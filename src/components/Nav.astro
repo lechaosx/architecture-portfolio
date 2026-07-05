@@ -1,25 +1,31 @@
 ---
+import { withBase, stripBase } from '../lib/url';
+
 const links = [
   { href: '/', label: 'Work' },
   { href: '/about', label: 'About' },
 ];
-const path = Astro.url.pathname;
+
+const current = stripBase(Astro.url.pathname);
+const isActive = (href: string) => current === (href === '/' ? '/' : href.replace(/\/+$/, ''));
 ---
 
 <header
   class="sticky top-0 z-40 border-b border-neutral-200 bg-white/80 backdrop-blur"
 >
   <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-    <a href="/" class="text-sm font-medium tracking-wide">Ing. arch. Tereza Kalábková</a>
+    <a href={withBase('/')} class="text-sm font-medium tracking-wide">
+      Ing. arch. Tereza Kalábková
+    </a>
     <ul class="flex gap-6 text-sm">
       {
         links.map((l) => (
           <li>
             <a
-              href={l.href}
+              href={withBase(l.href)}
               class:list={[
                 'transition-colors hover:text-neutral-500',
-                { 'text-neutral-400': path === l.href },
+                { 'text-neutral-400': isActive(l.href) },
               ]}
             >
               {l.label}

@@ -23,17 +23,41 @@ serves files only. It is also what makes the site fast and cheap.
 The user asked to host on GitHub Pages "ideally". This constrains several other
 decisions (static output, the CMS auth story, the deploy workflow).
 
-### Custom domain, served from root — [Explicit]
+### Dual deployment: project path OR custom domain — [Explicit]
 
-Chosen from the offered options. Because a custom domain serves from the root,
-Astro needs no `base` path. The domain lives in `public/CNAME` and `SITE` in
-`astro.config.mjs` — the two must match.
+The site must work both at the GitHub Pages project URL
+(`https://<owner>.github.io/<repo>/`) and at a custom domain root — the user
+asked for both. The two have _different_ mount points (`/repo/` vs `/`), and a
+static build bakes absolute asset paths, so a single build can only target one
+mount point. The mechanism (the implementation choices below are [Implicit]):
+
+- **Targets are declared in `deploy.config.json`** (in-repo, declarative). Each
+  target has a `base` (required — the mount path), an optional `site` (origin),
+  and an optional `cname`. An `active` field selects one. Switching targets is a
+  one-field edit — no code changes, no CI logic, no env vars. The user explicitly
+  wanted deployment config in-repo rather than in the pipeline.
+- **`astro.config.mjs` just applies the active target.** It sets `site`/`base`
+  from the config and emits `dist/CNAME` from `cname` via a build hook. No
+  repo/owner/domain literals in code.
+- Every internal link and asset path goes through `withBase()` in
+  `src/lib/url.ts`, so any `base` resolves correctly. Hardcoding a `/…` path
+  bypasses this and breaks the project-path build.
+- `public/CNAME` is **not** committed; it's generated at build for custom-domain
+  targets.
+- `site` (and therefore the sitemap) is **optional**: it only affects absolute
+  SEO URLs, not whether the site works at a given URL — `base` is the only
+  functionally required setting.
+
+GitHub Pages behavior: once a custom domain is configured, the
+`*.github.io/repo/` URL 301-redirects to the custom domain — so both URLs resolve
+for visitors, but you build for one canonical mode at a time.
 
 ### CI/CD: GitHub Actions → Pages — [Implicit]
 
 `.github/workflows/deploy.yml` builds with `withastro/action` (configured for
-bun) and deploys via `actions/deploy-pages`. Follows from the explicit Pages
-choice; a push to `master` is the deploy trigger.
+bun) and deploys via `actions/deploy-pages`; a push to `master` is the trigger.
+The workflow carries no deploy-target logic — it just builds; the target comes
+from `deploy.config.json` (see above).
 
 ---
 

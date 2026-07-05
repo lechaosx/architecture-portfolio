@@ -20,6 +20,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      # Deployment target (URL, base path, CNAME) is declared in
+      # deploy.config.json and applied by astro.config.mjs — nothing to configure
+      # here. Switch targets by editing that file's "active" field.
       - name: Build with Astro
         uses: withastro/action@v3
         with:

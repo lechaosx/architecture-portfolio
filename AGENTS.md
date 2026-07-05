@@ -45,8 +45,11 @@ Only then reconcile them.
 - **Two schemas must stay in sync:** `src/content.config.ts` (Zod, build-time)
   and `.pages.yml` (Pages CMS editing UI). Change both together. See
   ARCHITECTURE.md → "Two sources of truth for content shape".
-- **Domain lives in two places:** `public/CNAME` and `SITE` in
-  `astro.config.mjs`. Keep them equal.
+- **Deployment is declared in `deploy.config.json`** (targets + `active`
+  selector); `astro.config.mjs` just applies it and emits `CNAME`. Don't hardcode
+  URLs/paths or add CI logic. Every internal link/asset MUST go through
+  `withBase()` (`src/lib/url.ts`) — a hardcoded `/…` path breaks the project-URL
+  deployment. See ARCHITECTURE.md → "Dual deployment".
 - **Islands stay minimal:** hydrated Svelte components should be the exception.
   Adding broad client-side JS contradicts the explicit "fast and clean" goal —
   if it's needed, record it as a decision in ARCHITECTURE.md.
