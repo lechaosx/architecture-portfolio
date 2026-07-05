@@ -3,8 +3,8 @@
 A fast, clean portfolio website for an architect. Static, image-forward, and
 editable in the browser — no coding needed for day-to-day content.
 
-Built with Astro + Svelte + Tailwind, hosted on GitHub Pages — at the project URL
-or a custom domain. Content is managed through [Pages CMS](https://pagescms.org).
+Built with Astro + Svelte + Tailwind, hosted on GitHub Pages at a custom domain.
+Content is managed through [Pages CMS](https://pagescms.org).
 
 - **Why it behaves the way it does:** [FEATURES.md](FEATURES.md)
 - **Working on the code?** [MAINTAINERS.md](MAINTAINERS.md) and
@@ -54,9 +54,8 @@ Mostly a developer task; kept here so the owner knows what "done" looks like.
 
 1. Push the code to a GitHub repository.
 2. Repo **Settings → Pages → Source = GitHub Actions**.
-3. The site works as-is at the GitHub Pages project URL. To use a custom
-   **domain** instead: set `"active": "custom"` in `deploy.config.json`, add the
-   same domain under Settings → Pages, and point its DNS at GitHub Pages.
+3. The site serves from a custom **domain** (`public/CNAME`): add the same domain
+   under Settings → Pages, and point its DNS at GitHub Pages.
 4. Connect the repo at [app.pagescms.org](https://app.pagescms.org) so content
    editing works.
 5. Replace the placeholder images in `public/uploads/` and the sample projects

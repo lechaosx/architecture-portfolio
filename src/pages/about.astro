@@ -1,6 +1,5 @@
 ---
 import Base from '../layouts/Base.astro';
-import { withBase } from '../lib/url';
 // Single editable page, imported directly from Markdown.
 import { Content, frontmatter } from '../content/singletons/about.md';
 ---
@@ -11,7 +10,7 @@ import { Content, frontmatter } from '../content/singletons/about.md';
     {
       frontmatter.portrait && (
         <img
-          src={withBase(frontmatter.portrait)}
+          src={frontmatter.portrait}
           alt=""
           loading="lazy"
           class="reveal mt-8 w-full max-w-md bg-neutral-100"

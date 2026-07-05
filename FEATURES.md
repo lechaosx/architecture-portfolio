@@ -105,13 +105,13 @@ Users who set `prefers-reduced-motion` get no fade/transform animation.
 
 ## Reach
 
-### Works on both the GitHub Pages project URL and a custom domain — [Explicit]
+### Served from a custom domain at the root — [Explicit]
 
-The site must work both at the GitHub Pages project URL
-(`https://<owner>.github.io/<repo>/`) and on the architect's own custom domain.
-The build targets whichever is configured, with no source edits — see
-ARCHITECTURE.md → "Dual deployment". (The user initially chose a custom domain,
-then later asked that the project URL work too.)
+The site is served from the architect's own custom domain at the root URL. The
+user initially wanted the GitHub Pages project URL to work too, but later gave
+up dual-URL support in favour of a single root deployment — the simpler setup.
+See ARCHITECTURE.md → "Hosting: custom domain at the root". (Once the domain is
+configured, GitHub still 301-redirects the `*.github.io/<repo>/` URL to it.)
 
 ### Basic SEO & sharing — [Implicit]
 

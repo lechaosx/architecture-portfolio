@@ -27,15 +27,13 @@ bun run preview      # serve the built dist/ locally
 
 ```
 flake.nix                     minimal dev shell (bun, x86_64-linux)
-deploy.config.json            top-level site + per-target base/cname + active selector
-astro.config.mjs              applies the active deploy target; emits CNAME
+astro.config.mjs              site (for sitemap) + integrations; no base
 svelte.config.js              Svelte preprocess
 tsconfig.json                 extends astro/tsconfigs/strict
 .pages.yml                    Pages CMS schema (the browser editing UI)
 .github/workflows/deploy.yml  build with bun + deploy to Pages on push to master
 
 src/
-  lib/url.ts                  withBase()/stripBase() — base-aware links & assets
   content.config.ts           projects collection schema (Zod)
   content/projects/*.md        one file per project
   content/singletons/about.md  the About page
@@ -53,7 +51,7 @@ src/
 public/
   uploads/                     images (placeholder .svg files here now)
   favicon.svg
-                               (CNAME is not committed — the workflow writes it)
+  CNAME                        the custom domain (committed, copied to dist/)
 ```
 
 ---
@@ -83,25 +81,18 @@ change**. A mismatch means either the build fails (schema stricter than CMS) or
 the architect can't edit a field the site expects (CMS missing a field). This is
 the project's sharpest maintenance edge — see AGENTS.md.
 
-### Switch between project-URL and custom-domain hosting
+### Change the domain
 
-Deployment targets live in `deploy.config.json`. Change the `active` field:
+The site serves from a single custom domain at the root. To change it, edit
+`public/CNAME` (one line, the bare domain) and update `site` in
+`astro.config.mjs` to the matching `https://…` origin (that value only feeds the
+sitemap). Then update the domain under GitHub **Settings → Pages** and its DNS.
 
-- `"active": "github"` → GitHub Pages project URL (base `/architecture-portfolio`).
-- `"active": "custom"` → custom domain at the root; `dist/CNAME` is written from
-  that target's `cname`.
-
-Each target has `base` (required — the mount path) and optional `cname` (custom
-domains). A single top-level `site` feeds the sitemap (SEO) for all targets. Add
-or edit targets freely. Nothing else — no code, no CI, no env vars — changes to
-switch.
-
-**Test locally:** `bun run build` builds whichever target is `active`; inspect
-`dist/`. `bun dev` always serves at `/` for convenience, regardless of the active
-target.
-
-New internal links/assets must go through `withBase()` from `src/lib/url.ts` —
-never hardcode a leading-slash path, or it will 404 on the project-URL build.
+Internal links and assets are plain root-absolute paths (`/about`,
+`/uploads/…`) — there is no `base` and no link helper, because the site is
+mounted at the root. Don't reintroduce a `base`/subpath deployment without also
+routing every link/asset through a base-aware helper; see ARCHITECTURE.md →
+"Hosting: custom domain at the root" for why root-only keeps the code simple.
 
 ### Add another interactive island
 
@@ -114,9 +105,8 @@ point is that the rest of the page ships no JS.
 ## Deployment
 
 1. Push to GitHub. Repo **Settings → Pages → Source = GitHub Actions**.
-2. To use a custom domain: set `"active": "custom"` in `deploy.config.json` (with
-   the domain in that target), add the same domain under Settings → Pages, and
-   point DNS at GitHub Pages. Leave it as `"github"` to serve from the project URL.
+2. The site serves from the custom domain in `public/CNAME`: add the same domain
+   under Settings → Pages and point its DNS at GitHub Pages.
 3. Every push to `master` runs `.github/workflows/deploy.yml` (build with bun →
    deploy). No manual step.
 

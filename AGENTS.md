@@ -45,11 +45,12 @@ Only then reconcile them.
 - **Two schemas must stay in sync:** `src/content.config.ts` (Zod, build-time)
   and `.pages.yml` (Pages CMS editing UI). Change both together. See
   ARCHITECTURE.md → "Two sources of truth for content shape".
-- **Deployment is declared in `deploy.config.json`** (targets + `active`
-  selector); `astro.config.mjs` just applies it and emits `CNAME`. Don't hardcode
-  URLs/paths or add CI logic. Every internal link/asset MUST go through
-  `withBase()` (`src/lib/url.ts`) — a hardcoded `/…` path breaks the project-URL
-  deployment. See ARCHITECTURE.md → "Dual deployment".
+- **Root-only hosting on a custom domain.** The site is mounted at the root, so
+  internal links/assets are plain root-absolute paths (`/about`, `/uploads/…`) —
+  there is no `base` and no link helper. The domain lives in `public/CNAME`;
+  `site` in `astro.config.mjs` (canonical origin) feeds only the sitemap. Don't
+  add a `base`/subpath deployment without routing every link/asset through a
+  base-aware helper. See ARCHITECTURE.md → "Hosting: custom domain at the root".
 - **Islands stay minimal:** hydrated Svelte components should be the exception.
   Adding broad client-side JS contradicts the explicit "fast and clean" goal —
   if it's needed, record it as a decision in ARCHITECTURE.md.

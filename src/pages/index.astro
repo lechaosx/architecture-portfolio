@@ -2,7 +2,6 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import { withBase } from '../lib/url';
 
 const projects = (await getCollection('projects'))
   .filter((p) => !p.data.draft)
@@ -22,12 +21,12 @@ const projects = (await getCollection('projects'))
     {
       projects.map((p) => (
         <ProjectCard
-          href={withBase(`/projects/${p.id}/`)}
+          href={`/projects/${p.id}/`}
           slug={p.id}
           title={p.data.title}
           year={p.data.year}
           location={p.data.location}
-          cover={withBase(p.data.cover)}
+          cover={p.data.cover}
         />
       ))
     }

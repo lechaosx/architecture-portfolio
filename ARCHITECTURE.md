@@ -23,44 +23,31 @@ serves files only. It is also what makes the site fast and cheap.
 The user asked to host on GitHub Pages "ideally". This constrains several other
 decisions (static output, the CMS auth story, the deploy workflow).
 
-### Dual deployment: project path OR custom domain — [Explicit]
+### Hosting: custom domain at the root — [Explicit]
 
-The site must work both at the GitHub Pages project URL
-(`https://<owner>.github.io/<repo>/`) and at a custom domain root — the user
-asked for both. The two have _different_ mount points (`/repo/` vs `/`), and a
-static build bakes absolute asset paths, so a single build can only target one
-mount point. The mechanism (the implementation choices below are [Implicit]):
+The site is served from a single custom domain at the root (`/`). The user first
+asked that the GitHub Pages project URL (`https://<owner>.github.io/<repo>/`)
+work too, but later gave up dual-URL support to keep the setup simple. Choosing
+the root as the only mount point is what makes the code simple:
 
-- **Targets are declared in `deploy.config.json`** (in-repo, declarative). Each
-  target has a `base` (required — the mount path) and an optional `cname`. A
-  single top-level `site` and an `active` selector round out the file. Switching
-  targets is a one-field edit — no code changes, no CI logic, no env vars. The
-  user explicitly wanted deployment config in-repo rather than in the pipeline.
-- **`astro.config.mjs` just applies the active target.** It sets `site`/`base`
-  from the config and emits `dist/CNAME` from `cname` via a build hook. No
-  repo/owner/domain literals in code.
-- Every internal link and asset path goes through `withBase()` in
-  `src/lib/url.ts`, so any `base` resolves correctly. Hardcoding a `/…` path
-  bypasses this and breaks the project-path build.
-- `astro dev` always serves from `/` regardless of the active target (dev
-  convenience); `build` and `preview` use the target's `base`.
-- `public/CNAME` is **not** committed; it's generated at build for custom-domain
-  targets.
-- `site` is a **single top-level** value feeding only the sitemap's absolute URLs
-  (SEO). It's meaningful only on the canonical (custom-domain) deployment; on the
-  project URL the sitemap is irrelevant, so one shared value is fine. `base` is
-  the only functionally required per-target setting.
+- There is **no `base`** to configure — at the root, plain root-absolute paths
+  (`/about`, `/uploads/…`, `/favicon.svg`) just work, both in `astro dev` and in
+  the build. No `withBase()` helper, no per-target config, no dev override.
+- **The custom domain is committed as `public/CNAME`** (a static file Astro
+  copies to `dist/`). No build hook generates it.
+- `astro.config.mjs` sets a single hardcoded `site` (the canonical origin) and
+  registers the Svelte, sitemap, and Tailwind integrations — nothing else.
+- `site` feeds only the sitemap's absolute URLs (SEO — see below).
 
-GitHub Pages behavior: once a custom domain is configured, the
-`*.github.io/repo/` URL 301-redirects to the custom domain — so both URLs resolve
-for visitors, but you build for one canonical mode at a time.
+Trade-off given up: the bare `*.github.io/<repo>/` URL doesn't serve correctly on
+its own (its assets would need a `/<repo>/` prefix). This is fine because once the
+custom domain is configured, GitHub Pages 301-redirects that URL to the domain, so
+visitors still land in the right place.
 
 ### CI/CD: GitHub Actions → Pages — [Implicit]
 
 `.github/workflows/deploy.yml` builds with `withastro/action` (configured for
 bun) and deploys via `actions/deploy-pages`; a push to `master` is the trigger.
-The workflow carries no deploy-target logic — it just builds; the target comes
-from `deploy.config.json` (see above).
 
 ---
 
@@ -160,8 +147,8 @@ MAINTAINERS.md.
 
 ### Sitemap — [Implicit]
 
-`@astrojs/sitemap` generates `sitemap-index.xml` at build. Needs `SITE` set
-correctly to produce valid URLs.
+`@astrojs/sitemap` generates `sitemap-index.xml` at build. Needs `site` (in
+`astro.config.mjs`) set to the canonical origin to produce absolute URLs.
 
 ---
 

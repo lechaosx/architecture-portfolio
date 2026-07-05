@@ -1,8 +1,0 @@
-{
-  "site": "https://terezakalabkova.cz",
-  "active": "github",
-  "targets": {
-    "github": { "base": "/architecture-portfolio" },
-    "custom": { "base": "/", "cname": "terezakalabkova.cz" }
-  }
-}
