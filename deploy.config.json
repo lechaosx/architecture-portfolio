@@ -1,14 +1,8 @@
 {
+  "site": "https://terezakalabkova.cz",
   "active": "github",
   "targets": {
-    "github": {
-      "site": "https://lechaosx.github.io",
-      "base": "/architecture-portfolio"
-    },
-    "custom": {
-      "site": "https://terezakalabkova.cz",
-      "base": "/",
-      "cname": "terezakalabkova.cz"
-    }
+    "github": { "base": "/architecture-portfolio" },
+    "custom": { "base": "/", "cname": "terezakalabkova.cz" }
   }
 }

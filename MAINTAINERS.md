@@ -27,7 +27,7 @@ bun run preview      # serve the built dist/ locally
 
 ```
 flake.nix                     minimal dev shell (bun, x86_64-linux)
-deploy.config.json            deployment targets (base/site/cname) + active selector
+deploy.config.json            top-level site + per-target base/cname + active selector
 astro.config.mjs              applies the active deploy target; emits CNAME
 svelte.config.js              Svelte preprocess
 tsconfig.json                 extends astro/tsconfigs/strict
@@ -91,9 +91,10 @@ Deployment targets live in `deploy.config.json`. Change the `active` field:
 - `"active": "custom"` → custom domain at the root; `dist/CNAME` is written from
   that target's `cname`.
 
-Each target has `base` (required — the mount path), `site` (optional — only feeds
-the sitemap's absolute URLs), and `cname` (optional — custom domains). Add or edit
-targets freely. Nothing else — no code, no CI, no env vars — changes to switch.
+Each target has `base` (required — the mount path) and optional `cname` (custom
+domains). A single top-level `site` feeds the sitemap (SEO) for all targets. Add
+or edit targets freely. Nothing else — no code, no CI, no env vars — changes to
+switch.
 
 **Test locally:** `bun run build` builds whichever target is `active`; inspect
 `dist/`.

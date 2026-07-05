@@ -32,10 +32,10 @@ static build bakes absolute asset paths, so a single build can only target one
 mount point. The mechanism (the implementation choices below are [Implicit]):
 
 - **Targets are declared in `deploy.config.json`** (in-repo, declarative). Each
-  target has a `base` (required — the mount path), an optional `site` (origin),
-  and an optional `cname`. An `active` field selects one. Switching targets is a
-  one-field edit — no code changes, no CI logic, no env vars. The user explicitly
-  wanted deployment config in-repo rather than in the pipeline.
+  target has a `base` (required — the mount path) and an optional `cname`. A
+  single top-level `site` and an `active` selector round out the file. Switching
+  targets is a one-field edit — no code changes, no CI logic, no env vars. The
+  user explicitly wanted deployment config in-repo rather than in the pipeline.
 - **`astro.config.mjs` just applies the active target.** It sets `site`/`base`
   from the config and emits `dist/CNAME` from `cname` via a build hook. No
   repo/owner/domain literals in code.
@@ -44,9 +44,10 @@ mount point. The mechanism (the implementation choices below are [Implicit]):
   bypasses this and breaks the project-path build.
 - `public/CNAME` is **not** committed; it's generated at build for custom-domain
   targets.
-- `site` (and therefore the sitemap) is **optional**: it only affects absolute
-  SEO URLs, not whether the site works at a given URL — `base` is the only
-  functionally required setting.
+- `site` is a **single top-level** value feeding only the sitemap's absolute URLs
+  (SEO). It's meaningful only on the canonical (custom-domain) deployment; on the
+  project URL the sitemap is irrelevant, so one shared value is fine. `base` is
+  the only functionally required per-target setting.
 
 GitHub Pages behavior: once a custom domain is configured, the
 `*.github.io/repo/` URL 301-redirects to the custom domain — so both URLs resolve
