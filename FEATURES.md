@@ -26,8 +26,9 @@ lazy-loaded images, no bloat. Performance is a feature, not an afterthought.
 
 Neutral palette, generous whitespace, work shown in a simple grid. Agent chose
 this direction; the user did not specify an aesthetic beyond "clean". The site
-belongs to Ing. arch. Tereza Kalábková; the name appears as a plain wordmark, with
-the full credential kept to the About bio and SEO description.
+belongs to Ing. arch. Tereza Kalábková; the full name and credential are the nav
+wordmark (in normal case — the uppercase styling was dropped so "Ing. arch."
+reads cleanly), and also appear in the About bio and SEO description.
 
 ---
 
