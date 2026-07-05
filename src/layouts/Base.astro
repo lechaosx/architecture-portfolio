@@ -1,0 +1,63 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Architecture studio portfolio.' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <!-- Smooth same-origin page swaps via the native View Transitions API. -->
+    <ClientRouter />
+  </head>
+  <body class="min-h-screen bg-white text-neutral-900 antialiased">
+    <Nav />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      // Reveal elements as they enter the viewport, using the real scrollbar.
+      // Re-runs after every View Transition navigation (astro:page-load fires
+      // on the initial load and after each swap).
+      function initReveal() {
+        const els = document.querySelectorAll<HTMLElement>('.reveal:not(.is-visible)');
+        if (!('IntersectionObserver' in window)) {
+          els.forEach((el) => el.classList.add('is-visible'));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                io.unobserve(entry.target);
+              }
+            }
+          },
+          { rootMargin: '0px 0px -10% 0px' },
+        );
+        els.forEach((el) => io.observe(el));
+      }
+
+      document.addEventListener('astro:page-load', initReveal);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+# Pages CMS config — https://pagescms.org
+#
+# Setup: go to https://app.pagescms.org, sign in with GitHub, and grant the
+# Pages CMS GitHub App access to this repo. That's it — no server or OAuth proxy
+# to run. The architect edits content in the browser; saving commits to `main`,
+# which triggers the GitHub Pages deploy.
+
+media:
+  input: public/uploads # uploaded files are committed here
+  output: /uploads # ...and referenced by this path (served from site root)
+
+content:
+  - name: projects
+    label: Projects
+    type: collection
+    path: src/content/projects
+    filename: '{fields.title}.md' # slugified from the title
+    view:
+      fields: [title, year, location]
+    fields:
+      - { name: title, label: Title, type: string }
+      - { name: year, label: Year, type: number }
+      - { name: location, label: Location, type: string, required: false }
+      - { name: order, label: Sort order, type: number, default: 0 }
+      - { name: draft, label: Draft (hide from site), type: boolean, default: false }
+      - { name: cover, label: Cover image, type: image }
+      - { name: gallery, label: Gallery, type: image, list: true }
+      - { name: body, label: Description, type: rich-text }
+
+  - name: about
+    label: About page
+    type: file
+    path: src/content/singletons/about.md
+    fields:
+      - { name: title, label: Title, type: string }
+      - { name: portrait, label: Portrait, type: image, required: false }
+      - { name: body, label: Body, type: rich-text }

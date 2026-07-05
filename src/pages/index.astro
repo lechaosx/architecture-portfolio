@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+
+const projects = (await getCollection('projects'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => a.data.order - b.data.order || b.data.year - a.data.year);
+---
+
+<Base title="Studio Name — Architecture">
+  <section class="mx-auto max-w-6xl px-6 pt-20 pb-16">
+    <h1 class="max-w-2xl text-3xl leading-tight font-medium sm:text-5xl">
+      Architecture studio crafting calm, enduring spaces.
+    </h1>
+  </section>
+
+  <section
+    class="mx-auto grid max-w-6xl grid-cols-1 gap-x-8 gap-y-12 px-6 pb-24 sm:grid-cols-2"
+  >
+    {
+      projects.map((p) => (
+        <ProjectCard
+          href={`/projects/${p.id}/`}
+          title={p.data.title}
+          year={p.data.year}
+          location={p.data.location}
+          cover={p.data.cover}
+        />
+      ))
+    }
+  </section>
+</Base>

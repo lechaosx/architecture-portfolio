@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+// Single editable page, imported directly from Markdown.
+import { Content, frontmatter } from '../content/singletons/about.md';
+---
+
+<Base title={`${frontmatter.title} — Studio Name`}>
+  <article class="mx-auto max-w-3xl px-6 pt-16 pb-24">
+    <h1 class="reveal text-3xl font-medium sm:text-4xl">{frontmatter.title}</h1>
+    {
+      frontmatter.portrait && (
+        <img
+          src={frontmatter.portrait}
+          alt=""
+          loading="lazy"
+          class="reveal mt-8 w-full max-w-md bg-neutral-100"
+        />
+      )
+    }
+    <div class="prose prose-neutral reveal mt-8 max-w-none">
+      <Content />
+    </div>
+  </article>
+</Base>

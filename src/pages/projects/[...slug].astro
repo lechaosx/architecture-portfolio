@@ -1,0 +1,42 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Gallery from '../../components/Gallery.svelte';
+
+export async function getStaticPaths() {
+  const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
+  return projects.map((p) => ({ params: { slug: p.id }, props: { project: p } }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const { title, year, location, cover, gallery } = project.data;
+---
+
+<Base title={`${title} — Studio Name`}>
+  <article class="mx-auto max-w-4xl px-6 pt-16 pb-24">
+    <a href="/" class="text-sm text-neutral-500 hover:text-neutral-900">
+      ← Back to work
+    </a>
+
+    <header class="mt-6 mb-8">
+      <h1 class="text-3xl font-medium sm:text-4xl">{title}</h1>
+      <p class="mt-2 text-neutral-500">
+        {[location, year].filter(Boolean).join(' · ')}
+      </p>
+    </header>
+
+    <img
+      src={cover}
+      alt={title}
+      class="w-full bg-neutral-100 object-cover"
+      transition:name={`cover-/projects/${project.id}/`}
+    />
+
+    <div class="prose prose-neutral mt-10 max-w-none">
+      <Content />
+    </div>
+
+    <Gallery images={gallery} client:visible />
+  </article>
+</Base>

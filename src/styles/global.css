@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Reveal-on-scroll — driven by IntersectionObserver, so it rides the NATIVE
+   scrollbar. No scroll hijacking. */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
