@@ -21,6 +21,10 @@ if (!target) {
   throw new Error(`deploy.config.json: unknown active target "${deploy.active}"`);
 }
 
+// `astro dev` always serves from the root for convenience; builds use the
+// active target's base. (withBase() adapts links/assets to whichever is active.)
+const isDev = process.argv.includes('dev');
+
 /** Emit dist/CNAME for custom-domain targets, straight from the config. */
 const emitCname = {
   name: 'emit-cname',
@@ -33,7 +37,7 @@ const emitCname = {
 
 export default defineConfig({
   site: deploy.site,
-  base: target.base ?? '/',
+  base: isDev ? '/' : (target.base ?? '/'),
   integrations: [svelte(), sitemap(), emitCname],
   vite: {
     plugins: [tailwindcss()],

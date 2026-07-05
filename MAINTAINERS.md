@@ -97,7 +97,8 @@ or edit targets freely. Nothing else — no code, no CI, no env vars — changes
 switch.
 
 **Test locally:** `bun run build` builds whichever target is `active`; inspect
-`dist/`.
+`dist/`. `bun dev` always serves at `/` for convenience, regardless of the active
+target.
 
 New internal links/assets must go through `withBase()` from `src/lib/url.ts` —
 never hardcode a leading-slash path, or it will 404 on the project-URL build.

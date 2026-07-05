@@ -42,6 +42,8 @@ mount point. The mechanism (the implementation choices below are [Implicit]):
 - Every internal link and asset path goes through `withBase()` in
   `src/lib/url.ts`, so any `base` resolves correctly. Hardcoding a `/…` path
   bypasses this and breaks the project-path build.
+- `astro dev` always serves from `/` regardless of the active target (dev
+  convenience); `build` and `preview` use the target's `base`.
 - `public/CNAME` is **not** committed; it's generated at build for custom-domain
   targets.
 - `site` is a **single top-level** value feeding only the sitemap's absolute URLs
