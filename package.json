@@ -11,12 +11,12 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.2.1",
-    "@astrojs/svelte": "^7.0.9",
-    "@tailwindcss/typography": "^0.5.16",
-    "@tailwindcss/vite": "^4.0.9",
-    "astro": "^5.4.2",
-    "svelte": "^5.20.4",
-    "tailwindcss": "^4.0.9"
+    "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/svelte": "^9.0.1",
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.2",
+    "astro": "^7.0.6",
+    "svelte": "^5.56.4",
+    "tailwindcss": "^4.3.2"
   }
 }
