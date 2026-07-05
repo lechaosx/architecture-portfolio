@@ -24,9 +24,10 @@ lazy-loaded images, no bloat. Performance is a feature, not an afterthought.
 
 ### Minimal, image-forward visual design — [Implicit]
 
-Neutral palette, generous whitespace, work shown in a simple grid. Placeholder
-branding ("Architect Name") is intended to be replaced. Agent chose this direction;
-the user did not specify an aesthetic beyond "clean".
+Neutral palette, generous whitespace, work shown in a simple grid. Agent chose
+this direction; the user did not specify an aesthetic beyond "clean". The site
+belongs to Ing. arch. Tereza Kalábková; the name appears as a plain wordmark, with
+the full credential kept to the About bio and SEO description.
 
 ---
 
