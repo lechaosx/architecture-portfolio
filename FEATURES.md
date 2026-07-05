@@ -25,7 +25,7 @@ lazy-loaded images, no bloat. Performance is a feature, not an afterthought.
 ### Minimal, image-forward visual design — [Implicit]
 
 Neutral palette, generous whitespace, work shown in a simple grid. Placeholder
-branding ("Studio Name") is intended to be replaced. Agent chose this direction;
+branding ("Architect Name") is intended to be replaced. Agent chose this direction;
 the user did not specify an aesthetic beyond "clean".
 
 ---

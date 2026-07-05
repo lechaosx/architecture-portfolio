@@ -3,10 +3,10 @@ title: About
 portrait: /uploads/placeholder-portrait.svg
 ---
 
-Studio Name is an architecture practice working across residential, cultural,
-and public projects. We believe good buildings are calm, durable, and rooted in
-their place.
+I'm an architect working across residential, cultural, and public projects. I
+believe good buildings are calm, durable, and rooted in their place.
 
-Founded in 2015, the studio is based in the city and works internationally.
+I've practised independently since 2015, based in the city and working
+internationally.
 
 **Contact** — hello@example.com

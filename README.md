@@ -35,7 +35,7 @@ first).
 
 ### How do I change the logo name, email, or wording?
 
-Small text like the studio name and contact email currently lives in the code.
+Small text like the architect's name and contact email currently lives in the code.
 Ask your developer, or see [MAINTAINERS.md](MAINTAINERS.md).
 
 ### What do visitors get?

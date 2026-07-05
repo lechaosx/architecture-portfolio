@@ -127,5 +127,5 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
   `image()` field to the collection schema, and render with `astro:assets`
   `<Image>`/`<Picture>`. Note this complicates the CMS path handling — weigh it.
 - **Placeholders to replace before launch:** the `.svg` files in
-  `public/uploads/`, "Studio Name" / `hello@example.com` in `Nav.astro`,
+  `public/uploads/`, "Architect Name" / `hello@example.com` in `Nav.astro`,
   `Footer.astro`, and sample content, plus the domain (see above).
