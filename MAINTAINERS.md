@@ -31,7 +31,7 @@ astro.config.mjs              Astro config; SITE (custom domain) lives here
 svelte.config.js              Svelte preprocess
 tsconfig.json                 extends astro/tsconfigs/strict
 .pages.yml                    Pages CMS schema (the browser editing UI)
-.github/workflows/deploy.yml  build with bun + deploy to Pages on push to main
+.github/workflows/deploy.yml  build with bun + deploy to Pages on push to master
 
 src/
   content.config.ts           projects collection schema (Zod)
@@ -100,7 +100,7 @@ point is that the rest of the page ships no JS.
 
 1. Push to GitHub. Repo **Settings → Pages → Source = GitHub Actions**.
 2. Add the custom domain under Settings → Pages; point DNS at GitHub Pages.
-3. Every push to `main` runs `.github/workflows/deploy.yml` (build with bun →
+3. Every push to `master` runs `.github/workflows/deploy.yml` (build with bun →
    deploy). No manual step.
 
 ## Content editing setup (Pages CMS)

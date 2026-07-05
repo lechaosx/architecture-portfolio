@@ -45,7 +45,7 @@ Content edits and code edits share one source of truth and don't conflict.
 ### Browser-based editing via Pages CMS — [Explicit]
 
 The architect edits at app.pagescms.org: friendly forms, drag-and-drop image
-upload, no server to run. Saving commits to `main` and the site redeploys.
+upload, no server to run. Saving commits to `master` and the site redeploys.
 
 ### Projects have title, year, and optional location — [Implicit]
 

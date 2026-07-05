@@ -33,7 +33,7 @@ Astro needs no `base` path. The domain lives in `public/CNAME` and `SITE` in
 
 `.github/workflows/deploy.yml` builds with `withastro/action` (configured for
 bun) and deploys via `actions/deploy-pages`. Follows from the explicit Pages
-choice; a push to `main` is the deploy trigger.
+choice; a push to `master` is the deploy trigger.
 
 ---
 

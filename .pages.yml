@@ -2,7 +2,7 @@
 #
 # Setup: go to https://app.pagescms.org, sign in with GitHub, and grant the
 # Pages CMS GitHub App access to this repo. That's it — no server or OAuth proxy
-# to run. The architect edits content in the browser; saving commits to `main`,
+# to run. The architect edits content in the browser; saving commits to `master`,
 # which triggers the GitHub Pages deploy.
 
 media:
