@@ -19,12 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      # Deployment target (URL, base path, CNAME) is declared in
-      # deploy.config.json and applied by astro.config.mjs — nothing to configure
-      # here. Switch targets by editing that file's "active" field.
+        uses: actions/checkout@v5
+      # The site is root-only on a custom domain (public/CNAME); site/SEO is set
+      # in astro.config.mjs. Nothing to configure here.
       - name: Build with Astro
-        uses: withastro/action@v3
+        uses: withastro/action@v6
         with:
           package-manager: bun@latest
 
@@ -37,4 +36,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
