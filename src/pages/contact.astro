@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+import { frontmatter as site } from '../content/singletons/site.md';
+import { frontmatter as contact } from '../content/singletons/contact.md';
+
+const { email, phone } = contact;
+const hours: { day: string; hours: string }[] = contact.hours ?? [];
+---
+
+<Base title={`Contact — ${site.name}`}>
+  <section class="mx-auto max-w-6xl px-6 pt-16 pb-24">
+    <h1 class="text-3xl font-medium sm:text-4xl">Contact</h1>
+
+    <div class="mt-12 grid gap-12 md:grid-cols-2 md:gap-16">
+      <dl class="reveal space-y-8">
+        <div>
+          <dt class="text-sm tracking-widest text-neutral-600 uppercase">
+            Email
+          </dt>
+          <dd class="mt-1 text-lg">
+            <a
+              href={`mailto:${email}`}
+              class="underline underline-offset-4 hover:decoration-dotted"
+            >
+              {email}
+            </a>
+          </dd>
+        </div>
+
+        {
+          phone && (
+            <div>
+              <dt class="text-sm tracking-widest text-neutral-600 uppercase">
+                Phone
+              </dt>
+              <dd class="mt-1 text-lg">
+                <a
+                  href={`tel:${phone.replace(/\s+/g, '')}`}
+                  class="underline underline-offset-4 hover:decoration-dotted"
+                >
+                  {phone}
+                </a>
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+
+      {
+        hours.length > 0 && (
+          <div class="reveal">
+            <h2 class="text-sm tracking-widest text-neutral-600 uppercase">
+              When to reach me
+            </h2>
+            <ul class="mt-5 max-w-xs space-y-1.5">
+              {hours.map((h) => (
+                <li class="flex justify-between gap-8 border-b border-neutral-200 pb-1.5">
+                  <span>{h.day}</span>
+                  <span class="text-neutral-600">{h.hours}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</Base>

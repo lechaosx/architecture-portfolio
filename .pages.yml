@@ -21,17 +21,55 @@ content:
       - { name: title, label: Title, type: string }
       - { name: year, label: Year, type: number }
       - { name: location, label: Location, type: string, required: false }
-      - { name: order, label: Sort order, type: number, default: 0 }
       - { name: draft, label: Draft (hide from site), type: boolean, default: false }
       - { name: cover, label: Cover image, type: image }
       - { name: gallery, label: Gallery, type: image, list: true }
       - { name: body, label: Description, type: rich-text }
 
-  - name: about
-    label: About page
+  - name: home
+    label: Home page
     type: file
-    path: src/content/singletons/about.md
+    path: src/content/singletons/home.md
     fields:
-      - { name: title, label: Title, type: string }
       - { name: portrait, label: Portrait, type: image, required: false }
-      - { name: body, label: Body, type: rich-text }
+      - name: gallery
+        label: Gallery images (leave empty to use project photos)
+        type: image
+        list: true
+      - name: approaches
+        label: Approach
+        type: object
+        list: true
+        fields:
+          - { name: label, label: Label, type: string }
+          - { name: text, label: Text, type: text }
+          - name: icon
+            label: Icon
+            type: select
+            options:
+              values: [place, scale, material, thinking]
+      - { name: body, label: About text, type: rich-text }
+
+  - name: contact
+    label: Contact
+    type: file
+    path: src/content/singletons/contact.md
+    fields:
+      - { name: email, label: Email, type: string }
+      - { name: phone, label: Phone, type: string, required: false }
+      - name: hours
+        label: When I'm reachable (per day)
+        type: object
+        list: true
+        fields:
+          - { name: day, label: Day, type: string }
+          - { name: hours, label: Hours (e.g. 10:00 – 15:00, or —), type: string }
+
+  - name: site
+    label: Site settings
+    type: file
+    path: src/content/singletons/site.md
+    fields:
+      - { name: name, label: Name, type: string }
+      - { name: credential, label: Credential (e.g. Ing. arch.), type: string }
+      - { name: description, label: SEO description, type: text }

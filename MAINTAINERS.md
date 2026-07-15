@@ -36,17 +36,20 @@ tsconfig.json                 extends astro/tsconfigs/strict
 src/
   content.config.ts           projects collection schema (Zod)
   content/projects/*.md        one file per project
-  content/singletons/about.md  the About page
+  content/singletons/          CMS singletons: site.md, home.md, contact.md
   pages/
-    index.astro                home: project grid
+    index.astro                home: carousel + home.md (bio, portrait, approach)
+    work.astro                 project grid
+    contact.astro              email, phone, per-day availability (from contact.md)
     projects/[...slug].astro   project detail page
-    about.astro                imports about.md directly
   layouts/Base.astro           html shell, <ClientRouter/>, reveal-on-scroll script
   components/
-    Nav.astro, Footer.astro    chrome
+    Nav.astro, Footer.astro    chrome (name/email from site.md + contact.md)
+    Carousel.astro             home hero carousel; images from home.md or projects
+    Approaches.astro           vertical "how I work" list (items from home.md)
     ProjectCard.astro          grid card
     Gallery.svelte             the ONLY hydrated island (lightbox)
-  styles/global.css            tailwind import + typography plugin + .reveal styles
+  styles/global.css            tailwind import, fonts, .reveal + .no-scrollbar
 
 public/
   uploads/                     images (placeholder .svg files here now)
@@ -81,6 +84,13 @@ change**. A mismatch means either the build fails (schema stricter than CMS) or
 the architect can't edit a field the site expects (CMS missing a field). This is
 the project's sharpest maintenance edge — see AGENTS.md.
 
+This double-declaration applies to the **`projects` collection**. The
+**singletons** (`src/content/singletons/*.md`: site, home, contact) have
+**no Zod mirror** — they're declared only in `.pages.yml` and read straight from
+their Markdown by the component that imports them. So for a singleton field, keep
+`.pages.yml` and the consuming component in sync, and have that component tolerate
+missing/empty values (the current ones already do).
+
 ### Change the domain
 
 The site serves from a single custom domain at the root. To change it, edit
@@ -88,7 +98,7 @@ The site serves from a single custom domain at the root. To change it, edit
 `astro.config.mjs` to the matching `https://…` origin (that value only feeds the
 sitemap). Then update the domain under GitHub **Settings → Pages** and its DNS.
 
-Internal links and assets are plain root-absolute paths (`/about`,
+Internal links and assets are plain root-absolute paths (`/work`,
 `/uploads/…`) — there is no `base` and no link helper, because the site is
 mounted at the root. Don't reintroduce a `base`/subpath deployment without also
 routing every link/asset through a base-aware helper; see ARCHITECTURE.md →
@@ -134,7 +144,8 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
   `image()` field to the collection schema, and render with `astro:assets`
   `<Image>`/`<Picture>`. Note this complicates the CMS path handling — weigh it.
 - **Placeholders to replace before launch:** the `.svg` files in
-  `public/uploads/`, the `hello@example.com` contact email (in `Footer.astro` and
-  the About content), the sample projects, plus the domain (see above). The
-  architect's name (Tereza Kalábková) is already set in `Nav.astro`,
-  `Footer.astro`, page titles, and the About bio.
+  `public/uploads/`, the sample projects, and the domain (see above). Contact
+  details are placeholders in `src/content/singletons/contact.md`
+  (`info@kalabkova.cz`, `+420 777 123 456`) and the owner name in `site.md` — all
+  editable via the CMS. Site-wide text (name, credential, email, phone, hours) now
+  comes from those singletons, not from hardcoded strings in components.

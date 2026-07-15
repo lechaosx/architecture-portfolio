@@ -21,7 +21,9 @@ in your browser. Nothing to install.
 
 1. Go to app.pagescms.org and sign in with GitHub.
 2. Open this project (a one-time access grant lets it read the repo).
-3. Edit **Projects** or the **About page** using simple forms.
+3. Edit any entry with simple forms — **Home page** (carousel images, your bio +
+   portrait, and your approach), **Projects**, **Contact**, or **Site settings**
+   (your name, credential, and search-engine description).
 4. Click save. The site rebuilds and updates on its own in a couple of minutes.
 
 **Adding a project:** Projects → new → fill in title, year, location, upload a
@@ -30,19 +32,23 @@ cover image and gallery photos, write a description, save.
 **Hiding a project:** turn on its **Draft** switch — it stays in the system but
 disappears from the public site until you turn it off.
 
-**Reordering projects:** set each project's **Sort order** number (lower shows
-first).
+**Project order:** projects sort automatically — newest year first, then A–Z by
+title within the same year. Nothing to set.
 
-### How do I change the logo name, email, or wording?
+### How do I change my name, email, phone, or hours?
 
-Small text like the architect's name and contact email currently lives in the code.
-Ask your developer, or see [MAINTAINERS.md](MAINTAINERS.md).
+All editable in the CMS: your **name** and **credential** live in **Site
+settings**; your **email**, **phone**, and day-by-day **availability** live in
+**Contact**. Fixed section labels like "Work" and "Approach" live in the code —
+ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
 
 ### What do visitors get?
 
-- A home page with your projects in a grid.
+- A home page that's your "about": an image carousel, your bio, and your approach.
+  (The carousel images, bio, portrait, and approach are all editable in the CMS.)
+- A **Work** page with your projects in a grid.
 - A page per project with a description and a full-screen photo gallery.
-- An About page.
+- A **Contact** page with your email, phone, and when you're reachable.
 - Smooth transitions between pages and gentle fade-ins — all riding the normal
   scrollbar (no janky scroll effects). Fast to load, works on phones.
 
@@ -58,8 +64,9 @@ Mostly a developer task; kept here so the owner knows what "done" looks like.
    under Settings → Pages, and point its DNS at GitHub Pages.
 4. Connect the repo at [app.pagescms.org](https://app.pagescms.org) so content
    editing works.
-5. Replace the placeholder images in `public/uploads/` and the sample projects
-   with real content.
+5. Replace the placeholder content: the images in `public/uploads/`, the sample
+   projects, and your real details in **Contact** (email/phone/hours) and **Site
+   settings** (name).
 
 After this, every saved edit (yours via the CMS, or the developer's in code)
 publishes automatically.

@@ -2,6 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Gallery from '../../components/Gallery.svelte';
+import { frontmatter as site } from '../../content/singletons/site.md';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
@@ -13,9 +14,9 @@ const { Content } = await render(project);
 const { title, year, location, cover, gallery } = project.data;
 ---
 
-<Base title={`${title} — Tereza Kalábková`}>
+<Base title={`${title} — ${site.name}`}>
   <article class="mx-auto max-w-4xl px-6 pt-16 pb-24">
-    <a href="/" class="text-sm text-neutral-500 hover:text-neutral-900">
+    <a href="/work" class="text-sm text-neutral-500 hover:text-neutral-900">
       ← Back to work
     </a>
 

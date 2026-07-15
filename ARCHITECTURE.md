@@ -94,7 +94,22 @@ component today (`src/components/Gallery.svelte`).
 ### The lightbox is the only browser-side JS — [Implicit]
 
 `Gallery.svelte` (the project image lightbox) is the sole hydrated island
-(`client:visible`). Everything else ships no JS.
+(`client:visible`). The only other browser JS is a couple of tiny first-party
+vanilla scripts (reveal-on-scroll, the home carousel) and the View-Transitions
+router — no framework runtime ships beyond the lightbox.
+
+### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
+
+The carousel (`Carousel.astro`) is a native horizontal scroll-snap strip; a small
+vanilla script enhances it with arrows, dot indicators and a 5s auto-advance,
+pausing on hover/focus and skipping auto-advance under `prefers-reduced-motion`.
+No hydrated island — the same lightweight approach as the reveal script, so the
+"islands stay minimal" invariant holds. Because it scrolls its own container (not
+the page), it stays clear of the "don't reimplement scrolling" boundary. Images
+come from the Home singleton's `gallery` list, falling back to
+`getCollection('projects')` (cover + gallery) when it is empty, so there is no
+separate gallery content to maintain. The arrows/dots use the site's shared
+interaction language (outline box on hover, invert on press/current).
 
 ### Page transitions: native View Transitions API — [Implicit]
 
@@ -121,8 +136,22 @@ libraries — the user asked not to reimplement scrolling. Re-runs on
 
 ### Typography plugin for Markdown bodies — [Implicit]
 
-`@tailwindcss/typography` (`prose` classes) styles rendered Markdown on project
-and about pages.
+`@tailwindcss/typography` (`prose` classes) styles rendered Markdown bodies — the
+project descriptions and the home page's About text.
+
+### Self-hosted webfonts via @fontsource — [Implicit]
+
+Roboto ships as a variable webfont from `@fontsource-variable/roboto`, imported in
+`Base.astro` and bundled to `dist/_astro/*.woff2` — no third-party (Google Fonts)
+request, which keeps with "fast and clean". It is the single page typeface:
+`global.css`'s `@theme` sets one token, `--font-sans`, to Roboto, so body,
+headings and nav all share it. There is deliberately **no** separate
+display/heading token — Open Sans (body) and a `--font-display` seam were both
+tried and removed in favour of one typeface everywhere (the owner's call: "if I
+want separation later, I'll do it from scratch"). DIN Pro — also on her wishlist —
+is commercial with no free web licence and is omitted; to add it (or any distinct
+heading face) later, self-host the licensed `woff2`, reintroduce a `--font-display`
+token in `@theme`, and apply it to the headings/nav.
 
 ---
 
@@ -131,9 +160,15 @@ and about pages.
 ### Astro Content Collections + glob loader — [Implicit]
 
 `src/content.config.ts` defines a `projects` collection loaded from
-`src/content/projects/*.md`, with a Zod schema validating frontmatter. The About
-page is a single Markdown file imported directly in `about.astro` (not a
-collection — it's a one-off).
+`src/content/projects/*.md`, with a Zod schema validating frontmatter. The
+singletons — Site settings, Home, and Contact — are single Markdown files under
+`src/content/singletons/`, imported directly where they're needed (`home.md`
+supplies the home page's bio body + portrait + gallery + approaches in
+`index.astro`/`Carousel`/`Approaches`; `contact.md` in `contact.astro` and the
+footer; `site.md` in the layout/nav). They are not collections (each is a one-off)
+and are validated only through `.pages.yml` + their consuming code, not Zod.
+Components guard for missing/empty fields (e.g. an empty Home gallery falls back to
+project photos; an empty approach list hides the section).
 
 ### Images: `public/uploads`, referenced as string paths — [Implicit]
 
@@ -170,4 +205,7 @@ operate.
 
 The frontmatter schema is declared **twice**: in `src/content.config.ts` (build-
 time validation) and in `.pages.yml` (the editing UI). They must be kept in sync
-by hand — see MAINTAINERS.md and AGENTS.md.
+by hand — see MAINTAINERS.md and AGENTS.md. This applies to the `projects`
+collection. The singletons (Site, Home, Contact) have no Zod mirror — they are
+declared only in `.pages.yml` and read straight from their Markdown — so for those
+the pair to keep in sync is `.pages.yml` and the consuming component.

@@ -1,8 +1,7 @@
 ---
 title: Villa Solis
-year: 2024
+year: 2025
 location: Lake Como, Italy
-order: 1
 draft: false
 cover: /uploads/placeholder-cover.svg
 gallery:

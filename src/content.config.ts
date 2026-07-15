@@ -7,7 +7,6 @@ const projects = defineCollection({
     title: z.string(),
     year: z.number(),
     location: z.string().optional(),
-    order: z.number().default(0),
     draft: z.boolean().default(false),
     // Image paths live under /public (served from root), so plain strings.
     cover: z.string(),

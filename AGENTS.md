@@ -46,7 +46,7 @@ Only then reconcile them.
   and `.pages.yml` (Pages CMS editing UI). Change both together. See
   ARCHITECTURE.md → "Two sources of truth for content shape".
 - **Root-only hosting on a custom domain.** The site is mounted at the root, so
-  internal links/assets are plain root-absolute paths (`/about`, `/uploads/…`) —
+  internal links/assets are plain root-absolute paths (`/work`, `/uploads/…`) —
   there is no `base` and no link helper. The domain lives in `public/CNAME`;
   `site` in `astro.config.mjs` (canonical origin) feeds only the sitemap. Don't
   add a `base`/subpath deployment without routing every link/asset through a

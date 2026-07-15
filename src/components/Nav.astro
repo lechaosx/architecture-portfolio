@@ -1,7 +1,9 @@
 ---
+import { frontmatter as site } from '../content/singletons/site.md';
+
 const links = [
-  { href: '/', label: 'Work' },
-  { href: '/about', label: 'About' },
+  { href: '/work', label: 'Work' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 const current = Astro.url.pathname.replace(/\/+$/, '') || '/';
@@ -9,21 +11,28 @@ const isActive = (href: string) => current === (href === '/' ? '/' : href);
 ---
 
 <header
-  class="sticky top-0 z-40 border-b border-neutral-200 bg-white/80 backdrop-blur"
+  class="sticky top-0 z-40 border-b border-black bg-white/90 backdrop-blur"
 >
   <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-    <a href="/" class="text-sm font-medium tracking-wide">
-      Ing. arch. Tereza Kalábková
+    <a
+      href="/"
+      class="flex items-baseline gap-1.5 tracking-widest"
+    >
+      <span class="text-xs font-normal">{site.credential}</span>
+      <span class="text-lg font-medium uppercase">{site.name}</span>
     </a>
-    <ul class="flex gap-6 text-sm">
+    <ul class="flex gap-6 text-sm tracking-widest uppercase">
       {
         links.map((l) => (
           <li>
             <a
               href={l.href}
+              aria-current={isActive(l.href) ? 'page' : undefined}
               class:list={[
-                'transition-colors hover:text-neutral-500',
-                { 'text-neutral-400': isActive(l.href) },
+                'border border-transparent px-2 py-0.5',
+                isActive(l.href)
+                  ? 'border-black bg-black text-white'
+                  : 'hover:border-black',
               ]}
             >
               {l.label}

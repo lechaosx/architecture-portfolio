@@ -1,0 +1,72 @@
+---
+import { frontmatter as home } from '../content/singletons/home.md';
+
+interface Item {
+  label: string;
+  text: string;
+  icon: 'place' | 'scale' | 'material' | 'thinking';
+}
+
+const items: Item[] = home.approaches ?? [];
+---
+
+{
+  items.length > 0 && (
+    <section class="mx-auto max-w-6xl px-6 pb-24">
+      <h2 class="text-sm tracking-widest uppercase">Approach</h2>
+      <ul class="mt-8">
+    {
+      items.map((item) => (
+        <li class="reveal group flex items-start gap-6 py-8 sm:gap-10">
+          <div class="w-16 shrink-0 origin-left text-black motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-125 sm:w-20">
+            <svg
+              viewBox="0 0 48 48"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-auto w-full"
+              aria-hidden="true"
+            >
+              {item.icon === 'place' && (
+                <>
+                  <path d="M24 42C24 42 38 30 38 19a14 14 0 1 0-28 0c0 11 14 23 14 23Z" />
+                  <circle cx="24" cy="19" r="5" />
+                </>
+              )}
+              {item.icon === 'scale' && (
+                <>
+                  <rect x="6" y="6" width="36" height="36" />
+                  <rect x="16" y="16" width="16" height="16" />
+                  <path d="M6 6l10 10M42 6L32 16" />
+                </>
+              )}
+              {item.icon === 'material' && (
+                <>
+                  <path d="M6 16L24 8l18 8-18 8-18-8Z" />
+                  <path d="M6 24l18 8 18-8M6 32l18 8 18-8" />
+                </>
+              )}
+              {item.icon === 'thinking' && (
+                <>
+                  <circle cx="24" cy="20" r="12" />
+                  <path d="M19 38h10M20 43h8" />
+                  <path d="M24 8v-4M40 20h4M4 20h4M36 8l3-3M12 8L9 5" />
+                </>
+              )}
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl tracking-wide uppercase sm:text-2xl">
+              {item.label}
+            </h3>
+            <p class="mt-2 max-w-prose text-neutral-600">{item.text}</p>
+          </div>
+        </li>
+      ))
+    }
+      </ul>
+    </section>
+  )
+}

@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@theme {
+  --font-sans: "Roboto Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Reveal-on-scroll — driven by IntersectionObserver, so it rides the NATIVE
    scrollbar. No scroll hijacking. */
 .reveal {
@@ -20,4 +24,12 @@
     transform: none;
     transition: none;
   }
+}
+
+/* Carousel track scrolls natively (scroll-snap); hide the scrollbar chrome. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

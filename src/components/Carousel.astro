@@ -1,0 +1,145 @@
+---
+import { getCollection } from 'astro:content';
+import { frontmatter as home } from '../content/singletons/home.md';
+
+const curated: string[] = home.gallery ?? [];
+const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
+const images =
+  curated.length > 0
+    ? curated
+    : projects.flatMap((p) => [p.data.cover, ...p.data.gallery]);
+---
+
+{
+  images.length > 0 && (
+    <section class="mx-auto max-w-6xl px-6 pt-8">
+      <div
+        data-carousel
+        class="relative border border-black"
+        aria-roledescription="carousel"
+        aria-label="Selected work"
+      >
+        <div
+          data-carousel-track
+          class="no-scrollbar flex aspect-[16/9] snap-x snap-mandatory overflow-x-auto"
+        >
+          {images.map((src, i) => (
+            <div
+              data-slide
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${i + 1} of ${images.length}`}
+              class="h-full w-full shrink-0 snap-start"
+            >
+              <img
+                src={src}
+                alt=""
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                class="h-full w-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              data-carousel-prev
+              aria-label="Previous image"
+              class="absolute top-1/2 left-3 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center border border-transparent bg-white/80 text-lg text-black hover:border-black hover:bg-white active:bg-black active:text-white"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              data-carousel-next
+              aria-label="Next image"
+              class="absolute top-1/2 right-3 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center border border-transparent bg-white/80 text-lg text-black hover:border-black hover:bg-white active:bg-black active:text-white"
+            >
+              ›
+            </button>
+            <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
+              {images.map((_, i) => (
+                <button
+                  type="button"
+                  data-dot
+                  aria-label={`Go to image ${i + 1}`}
+                  class="h-2.5 w-2.5 cursor-pointer rounded-full border border-black bg-white/80 aria-[current=true]:bg-black"
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  )
+}
+
+<script>
+  // Enhances a native scroll-snap strip with arrows, dots and auto-advance.
+  // Vanilla, no island; re-inits after View Transition swaps.
+  let timer: number | undefined;
+
+  function initCarousel() {
+    if (timer) {
+      clearInterval(timer);
+      timer = undefined;
+    }
+    const root = document.querySelector<HTMLElement>('[data-carousel]');
+    if (!root) return;
+    const track = root.querySelector<HTMLElement>('[data-carousel-track]');
+    if (!track) return;
+    const slides = Array.from(track.querySelectorAll<HTMLElement>('[data-slide]'));
+    const dots = Array.from(root.querySelectorAll<HTMLElement>('[data-dot]'));
+    if (slides.length < 2) return;
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const indexNow = () => Math.round(track.scrollLeft / track.clientWidth);
+    const goto = (i: number) => {
+      const n = ((i % slides.length) + slides.length) % slides.length;
+      track.scrollTo({
+        left: n * track.clientWidth,
+        behavior: reduce ? 'auto' : 'smooth',
+      });
+    };
+    const sync = () => {
+      const i = indexNow();
+      dots.forEach((d, di) =>
+        d.setAttribute('aria-current', di === i ? 'true' : 'false'),
+      );
+    };
+
+    root
+      .querySelector('[data-carousel-prev]')
+      ?.addEventListener('click', () => goto(indexNow() - 1));
+    root
+      .querySelector('[data-carousel-next]')
+      ?.addEventListener('click', () => goto(indexNow() + 1));
+    dots.forEach((d, di) => d.addEventListener('click', () => goto(di)));
+    track.addEventListener('scroll', () => requestAnimationFrame(sync), {
+      passive: true,
+    });
+    sync();
+
+    if (!reduce) {
+      const start = () => {
+        timer = window.setInterval(() => goto(indexNow() + 1), 5000);
+      };
+      const stop = () => {
+        if (timer) {
+          clearInterval(timer);
+          timer = undefined;
+        }
+      };
+      root.addEventListener('pointerenter', stop);
+      root.addEventListener('pointerleave', start);
+      root.addEventListener('focusin', stop);
+      root.addEventListener('focusout', start);
+      start();
+    }
+  }
+
+  document.addEventListener('astro:page-load', initCarousel);
+</script>

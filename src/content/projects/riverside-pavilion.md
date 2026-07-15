@@ -1,8 +1,7 @@
 ---
 title: Riverside Pavilion
-year: 2023
+year: 2024
 location: Porto, Portugal
-order: 2
 draft: false
 cover: /uploads/placeholder-cover.svg
 gallery:

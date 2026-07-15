@@ -1,16 +1,17 @@
 ---
 import { ClientRouter } from 'astro:transitions';
+import '@fontsource-variable/roboto';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import { frontmatter as site } from '../content/singletons/site.md';
 
 interface Props {
   title: string;
   description?: string;
 }
 
-const { title, description = 'Portfolio of Ing. arch. Tereza Kalábková, architect.' } =
-  Astro.props;
+const { title, description = site.description } = Astro.props;
 ---
 
 <!doctype html>
@@ -27,7 +28,7 @@ const { title, description = 'Portfolio of Ing. arch. Tereza Kalábková, archit
     <!-- Smooth same-origin page swaps via the native View Transitions API. -->
     <ClientRouter />
   </head>
-  <body class="min-h-screen bg-white text-neutral-900 antialiased">
+  <body class="min-h-screen bg-white font-sans text-black antialiased">
     <Nav />
     <main>
       <slot />

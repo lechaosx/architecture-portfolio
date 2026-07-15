@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { frontmatter as site } from '../content/singletons/site.md';
+
+const projects = (await getCollection('projects'))
+  .filter((p) => !p.data.draft)
+  .sort(
+    (a, b) =>
+      b.data.year - a.data.year || a.data.title.localeCompare(b.data.title),
+  );
+---
+
+<Base title={`Work — ${site.name}`}>
+  <section class="mx-auto max-w-6xl px-6 pt-16 pb-8">
+    <h1 class="text-3xl font-medium sm:text-4xl">Work</h1>
+  </section>
+
+  <section
+    class="mx-auto grid max-w-6xl grid-cols-1 gap-x-32 gap-y-20 px-6 pb-24 sm:grid-cols-2 lg:grid-cols-3"
+  >
+    {
+      projects.map((p) => (
+        <ProjectCard
+          href={`/projects/${p.id}/`}
+          slug={p.id}
+          title={p.data.title}
+          year={p.data.year}
+          location={p.data.location}
+          cover={p.data.cover}
+        />
+      ))
+    }
+  </section>
+</Base>
