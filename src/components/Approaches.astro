@@ -1,9 +1,12 @@
 ---
 import { frontmatter as home } from '../content/singletons/home.md';
+import T from './T.astro';
 
 interface Item {
-  label: string;
-  text: string;
+  label_cs: string;
+  label_en: string;
+  text_cs: string;
+  text_en: string;
   icon: 'place' | 'scale' | 'material' | 'thinking';
 }
 
@@ -13,7 +16,7 @@ const items: Item[] = home.approaches ?? [];
 {
   items.length > 0 && (
     <section class="mx-auto max-w-6xl px-6 pb-24">
-      <h2 class="text-sm tracking-widest uppercase">Approach</h2>
+      <T as="h2" k="approach" class="text-sm tracking-widest uppercase" />
       <ul class="mt-8">
     {
       items.map((item) => (
@@ -58,10 +61,18 @@ const items: Item[] = home.approaches ?? [];
             </svg>
           </div>
           <div>
-            <h3 class="text-xl tracking-wide uppercase sm:text-2xl">
-              {item.label}
-            </h3>
-            <p class="mt-2 max-w-prose text-neutral-600">{item.text}</p>
+            <T
+              as="h3"
+              cs={item.label_cs}
+              en={item.label_en}
+              class="text-xl tracking-wide uppercase sm:text-2xl"
+            />
+            <T
+              as="p"
+              cs={item.text_cs}
+              en={item.text_en}
+              class="mt-2 max-w-prose text-neutral-600"
+            />
           </div>
         </li>
       ))

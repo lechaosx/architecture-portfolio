@@ -1,9 +1,11 @@
 ---
 import { frontmatter as site } from '../content/singletons/site.md';
+import type { UiKey } from '../i18n';
+import T from './T.astro';
 
-const links = [
-  { href: '/work', label: 'Work' },
-  { href: '/contact', label: 'Contact' },
+const links: { href: string; key: UiKey }[] = [
+  { href: '/work', key: 'workNav' },
+  { href: '/contact', key: 'contactNav' },
 ];
 
 const current = Astro.url.pathname.replace(/\/+$/, '') || '/';
@@ -14,13 +16,11 @@ const isActive = (href: string) => current === (href === '/' ? '/' : href);
   class="sticky top-0 z-40 border-b border-black bg-white/90 backdrop-blur"
 >
   <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-    <a
-      href="/"
-      class="flex items-baseline gap-1.5 tracking-widest"
-    >
+    <a href="/" class="flex items-baseline gap-1.5 tracking-widest">
       <span class="text-xs font-normal">{site.credential}</span>
       <span class="text-lg font-medium uppercase">{site.name}</span>
     </a>
+
     <ul class="flex gap-6 text-sm tracking-widest uppercase">
       {
         links.map((l) => (
@@ -35,7 +35,7 @@ const isActive = (href: string) => current === (href === '/' ? '/' : href);
                   : 'hover:border-black',
               ]}
             >
-              {l.label}
+              <T k={l.key} />
             </a>
           </li>
         ))

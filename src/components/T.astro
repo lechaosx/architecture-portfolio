@@ -1,0 +1,25 @@
+---
+import { ui, type UiKey } from '../i18n';
+
+// Renders both language variants inline; global.css hides whichever the active
+// language (html[data-lang]) is not. Pass a dictionary `k` for baked-in labels,
+// or explicit `cs`/`en` for CMS content.
+interface Props {
+  k?: UiKey;
+  cs?: string;
+  en?: string;
+  as?: string;
+  class?: string;
+}
+
+const { k, cs, en, as = 'span', class: cls } = Astro.props;
+const csText = k ? ui.cs[k] : (cs ?? '');
+const enText = k ? ui.en[k] : (en ?? '');
+const Tag = as as any;
+---
+
+<Tag lang="cs" class={cls} set:text={csText} /><Tag
+  lang="en"
+  class={cls}
+  set:text={enText}
+/>

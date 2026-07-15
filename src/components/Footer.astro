@@ -10,11 +10,33 @@ const year = new Date().getFullYear();
     class="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-16 sm:flex-row sm:items-center sm:justify-between"
   >
     <p>© {year} {site.name}</p>
-    <a
-      href={`mailto:${contact.email}`}
-      class="underline underline-offset-4 hover:decoration-dotted"
-    >
-      {contact.email}
-    </a>
+
+    <div class="flex items-center gap-6">
+      <a
+        href={`mailto:${contact.email}`}
+        class="underline underline-offset-4 hover:decoration-dotted"
+      >
+        {contact.email}
+      </a>
+
+      <div
+        class="flex items-center gap-1 tracking-widest"
+        role="group"
+        aria-label="Language"
+      >
+        {
+          (['cs', 'en'] as const).map((lang) => (
+            <button
+              type="button"
+              data-lang-btn={lang}
+              aria-label={lang === 'cs' ? 'Čeština' : 'English'}
+              class="cursor-pointer border border-transparent px-2 py-0.5 uppercase hover:border-black"
+            >
+              {lang.toUpperCase()}
+            </button>
+          ))
+        }
+      </div>
+    </div>
   </div>
 </footer>

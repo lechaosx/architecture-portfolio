@@ -1,0 +1,21 @@
+---
+import { marked } from 'marked';
+
+// Bilingual rich-text body. The two Markdown strings come from CMS frontmatter
+// fields (they are no longer the file's Markdown body), so they are rendered
+// here with `marked`; global.css hides the inactive language.
+interface Props {
+  cs?: string;
+  en?: string;
+  class?: string;
+}
+
+const { cs = '', en = '', class: cls } = Astro.props;
+const render = (md: string) => marked.parse(md, { async: false }) as string;
+---
+
+<div lang="cs" class={cls} set:html={render(cs)} /><div
+  lang="en"
+  class={cls}
+  set:html={render(en)}
+/>

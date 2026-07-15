@@ -6,24 +6,61 @@ import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { frontmatter as site } from '../content/singletons/site.md';
 
-interface Props {
-  title: string;
-  description?: string;
+interface Bilingual {
+  cs: string;
+  en: string;
 }
 
-const { title, description = site.description } = Astro.props;
+interface Props {
+  title: Bilingual;
+  description?: Bilingual;
+}
+
+const {
+  title,
+  description = { cs: site.description_cs, en: site.description_en },
+} = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+
+    <!-- Pick the language before first paint (query > saved > browser > en) so
+         the correct-language content shows without a flash. -->
+    <script is:inline>
+      (function () {
+        var url = new URLSearchParams(location.search).get('lang');
+        var saved = null;
+        try {
+          saved = localStorage.getItem('lang');
+        } catch (e) {}
+        var nav = (navigator.language || '').toLowerCase();
+        var lang = url || saved || (nav.indexOf('cs') === 0 ? 'cs' : 'en');
+        if (lang !== 'cs' && lang !== 'en') lang = 'en';
+        if (url === 'cs' || url === 'en') {
+          try {
+            localStorage.setItem('lang', url);
+          } catch (e) {}
+        }
+        document.documentElement.dataset.lang = lang;
+        document.documentElement.lang = lang;
+      })();
+    </script>
+
+    <title>{title.en}</title>
+    <meta name="page-title" data-cs={title.cs} data-en={title.en} />
+    <meta
+      name="description"
+      content={description.en}
+      data-cs={description.cs}
+      data-en={description.en}
+    />
+    <meta property="og:title" content={title.en} />
+    <meta property="og:description" content={description.en} />
     <meta property="og:type" content="website" />
     <!-- Smooth same-origin page swaps via the native View Transitions API. -->
     <ClientRouter />
@@ -37,8 +74,6 @@ const { title, description = site.description } = Astro.props;
 
     <script>
       // Reveal elements as they enter the viewport, using the real scrollbar.
-      // Re-runs after every View Transition navigation (astro:page-load fires
-      // on the initial load and after each swap).
       function initReveal() {
         const els = document.querySelectorAll<HTMLElement>('.reveal:not(.is-visible)');
         if (!('IntersectionObserver' in window)) {
@@ -59,7 +94,50 @@ const { title, description = site.description } = Astro.props;
         els.forEach((el) => io.observe(el));
       }
 
-      document.addEventListener('astro:page-load', initReveal);
+      // Sync the <title> and meta description to the active language.
+      function applyLang() {
+        const lang = document.documentElement.dataset.lang || 'en';
+        const tm = document.querySelector('meta[name="page-title"]');
+        if (tm)
+          document.title =
+            tm.getAttribute('data-' + lang) ||
+            tm.getAttribute('data-en') ||
+            document.title;
+        const dm = document.querySelector('meta[name="description"]');
+        const dv = dm?.getAttribute('data-' + lang);
+        if (dm && dv) dm.setAttribute('content', dv);
+      }
+
+      // Wire the CZ | EN toggle: persist the choice and flip <html data-lang>.
+      function wireToggle() {
+        document.querySelectorAll<HTMLElement>('[data-lang-btn]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const lang = btn.dataset.langBtn || 'en';
+            try {
+              localStorage.setItem('lang', lang);
+            } catch {}
+            const el = document.documentElement;
+            el.dataset.lang = lang;
+            el.lang = lang;
+            applyLang();
+          });
+        });
+      }
+
+      // Carry the chosen language onto the incoming document so a View
+      // Transition navigation doesn't reset it to the static default.
+      document.addEventListener('astro:before-swap', (e) => {
+        const lang = document.documentElement.dataset.lang || 'en';
+        const incoming = (e as any).newDocument.documentElement as HTMLElement;
+        incoming.dataset.lang = lang;
+        incoming.lang = lang;
+      });
+
+      document.addEventListener('astro:page-load', () => {
+        initReveal();
+        applyLang();
+        wireToggle();
+      });
     </script>
   </body>
 </html>

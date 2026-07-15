@@ -5,6 +5,26 @@
   --font-sans: "Roboto Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Dual language: both variants render into the page; hide the one that is not
+   the active language (set on <html data-lang> by the script in Base.astro).
+   <html> ships with data-lang="en", so with no JS the page falls back to
+   English rather than showing both languages at once. */
+html[data-lang="cs"] [lang="en"] {
+  display: none !important;
+}
+html[data-lang="en"] [lang="cs"] {
+  display: none !important;
+}
+
+/* Language toggle: mark the active choice using the shared interaction language
+   (solid black = selected), matching the nav's current-page state. */
+html[data-lang="cs"] [data-lang-btn="cs"],
+html[data-lang="en"] [data-lang-btn="en"] {
+  border-color: black;
+  background: black;
+  color: white;
+}
+
 /* Reveal-on-scroll — driven by IntersectionObserver, so it rides the NATIVE
    scrollbar. No scroll hijacking. */
 .reveal {

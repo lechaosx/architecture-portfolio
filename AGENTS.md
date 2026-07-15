@@ -54,6 +54,11 @@ Only then reconcile them.
 - **Islands stay minimal:** hydrated Svelte components should be the exception.
   Adding broad client-side JS contradicts the explicit "fast and clean" goal —
   if it's needed, record it as a decision in ARCHITECTURE.md.
+- **All user-facing text is bilingual (cs + en).** Translatable fields come in
+  `_cs`/`_en` pairs (add both, in both schema places); baked-in UI labels live in
+  `src/i18n.ts`. Render bilingual text through `T.astro`/`Prose.astro` so the
+  language switch keeps working — never emit a bare user-facing string. See
+  ARCHITECTURE.md → "Internationalization".
 
 ## Verifying a change
 

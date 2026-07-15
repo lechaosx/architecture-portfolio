@@ -1,28 +1,42 @@
 ---
+import T from './T.astro';
+
 interface Props {
   href: string;
   slug: string;
-  title: string;
+  titleCs: string;
+  titleEn: string;
   year: number;
-  location?: string;
+  locationCs?: string;
+  locationEn?: string;
   cover: string;
 }
 
-const { href, slug, title, year, location, cover } = Astro.props;
+const { href, slug, titleCs, titleEn, year, locationCs, locationEn, cover } =
+  Astro.props;
 ---
 
 <a href={href} class="reveal group relative block hover:z-10">
   <img
     src={cover}
-    alt={title}
+    alt={titleEn}
     loading="lazy"
     decoding="async"
     class="aspect-square w-full bg-neutral-100 object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]"
     transition:name={`cover-${slug}`}
   />
   <div class="mt-3 flex items-baseline justify-between">
-    <h3 class="text-base font-medium">{title}</h3>
+    <T as="h3" cs={titleCs} en={titleEn} class="text-base font-medium" />
     <span class="text-sm text-neutral-500">{year}</span>
   </div>
-  {location && <p class="text-sm text-neutral-500">{location}</p>}
+  {
+    (locationCs || locationEn) && (
+      <T
+        as="p"
+        cs={locationCs}
+        en={locationEn}
+        class="text-sm text-neutral-500"
+      />
+    )
+  }
 </a>

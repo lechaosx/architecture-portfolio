@@ -1,8 +1,11 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Gallery from '../../components/Gallery.svelte';
+import T from '../../components/T.astro';
+import Prose from '../../components/Prose.astro';
 import { frontmatter as site } from '../../content/singletons/site.md';
+import { ui } from '../../i18n';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
@@ -10,34 +13,50 @@ export async function getStaticPaths() {
 }
 
 const { project } = Astro.props;
-const { Content } = await render(project);
-const { title, year, location, cover, gallery } = project.data;
+const d = project.data;
+
+const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
 ---
 
-<Base title={`${title} — ${site.name}`}>
+<Base
+  title={{
+    cs: `${d.title_cs} — ${site.name}`,
+    en: `${d.title_en} — ${site.name}`,
+  }}
+>
   <article class="mx-auto max-w-4xl px-6 pt-16 pb-24">
     <a href="/work" class="text-sm text-neutral-500 hover:text-neutral-900">
-      ← Back to work
+      <T k="backToWork" />
     </a>
 
     <header class="mt-6 mb-8">
-      <h1 class="text-3xl font-medium sm:text-4xl">{title}</h1>
-      <p class="mt-2 text-neutral-500">
-        {[location, year].filter(Boolean).join(' · ')}
-      </p>
+      <T
+        as="h1"
+        cs={d.title_cs}
+        en={d.title_en}
+        class="text-3xl font-medium sm:text-4xl"
+      />
+      <T
+        as="p"
+        cs={meta(d.location_cs)}
+        en={meta(d.location_en)}
+        class="mt-2 text-neutral-500"
+      />
     </header>
 
     <img
-      src={cover}
-      alt={title}
+      src={d.cover}
+      alt={d.title_en}
       class="w-full bg-neutral-100 object-cover"
       transition:name={`cover-${project.id}`}
     />
 
-    <div class="prose prose-neutral mt-10 max-w-none">
-      <Content />
-    </div>
+    <Prose
+      cs={d.body_cs}
+      en={d.body_en}
+      class="prose prose-neutral mt-10 max-w-none"
+    />
 
-    <Gallery images={gallery} client:visible />
+    <Gallery images={d.gallery} client:visible />
   </article>
 </Base>

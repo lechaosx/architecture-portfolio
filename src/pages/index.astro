@@ -2,20 +2,30 @@
 import Base from '../layouts/Base.astro';
 import Carousel from '../components/Carousel.astro';
 import Approaches from '../components/Approaches.astro';
-import { Content, frontmatter as home } from '../content/singletons/home.md';
+import T from '../components/T.astro';
+import Prose from '../components/Prose.astro';
+import { frontmatter as home } from '../content/singletons/home.md';
 import { frontmatter as site } from '../content/singletons/site.md';
+import { ui } from '../i18n';
 ---
 
-<Base title={`${site.name} — Architecture`}>
+<Base
+  title={{
+    cs: `${site.name} — ${ui.cs.tagline}`,
+    en: `${site.name} — ${ui.en.tagline}`,
+  }}
+>
   <Carousel />
 
   <section class="mx-auto max-w-6xl px-6 py-16">
     <div class="grid gap-10 md:grid-cols-2 md:items-start md:gap-16">
       <div class="reveal">
-        <h2 class="text-sm tracking-widest uppercase">About</h2>
-        <div class="prose prose-neutral mt-6 max-w-none">
-          <Content />
-        </div>
+        <T as="h2" k="about" class="text-sm tracking-widest uppercase" />
+        <Prose
+          cs={home.body_cs}
+          en={home.body_en}
+          class="prose prose-neutral mt-6 max-w-none"
+        />
       </div>
       {
         home.portrait && (

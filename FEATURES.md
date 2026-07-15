@@ -82,11 +82,12 @@ Git, or Markdown. This is the core reason a CMS exists in the project at all.
 The architect asked for as much of the site as possible to be editable in Pages
 CMS, with only the general scaffolding baked into code. Editable: projects, the
 home page (bio, portrait, carousel images, Approach items), the contact details,
-and a small set of Site settings (name, credential, SEO text). Baked in: page
+and a small set of Site settings (name, credential, SEO text) — the text among
+these is entered in **both languages** (see "Dual language" below). Baked in: page
 structure, navigation, and section labels ("Work", "About", "Approach",
-"Contact"). The CMS entries mirror the pages — **Home**, **Projects**,
-**Contact**, and global **Site settings** — each backed by a file under
-`src/content/singletons/` (or the `projects` collection).
+"Contact"), which are translated in code. The CMS entries mirror the pages —
+**Home**, **Projects**, **Contact**, and global **Site settings** — each backed by
+a file under `src/content/singletons/` (or the `projects` collection).
 
 ### Larger changes are made by the developer — [Explicit]
 
@@ -106,9 +107,9 @@ are required.
 ### Editable site settings — [Explicit]
 
 A small "Site settings" CMS entry holds the owner's name, credential (e.g. "Ing.
-arch."), and the SEO description. These feed the nav wordmark, the footer
-copyright, and the default meta description, so they are changed in one place
-rather than being scattered through the code.
+arch."), and the SEO description (in both languages). These feed the nav wordmark,
+the footer copyright, and the default meta description, so they are changed in one
+place rather than being scattered through the code.
 
 ### Draft flag to hide unfinished projects — [Implicit]
 
@@ -118,9 +119,11 @@ stage work before publishing.
 ### Projects sort newest-first, then alphabetically — [Explicit]
 
 Projects on the Work page sort by `year` descending (newest first), then by
-title A–Z as a tie-breaker within the same year. This is fully automatic — there
-is no manual "sort order" field to maintain (an earlier `order` number existed but
-was dropped when the architect asked for this year-then-alphabetical rule).
+title A–Z as a tie-breaker within the same year — using the **English** title so
+the order is stable no matter which language the visitor is viewing. This is fully
+automatic — there is no manual "sort order" field to maintain (an earlier `order`
+number existed but was dropped when the architect asked for this
+year-then-alphabetical rule).
 
 ### The home page is the About page — [Explicit]
 
@@ -159,6 +162,32 @@ lines between items. The items (label, text, and which of four line icons) are
 editable in the CMS (the Home entry) and can be added, removed, or reordered; the
 text ships as placeholder wording. The icon set (place/scale/material/thinking)
 is fixed in code — [Implicit].
+
+---
+
+## Language
+
+### Dual language, Czech + English — [Explicit]
+
+The whole site is bilingual. Every visible piece of text exists in both Czech and
+English: the baked-in labels (nav, section headings) and all CMS content
+(projects, bio, approach, contact, SEO). The architect provides both languages for
+the content she edits.
+
+### Manual switch, defaults to the visitor's browser — [Explicit]
+
+On first visit the language is chosen automatically — a `?lang=cs`/`?lang=en` in
+the URL wins, then the visitor's previously saved choice, then their **browser
+language**, falling back to **English** if that's neither Czech nor English. A
+**CZ | EN** toggle lets them switch manually at any time; the choice is remembered
+for next time. The toggle lives in the **footer** (not the nav — the architect
+found it confusing there, and since the site already auto-detects language it's a
+fallback control, not a primary one). The active language is marked on the toggle
+with the same solid-black "selected" styling as the current nav link.
+
+Switching is instant — no page reload — because both languages are already in the
+page and the switch just flips which one is shown. A specific language can also be
+linked directly with `?lang=en`, which is handy for sharing.
 
 ---
 

@@ -4,6 +4,10 @@
 # Pages CMS GitHub App access to this repo. That's it — no server or OAuth proxy
 # to run. The architect edits content in the browser; saving commits to `master`,
 # which triggers the GitHub Pages deploy.
+#
+# The site is bilingual (Czech + English). Fields that differ per language come
+# in pairs suffixed _cs / _en; language-neutral fields (images, year, email,
+# phone) are single. See FEATURES.md "Dual language (Czech + English)".
 
 media:
   input: public/uploads # uploaded files are committed here
@@ -14,17 +18,20 @@ content:
     label: Projects
     type: collection
     path: src/content/projects
-    filename: '{fields.title}.md' # slugified from the title
+    filename: '{fields.title_en}.md' # slugified from the English title
     view:
-      fields: [title, year, location]
+      fields: [title_en, year, location_en]
     fields:
-      - { name: title, label: Title, type: string }
+      - { name: title_cs, label: Title (Czech), type: string }
+      - { name: title_en, label: Title (English), type: string }
       - { name: year, label: Year, type: number }
-      - { name: location, label: Location, type: string, required: false }
+      - { name: location_cs, label: Location (Czech), type: string, required: false }
+      - { name: location_en, label: Location (English), type: string, required: false }
       - { name: draft, label: Draft (hide from site), type: boolean, default: false }
       - { name: cover, label: Cover image, type: image }
       - { name: gallery, label: Gallery, type: image, list: true }
-      - { name: body, label: Description, type: rich-text }
+      - { name: body_cs, label: Description (Czech), type: rich-text }
+      - { name: body_en, label: Description (English), type: rich-text }
 
   - name: home
     label: Home page
@@ -41,14 +48,17 @@ content:
         type: object
         list: true
         fields:
-          - { name: label, label: Label, type: string }
-          - { name: text, label: Text, type: text }
+          - { name: label_cs, label: Label (Czech), type: string }
+          - { name: label_en, label: Label (English), type: string }
+          - { name: text_cs, label: Text (Czech), type: text }
+          - { name: text_en, label: Text (English), type: text }
           - name: icon
             label: Icon
             type: select
             options:
               values: [place, scale, material, thinking]
-      - { name: body, label: About text, type: rich-text }
+      - { name: body_cs, label: About text (Czech), type: rich-text }
+      - { name: body_en, label: About text (English), type: rich-text }
 
   - name: contact
     label: Contact
@@ -62,7 +72,8 @@ content:
         type: object
         list: true
         fields:
-          - { name: day, label: Day, type: string }
+          - { name: day_cs, label: Day (Czech), type: string }
+          - { name: day_en, label: Day (English), type: string }
           - { name: hours, label: Hours (e.g. 10:00 – 15:00, or —), type: string }
 
   - name: site
@@ -72,4 +83,5 @@ content:
     fields:
       - { name: name, label: Name, type: string }
       - { name: credential, label: Credential (e.g. Ing. arch.), type: string }
-      - { name: description, label: SEO description, type: text }
+      - { name: description_cs, label: SEO description (Czech), type: text }
+      - { name: description_en, label: SEO description (English), type: text }

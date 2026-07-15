@@ -26,6 +26,11 @@ in your browser. Nothing to install.
    (your name, credential, and search-engine description).
 4. Click save. The site rebuilds and updates on its own in a couple of minutes.
 
+**The site is bilingual (Czech + English).** Text fields come in pairs —
+"(Czech)" and "(English)" — so fill in both for anything you type (titles,
+descriptions, your bio, day names). Images, year, email and phone are shared, so
+there's only one of each.
+
 **Adding a project:** Projects → new → fill in title, year, location, upload a
 cover image and gallery photos, write a description, save.
 
@@ -44,6 +49,10 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
 
 ### What do visitors get?
 
+- The site in **their own language**: it shows Czech or English based on their
+  browser automatically, and a **CZ | EN** switch in the footer lets them change
+  it by hand (their choice is remembered). Sharing `yoursite/work?lang=en` forces
+  English for that link.
 - A home page that's your "about": an image carousel, your bio, and your approach.
   (The carousel images, bio, portrait, and approach are all editable in the CMS.)
 - A **Work** page with your projects in a grid.

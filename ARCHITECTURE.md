@@ -94,9 +94,9 @@ component today (`src/components/Gallery.svelte`).
 ### The lightbox is the only browser-side JS — [Implicit]
 
 `Gallery.svelte` (the project image lightbox) is the sole hydrated island
-(`client:visible`). The only other browser JS is a couple of tiny first-party
-vanilla scripts (reveal-on-scroll, the home carousel) and the View-Transitions
-router — no framework runtime ships beyond the lightbox.
+(`client:visible`). The only other browser JS is a few tiny first-party vanilla
+scripts (reveal-on-scroll, the home carousel, the language switch) and the
+View-Transitions router — no framework runtime ships beyond the lightbox.
 
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 
@@ -137,7 +137,11 @@ libraries — the user asked not to reimplement scrolling. Re-runs on
 ### Typography plugin for Markdown bodies — [Implicit]
 
 `@tailwindcss/typography` (`prose` classes) styles rendered Markdown bodies — the
-project descriptions and the home page's About text.
+project descriptions and the home page's About text. Because those bodies are
+bilingual they live in frontmatter fields (`body_cs`/`body_en`), not the file's
+Markdown body, so they're rendered from their Markdown strings with `marked` (a
+tiny build-time dependency) inside `Prose.astro` rather than via Astro's
+`render()`. See "Internationalization" below.
 
 ### Self-hosted webfonts via @fontsource — [Implicit]
 
@@ -163,12 +167,14 @@ token in `@theme`, and apply it to the headings/nav.
 `src/content/projects/*.md`, with a Zod schema validating frontmatter. The
 singletons — Site settings, Home, and Contact — are single Markdown files under
 `src/content/singletons/`, imported directly where they're needed (`home.md`
-supplies the home page's bio body + portrait + gallery + approaches in
+supplies the home page's bio + portrait + gallery + approaches in
 `index.astro`/`Carousel`/`Approaches`; `contact.md` in `contact.astro` and the
 footer; `site.md` in the layout/nav). They are not collections (each is a one-off)
 and are validated only through `.pages.yml` + their consuming code, not Zod.
 Components guard for missing/empty fields (e.g. an empty Home gallery falls back to
-project photos; an empty approach list hides the section).
+project photos; an empty approach list hides the section). All human-readable text
+is bilingual (paired `_cs`/`_en` fields); the Markdown file *bodies* are unused —
+even the bio and project descriptions live in `body_cs`/`body_en` frontmatter.
 
 ### Images: `public/uploads`, referenced as string paths — [Implicit]
 
@@ -184,6 +190,65 @@ MAINTAINERS.md.
 
 `@astrojs/sitemap` generates `sitemap-index.xml` at build. Needs `site` (in
 `astro.config.mjs`) set to the canonical origin to produce absolute URLs.
+
+---
+
+## Internationalization
+
+### Both languages ship in one page, CSS picks which shows — [Explicit] (shape [Implicit])
+
+The site is bilingual (Czech + English) but stays a **single set of URLs** — no
+`/cs` or `/en` route prefixes. This was a deliberate choice to preserve the
+root-only hosting model (see "Hosting") and to make "default to the visitor's
+browser language" work on a static host with **no server** to negotiate
+`Accept-Language`. Both language variants are rendered into every page; a CSS rule
+keyed off `html[data-lang]` hides the inactive one:
+
+```css
+html[data-lang="cs"] [lang="en"] { display: none !important; }
+html[data-lang="en"] [lang="cs"] { display: none !important; }
+```
+
+Consequences of this shape:
+
+- **Language switching is instant** (no navigation) — the toggle just flips
+  `html[data-lang]`; the other language is already in the DOM.
+- **Both languages are in the HTML**, so search engines see both. There are no
+  per-language URLs to share except the `?lang=` query (which the picker script
+  honours), and no `hreflang` (there are no alternate URLs to point at).
+- `<html>` is served with `data-lang="en"`, so if JS never runs the page falls
+  back to **English** (a clean single language) rather than a blank page. The
+  inline picker script overrides this before first paint when JS is on.
+
+### Picking the language — a tiny inline script — [Implicit]
+
+An `is:inline` script in `<head>` (so it runs before first paint, no flash) sets
+`html[data-lang]` from, in order: `?lang=`, `localStorage`, `navigator.language`,
+else English. A second module script in `Base.astro` wires the footer **CZ | EN**
+toggle (persists to `localStorage`, flips `data-lang`), syncs `<title>`/meta
+description to the active language, and on `astro:before-swap` copies the current
+language onto the incoming document so a View Transition doesn't reset it. No
+island — same "tiny vanilla script" approach as reveal/carousel.
+
+### Where the strings come from — `i18n.ts`, `T.astro`, `Prose.astro` — [Implicit]
+
+- **Baked-in UI labels** (nav, section headings) live in `src/i18n.ts` as a
+  `{ cs, en }` dictionary.
+- **`T.astro`** renders a bilingual inline/block element — either a dictionary key
+  (`<T k="about" />`) or explicit `cs`/`en` strings for CMS content — emitting one
+  element per language with a `lang` attribute for the CSS rule to target.
+- **`Prose.astro`** does the same for rich-text bodies, rendering each language's
+  Markdown string with `marked`.
+
+### Content shape: paired `_cs`/`_en` fields — [Implicit]
+
+Translatable fields are declared as pairs (`title_cs`/`title_en`,
+`body_cs`/`body_en`, `label_cs`/`label_en`, `day_cs`/`day_en`, …); genuinely
+language-neutral fields (images, `year`, `email`, `phone`) stay single. This keeps
+one file per project/singleton (rather than a file per language) and keeps the CMS
+a single form. The `projects` Zod schema and `.pages.yml` both encode the pairs and
+must stay in sync (see below). Sorting/slugs use the English field for stability
+(the project filename, hence URL slug, derives from `title_en`).
 
 ---
 

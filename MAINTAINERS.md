@@ -34,22 +34,26 @@ tsconfig.json                 extends astro/tsconfigs/strict
 .github/workflows/deploy.yml  build with bun + deploy to Pages on push to master
 
 src/
-  content.config.ts           projects collection schema (Zod)
-  content/projects/*.md        one file per project
+  content.config.ts           projects collection schema (Zod); bilingual fields
+  i18n.ts                      baked-in UI labels ({cs, en} dictionary)
+  content/projects/*.md        one file per project (text in _cs/_en frontmatter)
   content/singletons/          CMS singletons: site.md, home.md, contact.md
   pages/
     index.astro                home: carousel + home.md (bio, portrait, approach)
     work.astro                 project grid
     contact.astro              email, phone, per-day availability (from contact.md)
     projects/[...slug].astro   project detail page
-  layouts/Base.astro           html shell, <ClientRouter/>, reveal-on-scroll script
+  layouts/Base.astro           html shell, <ClientRouter/>, reveal + language scripts
   components/
-    Nav.astro, Footer.astro    chrome (name/email from site.md + contact.md)
+    Nav.astro                  chrome (name from site.md)
+    Footer.astro               chrome (email from contact.md) + CZ|EN language toggle
+    T.astro                    renders both languages of a label/string (CSS hides one)
+    Prose.astro                renders both languages of a rich-text body (via marked)
     Carousel.astro             home hero carousel; images from home.md or projects
     Approaches.astro           vertical "how I work" list (items from home.md)
     ProjectCard.astro          grid card
     Gallery.svelte             the ONLY hydrated island (lightbox)
-  styles/global.css            tailwind import, fonts, .reveal + .no-scrollbar
+  styles/global.css            tailwind import, fonts, .reveal, .no-scrollbar, lang rule
 
 public/
   uploads/                     images (placeholder .svg files here now)
@@ -90,6 +94,22 @@ This double-declaration applies to the **`projects` collection**. The
 their Markdown by the component that imports them. So for a singleton field, keep
 `.pages.yml` and the consuming component in sync, and have that component tolerate
 missing/empty values (the current ones already do).
+
+Translatable fields come in `_cs`/`_en` pairs — when you add one, add **both**
+halves in **both** schema places, and render them through `T.astro`/`Prose.astro`
+so the language switch works. Language-neutral fields (images, `year`, `email`,
+`phone`) stay single.
+
+### Add or change translated UI text (not CMS content)
+
+Baked-in labels (nav, section headings, "Back to work", etc.) live in
+`src/i18n.ts` as a `{ cs, en }` dictionary. Add a key with both languages, then
+render it with `<T k="yourKey" />` (or `<T as="h2" k="yourKey" class="…" />`).
+For a bilingual string that comes from content rather than the dictionary, pass
+explicit props: `<T cs={…} en={…} />`, or `<Prose cs={…} en={…} />` for rich text.
+The language machinery (detection, the footer CZ|EN toggle, `<title>` sync) lives
+in `src/layouts/Base.astro`; how and why is in ARCHITECTURE.md →
+"Internationalization".
 
 ### Change the domain
 
@@ -134,10 +154,12 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
   repo). After connecting, create one test project through the UI and confirm the
   committed file matches the shape of `src/content/projects/villa-solis.md`. Two
   things to check specifically:
-  - `filename: '{fields.title}.md'` produces a clean, slugified filename (Astro
+  - `filename: '{fields.title_en}.md'` produces a clean, slugified filename (Astro
     derives the URL slug from the filename).
-  - the `rich-text` "body" field is written as the Markdown body (not into
-    frontmatter).
+  - the two `rich-text` fields (`body_cs`, `body_en`) are written into
+    frontmatter as Markdown strings (the file's own Markdown body stays empty —
+    `Prose.astro` renders those fields with `marked`, so the descriptions must
+    land in frontmatter, not the body).
   If either is off, it's a small `.pages.yml` tweak.
 - **No image optimization.** Images are served as-is from `public/uploads` with
   native lazy-loading. For automatic AVIF/WebP: move images into `src/`, add an

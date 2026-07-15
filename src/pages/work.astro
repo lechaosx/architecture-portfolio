@@ -2,19 +2,24 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import T from '../components/T.astro';
 import { frontmatter as site } from '../content/singletons/site.md';
+import { ui } from '../i18n';
 
 const projects = (await getCollection('projects'))
   .filter((p) => !p.data.draft)
   .sort(
     (a, b) =>
-      b.data.year - a.data.year || a.data.title.localeCompare(b.data.title),
+      b.data.year - a.data.year ||
+      a.data.title_en.localeCompare(b.data.title_en),
   );
 ---
 
-<Base title={`Work — ${site.name}`}>
+<Base
+  title={{ cs: `${ui.cs.work} — ${site.name}`, en: `${ui.en.work} — ${site.name}` }}
+>
   <section class="mx-auto max-w-6xl px-6 pt-16 pb-8">
-    <h1 class="text-3xl font-medium sm:text-4xl">Work</h1>
+    <T as="h1" k="work" class="text-3xl font-medium sm:text-4xl" />
   </section>
 
   <section
@@ -25,9 +30,11 @@ const projects = (await getCollection('projects'))
         <ProjectCard
           href={`/projects/${p.id}/`}
           slug={p.id}
-          title={p.data.title}
+          titleCs={p.data.title_cs}
+          titleEn={p.data.title_en}
           year={p.data.year}
-          location={p.data.location}
+          locationCs={p.data.location_cs}
+          locationEn={p.data.location_en}
           cover={p.data.cover}
         />
       ))
