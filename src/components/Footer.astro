@@ -7,7 +7,7 @@ const year = new Date().getFullYear();
 
 <footer class="border-t border-black text-sm text-neutral-600">
   <div
-    class="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-16 sm:flex-row sm:items-center sm:justify-between"
+    class="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:py-16"
   >
     <p>© {year} {site.name}</p>
 
@@ -30,7 +30,7 @@ const year = new Date().getFullYear();
               type="button"
               data-lang-btn={lang}
               aria-label={lang === 'cs' ? 'Čeština' : 'English'}
-              class="cursor-pointer border border-transparent px-2 py-0.5 uppercase hover:border-black"
+              class="cursor-pointer border border-transparent px-2 py-1 uppercase hover:border-black sm:py-0.5"
             >
               {lang.toUpperCase()}
             </button>

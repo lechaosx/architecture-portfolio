@@ -15,13 +15,21 @@ const isActive = (href: string) => current === (href === '/' ? '/' : href);
 <header
   class="sticky top-0 z-40 border-b border-black bg-white/90 backdrop-blur"
 >
-  <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-    <a href="/" class="flex items-baseline gap-1.5 tracking-widest">
-      <span class="text-xs font-normal">{site.credential}</span>
-      <span class="text-lg font-medium uppercase">{site.name}</span>
+  <nav
+    class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4"
+  >
+    <a
+      href="/"
+      class="flex flex-col gap-0.5 leading-none sm:flex-row sm:items-baseline sm:gap-1.5 sm:leading-normal"
+    >
+      <span class="text-xs font-normal tracking-widest">{site.credential}</span>
+      <span
+        class="text-base font-medium tracking-wide uppercase sm:text-lg sm:tracking-widest"
+        >{site.name}</span
+      >
     </a>
 
-    <ul class="flex gap-6 text-sm tracking-widest uppercase">
+    <ul class="flex gap-1 text-sm tracking-wide uppercase sm:gap-6 sm:tracking-widest">
       {
         links.map((l) => (
           <li>
@@ -29,7 +37,7 @@ const isActive = (href: string) => current === (href === '/' ? '/' : href);
               href={l.href}
               aria-current={isActive(l.href) ? 'page' : undefined}
               class:list={[
-                'border border-transparent px-2 py-0.5',
+                'border border-transparent px-2 py-1.5 sm:py-0.5',
                 isActive(l.href)
                   ? 'border-black bg-black text-white'
                   : 'hover:border-black',

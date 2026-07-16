@@ -33,6 +33,18 @@ wordmark — the name is set uppercase ("Ing. arch. TEREZA KALÁBKOVÁ") while t
 the About bio and SEO description. Clicking the wordmark is how you get home
 (there is no Home menu item).
 
+### Works on phones — [Implicit]
+
+The layout is responsive down to small phones. Concretely: the nav wordmark
+stacks the credential above the name on narrow screens (and drops to a smaller
+size with tighter letter-spacing) so it never crowds or overflows past the
+WORK/CONTACT links; the work grid steps 3 → 2 → 1 columns with gaps that shrink
+on smaller viewports (the airy desktop gutter would be too wide for a phone);
+section vertical padding tightens on small screens so there's less empty
+scrolling; and tap targets (nav links, the footer CZ|EN buttons) get more
+height on touch-sized screens. Everything sizes from one shared content width
+(`max-w-6xl`) with `px` gutters, so pages line up at every breakpoint.
+
 ### Black-and-white visual language — [Explicit]
 
 White background, black text throughout; greys are allowed for secondary text
