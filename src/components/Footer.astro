@@ -7,11 +7,11 @@ const year = new Date().getFullYear();
 
 <footer class="border-t border-black text-sm text-neutral-600">
   <div
-    class="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:py-16"
+    class="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-10 text-center sm:flex-row sm:justify-between sm:gap-4 sm:py-16 sm:text-left"
   >
     <p>© {year} {site.name}</p>
 
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+    <div class="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
       <a
         href={`mailto:${contact.email}`}
         class="underline underline-offset-4 hover:decoration-dotted"
