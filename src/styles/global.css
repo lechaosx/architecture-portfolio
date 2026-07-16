@@ -42,23 +42,23 @@ html[data-lang="en"] [data-lang-btn="en"] {
   color: var(--color-white);
 }
 
-/* Theme toggle: one button, its icon cross-fades between sun (light) and moon
-   (dark). Sun shows in light mode, moon in dark. */
+/* Theme toggle: one button showing the theme it switches TO — moon in light
+   mode, sun in dark mode — cross-fading as the theme flips. */
 .theme-icon-sun,
 .theme-icon-moon {
   transition: opacity 0.3s ease, transform 0.4s ease;
 }
-.theme-icon-moon {
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.4);
-}
-html[data-theme="dark"] .theme-icon-sun {
+.theme-icon-sun {
   opacity: 0;
   transform: rotate(90deg) scale(0.4);
 }
-html[data-theme="dark"] .theme-icon-moon {
+html[data-theme="dark"] .theme-icon-sun {
   opacity: 1;
   transform: none;
+}
+html[data-theme="dark"] .theme-icon-moon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {

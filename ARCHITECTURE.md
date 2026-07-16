@@ -171,13 +171,16 @@ exception that needs a `dark:` variant is the typography plugin, whose prose
 colours are literal, not token-based — a registered `@custom-variant dark` plus
 `dark:prose-invert` on the two `.prose` blocks handles the Markdown bodies.
 
-The theme is selected before first paint by a tiny inline script in `Base.astro`
-(saved choice → `prefers-color-scheme` → light), exactly mirroring the language
-script; `<html>` ships `data-theme="light"` so no-JS falls back to light. A single
+The theme is selected before first paint by a tiny inline script in `Base.astro`,
+mirroring the language script but simpler: dark only when `localStorage.theme` is
+explicitly `"dark"`, otherwise light. Deliberately **not** keyed off
+`prefers-color-scheme` — light is the default regardless of the OS setting.
+`<html>` ships `data-theme="light"` so no-JS also falls back to light. A single
 footer button toggles `html[data-theme]` and persists to `localStorage`, and
 `astro:before-swap` carries the theme onto the incoming document so a View
 Transition navigation doesn't reset it — the same pattern used for `data-lang`.
-The toggle's sun/moon icons are cross-faded purely in CSS off `html[data-theme]`.
+The toggle shows the mode it switches _to_ (moon in light, sun in dark); the two
+icons are cross-faded purely in CSS off `html[data-theme]`.
 
 ---
 

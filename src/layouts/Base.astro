@@ -51,22 +51,15 @@ const {
       })();
     </script>
 
-    <!-- Pick the theme before first paint (saved > system > light) so there's
-         no light-to-dark flash. -->
+    <!-- Pick the theme before first paint. Light is the default; dark only when
+         the visitor explicitly chose it (saved in localStorage). -->
     <script is:inline>
       (function () {
         var saved = null;
         try {
           saved = localStorage.getItem('theme');
         } catch (e) {}
-        var theme =
-          saved ||
-          (window.matchMedia &&
-          window.matchMedia('(prefers-color-scheme: dark)').matches
-            ? 'dark'
-            : 'light');
-        if (theme !== 'light' && theme !== 'dark') theme = 'light';
-        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.theme = saved === 'dark' ? 'dark' : 'light';
       })();
     </script>
 
