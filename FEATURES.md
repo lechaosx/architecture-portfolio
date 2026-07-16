@@ -224,12 +224,20 @@ native View Transitions. Delivers "smoothness" without a heavy SPA.
 Content eases in as it scrolls into view, using the real scrollbar (no
 hijacking). Honors the explicit motion boundary.
 
-### Page colour-invert — deferred
+### Dark mode — [Explicit]
 
 The architect's brief floated inverting the page to white-on-black ("after
-clicking — the opposite"). A first pass (a CSS `filter` invert toggled from the
-footer) fought the sticky nav and View Transitions, so it was **removed for now**
-and is to be revisited — there is currently no invert control on the site.
+clicking — the opposite"). It now ships as a proper dark mode: the palette is the
+exact inverse of light — white background becomes black, black text becomes white,
+and the greys flip to match — while **photos and drawings are left untouched** (an
+image-forward site must never invert its imagery). The theme is chosen
+automatically on first visit from the visitor's system preference
+(`prefers-color-scheme`), falling back to **light**; a **single toggle in the
+footer**, next to the CZ|EN switch, flips it manually and its icon slides between a
+sun (light) and a moon (dark). The choice is remembered for next time and carries
+across page navigations. (An earlier attempt using a CSS `filter` invert was
+dropped because it inverted the photos too and fought the sticky nav and View
+Transitions.)
 
 ### Image lightbox / gallery — [Implicit]
 

@@ -1,8 +1,24 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
   --font-sans: "Roboto Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Dark mode is the exact inverse of the light palette. Tailwind v4 compiles
+   colour utilities to var(--color-*), so remapping those tokens flips every
+   existing bg-white/text-black/text-neutral-* at once — no per-component
+   classes, and images (which don't read these vars) are left untouched. */
+html[data-theme="dark"] {
+  --color-white: #000;
+  --color-black: #fff;
+  --color-neutral-100: oklch(20.5% 0 0);
+  --color-neutral-200: oklch(26.9% 0 0);
+  --color-neutral-500: oklch(70.8% 0 0);
+  --color-neutral-600: oklch(87% 0 0);
+  --color-neutral-900: oklch(97% 0 0);
 }
 
 /* Dual language: both variants render into the page; hide the one that is not
@@ -17,12 +33,39 @@ html[data-lang="en"] [lang="cs"] {
 }
 
 /* Language toggle: mark the active choice using the shared interaction language
-   (solid black = selected), matching the nav's current-page state. */
+   (solid fill = selected), matching the nav's current-page state. Uses the
+   palette vars so "selected" inverts along with the theme. */
 html[data-lang="cs"] [data-lang-btn="cs"],
 html[data-lang="en"] [data-lang-btn="en"] {
-  border-color: black;
-  background: black;
-  color: white;
+  border-color: var(--color-black);
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+/* Theme toggle: one button, its icon cross-fades between sun (light) and moon
+   (dark). Sun shows in light mode, moon in dark. */
+.theme-icon-sun,
+.theme-icon-moon {
+  transition: opacity 0.3s ease, transform 0.4s ease;
+}
+.theme-icon-moon {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.4);
+}
+html[data-theme="dark"] .theme-icon-sun {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.4);
+}
+html[data-theme="dark"] .theme-icon-moon {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-icon-sun,
+  .theme-icon-moon {
+    transition: none;
+  }
 }
 
 /* Reveal-on-scroll — driven by IntersectionObserver, so it rides the NATIVE

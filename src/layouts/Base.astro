@@ -23,7 +23,7 @@ const {
 ---
 
 <!doctype html>
-<html lang="en" data-lang="en">
+<html lang="en" data-lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -48,6 +48,25 @@ const {
         }
         document.documentElement.dataset.lang = lang;
         document.documentElement.lang = lang;
+      })();
+    </script>
+
+    <!-- Pick the theme before first paint (saved > system > light) so there's
+         no light-to-dark flash. -->
+    <script is:inline>
+      (function () {
+        var saved = null;
+        try {
+          saved = localStorage.getItem('theme');
+        } catch (e) {}
+        var theme =
+          saved ||
+          (window.matchMedia &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light');
+        if (theme !== 'light' && theme !== 'dark') theme = 'light';
+        document.documentElement.dataset.theme = theme;
       })();
     </script>
 
@@ -124,19 +143,36 @@ const {
         });
       }
 
-      // Carry the chosen language onto the incoming document so a View
-      // Transition navigation doesn't reset it to the static default.
+      // Wire the theme toggle: flip <html data-theme> between light/dark and
+      // persist the choice.
+      function wireTheme() {
+        document.querySelectorAll<HTMLElement>('[data-theme-toggle]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const el = document.documentElement;
+            const theme = el.dataset.theme === 'dark' ? 'light' : 'dark';
+            try {
+              localStorage.setItem('theme', theme);
+            } catch {}
+            el.dataset.theme = theme;
+          });
+        });
+      }
+
+      // Carry the chosen language and theme onto the incoming document so a View
+      // Transition navigation doesn't reset them to the static defaults.
       document.addEventListener('astro:before-swap', (e) => {
-        const lang = document.documentElement.dataset.lang || 'en';
+        const el = document.documentElement;
         const incoming = (e as any).newDocument.documentElement as HTMLElement;
-        incoming.dataset.lang = lang;
-        incoming.lang = lang;
+        incoming.dataset.lang = el.dataset.lang || 'en';
+        incoming.lang = el.lang || 'en';
+        incoming.dataset.theme = el.dataset.theme || 'light';
       });
 
       document.addEventListener('astro:page-load', () => {
         initReveal();
         applyLang();
         wireToggle();
+        wireTheme();
       });
     </script>
   </body>

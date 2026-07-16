@@ -7,6 +7,4 @@ hours:
   - { day_cs: Středa, day_en: Wednesday, hours: 10:00 – 15:00 }
   - { day_cs: Čtvrtek, day_en: Thursday, hours: 10:00 – 15:00 }
   - { day_cs: Pátek, day_en: Friday, hours: 10:00 – 15:00 }
-  - { day_cs: Sobota, day_en: Saturday, hours: "—" }
-  - { day_cs: Neděle, day_en: Sunday, hours: "—" }
 ---

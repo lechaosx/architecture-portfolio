@@ -157,6 +157,28 @@ is commercial with no free web licence and is omitted; to add it (or any distinc
 heading face) later, self-host the licensed `woff2`, reintroduce a `--font-display`
 token in `@theme`, and apply it to the headings/nav.
 
+### Dark mode: palette remap via CSS variables — [Implicit]
+
+Dark mode is not a second set of utility classes; it's a remap of the palette
+**tokens**. Tailwind v4 compiles colour utilities to `var(--color-*)` (e.g.
+`bg-white` → `background-color: var(--color-white)`), so overriding those tokens
+under `html[data-theme="dark"]` in `global.css` flips every existing
+`bg-white`/`text-black`/`text-neutral-*` at once — no `dark:` class on any
+component. `--color-white`/`--color-black` swap and the used neutral shades map to
+their mirror. This is why the old `filter: invert` approach was rejected: a filter
+also inverts `<img>` content, whereas a token remap leaves imagery alone. The one
+exception that needs a `dark:` variant is the typography plugin, whose prose
+colours are literal, not token-based — a registered `@custom-variant dark` plus
+`dark:prose-invert` on the two `.prose` blocks handles the Markdown bodies.
+
+The theme is selected before first paint by a tiny inline script in `Base.astro`
+(saved choice → `prefers-color-scheme` → light), exactly mirroring the language
+script; `<html>` ships `data-theme="light"` so no-JS falls back to light. A single
+footer button toggles `html[data-theme]` and persists to `localStorage`, and
+`astro:before-swap` carries the theme onto the incoming document so a View
+Transition navigation doesn't reset it — the same pattern used for `data-lang`.
+The toggle's sun/moon icons are cross-faded purely in CSS off `html[data-theme]`.
+
 ---
 
 ## Content

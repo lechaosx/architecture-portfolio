@@ -54,7 +54,7 @@ const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
     <Prose
       cs={d.body_cs}
       en={d.body_en}
-      class="prose prose-neutral mt-10 max-w-none"
+      class="prose prose-neutral mt-10 max-w-none dark:prose-invert"
     />
 
     <Gallery images={d.gallery} client:visible />

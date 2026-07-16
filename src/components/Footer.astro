@@ -11,7 +11,7 @@ const year = new Date().getFullYear();
   >
     <p>© {year} {site.name}</p>
 
-    <div class="flex items-center gap-6">
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
       <a
         href={`mailto:${contact.email}`}
         class="underline underline-offset-4 hover:decoration-dotted"
@@ -19,23 +19,60 @@ const year = new Date().getFullYear();
         {contact.email}
       </a>
 
-      <div
-        class="flex items-center gap-1 tracking-widest"
-        role="group"
-        aria-label="Language"
-      >
-        {
-          (['cs', 'en'] as const).map((lang) => (
-            <button
-              type="button"
-              data-lang-btn={lang}
-              aria-label={lang === 'cs' ? 'Čeština' : 'English'}
-              class="cursor-pointer border border-transparent px-2 py-1 uppercase hover:border-black sm:py-0.5"
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          data-theme-toggle
+          aria-label="Toggle theme"
+          class="flex cursor-pointer items-center border border-transparent px-2 py-1.5 hover:border-black"
+        >
+          <span class="relative block h-4 w-4">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="theme-icon-sun absolute inset-0 h-4 w-4"
+              aria-hidden="true"
             >
-              {lang.toUpperCase()}
-            </button>
-          ))
-        }
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+            </svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="theme-icon-moon absolute inset-0 h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+            </svg>
+          </span>
+        </button>
+
+        <div
+          class="flex items-center gap-1 tracking-widest"
+          role="group"
+          aria-label="Language"
+        >
+          {
+            (['cs', 'en'] as const).map((lang) => (
+              <button
+                type="button"
+                data-lang-btn={lang}
+                aria-label={lang === 'cs' ? 'Čeština' : 'English'}
+                class="cursor-pointer border border-transparent px-2 py-1 uppercase hover:border-black sm:py-0.5"
+              >
+                {lang.toUpperCase()}
+              </button>
+            ))
+          }
+        </div>
       </div>
     </div>
   </div>
