@@ -134,6 +134,34 @@ libraries — the user asked not to reimplement scrolling. Re-runs on
 `@tailwindcss/vite` plus `@import "tailwindcss"` in `global.css`. No
 `tailwind.config` file — v4 is configured in CSS.
 
+### CSS unit & token conventions — [Explicit]
+
+Pick units by what the value should scale with, not by habit. Tailwind's default
+scales already follow most of this (its `text-*`/`p-*`/`gap-*` utilities are
+`rem`-based), so staying on the utility scale is the path of least resistance;
+these rules govern the arbitrary values and the custom CSS in `global.css`.
+
+- **`rem`** — typography and spacing. Scales with the user's root font size.
+- **`em`** — sizing that should scale with the component's own font size (e.g.
+  padding on a button). Avoid setting `font-size` in `em` on nested elements —
+  that compounds through the cascade. Non-font-size `em` does not.
+- **`px`** — borders, shadows, and pixel-precise details only.
+- **`%` / `fr` / `vw` / `vh`** — responsive layout (grid tracks, viewport-sized
+  regions like the lightbox `max-h-[85vh]`).
+- **`clamp()`** — fluid text/sizing, with `rem` bounds and a `rem`+`vw` middle
+  term (`clamp(1rem, 0.5rem + 1.5vw, 1.5rem)`) so it still responds to zoom.
+- **unitless** — `line-height` (a ratio, not a length). Tailwind's
+  `leading-none`/`leading-normal` already are.
+- Prefer **tokens/variables** (Tailwind's scale, or `@theme` custom props such as
+  `--font-sans` and `--duration-*`) over hardcoded values — but don't invent a
+  token for a genuine one-off; a single literal is clearer inline.
+- Don't use the 62.5% root font-size hack.
+
+Note: page-title headings deliberately step at the `sm` breakpoint
+(`text-3xl sm:text-4xl`) rather than using `clamp()` — the fluid range is narrow
+and the semantic utility is more readable. `clamp()` is the tool if a genuinely
+large display type is introduced later.
+
 ### Typography plugin for Markdown bodies — [Implicit]
 
 `@tailwindcss/typography` (`prose` classes) styles rendered Markdown bodies — the
@@ -156,6 +184,14 @@ want separation later, I'll do it from scratch"). DIN Pro — also on her wishli
 is commercial with no free web licence and is omitted; to add it (or any distinct
 heading face) later, self-host the licensed `woff2`, reintroduce a `--font-display`
 token in `@theme`, and apply it to the headings/nav.
+
+### Motion durations as `@theme` tokens — [Implicit]
+
+The three transition speeds used by the CSS animations (reveal-on-scroll and the
+theme-icon cross-fade) live as `--duration-fast/base/slow` tokens in `@theme`
+rather than as inline seconds, so the values stay consistent and adjustable in
+one place. The reveal offset is authored in `rem` (`translateY(0.875rem)`), not
+`px`, so it scales with the root font size like the rest of the spacing.
 
 ### Dark mode: palette remap via CSS variables — [Implicit]
 
