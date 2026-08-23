@@ -7,13 +7,13 @@ location_en: Czech republic, Brno
 draft: false
 cover: /uploads/placeholder-cover.svg
 gallery:
-  - /uploads/01 Situační výkres širších vztahů-1.png
-  - /uploads/02 Situace místa stavby-1.png
-  - /uploads/03 Půdorys 1.NP-1.png
-  - /uploads/04 Půdorys 1.S-1.png
-  - /uploads/09 Řez AA, BB, CC-1.png
-  - /uploads/07 Pohledy SV a JZ-1.png
-  - /uploads/08 Pohledy JV, SZ, JZ-1.png
+  - image: /uploads/01 Situační výkres širších vztahů-1.png
+  - image: /uploads/02 Situace místa stavby-1.png
+  - image: /uploads/03 Půdorys 1.NP-1.png
+  - image: /uploads/04 Půdorys 1.S-1.png
+  - image: /uploads/09 Řez AA, BB, CC-1.png
+  - image: /uploads/07 Pohledy SV a JZ-1.png
+  - image: /uploads/08 Pohledy JV, SZ, JZ-1.png
 body_cs: >-
   Návrh nového Exotária v brněnské zoologické zahradě pracuje s myšlenkou
   propojení architektury, přírody a environmentálního vzdělávání. Stávající

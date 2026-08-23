@@ -32,7 +32,8 @@ descriptions, your bio, day names). Images, year, email and phone are shared, so
 there's only one of each.
 
 **Adding a project:** Projects → new → fill in title, year, location, upload a
-cover image and gallery photos, write a description, save.
+cover image and gallery photos, optionally add Czech and English titles or short
+descriptions to individual gallery images, write the project description, save.
 
 **Hiding a project:** turn on its **Draft** switch — it stays in the system but
 disappears from the public site until you turn it off.
@@ -56,7 +57,8 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
 - A home page that's your "about": an image carousel, your bio, and your approach.
   (The carousel images, bio, portrait, and approach are all editable in the CMS.)
 - A **Work** page with your projects in a grid.
-- A page per project with a description and a full-screen photo gallery.
+- A page per project with a description and a full-screen photo gallery whose
+  enlarged images can show optional titles and descriptions.
 - A **Contact** page with your email, phone, and when you're reachable.
 - Smooth transitions between pages and gentle fade-ins — all riding the normal
   scrollbar (no janky scroll effects). Fast to load, works on phones.

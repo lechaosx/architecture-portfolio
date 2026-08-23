@@ -76,6 +76,19 @@ Two ways, same result (a Markdown file in `src/content/projects/`):
 
 Frontmatter shape is defined in `src/content.config.ts`.
 
+Gallery entries are objects so captions stay attached to their images:
+
+```yaml
+gallery:
+  - image: /uploads/project.jpg
+    title_cs: České jméno
+    title_en: English title
+    description_cs: Krátký český popis.
+    description_en: A short English description.
+```
+
+The four caption fields are optional; omit them to show only the enlarged image.
+
 ### Change the content schema — update BOTH places
 
 The content shape is declared **twice** and they must agree:
