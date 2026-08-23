@@ -12,7 +12,17 @@ const projects = defineCollection({
     draft: z.boolean().default(false),
     // Image paths live under /public (served from root), so plain strings.
     cover: z.string(),
-    gallery: z.array(z.string()).default([]),
+    gallery: z
+      .array(
+        z.object({
+          image: z.string(),
+          title_cs: z.string().optional(),
+          title_en: z.string().optional(),
+          description_cs: z.string().optional(),
+          description_en: z.string().optional(),
+        }),
+      )
+      .default([]),
     // Bilingual descriptions live in frontmatter (Markdown strings) rather than
     // the file body, so both languages can coexist; rendered with `marked`.
     body_cs: z.string(),

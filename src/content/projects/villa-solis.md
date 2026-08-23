@@ -7,8 +7,8 @@ location_en: Lake Como, Italy
 draft: false
 cover: /uploads/placeholder-cover.svg
 gallery:
-  - /uploads/placeholder-1.svg
-  - /uploads/placeholder-2.svg
+  - image: /uploads/placeholder-1.svg
+  - image: /uploads/placeholder-2.svg
 body_cs: |
   Soukromá rezidence zasazená do jižního svahu, uspořádaná kolem sledu
   zastíněných átrií. Místní kámen a vápenná omítka drží paletu v klidu, hluboké

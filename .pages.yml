@@ -29,7 +29,16 @@ content:
       - { name: location_en, label: Location (English), type: string, required: false }
       - { name: draft, label: Draft (hide from site), type: boolean, default: false }
       - { name: cover, label: Cover image, type: image }
-      - { name: gallery, label: Gallery, type: image, list: true }
+      - name: gallery
+        label: Gallery
+        type: object
+        list: true
+        fields:
+          - { name: image, label: Image, type: image }
+          - { name: title_cs, label: Image title (Czech), type: string, required: false }
+          - { name: title_en, label: Image title (English), type: string, required: false }
+          - { name: description_cs, label: Image description (Czech), type: text, required: false }
+          - { name: description_en, label: Image description (English), type: text, required: false }
       - { name: body_cs, label: Description (Czech), type: rich-text }
       - { name: body_en, label: Description (English), type: rich-text }
 

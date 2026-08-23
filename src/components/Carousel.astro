@@ -7,7 +7,10 @@ const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
 const images =
   curated.length > 0
     ? curated
-    : projects.flatMap((p) => [p.data.cover, ...p.data.gallery]);
+    : projects.flatMap((p) => [
+        p.data.cover,
+        ...p.data.gallery.map((image) => image.image),
+      ]);
 ---
 
 {

@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { hasCaption, type GalleryImage } from './gallery';
+
   // Interactive island: a keyboard-navigable image lightbox.
   // This is the ONLY component that ships JS to the browser.
-  let { images = [] as string[] } = $props();
+  let { images = [] }: { images?: GalleryImage[] } = $props();
 
   let open = $state(false);
   let index = $state(0);
@@ -39,7 +41,7 @@
         aria-label={`Open image ${i + 1}`}
       >
         <img
-          src={img}
+          src={img.image}
           alt=""
           loading="lazy"
           decoding="async"
@@ -70,12 +72,38 @@
       }}
       aria-label="Previous">‹</button
     >
-    <img
-      src={images[index]}
-      alt=""
-      class="max-h-[85vh] max-w-full object-contain"
+    <figure
+      class="flex max-h-full max-w-full flex-col items-center"
       onclick={(e) => e.stopPropagation()}
-    />
+    >
+      <img
+        src={images[index].image}
+        alt=""
+        class={hasCaption(images[index])
+          ? 'max-h-[calc(100vh-10rem)] max-w-full object-contain'
+          : 'max-h-[85vh] max-w-full object-contain'}
+      />
+      {#if hasCaption(images[index])}
+        <figcaption class="mt-4 w-full max-w-2xl text-white">
+          {#if images[index].title_cs}
+            <p lang="cs" class="text-sm font-medium">{images[index].title_cs}</p>
+          {/if}
+          {#if images[index].title_en}
+            <p lang="en" class="text-sm font-medium">{images[index].title_en}</p>
+          {/if}
+          {#if images[index].description_cs}
+            <p lang="cs" class="mt-1 text-sm text-white/70">
+              {images[index].description_cs}
+            </p>
+          {/if}
+          {#if images[index].description_en}
+            <p lang="en" class="mt-1 text-sm text-white/70">
+              {images[index].description_en}
+            </p>
+          {/if}
+        </figcaption>
+      {/if}
+    </figure>
     <button
       class="absolute right-4 text-4xl leading-none text-white/70 hover:text-white"
       onclick={(e) => {

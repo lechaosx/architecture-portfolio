@@ -247,6 +247,14 @@ resolution to get wrong. Trade-off: no automatic AVIF/WebP generation. The
 upgrade path (move images into `src/`, switch to `<Image>`) is documented in
 MAINTAINERS.md.
 
+### Project gallery items are caption records — [Implicit]
+
+Each project gallery item groups its root-absolute `image` path with optional
+paired `title_cs`/`title_en` and `description_cs`/`description_en` fields. Keeping
+the caption beside its image preserves their association when items are reordered
+in Pages CMS. The home carousel fallback reads only the `image` path from these
+records; captions remain exclusive to the project lightbox.
+
 ### Sitemap — [Implicit]
 
 `@astrojs/sitemap` generates `sitemap-index.xml` at build. Needs `site` (in

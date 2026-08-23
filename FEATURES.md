@@ -244,6 +244,12 @@ sticky nav and View Transitions.)
 Project images open in a full-screen, keyboard-navigable lightbox (arrows, Esc).
 This is the concrete "interactivity" the user asked for.
 
+### Optional image titles and descriptions — [Explicit]
+
+Each project gallery image can have a short title and description in Czech and
+English. Both fields are optional and appear only beneath the enlarged image in
+the lightbox, keeping the thumbnail grid image-only.
+
 ### Respects reduced-motion preferences — [Implicit]
 
 Users who set `prefers-reduced-motion` get no fade/transform animation.
