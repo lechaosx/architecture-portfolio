@@ -11,6 +11,7 @@ gallery:
     title_cs: Analýza cyklo dopravy
     title_en: Cycling Transport Analysis
   - image: /uploads/03 SWOT - život v Kyjově.png
+    title_cs: Analýza společenského vyžití v Kyjově
   - image: /uploads/05 SWOT - Sportoviště.png
   - image: /uploads/01 Problémová mapa +.png
   - image: /uploads/02 Problémová mapa -.png
