@@ -250,6 +250,11 @@ Each project gallery image can have a short title and description in Czech and
 English. Both fields are optional and appear only beneath the enlarged image in
 the lightbox, keeping the thumbnail grid image-only.
 
+### Project galleries are optional — [Explicit]
+
+A project can have no gallery images. A gallery entry that contains caption
+content must have an image.
+
 ### Respects reduced-motion preferences — [Implicit]
 
 Users who set `prefers-reduced-motion` get no fade/transform animation.

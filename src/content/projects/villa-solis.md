@@ -18,7 +18,6 @@ gallery:
   - image: /uploads/03 Situace areálu.png
   - image: /uploads/04 Půdorys park.png
   - image: /uploads/07 Urbanistický detail + ŘEZ.png
-  - {}
 body_cs: |-
   Soukromá rezidence zasazená do jižního svahu, uspořádaná kolem sledu
   zastíněných átrií. Místní kámen a vápenná omítka drží paletu v klidu, hluboké
