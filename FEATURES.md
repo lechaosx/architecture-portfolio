@@ -235,7 +235,8 @@ the page ignores the visitor's system preference and only goes dark when the
 visitor has explicitly asked for it. A **single toggle in the footer**, next to the
 language switch, flips the theme; it shows the mode it will switch _to_ — a moon in
 light mode, a sun in dark mode — cross-fading as it flips. The choice is remembered
-for next time and carries across page navigations. (An earlier attempt using a CSS
+for next time and carries across page navigations. Both footer toggles use the same
+square hit area. (An earlier attempt using a CSS
 `filter` invert was dropped because it inverted the photos too and fought the
 sticky nav and View Transitions.)
 
