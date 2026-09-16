@@ -343,3 +343,10 @@ by hand — see MAINTAINERS.md and AGENTS.md. This applies to the `projects`
 collection. The singletons (Site, Home, Contact) have no Zod mirror — they are
 declared only in `.pages.yml` and read straight from their Markdown — so for those
 the pair to keep in sync is `.pages.yml` and the consuming component.
+
+### Empty project galleries — [Explicit]
+
+Projects may have no gallery images. Pages CMS can serialize a blank row in an
+optional object list as `{}`, so the Astro schema removes completely empty
+gallery records before validating the remaining items. Any non-empty gallery
+record still requires an image; captions without an image fail validation.

@@ -33,8 +33,9 @@ content:
         label: Gallery
         type: object
         list: true
+        required: false
         fields:
-          - { name: image, label: Image, type: image }
+          - { name: image, label: Image, type: image, required: true }
           - { name: title_cs, label: Image title (Czech), type: string, required: false }
           - { name: title_en, label: Image title (English), type: string, required: false }
           - { name: description_cs, label: Image description (Czech), type: text, required: false }
