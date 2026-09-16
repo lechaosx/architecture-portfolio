@@ -167,7 +167,7 @@
   >
     <button
       type="button"
-      class="absolute top-4 left-4 z-20 min-w-16 cursor-pointer border border-white/40 bg-black/70 px-3 py-2 text-sm tabular-nums text-white hover:border-white hover:bg-black"
+      class="absolute top-4 left-4 z-20 min-w-16 cursor-pointer border border-white/40 px-3 py-2 text-sm tabular-nums text-white hover:border-white"
       onclick={(e) => {
         e.stopPropagation();
         resetView();
@@ -178,12 +178,12 @@
       <span lang="en" class="sr-only">Reset zoom</span>
     </button>
     <button
-      class="absolute top-4 right-4 z-20 flex h-10 w-10 cursor-pointer items-center justify-center border border-white/40 bg-black/70 text-3xl leading-none text-white hover:border-white hover:bg-black"
+      class="absolute top-4 right-4 z-20 flex h-10 w-10 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white"
       onclick={close}
       aria-label="Close">×</button
     >
     <button
-      class="absolute left-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 bg-black/70 text-4xl leading-none text-white hover:border-white hover:bg-black"
+      class="absolute left-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 text-4xl leading-none text-white hover:border-white"
       onclick={(e) => {
         e.stopPropagation();
         prev();
@@ -240,7 +240,7 @@
       {/if}
     </figure>
     <button
-      class="absolute right-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 bg-black/70 text-4xl leading-none text-white hover:border-white hover:bg-black"
+      class="absolute right-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 text-4xl leading-none text-white hover:border-white"
       onclick={(e) => {
         e.stopPropagation();
         next();
