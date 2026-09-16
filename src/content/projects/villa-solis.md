@@ -22,6 +22,9 @@ gallery:
       tempor felis congue sit amet. Sed imperdiet dolor ex, vitae feugiat justo
       luctus vitae. In at rutrum nisl. Nullam ultrices tempus velit et accumsan.
       Suspendisse orci velit, malesuada et fringilla vel, pellentesque id ante.
+  - image: /uploads/01 Problémová mapa ++.png
+    title_cs: Analýza cyklo dopravy
+    title_en: Cycling Transport Analysis
   - image: /uploads/03 SWOT - život v Kyjově.png
     title_cs: Analýza společenského vyžití v Kyjově
   - image: /uploads/05 SWOT - Sportoviště.png
