@@ -297,8 +297,9 @@ Consequences of this shape:
 
 An `is:inline` script in `<head>` (so it runs before first paint, no flash) sets
 `html[data-lang]` from, in order: `?lang=`, `localStorage`, `navigator.language`,
-else English. A second module script in `Base.astro` wires the footer **CZ | EN**
-toggle (persists to `localStorage`, flips `data-lang`), syncs `<title>`/meta
+else English. A second module script in `Base.astro` wires the footer language
+toggle (shows the other language, persists to `localStorage`, flips `data-lang`),
+syncs `<title>`/meta
 description to the active language, and on `astro:before-swap` copies the current
 language onto the incoming document so a View Transition doesn't reset it. No
 island — same "tiny vanilla script" approach as reveal/carousel.

@@ -35,14 +35,19 @@ html[data-lang="en"] [lang="cs"] {
   display: none !important;
 }
 
-/* Language toggle: mark the active choice using the shared interaction language
-   (solid fill = selected), matching the nav's current-page state. Uses the
-   palette vars so "selected" inverts along with the theme. */
-html[data-lang="cs"] [data-lang-btn="cs"],
-html[data-lang="en"] [data-lang-btn="en"] {
-  border-color: var(--color-black);
-  background: var(--color-black);
-  color: var(--color-white);
+/* Language toggle: show the language it switches TO. */
+.language-option-cs,
+.language-option-en {
+  transition: opacity var(--duration-fast) ease;
+}
+.language-option-en {
+  opacity: 0;
+}
+html[data-lang="cs"] .language-option-cs {
+  opacity: 0;
+}
+html[data-lang="cs"] .language-option-en {
+  opacity: 1;
 }
 
 /* Theme toggle: one button showing the theme it switches TO — moon in light
@@ -66,7 +71,9 @@ html[data-theme="dark"] .theme-icon-moon {
 
 @media (prefers-reduced-motion: reduce) {
   .theme-icon-sun,
-  .theme-icon-moon {
+  .theme-icon-moon,
+  .language-option-cs,
+  .language-option-en {
     transition: none;
   }
 }

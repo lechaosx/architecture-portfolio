@@ -1,6 +1,7 @@
 ---
 import { frontmatter as site } from '../content/singletons/site.md';
 import { frontmatter as contact } from '../content/singletons/contact.md';
+import { ui } from '../i18n';
 
 const year = new Date().getFullYear();
 ---
@@ -55,24 +56,18 @@ const year = new Date().getFullYear();
           </span>
         </button>
 
-        <div
-          class="flex items-center gap-1 tracking-widest"
-          role="group"
-          aria-label="Language"
+        <button
+          type="button"
+          data-lang-toggle
+          class="flex cursor-pointer items-center border border-transparent px-2 py-1.5 hover:border-black"
         >
-          {
-            (['cs', 'en'] as const).map((lang) => (
-              <button
-                type="button"
-                data-lang-btn={lang}
-                aria-label={lang === 'cs' ? 'Čeština' : 'English'}
-                class="cursor-pointer border border-transparent px-2 py-1 uppercase hover:border-black sm:py-0.5"
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))
-          }
-        </div>
+          <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
+            <span class="language-option-cs absolute inset-0" aria-hidden="true">CZ</span>
+            <span class="language-option-en absolute inset-0" aria-hidden="true">EN</span>
+          </span>
+          <span lang="cs" class="sr-only">{ui.cs.switchLanguage}</span>
+          <span lang="en" class="sr-only">{ui.en.switchLanguage}</span>
+        </button>
       </div>
     </div>
   </div>

@@ -41,7 +41,7 @@ size with tighter letter-spacing) so it never crowds or overflows past the
 WORK/CONTACT links; the work grid steps 3 → 2 → 1 columns with gaps that shrink
 on smaller viewports (the airy desktop gutter would be too wide for a phone);
 section vertical padding tightens on small screens so there's less empty
-scrolling; and tap targets (nav links, the footer CZ|EN buttons) get more
+scrolling; and tap targets (nav links and footer controls) get more
 height on touch-sized screens. Everything sizes from one shared content width
 (`max-w-6xl`) with `px` gutters, so pages line up at every breakpoint.
 
@@ -191,11 +191,11 @@ the content she edits.
 On first visit the language is chosen automatically — a `?lang=cs`/`?lang=en` in
 the URL wins, then the visitor's previously saved choice, then their **browser
 language**, falling back to **English** if that's neither Czech nor English. A
-**CZ | EN** toggle lets them switch manually at any time; the choice is remembered
-for next time. The toggle lives in the **footer** (not the nav — the architect
-found it confusing there, and since the site already auto-detects language it's a
-fallback control, not a primary one). The active language is marked on the toggle
-with the same solid-black "selected" styling as the current nav link.
+single language button lets them switch manually at any time; it shows the
+language it will switch _to_ (`CZ` while viewing English, `EN` while viewing
+Czech), and the choice is remembered for next time. The toggle lives in the
+**footer** (not the nav — the architect found it confusing there, and since the
+site already auto-detects language it's a fallback control, not a primary one).
 
 Switching is instant — no page reload — because both languages are already in the
 page and the switch just flips which one is shown. A specific language can also be
@@ -233,7 +233,7 @@ and the greys flip to match — while **photos and drawings are left untouched**
 image-forward site must never invert its imagery). **Light is always the default**:
 the page ignores the visitor's system preference and only goes dark when the
 visitor has explicitly asked for it. A **single toggle in the footer**, next to the
-CZ|EN switch, flips the theme; it shows the mode it will switch _to_ — a moon in
+language switch, flips the theme; it shows the mode it will switch _to_ — a moon in
 light mode, a sun in dark mode — cross-fading as it flips. The choice is remembered
 for next time and carries across page navigations. (An earlier attempt using a CSS
 `filter` invert was dropped because it inverted the photos too and fought the
