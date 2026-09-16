@@ -10,6 +10,18 @@ gallery:
   - image: /uploads/04 SWOT - cyklostezky.png
     title_cs: Analýza cyklo dopravy
     title_en: Cycling Transport Analysis
+    description_cs: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce
+      sed viverra tortor. Maecenas ut leo tempor est convallis consequat aliquet
+      nec nisi. Etiam non pretium felis. Nulla convallis bibendum massa, ac
+      tempor felis congue sit amet. Sed imperdiet dolor ex, vitae feugiat justo
+      luctus vitae. In at rutrum nisl. Nullam ultrices tempus velit et accumsan.
+      Suspendisse orci velit, malesuada et fringilla vel, pellentesque id ante.
+    description_en: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce
+      sed viverra tortor. Maecenas ut leo tempor est convallis consequat aliquet
+      nec nisi. Etiam non pretium felis. Nulla convallis bibendum massa, ac
+      tempor felis congue sit amet. Sed imperdiet dolor ex, vitae feugiat justo
+      luctus vitae. In at rutrum nisl. Nullam ultrices tempus velit et accumsan.
+      Suspendisse orci velit, malesuada et fringilla vel, pellentesque id ante.
   - image: /uploads/03 SWOT - život v Kyjově.png
     title_cs: Analýza společenského vyžití v Kyjově
   - image: /uploads/05 SWOT - Sportoviště.png
