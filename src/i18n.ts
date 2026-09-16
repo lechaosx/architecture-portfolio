@@ -17,6 +17,7 @@ export const ui = {
     phone: 'Telefon',
     backToWork: '← Zpět na práce',
     tagline: 'Architektura',
+    switchLanguage: 'Přepnout do angličtiny',
   },
   en: {
     workNav: 'Work',
@@ -30,6 +31,7 @@ export const ui = {
     phone: 'Phone',
     backToWork: '← Back to work',
     tagline: 'Architecture',
+    switchLanguage: 'Switch to Czech',
   },
 } satisfies Record<Lang, Record<string, string>>;
 

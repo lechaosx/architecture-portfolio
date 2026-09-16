@@ -46,7 +46,7 @@ src/
   layouts/Base.astro           html shell, <ClientRouter/>, reveal + language scripts
   components/
     Nav.astro                  chrome (name from site.md)
-    Footer.astro               chrome (email from contact.md) + CZ|EN language toggle
+    Footer.astro               chrome (email from contact.md) + language/theme toggles
     T.astro                    renders both languages of a label/string (CSS hides one)
     Prose.astro                renders both languages of a rich-text body (via marked)
     Carousel.astro             home hero carousel; images from home.md or projects
@@ -120,7 +120,7 @@ Baked-in labels (nav, section headings, "Back to work", etc.) live in
 render it with `<T k="yourKey" />` (or `<T as="h2" k="yourKey" class="…" />`).
 For a bilingual string that comes from content rather than the dictionary, pass
 explicit props: `<T cs={…} en={…} />`, or `<Prose cs={…} en={…} />` for rich text.
-The language machinery (detection, the footer CZ|EN toggle, `<title>` sync) lives
+The language machinery (detection, the footer language toggle, `<title>` sync) lives
 in `src/layouts/Base.astro`; how and why is in ARCHITECTURE.md →
 "Internationalization".
 

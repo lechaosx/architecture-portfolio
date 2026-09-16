@@ -52,9 +52,9 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
 ### What do visitors get?
 
 - The site in **their own language**: it shows Czech or English based on their
-  browser automatically, and a **CZ | EN** switch in the footer lets them change
-  it by hand (their choice is remembered). Sharing `yoursite/work?lang=en` forces
-  English for that link.
+  browser automatically, and a footer language button lets them change it by
+  hand (it shows the language it will switch to, and remembers their choice).
+  Sharing `yoursite/work?lang=en` forces English for that link.
 - A home page that's your "about": an image carousel, your bio, and your approach.
   (The carousel images, bio, portrait, and approach are all editable in the CMS.)
 - A **Work** page with your projects in a grid.

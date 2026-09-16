@@ -120,11 +120,12 @@ const {
         if (dm && dv) dm.setAttribute('content', dv);
       }
 
-      // Wire the CZ | EN toggle: persist the choice and flip <html data-lang>.
+      // Wire the language toggle: persist the choice and flip <html data-lang>.
       function wireToggle() {
-        document.querySelectorAll<HTMLElement>('[data-lang-btn]').forEach((btn) => {
+        document.querySelectorAll<HTMLElement>('[data-lang-toggle]').forEach((btn) => {
           btn.addEventListener('click', () => {
-            const lang = btn.dataset.langBtn || 'en';
+            const lang =
+              document.documentElement.dataset.lang === 'cs' ? 'en' : 'cs';
             try {
               localStorage.setItem('lang', lang);
             } catch {}
