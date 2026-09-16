@@ -242,7 +242,9 @@ sticky nav and View Transitions.)
 ### Image lightbox / gallery — [Implicit]
 
 Project images open in a full-screen, keyboard-navigable lightbox (arrows, Esc).
-This is the concrete "interactivity" the user asked for.
+Desktop visitors can zoom toward the pointer with the mouse wheel and drag a
+zoomed image to inspect it. Touch visitors keep native pinch zoom and can swipe
+horizontally between gallery images.
 
 ### Optional image titles and descriptions — [Explicit]
 
