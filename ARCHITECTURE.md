@@ -97,6 +97,9 @@ component today (`src/components/Gallery.svelte`).
 (`client:visible`). The only other browser JS is a few tiny first-party vanilla
 scripts (reveal-on-scroll, the home carousel, the language switch) and the
 View-Transitions router — no framework runtime ships beyond the lightbox.
+Its wheel zoom and mouse panning are local transforms constrained to the image
+stage. Touch handling only detects completed one-finger horizontal swipes, so
+browser-native pinch zoom remains available.
 
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 
