@@ -248,8 +248,8 @@ Project images open in a full-screen, keyboard-navigable lightbox (arrows, Esc).
 Desktop visitors can zoom toward the pointer with the mouse wheel and drag a
 zoomed image to inspect it. The current zoom percentage is always visible and
 clicking it resets zoom and pan to 100%. On desktop the image stays between the
-navigation controls, whose opaque backgrounds keep them legible. Touch visitors
-keep native pinch zoom and can swipe horizontally between gallery images.
+navigation controls. Touch visitors keep native pinch zoom and can swipe
+horizontally between gallery images.
 
 ### Optional image titles and descriptions — [Explicit]
 
