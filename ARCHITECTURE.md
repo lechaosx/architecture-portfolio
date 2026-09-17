@@ -103,9 +103,15 @@ View-Transitions router — no framework runtime ships beyond the lightbox.
 Images up to 4096 px use local transforms constrained to the image stage;
 larger images lazy-load OpenSeadragon as a separate chunk and use its tiled
 canvas. Desktop side gutters keep either stage separate from the navigation
-controls. Both paths support pointer-centred wheel zoom, touch pinch and pan,
-and constrain maximum zoom to native image detail. At the base scale,
-horizontal mouse and one-finger gestures drive the same animated navigation.
+controls; the mobile grid moves those controls into a row below the stage. A
+fixed-height, full-stage-width, independently scrollable caption row keeps the
+stage dimensions stable across gallery entries and prevents text length from
+changing image selection or apparent size. Both rendering paths support
+pointer-centred wheel zoom, touch pinch and pan, and constrain maximum zoom to
+native image detail. At the base scale, horizontal mouse and one-finger gestures
+drive the same animated navigation. The caption's clipped inner layer mirrors
+that navigation offset and transition, while input listeners remain confined to
+the image stage so caption scrolling and text interaction cannot navigate.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 
