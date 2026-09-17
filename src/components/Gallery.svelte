@@ -661,14 +661,14 @@
 {#if open}
   <div
     bind:this={dialog}
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+    class="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] gap-3 bg-black/90 p-4"
     role="dialog"
     aria-modal="true"
     aria-label={ui[lang].imageViewer}
     tabindex="-1"
     onclick={requestClose}
   >
-    <div class="absolute top-4 right-4 left-4 z-20 flex items-start justify-between gap-2">
+    <div class="flex items-start justify-between gap-2">
       <div class="flex items-center gap-2">
         <button
           type="button"
@@ -706,24 +706,15 @@
         aria-label={ui[lang].close}>×</button
       >
     </div>
-    <button
-      type="button"
-      class="absolute left-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 text-4xl leading-none text-white hover:border-white"
-      onclick={(e) => {
-        e.stopPropagation();
-        prev();
-      }}
-      aria-label={ui[lang].previousImage}>‹</button
-    >
     <figure
-      class="flex h-[85vh] w-full flex-col items-center sm:px-16"
+      class="lightbox-layout min-h-0 w-full"
       onclick={(e) => e.stopPropagation()}
     >
       <div
         bind:this={stage}
         bind:clientWidth={stageWidth}
         bind:clientHeight={stageHeight}
-        class="relative flex min-h-0 w-full flex-1 touch-none items-center justify-center overflow-hidden"
+        class="lightbox-stage relative flex min-h-0 w-full touch-none items-center justify-center overflow-hidden"
         style:cursor={scale > 1
           ? dragging
             ? 'grabbing'
@@ -763,35 +754,96 @@
           {/if}
         </div>
       </div>
-      {#if hasCaption(images[index])}
-        <figcaption class="mt-4 w-full max-w-2xl text-white">
-          {#if images[index].title_cs}
-            <p lang="cs" class="text-sm font-medium">{images[index].title_cs}</p>
+      <button
+        type="button"
+        class="lightbox-previous flex h-12 w-12 cursor-pointer items-center justify-center self-center border border-white/40 text-4xl leading-none text-white hover:border-white"
+        onclick={(e) => {
+          e.stopPropagation();
+          prev();
+        }}
+        aria-label={ui[lang].previousImage}>‹</button
+      >
+      <button
+        type="button"
+        class="lightbox-next flex h-12 w-12 cursor-pointer items-center justify-center self-center border border-white/40 text-4xl leading-none text-white hover:border-white"
+        onclick={(e) => {
+          e.stopPropagation();
+          next();
+        }}
+        aria-label={ui[lang].nextImage}>›</button
+      >
+      <figcaption
+        class="lightbox-caption w-full overflow-hidden text-white"
+      >
+        <div
+          class="h-full overflow-y-auto"
+          style:transform={`translate3d(${swipeOffset}px, 0, 0)`}
+          style:transition={swipeAnimating
+            ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
+            : 'none'}
+        >
+          {#if hasCaption(images[index])}
+            {#if images[index].title_cs}
+              <p lang="cs" class="text-sm font-medium">{images[index].title_cs}</p>
+            {/if}
+            {#if images[index].title_en}
+              <p lang="en" class="text-sm font-medium">{images[index].title_en}</p>
+            {/if}
+            {#if images[index].description_cs}
+              <p lang="cs" class="mt-1 text-sm text-white/70">
+                {images[index].description_cs}
+              </p>
+            {/if}
+            {#if images[index].description_en}
+              <p lang="en" class="mt-1 text-sm text-white/70">
+                {images[index].description_en}
+              </p>
+            {/if}
           {/if}
-          {#if images[index].title_en}
-            <p lang="en" class="text-sm font-medium">{images[index].title_en}</p>
-          {/if}
-          {#if images[index].description_cs}
-            <p lang="cs" class="mt-1 text-sm text-white/70">
-              {images[index].description_cs}
-            </p>
-          {/if}
-          {#if images[index].description_en}
-            <p lang="en" class="mt-1 text-sm text-white/70">
-              {images[index].description_en}
-            </p>
-          {/if}
-        </figcaption>
-      {/if}
+        </div>
+      </figcaption>
     </figure>
-    <button
-      type="button"
-      class="absolute right-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 text-4xl leading-none text-white hover:border-white"
-      onclick={(e) => {
-        e.stopPropagation();
-        next();
-      }}
-      aria-label={ui[lang].nextImage}>›</button
-    >
   </div>
 {/if}
+
+<style>
+  .lightbox-layout {
+    display: grid;
+    grid-template-areas:
+      'stage stage'
+      'caption caption'
+      'previous next';
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) 6rem 3rem;
+    gap: 0.75rem;
+  }
+
+  .lightbox-stage {
+    grid-area: stage;
+  }
+
+  .lightbox-caption {
+    grid-area: caption;
+  }
+
+  .lightbox-previous {
+    grid-area: previous;
+    justify-self: start;
+  }
+
+  .lightbox-next {
+    grid-area: next;
+    justify-self: end;
+  }
+
+  @media (min-width: 640px) {
+    .lightbox-layout {
+      grid-template-areas:
+        'previous stage next'
+        '. caption .';
+      grid-template-columns: 3rem minmax(0, 1fr) 3rem;
+      grid-template-rows: minmax(0, 1fr) 6rem;
+      column-gap: 1rem;
+    }
+  }
+</style>

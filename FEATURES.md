@@ -258,7 +258,8 @@ Opening the lightbox moves keyboard focus to its controls and keeps focus inside
 until it closes. Closing it restores focus to the thumbnail that opened it.
 The background page stays fixed at its exact scroll position while the lightbox
 is open, including on touch browsers. Its dialog, thumbnail, close, and
-navigation labels follow the selected site language.
+navigation labels follow the selected site language. The top controls and
+navigation buttons stay outside the image viewport, including while zoomed.
 
 ### High-detail architectural images — [Explicit]
 
@@ -287,10 +288,11 @@ outside the visible tile boundaries.
 Desktop visitors can zoom toward the pointer with the mouse wheel and drag a
 zoomed image to inspect it. The current zoom percentage is always visible and
 clicking it resets zoom and pan to 100%. On desktop the image stays between the
-navigation controls. Touch visitors can pinch around the point between their
-fingers and drag a zoomed image with one finger. At 100%, horizontal dragging
-with either a finger or mouse navigates between gallery images; completed
-navigation slides to the next image and an incomplete gesture snaps back.
+navigation controls; on mobile those controls sit in their own row below it.
+Touch visitors can pinch around the point between their fingers and drag a
+zoomed image with one finger. At 100%, horizontal dragging with either a finger
+or mouse navigates between gallery images; completed navigation slides to the
+next image and an incomplete gesture snaps back.
 Buttons and arrow keys use the same short slide, while reduced-motion settings
 disable it. Maximum zoom depends on the image and display density, ending when
 native image pixels reach display pixels. A bilingual control opens the
@@ -306,7 +308,12 @@ physical-pixel requirement so their base view is not an upscaled lower level.
 
 Each project gallery image can have a short title and description in Czech and
 English. Both fields are optional and appear only beneath the enlarged image in
-the lightbox, keeping the thumbnail grid image-only.
+the lightbox, keeping the thumbnail grid image-only. The caption occupies a
+fixed rail so switching between captioned and uncaptioned images does not resize
+the image viewport. It is left-aligned to the image and uses its available
+width; unusually long text scrolls within that rail. The caption slides with
+its image during navigation, but dragging or swiping the text never changes the
+image.
 
 ### Project galleries are optional — [Explicit]
 
