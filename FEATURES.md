@@ -244,6 +244,13 @@ sticky nav and View Transitions.)
 
 Project images open in a full-screen, keyboard-navigable lightbox (arrows, Esc).
 
+### Accessible lightbox modal — [Explicit]
+
+Opening the lightbox moves keyboard focus to its controls and keeps focus inside
+until it closes. Closing it restores focus to the thumbnail that opened it.
+Background page scrolling is locked while the lightbox is open, and its dialog,
+thumbnail, close, and navigation labels follow the selected site language.
+
 ### High-detail architectural images — [Explicit]
 
 Reduced views such as project cards, the home carousel, and gallery thumbnails
@@ -273,6 +280,10 @@ fingers and drag a zoomed image with one finger. At 100%, a one-finger horizonta
 swipe moves between gallery images instead. Maximum zoom depends on the image
 and display density, ending when native image pixels reach display pixels. A
 bilingual control opens the untouched original in a separate browser tab.
+Tiled and full-image previews use the same immediate gesture response: neither
+can be dragged at 100%, and neither adds momentum or a settling animation.
+Pyramid previews request the first resolution level at or above the display's
+physical-pixel requirement so their base view is not an upscaled lower level.
 
 ### Optional image titles and descriptions — [Explicit]
 

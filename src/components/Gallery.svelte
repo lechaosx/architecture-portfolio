@@ -1,10 +1,13 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import type OpenSeadragon from 'openseadragon';
   import type { ResponsiveImage } from '../images';
-  import { ui } from '../i18n';
+  import { ui, type Lang } from '../i18n';
   import {
     clampPan,
+    containedImageSize,
+    deepZoomViewport,
+    focusWrapTarget,
     hasCaption,
     lightboxImageUrl,
     nativeZoomScale,
@@ -29,6 +32,7 @@
   } = $props();
 
   let open = $state(false);
+  let lang = $state<Lang>('en');
   let index = $state(0);
   let scale = $state(1);
   let pan = $state<Point>({ x: 0, y: 0 });
@@ -36,12 +40,13 @@
   let stageWidth = $state(0);
   let stageHeight = $state(0);
   let devicePixelRatio = $state(1);
-  let deepZoomScale = $state(1);
   let stage: HTMLDivElement;
   let image: HTMLImageElement;
+  let dialog: HTMLDivElement;
+  let closeButton: HTMLButtonElement;
+  let trigger: HTMLButtonElement | undefined;
   let deepZoomElement = $state<HTMLDivElement>();
   let deepZoomViewer: OpenSeadragon.Viewer | undefined;
-  let deepZoomTouchStart: Point | null = null;
   let dragStart: Point | null = null;
   let touchStart: Point | null = null;
   let touchPanStart: Point | null = null;
@@ -79,39 +84,22 @@
       viewer = createViewer({
         element,
         tileSources: descriptor.url,
+        mouseNavEnabled: false,
+        keyboardNavEnabled: false,
+        tabIndex: -1,
         showNavigationControl: false,
         showNavigator: false,
         constrainDuringPan: true,
         visibilityRatio: 1,
         maxZoomPixelRatio: 1,
-        minPixelRatio: 1,
+        minPixelRatio: 0.5,
+        animationTime: 0,
+        immediateRender: true,
       });
       deepZoomViewer = viewer;
       viewer.addHandler('open', () => {
         if (!viewer) return;
-        deepZoomScale = 1;
-      });
-      viewer.addHandler('zoom', ({ zoom }) => {
-        if (!viewer) return;
-        deepZoomScale = zoom / viewer.viewport.getHomeZoom();
-        if (deepZoomScale > 1) deepZoomTouchStart = null;
-      });
-      viewer.addHandler('canvas-press', ({ pointerType, position }) => {
-        deepZoomTouchStart =
-          pointerType === 'touch' && deepZoomScale <= 1.001 ? position : null;
-      });
-      viewer.addHandler('canvas-pinch', () => {
-        deepZoomTouchStart = null;
-      });
-      viewer.addHandler('canvas-release', ({ pointerType, position }) => {
-        if (pointerType !== 'touch' || !deepZoomTouchStart) return;
-        const direction = swipeDirection(
-          position.x - deepZoomTouchStart.x,
-          position.y - deepZoomTouchStart.y,
-        );
-        deepZoomTouchStart = null;
-        if (direction === 1) next();
-        else if (direction === -1) prev();
+        syncDeepZoomViewport(viewer);
       });
     });
 
@@ -119,8 +107,19 @@
       cancelled = true;
       viewer?.destroy();
       if (deepZoomViewer === viewer) deepZoomViewer = undefined;
-      deepZoomTouchStart = null;
-      deepZoomScale = 1;
+    };
+  });
+
+  $effect(() => {
+    if (!open) return;
+    const rootOverflow = document.documentElement.style.overflow;
+    const bodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = rootOverflow;
+      document.body.style.overflow = bodyOverflow;
     };
   });
 
@@ -128,11 +127,20 @@
     devicePixelRatio = window.devicePixelRatio || 1;
     stageWidth = window.innerWidth;
     stageHeight = window.innerHeight * 0.85;
+    const syncLang = () => {
+      lang = document.documentElement.dataset.lang === 'cs' ? 'cs' : 'en';
+    };
+    syncLang();
+    const languageObserver = new MutationObserver(syncLang);
+    languageObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-lang'],
+    });
+    return () => languageObserver.disconnect();
   });
 
   function resetView() {
-    deepZoomViewer?.viewport.goHome();
-    deepZoomScale = 1;
+    deepZoomViewer?.viewport.goHome(true);
     scale = 1;
     pan = { x: 0, y: 0 };
     dragging = false;
@@ -140,17 +148,23 @@
     touchStart = null;
     touchPanStart = null;
     pinchStart = null;
-    deepZoomTouchStart = null;
   }
 
-  function show(i: number) {
+  async function show(i: number, source: HTMLButtonElement) {
+    trigger = source;
     index = i;
     resetView();
     open = true;
+    await tick();
+    closeButton.focus();
   }
-  function close() {
+  async function close() {
+    if (!open) return;
     open = false;
     resetView();
+    await tick();
+    trigger?.focus();
+    trigger = undefined;
   }
   function go(offset: number) {
     index = (index + offset + images.length) % images.length;
@@ -164,33 +178,100 @@
   }
   function onkeydown(e: KeyboardEvent) {
     if (!open) return;
-    if (e.key === 'Escape') close();
+    if (e.key === 'Tab') {
+      trapFocus(e);
+      return;
+    }
+    if (e.key === 'Escape') void close();
     else if (e.key === 'ArrowRight') next();
     else if (e.key === 'ArrowLeft') prev();
   }
 
+  function trapFocus(e: KeyboardEvent) {
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((element) => element.getClientRects().length > 0);
+    if (focusable.length === 0) {
+      e.preventDefault();
+      dialog.focus();
+      return;
+    }
+    const target = focusWrapTarget(
+      focusable.indexOf(document.activeElement as HTMLElement),
+      focusable.length,
+      e.shiftKey,
+    );
+    if (target === undefined) return;
+    e.preventDefault();
+    focusable[target].focus();
+  }
+
   function constrainedPan(nextPan: Point, nextScale = scale) {
-    if (!stage || !image) return nextPan;
+    if (!stage) return nextPan;
+    const imageSize = renderedImageSize();
+    if (!imageSize) return nextPan;
     return clampPan(
       nextPan,
       nextScale,
-      { width: image.clientWidth, height: image.clientHeight },
+      imageSize,
       { width: stage.clientWidth, height: stage.clientHeight },
     );
   }
 
+  function renderedImageSize() {
+    const responsiveImage = responsiveImages[index];
+    if (responsiveImage && stage) {
+      return containedImageSize(responsiveImage.source, {
+        width: stage.clientWidth,
+        height: stage.clientHeight,
+      });
+    }
+    if (image) return { width: image.clientWidth, height: image.clientHeight };
+  }
+
   function maximumScale() {
     const responsiveImage = responsiveImages[index];
-    if (!responsiveImage || !image) return 1;
+    const imageSize = renderedImageSize();
+    if (!responsiveImage || !imageSize) return 1;
     return nativeZoomScale(
       responsiveImage.source.width,
-      image.clientWidth,
+      imageSize.width,
       devicePixelRatio,
     );
   }
 
+  function syncDeepZoomViewport(
+    viewer: OpenSeadragon.Viewer | undefined = deepZoomViewer,
+    nextScale = scale,
+    nextPan = pan,
+  ) {
+    if (!viewer || !stage?.clientWidth) return;
+    const viewport = viewer.viewport;
+    const homeCenter = viewport.getHomeBounds().getCenter();
+    const target = deepZoomViewport(
+      viewport.getHomeZoom(),
+      homeCenter,
+      stage.clientWidth,
+      nextScale,
+      nextPan,
+    );
+    const center = viewport.getCenter();
+    center.x = target.center.x;
+    center.y = target.center.y;
+    viewport.zoomTo(target.zoom, undefined, true);
+    viewport.panTo(center, true);
+    viewport.applyConstraints(true);
+  }
+
+  function setView(nextScale: number, nextPan: Point) {
+    scale = nextScale;
+    pan = nextPan;
+    syncDeepZoomViewport(undefined, nextScale, nextPan);
+  }
+
   function onwheel(e: WheelEvent) {
-    if (deepZoom) return;
     e.preventDefault();
     const delta =
       e.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -204,12 +285,13 @@
       x: e.clientX - (bounds.left + bounds.width / 2),
       y: e.clientY - (bounds.top + bounds.height / 2),
     };
-    pan = constrainedPan(panForZoom(pan, scale, nextScale, pointer), nextScale);
-    scale = nextScale;
+    setView(
+      nextScale,
+      constrainedPan(panForZoom(pan, scale, nextScale, pointer), nextScale),
+    );
   }
 
   function onpointerdown(e: PointerEvent) {
-    if (deepZoom) return;
     if (e.pointerType !== 'mouse' || e.button !== 0 || scale === 1) return;
     e.preventDefault();
     stage.setPointerCapture(e.pointerId);
@@ -218,16 +300,17 @@
   }
 
   function onpointermove(e: PointerEvent) {
-    if (deepZoom) return;
     if (!dragging || !dragStart) return;
-    pan = constrainedPan({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    });
+    setView(
+      scale,
+      constrainedPan({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      }),
+    );
   }
 
   function onpointerup(e: PointerEvent) {
-    if (deepZoom) return;
     if (!dragging) return;
     if (stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId);
     dragging = false;
@@ -235,7 +318,6 @@
   }
 
   function ontouchstart(e: TouchEvent) {
-    if (deepZoom) return;
     if (e.touches.length === 2) {
       const first = touchPoint(e.touches[0]);
       const second = touchPoint(e.touches[1]);
@@ -262,7 +344,6 @@
   }
 
   function ontouchmove(e: TouchEvent) {
-    if (deepZoom) return;
     if (e.touches.length === 2 && pinchStart) {
       const first = touchPoint(e.touches[0]);
       const second = touchPoint(e.touches[1]);
@@ -272,26 +353,31 @@
         touchDistance(first, second),
         maximumScale(),
       );
-      pan = constrainedPan(
-        panForPinch(
-          pinchStart.pan,
-          pinchStart.scale,
-          nextScale,
-          pinchStart.center,
-          touchCenter(first, second),
-        ),
+      setView(
         nextScale,
+        constrainedPan(
+          panForPinch(
+            pinchStart.pan,
+            pinchStart.scale,
+            nextScale,
+            pinchStart.center,
+            touchCenter(first, second),
+          ),
+          nextScale,
+        ),
       );
-      scale = nextScale;
       return;
     }
 
     if (e.touches.length === 1 && touchPanStart) {
       const point = touchPoint(e.touches[0]);
-      pan = constrainedPan({
-        x: point.x - touchPanStart.x,
-        y: point.y - touchPanStart.y,
-      });
+      setView(
+        scale,
+        constrainedPan({
+          x: point.x - touchPanStart.x,
+          y: point.y - touchPanStart.y,
+        }),
+      );
       return;
     }
 
@@ -299,7 +385,6 @@
   }
 
   function ontouchend(e: TouchEvent) {
-    if (deepZoom) return;
     if (pinchStart) {
       pinchStart = null;
       touchStart = null;
@@ -362,8 +447,8 @@
       <button
         type="button"
         class="group aspect-square overflow-hidden bg-neutral-100"
-        onclick={() => show(i)}
-        aria-label={`Open image ${i + 1}`}
+        onclick={(event) => show(i, event.currentTarget)}
+        aria-label={`${ui[lang].openImage} ${i + 1}`}
       >
         <img
           src={img.image}
@@ -381,9 +466,12 @@
 
 {#if open}
   <div
+    bind:this={dialog}
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
     role="dialog"
     aria-modal="true"
+    aria-label={ui[lang].imageViewer}
+    tabindex="-1"
     onclick={close}
   >
     <div class="absolute top-4 right-4 left-4 z-20 flex items-start justify-between gap-2">
@@ -397,7 +485,7 @@
           }}
         >
           <span aria-hidden="true">
-            {Math.round((deepZoom ? deepZoomScale : scale) * 100)}%
+            {Math.round(scale * 100)}%
           </span>
           <span lang="cs" class="sr-only">Obnovit přiblížení</span>
           <span lang="en" class="sr-only">Reset zoom</span>
@@ -414,18 +502,21 @@
         </a>
       </div>
       <button
+        bind:this={closeButton}
+        type="button"
         class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white"
         onclick={close}
-        aria-label="Close">×</button
+        aria-label={ui[lang].close}>×</button
       >
     </div>
     <button
+      type="button"
       class="absolute left-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 text-4xl leading-none text-white hover:border-white"
       onclick={(e) => {
         e.stopPropagation();
         prev();
       }}
-      aria-label="Previous">‹</button
+      aria-label={ui[lang].previousImage}>‹</button
     >
     <figure
       class="flex h-[85vh] w-full flex-col items-center sm:px-16"
@@ -436,7 +527,7 @@
         bind:clientWidth={stageWidth}
         bind:clientHeight={stageHeight}
         class="relative flex min-h-0 w-full flex-1 touch-none items-center justify-center overflow-hidden"
-        style:cursor={!deepZoom && scale > 1
+        style:cursor={scale > 1
           ? dragging
             ? 'grabbing'
             : 'grab'
@@ -487,12 +578,13 @@
       {/if}
     </figure>
     <button
+      type="button"
       class="absolute right-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 text-4xl leading-none text-white hover:border-white"
       onclick={(e) => {
         e.stopPropagation();
         next();
       }}
-      aria-label="Next">›</button
+      aria-label={ui[lang].nextImage}>›</button
     >
   </div>
 {/if}

@@ -82,14 +82,51 @@ export function clampPan(
   const maxX = Math.max(0, (image.width * scale - viewport.width) / 2);
   const maxY = Math.max(0, (image.height * scale - viewport.height) / 2);
   return {
-    x: Math.min(maxX, Math.max(-maxX, pan.x)),
-    y: Math.min(maxY, Math.max(-maxY, pan.y)),
+    x: maxX === 0 ? 0 : Math.min(maxX, Math.max(-maxX, pan.x)),
+    y: maxY === 0 ? 0 : Math.min(maxY, Math.max(-maxY, pan.y)),
+  };
+}
+
+export function containedImageSize(image: Size, viewport: Size): Size {
+  const fit = Math.min(
+    viewport.width / image.width,
+    viewport.height / image.height,
+  );
+  return { width: image.width * fit, height: image.height * fit };
+}
+
+export function deepZoomViewport(
+  homeZoom: number,
+  homeCenter: Point,
+  viewportWidth: number,
+  scale: number,
+  pan: Point,
+) {
+  const zoom = homeZoom * scale;
+  return {
+    zoom,
+    center: {
+      x: homeCenter.x - pan.x / (viewportWidth * zoom),
+      y: homeCenter.y - pan.y / (viewportWidth * zoom),
+    },
   };
 }
 
 export function swipeDirection(deltaX: number, deltaY: number) {
   if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY)) return 0;
   return deltaX < 0 ? 1 : -1;
+}
+
+export function focusWrapTarget(
+  currentIndex: number,
+  focusableCount: number,
+  backwards: boolean,
+) {
+  if (focusableCount === 0) return undefined;
+  if (currentIndex < 0) return backwards ? focusableCount - 1 : 0;
+  if (backwards && currentIndex === 0) return focusableCount - 1;
+  if (!backwards && currentIndex === focusableCount - 1) return 0;
+  return undefined;
 }
 
 export function nativeZoomScale(

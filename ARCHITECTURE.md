@@ -104,6 +104,22 @@ controls. Both paths support pointer-centred wheel zoom, touch pinch and pan,
 and constrain maximum zoom to native image detail. At the base scale, a
 completed one-finger horizontal gesture navigates between images instead.
 
+### Shared lightbox input and tiled rendering — [Explicit]
+
+The component owns one scale/pan gesture state for both paths. OpenSeadragon's
+mouse, touch, and keyboard navigation is disabled; its viewport receives the
+shared state with immediate updates and remains responsible for tile selection,
+loading, caching, and drawing. A pyramid `minPixelRatio` of `0.5` selects the
+next higher DZI level instead of upscaling the level below the required display
+density.
+
+### Lightbox modal state — [Explicit]
+
+While open, the island owns modal focus and root scroll locking: focus enters
+the close control, Tab wraps within the dialog, and focus returns to the opening
+thumbnail on close. A `data-lang` observer keeps the dialog's accessible names
+aligned with the global language switch.
+
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 
 The carousel (`Carousel.astro`) is a native horizontal scroll-snap strip; a small
