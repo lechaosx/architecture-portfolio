@@ -257,8 +257,9 @@ lightbox continues to load the untouched original for detailed inspection.
 Desktop visitors can zoom toward the pointer with the mouse wheel and drag a
 zoomed image to inspect it. The current zoom percentage is always visible and
 clicking it resets zoom and pan to 100%. On desktop the image stays between the
-navigation controls. Touch visitors keep native pinch zoom and can swipe
-horizontally between gallery images.
+navigation controls. Touch visitors can pinch around the point between their
+fingers and drag a zoomed image with one finger. At 100%, a one-finger horizontal
+swipe moves between gallery images instead.
 
 ### Optional image titles and descriptions — [Explicit]
 

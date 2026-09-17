@@ -2,7 +2,9 @@ import { describe, expect, test } from 'bun:test';
 import {
   clampPan,
   hasCaption,
+  panForPinch,
   panForZoom,
+  scaleFromPinch,
   scaleFromWheel,
   swipeDirection,
   type GalleryImage,
@@ -40,6 +42,24 @@ describe('lightbox gestures', () => {
     expect(
       panForZoom({ x: 0, y: 0 }, 1, 2, { x: 100, y: -50 }),
     ).toEqual({ x: -100, y: 50 });
+  });
+
+  test('pinch zoom follows finger distance and stays within the zoom limits', () => {
+    expect(scaleFromPinch(1, 100, 250)).toBe(2.5);
+    expect(scaleFromPinch(4, 100, 200)).toBe(5);
+    expect(scaleFromPinch(2, 100, 25)).toBe(1);
+  });
+
+  test('pinch zoom keeps its starting image point beneath the moving midpoint', () => {
+    expect(
+      panForPinch(
+        { x: 0, y: 0 },
+        1,
+        2,
+        { x: 100, y: -50 },
+        { x: 120, y: -40 },
+      ),
+    ).toEqual({ x: -80, y: 60 });
   });
 
   test('panning cannot move the scaled image beyond the viewport', () => {

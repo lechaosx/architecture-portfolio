@@ -99,8 +99,11 @@ scripts (reveal-on-scroll, the home carousel, the language switch) and the
 View-Transitions router — no framework runtime ships beyond the lightbox.
 Its wheel zoom and mouse panning are local transforms constrained to the image
 stage. Desktop side gutters keep that transformed stage separate from the
-navigation controls. Touch handling only detects completed one-finger horizontal
-swipes, so browser-native pinch zoom remains available.
+navigation controls. Touch handling applies two-finger scale and midpoint
+movement to the same constrained transform. A remaining finger continues as a
+pan when zoomed; at the base scale, a completed one-finger horizontal gesture
+navigates between images instead. The stage disables native touch gestures so
+the browser does not zoom the whole page during image inspection.
 
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 

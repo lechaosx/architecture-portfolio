@@ -2,7 +2,9 @@
   import {
     clampPan,
     hasCaption,
+    panForPinch,
     panForZoom,
+    scaleFromPinch,
     scaleFromWheel,
     swipeDirection,
     type GalleryImage,
@@ -23,6 +25,13 @@
   let image: HTMLImageElement;
   let dragStart: Point | null = null;
   let touchStart: Point | null = null;
+  let touchPanStart: Point | null = null;
+  let pinchStart: {
+    distance: number;
+    scale: number;
+    center: Point;
+    pan: Point;
+  } | null = null;
 
   function resetView() {
     scale = 1;
@@ -30,6 +39,8 @@
     dragging = false;
     dragStart = null;
     touchStart = null;
+    touchPanStart = null;
+    pinchStart = null;
   }
 
   function show(i: number) {
@@ -110,17 +121,84 @@
   }
 
   function ontouchstart(e: TouchEvent) {
-    touchStart =
-      e.touches.length === 1
-        ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
-        : null;
+    if (e.touches.length === 2) {
+      const first = touchPoint(e.touches[0]);
+      const second = touchPoint(e.touches[1]);
+      pinchStart = {
+        distance: touchDistance(first, second),
+        scale,
+        center: touchCenter(first, second),
+        pan,
+      };
+      touchStart = null;
+      touchPanStart = null;
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      const point = touchPoint(e.touches[0]);
+      touchStart = scale === 1 ? point : null;
+      touchPanStart =
+        scale > 1 ? { x: point.x - pan.x, y: point.y - pan.y } : null;
+      return;
+    }
+
+    resetTouchGesture();
   }
 
   function ontouchmove(e: TouchEvent) {
+    if (e.touches.length === 2 && pinchStart) {
+      const first = touchPoint(e.touches[0]);
+      const second = touchPoint(e.touches[1]);
+      const nextScale = scaleFromPinch(
+        pinchStart.scale,
+        pinchStart.distance,
+        touchDistance(first, second),
+      );
+      pan = constrainedPan(
+        panForPinch(
+          pinchStart.pan,
+          pinchStart.scale,
+          nextScale,
+          pinchStart.center,
+          touchCenter(first, second),
+        ),
+        nextScale,
+      );
+      scale = nextScale;
+      return;
+    }
+
+    if (e.touches.length === 1 && touchPanStart) {
+      const point = touchPoint(e.touches[0]);
+      pan = constrainedPan({
+        x: point.x - touchPanStart.x,
+        y: point.y - touchPanStart.y,
+      });
+      return;
+    }
+
     if (e.touches.length !== 1) touchStart = null;
   }
 
   function ontouchend(e: TouchEvent) {
+    if (pinchStart) {
+      pinchStart = null;
+      touchStart = null;
+      if (e.touches.length === 1 && scale > 1) {
+        const point = touchPoint(e.touches[0]);
+        touchPanStart = { x: point.x - pan.x, y: point.y - pan.y };
+      } else {
+        touchPanStart = null;
+      }
+      return;
+    }
+
+    if (touchPanStart) {
+      if (e.touches.length === 0) touchPanStart = null;
+      return;
+    }
+
     if (!touchStart || e.touches.length || e.changedTouches.length !== 1) {
       touchStart = null;
       return;
@@ -133,6 +211,28 @@
     touchStart = null;
     if (direction === 1) next();
     else if (direction === -1) prev();
+  }
+
+  function touchPoint(touch: Touch): Point {
+    return { x: touch.clientX, y: touch.clientY };
+  }
+
+  function touchDistance(first: Point, second: Point) {
+    return Math.hypot(second.x - first.x, second.y - first.y);
+  }
+
+  function touchCenter(first: Point, second: Point): Point {
+    const bounds = stage.getBoundingClientRect();
+    return {
+      x: (first.x + second.x) / 2 - (bounds.left + bounds.width / 2),
+      y: (first.y + second.y) / 2 - (bounds.top + bounds.height / 2),
+    };
+  }
+
+  function resetTouchGesture() {
+    touchStart = null;
+    touchPanStart = null;
+    pinchStart = null;
   }
 </script>
 
@@ -199,7 +299,7 @@
     >
       <div
         bind:this={stage}
-        class="relative flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden"
+        class="relative flex min-h-0 w-full flex-1 touch-none items-center justify-center overflow-hidden"
         style:cursor={scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default'}
         {onwheel}
         {onpointerdown}
@@ -209,7 +309,7 @@
         {ontouchstart}
         {ontouchmove}
         {ontouchend}
-        ontouchcancel={() => (touchStart = null)}
+        ontouchcancel={resetTouchGesture}
       >
         <img
           bind:this={image}
