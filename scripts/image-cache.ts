@@ -15,7 +15,7 @@ export function derivativeWidths(
   sourceWidth: number,
   widths: readonly number[],
 ) {
-  return widths.filter((width) => width < sourceWidth);
+  return [...widths.filter((width) => width < sourceWidth), sourceWidth];
 }
 
 export function shouldPublishDerivative(
@@ -38,4 +38,8 @@ export function webpPolicy(format: string, hasAlpha: boolean) {
     effort: 4,
     preset: 'picture',
   } as const;
+}
+
+export function shouldGenerateDeepZoom(width: number, height: number) {
+  return Math.max(width, height) > 4096;
 }

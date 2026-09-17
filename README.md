@@ -35,8 +35,8 @@ there's only one of each.
 cover image and any gallery photos, optionally add Czech and English titles or
 short descriptions to individual gallery images, write the project description,
 save. The gallery may be left empty. Upload the best original available; the
-site builds smoother responsive previews without enlarging it and keeps the
-original for the project lightbox.
+site builds optimized responsive previews and zoom tiles without enlarging it,
+while the project lightbox keeps a direct link to the untouched original.
 
 **Hiding a project:** turn on its **Draft** switch — it stays in the system but
 disappears from the public site until you turn it off.

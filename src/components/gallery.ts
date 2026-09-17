@@ -14,10 +14,8 @@ export interface Size {
 }
 
 const MIN_SCALE = 1;
-const MAX_SCALE = 5;
-
-function clampScale(scale: number) {
-  return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+function clampScale(scale: number, maxScale = Number.POSITIVE_INFINITY) {
+  return Math.min(maxScale, Math.max(MIN_SCALE, scale));
 }
 
 export function hasCaption(image: GalleryImage) {
@@ -29,8 +27,12 @@ export function hasCaption(image: GalleryImage) {
   ].some((value) => Boolean(value?.trim()));
 }
 
-export function scaleFromWheel(scale: number, deltaY: number) {
-  return clampScale(scale * Math.exp(-deltaY * 0.002));
+export function scaleFromWheel(
+  scale: number,
+  deltaY: number,
+  maxScale?: number,
+) {
+  return clampScale(scale * Math.exp(-deltaY * 0.002), maxScale);
 }
 
 export function panForZoom(
@@ -50,9 +52,10 @@ export function scaleFromPinch(
   scale: number,
   startDistance: number,
   distance: number,
+  maxScale?: number,
 ) {
   return startDistance > 0
-    ? clampScale(scale * (distance / startDistance))
+    ? clampScale(scale * (distance / startDistance), maxScale)
     : scale;
 }
 
@@ -89,6 +92,15 @@ export function swipeDirection(deltaX: number, deltaY: number) {
   return deltaX < 0 ? 1 : -1;
 }
 
+export function nativeZoomScale(
+  sourceWidth: number,
+  renderedWidth: number,
+  devicePixelRatio: number,
+) {
+  if (renderedWidth <= 0 || devicePixelRatio <= 0) return 1;
+  return Math.max(1, sourceWidth / (renderedWidth * devicePixelRatio));
+}
+
 export function lightboxImageUrl(
   image: ResponsiveImage,
   viewport: Size,
@@ -100,7 +112,10 @@ export function lightboxImageUrl(
     viewport.width,
     viewport.height * aspectRatio,
   );
-  const requiredWidth = renderedWidth * scale * devicePixelRatio;
+  const requiredWidth = Math.min(
+    renderedWidth * scale * devicePixelRatio,
+    image.source.width,
+  );
   const variant = [...image.variants]
     .sort((first, second) => first.width - second.width)
     .find(({ width }) => width >= requiredWidth);

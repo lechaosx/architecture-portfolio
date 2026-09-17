@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import type OpenSeadragon from 'openseadragon';
   import type { ResponsiveImage } from '../images';
   import { ui } from '../i18n';
   import {
     clampPan,
     hasCaption,
     lightboxImageUrl,
+    nativeZoomScale,
     panForPinch,
     panForZoom,
     scaleFromPinch,
@@ -34,8 +36,12 @@
   let stageWidth = $state(0);
   let stageHeight = $state(0);
   let devicePixelRatio = $state(1);
+  let deepZoomScale = $state(1);
   let stage: HTMLDivElement;
   let image: HTMLImageElement;
+  let deepZoomElement = $state<HTMLDivElement>();
+  let deepZoomViewer: OpenSeadragon.Viewer | undefined;
+  let deepZoomTouchStart: Point | null = null;
   let dragStart: Point | null = null;
   let touchStart: Point | null = null;
   let touchPanStart: Point | null = null;
@@ -58,6 +64,65 @@
   let originalSrc = $derived(
     responsiveImages[index]?.source.url ?? images[index]?.image,
   );
+  let deepZoom = $derived(responsiveImages[index]?.deepZoom);
+
+  $effect(() => {
+    const descriptor = deepZoom;
+    const element = deepZoomElement;
+    if (!open || !descriptor || !element) return;
+
+    let cancelled = false;
+    let viewer: OpenSeadragon.Viewer | undefined;
+
+    void import('openseadragon').then(({ default: createViewer }) => {
+      if (cancelled) return;
+      viewer = createViewer({
+        element,
+        tileSources: descriptor.url,
+        showNavigationControl: false,
+        showNavigator: false,
+        constrainDuringPan: true,
+        visibilityRatio: 1,
+        maxZoomPixelRatio: 1,
+        minPixelRatio: 1,
+      });
+      deepZoomViewer = viewer;
+      viewer.addHandler('open', () => {
+        if (!viewer) return;
+        deepZoomScale = 1;
+      });
+      viewer.addHandler('zoom', ({ zoom }) => {
+        if (!viewer) return;
+        deepZoomScale = zoom / viewer.viewport.getHomeZoom();
+        if (deepZoomScale > 1) deepZoomTouchStart = null;
+      });
+      viewer.addHandler('canvas-press', ({ pointerType, position }) => {
+        deepZoomTouchStart =
+          pointerType === 'touch' && deepZoomScale <= 1.001 ? position : null;
+      });
+      viewer.addHandler('canvas-pinch', () => {
+        deepZoomTouchStart = null;
+      });
+      viewer.addHandler('canvas-release', ({ pointerType, position }) => {
+        if (pointerType !== 'touch' || !deepZoomTouchStart) return;
+        const direction = swipeDirection(
+          position.x - deepZoomTouchStart.x,
+          position.y - deepZoomTouchStart.y,
+        );
+        deepZoomTouchStart = null;
+        if (direction === 1) next();
+        else if (direction === -1) prev();
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      viewer?.destroy();
+      if (deepZoomViewer === viewer) deepZoomViewer = undefined;
+      deepZoomTouchStart = null;
+      deepZoomScale = 1;
+    };
+  });
 
   onMount(() => {
     devicePixelRatio = window.devicePixelRatio || 1;
@@ -66,6 +131,8 @@
   });
 
   function resetView() {
+    deepZoomViewer?.viewport.goHome();
+    deepZoomScale = 1;
     scale = 1;
     pan = { x: 0, y: 0 };
     dragging = false;
@@ -73,6 +140,7 @@
     touchStart = null;
     touchPanStart = null;
     pinchStart = null;
+    deepZoomTouchStart = null;
   }
 
   function show(i: number) {
@@ -111,7 +179,18 @@
     );
   }
 
+  function maximumScale() {
+    const responsiveImage = responsiveImages[index];
+    if (!responsiveImage || !image) return 1;
+    return nativeZoomScale(
+      responsiveImage.source.width,
+      image.clientWidth,
+      devicePixelRatio,
+    );
+  }
+
   function onwheel(e: WheelEvent) {
+    if (deepZoom) return;
     e.preventDefault();
     const delta =
       e.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -119,7 +198,7 @@
         : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
           ? e.deltaY * stage.clientHeight
           : e.deltaY;
-    const nextScale = scaleFromWheel(scale, delta);
+    const nextScale = scaleFromWheel(scale, delta, maximumScale());
     const bounds = stage.getBoundingClientRect();
     const pointer = {
       x: e.clientX - (bounds.left + bounds.width / 2),
@@ -130,6 +209,7 @@
   }
 
   function onpointerdown(e: PointerEvent) {
+    if (deepZoom) return;
     if (e.pointerType !== 'mouse' || e.button !== 0 || scale === 1) return;
     e.preventDefault();
     stage.setPointerCapture(e.pointerId);
@@ -138,6 +218,7 @@
   }
 
   function onpointermove(e: PointerEvent) {
+    if (deepZoom) return;
     if (!dragging || !dragStart) return;
     pan = constrainedPan({
       x: e.clientX - dragStart.x,
@@ -146,6 +227,7 @@
   }
 
   function onpointerup(e: PointerEvent) {
+    if (deepZoom) return;
     if (!dragging) return;
     if (stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId);
     dragging = false;
@@ -153,6 +235,7 @@
   }
 
   function ontouchstart(e: TouchEvent) {
+    if (deepZoom) return;
     if (e.touches.length === 2) {
       const first = touchPoint(e.touches[0]);
       const second = touchPoint(e.touches[1]);
@@ -179,6 +262,7 @@
   }
 
   function ontouchmove(e: TouchEvent) {
+    if (deepZoom) return;
     if (e.touches.length === 2 && pinchStart) {
       const first = touchPoint(e.touches[0]);
       const second = touchPoint(e.touches[1]);
@@ -186,6 +270,7 @@
         pinchStart.scale,
         pinchStart.distance,
         touchDistance(first, second),
+        maximumScale(),
       );
       pan = constrainedPan(
         panForPinch(
@@ -214,6 +299,7 @@
   }
 
   function ontouchend(e: TouchEvent) {
+    if (deepZoom) return;
     if (pinchStart) {
       pinchStart = null;
       touchStart = null;
@@ -310,7 +396,9 @@
             resetView();
           }}
         >
-          <span aria-hidden="true">{Math.round(scale * 100)}%</span>
+          <span aria-hidden="true">
+            {Math.round((deepZoom ? deepZoomScale : scale) * 100)}%
+          </span>
           <span lang="cs" class="sr-only">Obnovit přiblížení</span>
           <span lang="en" class="sr-only">Reset zoom</span>
         </button>
@@ -348,7 +436,11 @@
         bind:clientWidth={stageWidth}
         bind:clientHeight={stageHeight}
         class="relative flex min-h-0 w-full flex-1 touch-none items-center justify-center overflow-hidden"
-        style:cursor={scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default'}
+        style:cursor={!deepZoom && scale > 1
+          ? dragging
+            ? 'grabbing'
+            : 'grab'
+          : 'default'}
         {onwheel}
         {onpointerdown}
         {onpointermove}
@@ -359,15 +451,19 @@
         {ontouchend}
         ontouchcancel={resetTouchGesture}
       >
-        <img
-          bind:this={image}
-          src={lightboxSrc}
-          alt=""
-          draggable="false"
-          class="max-h-full max-w-full object-contain select-none"
-          style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
-          onload={() => (pan = constrainedPan(pan))}
-        />
+        {#if deepZoom}
+          <div bind:this={deepZoomElement} class="h-full w-full"></div>
+        {:else}
+          <img
+            bind:this={image}
+            src={lightboxSrc}
+            alt=""
+            draggable="false"
+            class="max-h-full max-w-full object-contain select-none"
+            style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
+            onload={() => (pan = constrainedPan(pan))}
+          />
+        {/if}
       </div>
       {#if hasCaption(images[index])}
         <figcaption class="mt-4 w-full max-w-2xl text-white">
