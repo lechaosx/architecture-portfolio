@@ -5,7 +5,7 @@ year: 2025
 location_cs: Kyjov, Česká republika
 location_en: Kyjov, Czech Republic
 draft: false
-cover: /uploads/09 AXO s.webp
+cover: /uploads/09 AXO 2+.webp
 gallery:
   - image: /uploads/04 SWOT - cyklostezky.png
     title_cs: Analýza cyklo dopravy
