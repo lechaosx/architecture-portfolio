@@ -191,6 +191,31 @@ gallery:
       and functionally connecting the two areas while maintaining a subtle
       boundary between them.
   - image: /uploads/04 Půdorys park.png
+    title_cs: Půdorys parku
+    title_en: Park Plan
+    description_cs: Návrh proměňuje park z převážně průchozí zelené plochy v
+      plnohodnotný pobytový a společenský prostor. Stávající síť cest je
+      doplněna o místa, která vytvářejí důvody k zastavení a podporují různorodé
+      způsoby využití parku. V jeho centrální části vzniká nový shromažďovací
+      prostor, který může sloužit pro setkávání, odpočinek i menší společenské
+      aktivity. Park dále doplňuje amfiteátr, veřejná grilovací místa a altán,
+      které rozšiřují možnosti trávení volného času. Významným přírodním prvkem
+      návrhu je nový meandr řeky Kyjovky, který řeku více zapojuje do struktury
+      parku a posiluje jeho rekreační a krajinný charakter. Park se tak stává
+      místem, kterým se pouze neprochází, ale prostorem pro setkávání, odpočinek
+      a trávení času, propojeným s navazujícím sportovním areálem.
+    description_en: The proposal transforms the park from a primarily transitional
+      green space into a fully functional recreational and social space. The
+      existing path network is complemented by new places that encourage
+      visitors to stop, meet and spend time in the park. A new gathering space
+      forms its central social point, providing a place for meetings, relaxation
+      and smaller community activities. The park is further enriched by an
+      amphitheatre, public barbecue areas and a pavilion, offering a wider range
+      of leisure activities. An important natural element is the new meander of
+      the Kyjovka River, integrating the river more closely into the park and
+      strengthening its recreational and landscape character. The park thus
+      becomes not merely a place to pass through, but a space for meeting,
+      relaxation and leisure, directly connected to the adjacent sports complex.
   - image: /uploads/07 Urbanistický detail + ŘEZ.png
 body_cs: |-
   Soukromá rezidence zasazená do jižního svahu, uspořádaná kolem sledu
