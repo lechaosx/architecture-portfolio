@@ -15,6 +15,10 @@ export interface Size {
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 
+function clampScale(scale: number) {
+  return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+}
+
 export function hasCaption(image: GalleryImage) {
   return [
     image.title_cs,
@@ -25,10 +29,7 @@ export function hasCaption(image: GalleryImage) {
 }
 
 export function scaleFromWheel(scale: number, deltaY: number) {
-  return Math.min(
-    MAX_SCALE,
-    Math.max(MIN_SCALE, scale * Math.exp(-deltaY * 0.002)),
-  );
+  return clampScale(scale * Math.exp(-deltaY * 0.002));
 }
 
 export function panForZoom(
@@ -41,6 +42,30 @@ export function panForZoom(
   return {
     x: pointerFromCenter.x - ratio * (pointerFromCenter.x - pan.x),
     y: pointerFromCenter.y - ratio * (pointerFromCenter.y - pan.y),
+  };
+}
+
+export function scaleFromPinch(
+  scale: number,
+  startDistance: number,
+  distance: number,
+) {
+  return startDistance > 0
+    ? clampScale(scale * (distance / startDistance))
+    : scale;
+}
+
+export function panForPinch(
+  pan: Point,
+  scale: number,
+  nextScale: number,
+  startCenter: Point,
+  center: Point,
+): Point {
+  const ratio = nextScale / scale;
+  return {
+    x: center.x - ratio * (startCenter.x - pan.x),
+    y: center.y - ratio * (startCenter.y - pan.y),
   };
 }
 
