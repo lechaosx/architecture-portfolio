@@ -38,7 +38,8 @@ gallery:
       seating, secure bicycle parking, basic service facilities and e-bike
       charging.
   - image: /uploads/03 SWOT - život v Kyjově.png
-    title_cs: Analýza společenského vyžití v Kyjově
+    title_cs: Život ve městě
+    title_en: Life at the city
     description_cs: "Analýza života v Kyjově sleduje aktivity, které nejvýrazněji
       formují společenský život města, a místa, kde se koncentrují. Významnou
       roli zde hraje především sport – zejména fotbal a basketbal, který
