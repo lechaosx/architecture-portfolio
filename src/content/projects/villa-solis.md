@@ -217,6 +217,35 @@ gallery:
       becomes not merely a place to pass through, but a space for meeting,
       relaxation and leisure, directly connected to the adjacent sports complex.
   - image: /uploads/07 Urbanistický detail + ŘEZ.png
+    title_cs: Urbanistický detail
+    title_en: Urban Detail
+    description_cs: Urbanistický detail představuje řešení hlavního vstupního
+      prostoru sportovního areálu, jeho materiálové členění, mobiliář a
+      návaznost jednotlivých funkcí. Kombinace zpevněných a polopropustných
+      povrchů vymezuje hlavní pěší trasy a pobytové plochy, které jsou doplněny
+      zelení, venkovním mobiliářem a stojany na kola. Součástí areálu vzniká
+      nové fitness centrum, zatímco stávající kuželkárna je zachována a doplněna
+      bistrem sloužícím návštěvníkům areálu, místním obyvatelům i turistům.
+      Bistro se prostřednictvím venkovní zahrádky otevírá přímo do veřejného
+      prostoru a propojuje sportoviště s navazujícím dětským hřištěm. Vstupní
+      část se tak stává nejen komunikačním bodem, ale také místem setkávání a
+      každodenního života areálu. Přiložený řez doplňuje půdorysné řešení a
+      znázorňuje výškové vztahy mezi objekty, veřejným prostorem a okolním
+      terénem.
+    description_en: The urban detail presents the design of the main entrance to the
+      sports complex, its material treatment, outdoor furniture and connections
+      between individual functions. A combination of paved and semi-permeable
+      surfaces defines the main pedestrian routes and public spaces,
+      complemented by greenery, seating and bicycle stands. A new fitness centre
+      is introduced within the complex, while the existing bowling facility is
+      retained and complemented by a bistro serving athletes, local residents,
+      visitors and cyclists. The bistro opens directly into the public space
+      through an outdoor seating area, creating a connection between the sports
+      facilities and the adjacent children’s playground. The entrance area thus
+      becomes not only a point of access but also a place for meeting and
+      everyday social activity. The accompanying section illustrates the height
+      relationships between the buildings, public space and surrounding terrain,
+      complementing the spatial arrangement shown in the plan.
 body_cs: |-
   Soukromá rezidence zasazená do jižního svahu, uspořádaná kolem sledu
   zastíněných átrií. Místní kámen a vápenná omítka drží paletu v klidu, hluboké
