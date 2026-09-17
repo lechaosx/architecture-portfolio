@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  deepZoomLevels,
+  deepZoomOverlap,
   derivativeWidths,
   imageCacheKey,
   shouldPublishDerivative,
@@ -63,5 +65,20 @@ describe('deep zoom eligibility', () => {
     expect(shouldGenerateDeepZoom(4096, 3000)).toBe(false);
     expect(shouldGenerateDeepZoom(4097, 3000)).toBe(true);
     expect(shouldGenerateDeepZoom(3000, 4097)).toBe(true);
+  });
+
+  test('describes every DZI level at its exact rounded dimensions', () => {
+    const levels = deepZoomLevels(4972, 3000);
+
+    expect(levels.at(-1)).toEqual({ level: 13, width: 4972, height: 3000 });
+    expect(levels.at(-2)).toEqual({ level: 12, width: 2486, height: 1500 });
+    expect(levels.at(-3)).toEqual({ level: 11, width: 1243, height: 750 });
+    expect(levels.at(-4)).toEqual({ level: 10, width: 622, height: 375 });
+    expect(levels[0]).toEqual({ level: 0, width: 1, height: 1 });
+  });
+
+  test('keeps lossy tile boundaries one codec macroblock outside the visible core', () => {
+    expect(deepZoomOverlap(true)).toBe(1);
+    expect(deepZoomOverlap(false)).toBe(16);
   });
 });

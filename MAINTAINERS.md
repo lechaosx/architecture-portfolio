@@ -107,8 +107,11 @@ reused from `node_modules/.astro/images`; `bun run images` reports their generat
 and reused counts. Widths above the source resolution are never generated. The
 pipeline auto-orients derivatives and normalizes them to sRGB. PNG and
 alpha-bearing inputs use lossless WebP; other raster inputs use high-quality
-lossy WebP. The deploy workflow's Astro action persists the cache between CI
-runs. Cache loss only makes the next build slower—it does not change its output.
+lossy WebP. Pyramid levels are Lanczos-resized directly from the original rather
+than recursively reduced. Lossless tiles overlap by 1 px; lossy tiles overlap by
+16 px so WebP boundary filtering does not reach their visible cores. The deploy
+workflow's Astro action persists the cache between CI runs. Cache loss only
+makes the next build slower—it does not change its output.
 
 ### Change the content schema — update BOTH places
 

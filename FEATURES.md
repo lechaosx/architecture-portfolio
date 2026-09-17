@@ -269,6 +269,9 @@ smaller than the original.
 Transparent and PNG previews preserve lossless detail, while photographic
 previews use conservative high-quality compression. Camera orientation and web
 colour are normalized in previews without changing the uploaded original.
+Every tiled resolution level uses the same line-preserving Lanczos resampling
+as a full-image preview. Tile overlaps keep sampling and lossy-compression edges
+outside the visible tile boundaries.
 
 ### Lightbox inspection controls — [Explicit]
 
