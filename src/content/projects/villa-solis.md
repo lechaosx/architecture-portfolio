@@ -130,6 +130,36 @@ gallery:
       area within the central part of Kyjov, whose location and connections to
       surrounding functions provide strong potential for further development.
   - image: /uploads/02 Problémová mapa -.png
+    title_cs: Limity území
+    title_en: Limitations of the Area
+    description_cs: Analýza identifikuje hlavní prostorové a provozní nedostatky
+      území a jeho okolí. Zásadním problémem je především vizuální i fyzická
+      uzavřenost sportovního areálu, který není dostatečně propojen s okolní
+      městskou strukturou. Vstupy nejsou jednoznačně definovány a areál zvenčí
+      působí spíše jako uzavřený či zanedbaný prostor, který k návštěvě neláká.
+      Také přilehlý městský park funguje převážně jako průchozí zelený koridor –
+      chybějí zde pobytová místa, možnosti setkávání i důvody k delšímu
+      zastavení. Negativně se uplatňují také vizuální vazby na průmyslové
+      výškové objekty, které narušují některé hodnotné pohledové osy města.
+      Další ztrátou je zaniklý amfiteátr a tenisové kurty. Přestože je prostor
+      amfiteátru řešen novou studií, jeho okolí je navrženo také pro bydlení,
+      což může do budoucna vytvářet konflikt mezi obytnou funkcí a hlukově
+      náročnějšími kulturními aktivitami, jako jsou letní kina či folklorní
+      akce.
+    description_en: The analysis identifies the main spatial and functional
+      limitations of the site and its surroundings. A key issue is the visual
+      and physical isolation of the sports complex, which lacks clear
+      connections to the surrounding urban structure. Its entrances are poorly
+      defined and the area appears closed and neglected rather than inviting.
+      The adjacent municipal park functions mainly as a green passage, lacking
+      places to gather, rest or spend longer periods of time. The character of
+      the area is also negatively affected by views towards industrial high-rise
+      structures, which disrupt several otherwise valuable visual axes. Another
+      loss is the former amphitheatre and tennis courts. Although the
+      amphitheatre is being addressed by a new development study, the proposed
+      residential buildings nearby may create future conflicts between housing
+      and noise-intensive cultural activities, including open-air cinema and
+      traditional folklore events.
   - image: /uploads/03 Situace areálu.png
   - image: /uploads/04 Půdorys park.png
   - image: /uploads/07 Urbanistický detail + ŘEZ.png
