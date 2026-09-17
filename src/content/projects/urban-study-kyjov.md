@@ -273,24 +273,70 @@ gallery:
   - image: /uploads/IMG_20250515_134436.jpg
     title_cs: Model
     title_en: Model
-body_cs: |-
-  Soukromá rezidence zasazená do jižního svahu, uspořádaná kolem sledu
-  zastíněných átrií. Místní kámen a vápenná omítka drží paletu v klidu, hluboké
-  přesahy střechy mírní letní slunce.
+body_cs: >-
+  Projekt se zabývá **revitalizací sportovního areálu a navazujícího městského
+  parku v Kyjově**. Jeho hlavním cílem je proměnit dnes poměrně uzavřený a od
+  okolí oddělený areál v otevřenou součást města, která propojuje **sport,
+  rekreaci, kulturu a každodenní život obyvatel**. Návrh vychází z analýzy
+  života ve městě, sportovní vybavenosti, cyklodopravy i prostorových hodnot a
+  nedostatků území.
 
-  Půdorys se obtáčí kolem stávajícího olivového háje, zachovává každý strom
-  a rámuje jezero v dáli.
+
+  Sportovní areál se otevírá směrem k městu a získává nové, jasně definované
+  vstupy a vazby na přilehlý park. Stávající sportovní funkce jsou zachovány a
+  doplněny o **multifunkční hřiště, tenis, venkovní squash, parkour, workout a
+  fitness centrum**. Nová tribuna poskytuje odpovídající zázemí sportovcům i
+  návštěvníkům a její přesunutí umožňuje efektivnější využití celého areálu.
+  Přirozeně stoupající terén je využit pro vytvoření **běžeckého okruhu se
+  stoupáním**, který rozšiřuje možnosti tréninku.
+
+
+  Stejně důležitou součástí návrhu je proměna městského parku z převážně
+  průchozí zelené plochy v **pobytový a společenský prostor**. Vzniká zde nový
+  amfiteátr, shromažďovací prostor, veřejný gril, altán a meandr řeky Kyjovky.
+  Park a sportoviště propojuje dětské hřiště fungující jako přirozený prostorový
+  filtr. Bistro s venkovní zahrádkou, cyklistické zázemí a další pobytové funkce
+  podporují využití území nejen sportovci, ale také místními obyvateli a
+  návštěvníky města.
+
+
+  Výsledkem je **propojený sportovně-rekreační celek**, který využívá existující
+  potenciál místa, rozšiřuje nabídku aktivit a vrací rozsáhlé území do
+  každodenního života Kyjova.
 body_en: >-
-  A private residence set into a south-facing slope, organised around a sequence
-
-  of shaded courtyards. Local stone and lime plaster keep the palette quiet,
-  while
-
-  deep overhangs temper the summer sun.
+  ### Sports Complex and Municipal Park | Kyjov
 
 
-  The plan folds around an existing olive grove, preserving every tree and
-  framing
+  The project focuses on the **revitalisation of the sports complex and the
+  adjacent municipal park in Kyjov**. Its main objective is to transform the
+  currently enclosed and disconnected area into an open part of the town,
+  bringing together **sport, recreation, culture and everyday urban life**. The
+  proposal is based on an analysis of local activities, sports facilities,
+  cycling infrastructure, as well as the existing qualities and limitations of
+  the site.
 
-  the lake beyond.
+
+  The sports complex opens towards the town through clearly defined entrances
+  and new connections to the adjacent park. Existing sports functions are
+  preserved and complemented by a **multifunctional court, tennis, outdoor
+  squash, parkour, workout facilities and a fitness centre**. A new grandstand
+  provides improved facilities for athletes and visitors, while its relocation
+  allows for more efficient use of the entire site. The naturally rising terrain
+  is incorporated into an **uphill running route**, expanding the range of
+  training opportunities.
+
+
+  Equally important is the transformation of the municipal park from a primarily
+  transitional green space into a **recreational and social destination**. A new
+  amphitheatre, gathering space, public barbecue area, pavilion and a new
+  meander of the Kyjovka River create opportunities for people to meet, relax
+  and spend time outdoors. A children’s playground forms a natural spatial
+  filter between the park and the sports grounds, while the bistro, cycling
+  facilities and other amenities encourage use by athletes, local residents and
+  visitors alike.
+
+
+  The result is an **interconnected sports and recreational complex** that
+  builds on the existing potential of the site, broadens the range of activities
+  and brings this extensive area back into the everyday life of Kyjov.
 ---
