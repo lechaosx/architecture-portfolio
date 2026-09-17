@@ -10,3 +10,17 @@ export function imageCacheKey(
     .update(JSON.stringify(recipe))
     .digest('hex');
 }
+
+export function derivativeWidths(
+  sourceWidth: number,
+  widths: readonly number[],
+) {
+  return widths.filter((width) => width < sourceWidth);
+}
+
+export function shouldPublishDerivative(
+  sourceBytes: number,
+  derivativeBytes: number,
+) {
+  return derivativeBytes < sourceBytes;
+}

@@ -5,11 +5,18 @@ import {
   readFile,
   readdir,
   rm,
+  stat,
+  writeFile,
 } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import sharp from 'sharp';
 import { GENERATED_IMAGE_WIDTHS } from '../src/images';
-import { imageCacheKey } from './image-cache';
+import type { ImageManifest, ImageVariant } from '../src/images';
+import {
+  derivativeWidths,
+  imageCacheKey,
+  shouldPublishDerivative,
+} from './image-cache';
 
 const sourceDirectory = resolve('public/uploads');
 const contentDirectory = resolve('src/content');
@@ -50,40 +57,102 @@ async function referencedImages() {
     }
   }
 
-  return [...paths];
+  return [...paths].sort();
 }
 
 await rm(outputDirectory, { recursive: true, force: true });
 
 let generated = 0;
 let reused = 0;
+let omitted = 0;
+const manifest: ImageManifest = { version: 1, images: {} };
 
 for (const sourcePath of await referencedImages()) {
   const relativePath = relative(sourceDirectory, sourcePath);
-  const cacheKey = imageCacheKey(await readFile(sourcePath), recipe);
+  const source = await readFile(sourcePath);
+  const sourceMetadata = await sharp(sourcePath, {
+    limitInputPixels: false,
+  }).metadata();
+  if (!sourceMetadata.width || !sourceMetadata.height || !sourceMetadata.format) {
+    throw new Error(`Could not read image metadata: ${sourcePath}`);
+  }
+  const cacheKey = imageCacheKey(source, recipe);
+  const sourceUrl = `/uploads/${relativePath
+    .split(sep)
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')}`;
+  const variants: ImageVariant[] = [];
 
-  for (const width of GENERATED_IMAGE_WIDTHS) {
-    const outputPath = join(outputDirectory, `${relativePath}.${width}.webp`);
+  for (const width of derivativeWidths(
+    sourceMetadata.width,
+    GENERATED_IMAGE_WIDTHS,
+  )) {
+    const outputPath = join(outputDirectory, cacheKey, `${width}.webp`);
     const cachePath = join(cacheDirectory, cacheKey, `${width}.webp`);
-    await mkdir(dirname(outputPath), { recursive: true });
+    let variant: ImageVariant;
 
     try {
       await access(cachePath);
+      const [metadata, file] = await Promise.all([
+        sharp(cachePath).metadata(),
+        stat(cachePath),
+      ]);
+      if (!metadata.width || !metadata.height || !metadata.format) {
+        throw new Error(`Could not read cached image metadata: ${cachePath}`);
+      }
+      variant = {
+        url: `/_responsive/${cacheKey}/${width}.webp`,
+        width: metadata.width,
+        height: metadata.height,
+        bytes: file.size,
+        format: metadata.format,
+      };
       reused += 1;
     } catch {
       await mkdir(dirname(cachePath), { recursive: true });
-      await sharp(sourcePath, { limitInputPixels: false })
+      const result = await sharp(sourcePath, { limitInputPixels: false })
         .gamma(recipe.gamma)
         .resize({ width, kernel: recipe.kernel })
         .webp({ lossless: recipe.lossless, effort: recipe.effort })
         .toFile(cachePath);
+      variant = {
+        url: `/_responsive/${cacheKey}/${width}.webp`,
+        width: result.width,
+        height: result.height,
+        bytes: result.size,
+        format: result.format,
+      };
       generated += 1;
     }
 
+    if (!shouldPublishDerivative(source.byteLength, variant.bytes)) {
+      omitted += 1;
+      continue;
+    }
+
+    await mkdir(dirname(outputPath), { recursive: true });
     await copyFile(cachePath, outputPath);
+    variants.push(variant);
   }
+
+  manifest.images[`/uploads/${relativePath.split(sep).join('/')}`] = {
+    source: {
+      url: sourceUrl,
+      width: sourceMetadata.width,
+      height: sourceMetadata.height,
+      bytes: source.byteLength,
+      format: sourceMetadata.format,
+    },
+    variants,
+  };
 }
 
+await mkdir(outputDirectory, { recursive: true });
+await writeFile(
+  join(outputDirectory, 'manifest.json'),
+  `${JSON.stringify(manifest, null, 2)}\n`,
+);
+
 console.log(
-  `Responsive images: ${generated} generated, ${reused} reused from cache.`,
+  `Responsive images: ${generated} generated, ${reused} reused, ${omitted} omitted because they were not smaller than their sources.`,
 );

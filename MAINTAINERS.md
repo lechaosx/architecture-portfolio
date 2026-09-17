@@ -35,6 +35,7 @@ tsconfig.json                 extends astro/tsconfigs/strict
 
 src/
   images.ts                    responsive derivative URL/srcset contract
+  server-images.ts             reads the generated image manifest during builds
   content.config.ts           projects collection schema (Zod); bilingual fields
   i18n.ts                      baked-in UI labels ({cs, en} dictionary)
   content/projects/*.md        one file per project (text in _cs/_en frontmatter)
@@ -58,7 +59,7 @@ src/
 
 public/
   uploads/                     original CMS image uploads
-  _responsive/                generated display derivatives (gitignored)
+  _responsive/                generated derivatives + manifest (gitignored)
   favicon.svg
   CNAME                        the custom domain (committed, copied to dist/)
 
@@ -98,9 +99,10 @@ Raster uploads referenced by content are converted automatically before `dev`
 and `build`; do not commit `public/_responsive`. Reduced image surfaces use the
 generated variants, while the lightbox uses the original upload. Encoded files
 are reused from `node_modules/.astro/images`; `bun run images` reports how many
-variants were generated and how many came from that cache. The deploy workflow's
-Astro action persists this directory between CI runs. Cache loss only makes the
-next build slower—it does not change its output.
+variants were generated, reused, or omitted because they were not smaller than
+the source. Widths at or above the source resolution are never generated. The
+deploy workflow's Astro action persists the cache between CI runs. Cache loss
+only makes the next build slower—it does not change its output.
 
 ### Change the content schema — update BOTH places
 
