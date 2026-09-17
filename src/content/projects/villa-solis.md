@@ -10,35 +10,66 @@ gallery:
   - image: /uploads/04 SWOT - cyklostezky.png
     title_cs: Analýza cyklo dopravy
     title_en: Cycling Transport Analysis
-    description_cs: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce
-      sed viverra tortor. Maecenas ut leo tempor est convallis consequat aliquet
-      nec nisi. Etiam non pretium felis. Nulla convallis bibendum massa, ac
-      tempor felis congue sit amet. Sed imperdiet dolor ex, vitae feugiat justo
-      luctus vitae. In at rutrum nisl. Nullam ultrices tempus velit et accumsan.
-      Suspendisse orci velit, malesuada et fringilla vel, pellentesque id ante.
-    description_en: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce
-      sed viverra tortor. Maecenas ut leo tempor est convallis consequat aliquet
-      nec nisi. Etiam non pretium felis. Nulla convallis bibendum massa, ac
-      tempor felis congue sit amet. Sed imperdiet dolor ex, vitae feugiat justo
-      luctus vitae. In at rutrum nisl. Nullam ultrices tempus velit et accumsan.
-      Suspendisse orci velit, malesuada et fringilla vel, pellentesque id ante.
-  - image: /uploads/04 SWOT - cyklostezky+.png
-    title_cs: Analýza cyklo dopravy
-    title_en: Cycling Transport Analysis
-    description_cs: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce
-      sed viverra tortor. Maecenas ut leo tempor est convallis consequat aliquet
-      nec nisi. Etiam non pretium felis. Nulla convallis bibendum massa, ac
-      tempor felis congue sit amet. Sed imperdiet dolor ex, vitae feugiat justo
-      luctus vitae. In at rutrum nisl. Nullam ultrices tempus velit et accumsan.
-      Suspendisse orci velit, malesuada et fringilla vel, pellentesque id ante.
-    description_en: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce
-      sed viverra tortor. Maecenas ut leo tempor est convallis consequat aliquet
-      nec nisi. Etiam non pretium felis. Nulla convallis bibendum massa, ac
-      tempor felis congue sit amet. Sed imperdiet dolor ex, vitae feugiat justo
-      luctus vitae. In at rutrum nisl. Nullam ultrices tempus velit et accumsan.
-      Suspendisse orci velit, malesuada et fringilla vel, pellentesque id ante.
+    description_cs: Analýza cyklodopravy se zaměřuje na hlavní cyklistické trasy
+      procházející Kyjovem, jejich směrování a návaznost na okolní krajinu.
+      Město se nachází na průsečíku tří významných tras – EuroVelo 4 – Trasy
+      střední Evropou, Moravské vinné stezky a Kyjovské vinařské stezky. Díky
+      jejich vysoké návštěvnosti projíždí Kyjovem každoročně velké množství
+      cyklistů, což představuje potenciál nejen pro rozvoj cyklodopravy, ale
+      také cestovního ruchu a místní ekonomiky. Vytvoření atraktivních
+      zastávkových bodů může cyklisty motivovat k delšímu pobytu ve městě a
+      využití místních služeb. V bezprostřední blízkosti řešeného území
+      procházejí všechny tři zmíněné trasy, a nabízí se proto jejich přímé
+      propojení s návrhem. Sportovní areál navazující na městský park je
+      přirozeným místem pro vznik odpočinkového bodu s posezením, bezpečným
+      odstavením kol, základním servisem a možností dobíjení elektrokol.
+    description_en: The cycling analysis focuses on the main cycling routes passing
+      through Kyjov, their directions and connections to the surrounding
+      landscape. The town lies at the intersection of three important routes –
+      EuroVelo 4 – Central Europe Route, the Moravian Wine Trail and the Kyjov
+      Wine Trail. Their popularity brings a significant number of cyclists
+      through Kyjov every year, creating potential not only for cycling
+      infrastructure but also for tourism and the local economy. Creating
+      attractive stopping points can encourage cyclists to spend more time in
+      the town and use local services. All three routes pass in the immediate
+      vicinity of the project area, offering an opportunity to integrate cycling
+      infrastructure directly into the proposal. The sports complex connected to
+      the municipal park provides a natural location for a rest point with
+      seating, secure bicycle parking, basic service facilities and e-bike
+      charging.
   - image: /uploads/03 SWOT - život v Kyjově.png
     title_cs: Analýza společenského vyžití v Kyjově
+    description_cs: "Analýza života v Kyjově sleduje aktivity, které nejvýrazněji
+      formují společenský život města, a místa, kde se koncentrují. Významnou
+      roli zde hraje především sport – zejména fotbal a basketbal, který
+      doplňuje silná kulturní scéna zastoupená hudbou, tancem, výstavami, trhy,
+      divadlem či filmem. Jednotlivá centra těchto aktivit vytvářejí síť
+      prostupující městem: 1. Vlastivědné muzeum Kyjov, 2. Městský úřad, 3. Dům
+      kultury, 4. Městský stadion, 5. Masarykovo náměstí, 6. Letní kino –
+      amfiteátr, 7. kostel Nanebevzetí Panny Marie, 8. náměstí Hrdinů, 9.
+      Městský park, 10. Kino Panorama, 11. Aquapark, 12. Městská knihovna, 13.
+      Kyjovský pivovar a 14. Základní umělecká škola. Mapa zároveň ukazuje
+      výraznou koncentraci kulturního a sportovního života právě v okolí
+      řešeného území. To zahrnuje městský stadion a přímo navazuje na park i
+      další veřejná a rekreační místa. Z analýzy tak vyplývá, že sport je jedním
+      z důležitých hybatelů života a identity Kyjova a zaslouží si kvalitní,
+      reprezentativní a otevřený prostor pro svůj další rozvoj."
+    description_en: "The analysis of life in Kyjov focuses on the activities that
+      most strongly shape the town’s social life and the places where they are
+      concentrated. Sport – particularly football and basketball – plays a major
+      role, complemented by a strong cultural scene including music, dance,
+      exhibitions, markets, theatre and film. The main centres of activity form
+      a network throughout the town: 1. Kyjov Regional Museum, 2. Kyjov Town
+      Hall, 3. House of Culture, 4. Municipal Stadium, 5. Masaryk Square, 6.
+      Open-Air Cinema and Amphitheatre, 7. Church of the Assumption of the
+      Virgin Mary, 8. Hrdinů Square, 9. Municipal Park, 10. Panorama Cinema, 11.
+      Aquapark, 12. Municipal Library, 13. Kyjov Brewery and 14. Elementary Art
+      School. The map also reveals a significant concentration of cultural and
+      sporting activities around the project area, which includes the municipal
+      stadium and directly connects to the park and other public and
+      recreational spaces. The analysis therefore identifies sport as one of the
+      key drivers of life and identity in Kyjov, deserving a high-quality,
+      representative and open space for its future development."
   - image: /uploads/05 SWOT - Sportoviště.png
   - image: /uploads/01 Problémová mapa +.png
   - image: /uploads/02 Problémová mapa -.png
