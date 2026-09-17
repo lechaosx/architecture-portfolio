@@ -97,13 +97,12 @@ component today (`src/components/Gallery.svelte`).
 (`client:visible`). The only other browser JS is a few tiny first-party vanilla
 scripts (reveal-on-scroll, the home carousel, the language switch) and the
 View-Transitions router — no framework runtime ships beyond the lightbox.
-Its wheel zoom and mouse panning are local transforms constrained to the image
-stage. Desktop side gutters keep that transformed stage separate from the
-navigation controls. Touch handling applies two-finger scale and midpoint
-movement to the same constrained transform. A remaining finger continues as a
-pan when zoomed; at the base scale, a completed one-finger horizontal gesture
-navigates between images instead. The stage disables native touch gestures so
-the browser does not zoom the whole page during image inspection.
+Images up to 4096 px use local transforms constrained to the image stage;
+larger images lazy-load OpenSeadragon as a separate chunk and use its tiled
+canvas. Desktop side gutters keep either stage separate from the navigation
+controls. Both paths support pointer-centred wheel zoom, touch pinch and pan,
+and constrain maximum zoom to native image detail. At the base scale, a
+completed one-finger horizontal gesture navigates between images instead.
 
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 
@@ -256,24 +255,41 @@ resizes as WebP files in the ignored `public/_responsive` directory. Derivatives
 are auto-oriented, converted to the web sRGB colour space, and stripped of
 metadata. PNG and alpha-bearing sources remain lossless; already-lossy sources
 use high-quality lossy WebP. The original upload is never modified. The pipeline
-probes each source first, generates only widths below its orientation-aware
-width, and publishes a derivative only when its file is smaller than the
-original. A generated manifest records the dimensions, byte size, format, and
-content-addressed URL of every available representation.
+probes each source first, generates widths up to and including its
+orientation-aware native width, and publishes a full-image derivative only when
+its file is smaller than the original. A generated manifest records the
+dimensions, byte size, format, and content-addressed URL of every available
+representation.
 
 Reduced display surfaces build `srcset` from that manifest and provide accurate
 `sizes` hints, avoiding severe browser downsampling of detailed architectural
 linework without assuming every configured size exists. The untouched original
-is the final, highest-resolution candidate. SVGs bypass the derivative pipeline.
-The full-screen lightbox selects the smallest representation that covers the
-contained image width at the current zoom and device-pixel ratio. It upgrades as
-the visitor zooms and falls back to the original `/uploads/…` source beyond the
-largest derivative. A direct original-image link remains available independently
-of that selection.
+is replaced as the terminal browser candidate by a smaller processed
+native-resolution derivative whenever one is available. It remains the terminal
+candidate only when processing cannot reduce its byte size. SVGs bypass the
+derivative pipeline. A direct original-image link remains available independently
+of browser display selection.
+
+### Large gallery images use cached Deep Zoom pyramids — [Explicit]
+
+Referenced rasters whose longest oriented side exceeds 4096 px receive a DZI
+pyramid of 512 px WebP tiles with one pixel of overlap. This boundary avoids
+decoding full bitmaps above roughly 64 MiB of RGBA memory while leaving smaller
+images on the lower-overhead full-image path. OpenSeadragon is dynamically
+imported only when such an image opens. It requests the resolution levels and
+visible regions needed for the current viewport and stops at a 1:1 ratio with
+the finest source level. Smaller images select the least full-image derivative
+that covers their rendered pixels and use the same native-detail zoom limit.
+
+Pyramids use the same lossless-versus-photographic WebP policy as full-image
+derivatives and have their own content-addressed cache keys. Their combined
+files can exceed the original because they contain multiple resolution levels;
+the benefit is bounded browser memory and network transfer for the region being
+viewed, not a smaller aggregate deployment.
 
 ### Image derivatives use a content-addressed build cache — [Explicit]
 
-Encoding results are cached under `node_modules/.astro/images` by a SHA-256 key
+Encoding results are cached under `node_modules/.astro/images` by SHA-256 keys
 derived from the original bytes and the complete transformation recipe,
 including the Sharp and libvips versions. A changed upload or recipe gets a new
 cache entry; unrelated site changes reuse existing entries. Each build clears

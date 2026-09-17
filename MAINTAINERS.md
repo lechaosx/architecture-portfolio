@@ -98,15 +98,17 @@ The four caption fields are optional; omit them to show only the enlarged image.
 Raster uploads referenced by content are converted automatically before `dev`
 and `build`; do not commit `public/_responsive`. Reduced image surfaces use the
 generated variants. The lightbox chooses among them using its rendered size,
-display density, and zoom, then uses the original when no derivative is large
-enough. Encoded files are reused from `node_modules/.astro/images`; `bun run
-images` reports how many variants were generated, reused, or omitted because
-they were not smaller than the source. Widths at or above the source resolution
-are never generated. The pipeline auto-orients derivatives and normalizes them
-to sRGB. PNG and alpha-bearing inputs use lossless WebP; other raster inputs use
-high-quality lossy WebP. The deploy workflow's Astro action persists the cache
-between CI runs. Cache loss only makes the next build slower—it does not change
-its output.
+display density, and zoom. The final full-image candidate is a processed
+native-resolution representation when that is smaller than the original;
+otherwise the original is retained as the efficient fallback. Images whose
+longest side exceeds 4096 px also receive 512 px DZI tiles and use a lazily
+loaded OpenSeadragon canvas in the lightbox. Encoded files and pyramids are
+reused from `node_modules/.astro/images`; `bun run images` reports their generated
+and reused counts. Widths above the source resolution are never generated. The
+pipeline auto-orients derivatives and normalizes them to sRGB. PNG and
+alpha-bearing inputs use lossless WebP; other raster inputs use high-quality
+lossy WebP. The deploy workflow's Astro action persists the cache between CI
+runs. Cache loss only makes the next build slower—it does not change its output.
 
 ### Change the content schema — update BOTH places
 

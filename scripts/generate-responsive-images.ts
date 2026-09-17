@@ -1,5 +1,6 @@
 import {
   access,
+  cp,
   copyFile,
   mkdir,
   readFile,
@@ -15,6 +16,7 @@ import type { ImageManifest, ImageVariant } from '../src/images';
 import {
   derivativeWidths,
   imageCacheKey,
+  shouldGenerateDeepZoom,
   shouldPublishDerivative,
   webpPolicy,
 } from './image-cache';
@@ -29,6 +31,17 @@ const recipe = {
   widths: GENERATED_IMAGE_WIDTHS,
   gamma: 2.2,
   kernel: sharp.kernel.lanczos3,
+  format: 'webp',
+  sharp: sharp.versions.sharp,
+  vips: sharp.versions.vips,
+};
+const deepZoomRecipe = {
+  version: 1,
+  minimumLongestSide: 4096,
+  gamma: 2.2,
+  tileSize: 512,
+  overlap: 1,
+  layout: 'dz' as const,
   format: 'webp',
   sharp: sharp.versions.sharp,
   vips: sharp.versions.vips,
@@ -64,7 +77,9 @@ await rm(outputDirectory, { recursive: true, force: true });
 let generated = 0;
 let reused = 0;
 let omitted = 0;
-const manifest: ImageManifest = { version: 1, images: {} };
+let pyramidsGenerated = 0;
+let pyramidsReused = 0;
+const manifest: ImageManifest = { version: 2, images: {} };
 
 for (const sourcePath of await referencedImages()) {
   const relativePath = relative(sourceDirectory, sourcePath);
@@ -140,6 +155,51 @@ for (const sourcePath of await referencedImages()) {
     variants.push(variant);
   }
 
+  let deepZoom: ResponsiveImage['deepZoom'];
+  if (
+    shouldGenerateDeepZoom(sourceDimensions.width, sourceDimensions.height)
+  ) {
+    const deepZoomCacheKey = imageCacheKey(source, {
+      ...deepZoomRecipe,
+      output,
+    });
+    const deepZoomCacheDirectory = join(cacheDirectory, deepZoomCacheKey);
+    const deepZoomCachePath = join(deepZoomCacheDirectory, 'image.dzi');
+    const deepZoomTargetPath = join(deepZoomCacheDirectory, 'image.dz');
+    const deepZoomOutputDirectory = join(outputDirectory, deepZoomCacheKey);
+
+    try {
+      await access(deepZoomCachePath);
+      pyramidsReused += 1;
+    } catch {
+      await rm(deepZoomCacheDirectory, { recursive: true, force: true });
+      await mkdir(deepZoomCacheDirectory, { recursive: true });
+      await sharp(sourcePath, { limitInputPixels: false })
+        .autoOrient()
+        .gamma(deepZoomRecipe.gamma)
+        .webp(output)
+        .tile({
+          size: deepZoomRecipe.tileSize,
+          overlap: deepZoomRecipe.overlap,
+          layout: deepZoomRecipe.layout,
+        })
+        .toFile(deepZoomTargetPath);
+      pyramidsGenerated += 1;
+    }
+
+    await cp(deepZoomCacheDirectory, deepZoomOutputDirectory, {
+      recursive: true,
+    });
+    deepZoom = {
+      url: `/_responsive/${deepZoomCacheKey}/image.dzi`,
+      width: sourceDimensions.width,
+      height: sourceDimensions.height,
+      tileSize: deepZoomRecipe.tileSize,
+      overlap: deepZoomRecipe.overlap,
+      format: deepZoomRecipe.format,
+    };
+  }
+
   manifest.images[`/uploads/${relativePath.split(sep).join('/')}`] = {
     source: {
       url: sourceUrl,
@@ -149,6 +209,7 @@ for (const sourcePath of await referencedImages()) {
       format: sourceMetadata.format,
     },
     variants,
+    deepZoom,
   };
 }
 
@@ -160,4 +221,7 @@ await writeFile(
 
 console.log(
   `Responsive images: ${generated} generated, ${reused} reused, ${omitted} omitted because they were not smaller than their sources.`,
+);
+console.log(
+  `Deep zoom pyramids: ${pyramidsGenerated} generated, ${pyramidsReused} reused.`,
 );

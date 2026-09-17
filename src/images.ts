@@ -15,10 +15,18 @@ export interface ImageVariant {
 export interface ResponsiveImage {
   source: ImageVariant;
   variants: ImageVariant[];
+  deepZoom?: {
+    url: string;
+    width: number;
+    height: number;
+    tileSize: number;
+    overlap: number;
+    format: string;
+  };
 }
 
 export interface ImageManifest {
-  version: 1;
+  version: 2;
   images: Record<string, ResponsiveImage>;
 }
 
@@ -29,10 +37,14 @@ export function responsiveSrcset(
   if (!image) return;
 
   const requestedWidths = new Set(widths);
-  const variants = image.variants.filter((variant) =>
-    requestedWidths.has(variant.width),
+  const terminal =
+    image.variants.find(({ width }) => width === image.source.width) ??
+    image.source;
+  const variants = image.variants.filter(
+    (variant) =>
+      variant.url !== terminal.url && requestedWidths.has(variant.width),
   );
-  variants.push(image.source);
+  variants.push(terminal);
   variants.sort((first, second) => first.width - second.width);
 
   return variants.map((variant) => `${variant.url} ${variant.width}w`).join(', ');

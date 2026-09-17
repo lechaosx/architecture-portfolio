@@ -3,6 +3,7 @@ import {
   derivativeWidths,
   imageCacheKey,
   shouldPublishDerivative,
+  shouldGenerateDeepZoom,
   webpPolicy,
 } from './image-cache';
 
@@ -28,8 +29,10 @@ describe('imageCacheKey', () => {
 });
 
 describe('derivative selection', () => {
-  test('only resamples widths smaller than the source', () => {
-    expect(derivativeWidths(640, [320, 480, 640, 960])).toEqual([320, 480]);
+  test('ends the derivative ladder at the native source width', () => {
+    expect(derivativeWidths(640, [320, 480, 640, 960])).toEqual([
+      320, 480, 640,
+    ]);
   });
 
   test('publishes a derivative only when it is smaller than the source file', () => {
@@ -52,5 +55,13 @@ describe('derivative selection', () => {
       effort: 4,
       preset: 'picture',
     });
+  });
+});
+
+describe('deep zoom eligibility', () => {
+  test('uses pyramids only beyond the full-image preview range', () => {
+    expect(shouldGenerateDeepZoom(4096, 3000)).toBe(false);
+    expect(shouldGenerateDeepZoom(4097, 3000)).toBe(true);
+    expect(shouldGenerateDeepZoom(3000, 4097)).toBe(true);
   });
 });

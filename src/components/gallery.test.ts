@@ -3,6 +3,7 @@ import {
   clampPan,
   hasCaption,
   lightboxImageUrl,
+  nativeZoomScale,
   panForPinch,
   panForZoom,
   scaleFromPinch,
@@ -34,9 +35,9 @@ describe('hasCaption', () => {
 });
 
 describe('lightbox gestures', () => {
-  test('wheel zoom stays between 1x and 5x', () => {
+  test('wheel zoom stays between 1x and the native-detail limit', () => {
     expect(scaleFromWheel(1, -100)).toBeGreaterThan(1);
-    expect(scaleFromWheel(5, -100)).toBe(5);
+    expect(scaleFromWheel(4, -100, 4)).toBe(4);
     expect(scaleFromWheel(1, 100)).toBe(1);
   });
 
@@ -48,8 +49,13 @@ describe('lightbox gestures', () => {
 
   test('pinch zoom follows finger distance and stays within the zoom limits', () => {
     expect(scaleFromPinch(1, 100, 250)).toBe(2.5);
-    expect(scaleFromPinch(4, 100, 200)).toBe(5);
+    expect(scaleFromPinch(3, 100, 200, 4)).toBe(4);
     expect(scaleFromPinch(2, 100, 25)).toBe(1);
+  });
+
+  test('native zoom matches source pixels to physical display pixels', () => {
+    expect(nativeZoomScale(3000, 750, 2)).toBe(2);
+    expect(nativeZoomScale(640, 750, 2)).toBe(1);
   });
 
   test('pinch zoom keeps its starting image point beneath the moving midpoint', () => {
@@ -92,7 +98,7 @@ describe('lightbox image selection', () => {
       bytes: 4_000_000,
       format: 'jpeg',
     },
-    variants: [640, 1280, 2560].map((width) => ({
+    variants: [640, 1280, 2560, 4000].map((width) => ({
       url: `/_responsive/project/${width}.webp`,
       width,
       height: width * 0.75,
@@ -110,9 +116,9 @@ describe('lightbox image selection', () => {
     ).toBe('/_responsive/project/2560.webp');
   });
 
-  test('uses the original when zoom exceeds the largest preview', () => {
+  test('keeps a processed native-resolution image at maximum zoom', () => {
     expect(
-      lightboxImageUrl(responsiveImage, { width: 800, height: 600 }, 4, 1),
-    ).toBe('/uploads/project.jpg');
+      lightboxImageUrl(responsiveImage, { width: 800, height: 600 }, 4, 2),
+    ).toBe('/_responsive/project/4000.webp');
   });
 });

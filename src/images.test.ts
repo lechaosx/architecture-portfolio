@@ -24,12 +24,30 @@ const plan: ResponsiveImage = {
       bytes: 300,
       format: 'webp',
     },
+    {
+      url: '/_responsive/hash/1000.webp',
+      width: 1000,
+      height: 800,
+      bytes: 700,
+      format: 'webp',
+    },
   ],
 };
 
 describe('responsiveSrcset', () => {
-  test('selects requested derivatives and includes the original', () => {
+  test('uses a processed native-resolution derivative as its ceiling', () => {
     expect(responsiveSrcset(plan, [320])).toBe(
+      '/_responsive/hash/320.webp 320w, /_responsive/hash/1000.webp 1000w',
+    );
+  });
+
+  test('uses the original ceiling when native processing is not smaller', () => {
+    expect(
+      responsiveSrcset(
+        { ...plan, variants: plan.variants.filter(({ width }) => width < 1000) },
+        [320],
+      ),
+    ).toBe(
       '/_responsive/hash/320.webp 320w, /uploads/P%C5%AFdorys%201.NP.png 1000w',
     );
   });
