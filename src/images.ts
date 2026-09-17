@@ -1,28 +1,39 @@
-const UPLOAD_PREFIX = '/uploads/';
-const RASTER_EXTENSION = /\.(?:avif|jpe?g|png|webp)$/i;
-
 export const THUMBNAIL_WIDTHS = [320, 480, 640, 960, 1280] as const;
 export const LARGE_IMAGE_WIDTHS = [640, 960, 1280, 1920, 2560] as const;
 export const GENERATED_IMAGE_WIDTHS = [
   320, 480, 640, 960, 1280, 1920, 2560,
 ] as const;
 
-function responsiveVariant(src: string, width: number) {
-  if (!src.startsWith(UPLOAD_PREFIX) || !RASTER_EXTENSION.test(src)) return;
-
-  const relativePath = src.slice(UPLOAD_PREFIX.length);
-  const encodedPath = relativePath
-    .split('/')
-    .map((segment) => encodeURIComponent(segment))
-    .join('/');
-  return `/_responsive/${encodedPath}.${width}.webp`;
+export interface ImageVariant {
+  url: string;
+  width: number;
+  height: number;
+  bytes: number;
+  format: string;
 }
 
-export function responsiveSrcset(src: string, widths: readonly number[]) {
-  const variants = widths.map((width) => {
-    const url = responsiveVariant(src, width);
-    return url && `${url} ${width}w`;
-  });
+export interface ResponsiveImage {
+  source: ImageVariant;
+  variants: ImageVariant[];
+}
 
-  return variants.every(Boolean) ? variants.join(', ') : undefined;
+export interface ImageManifest {
+  version: 1;
+  images: Record<string, ResponsiveImage>;
+}
+
+export function responsiveSrcset(
+  image: ResponsiveImage | undefined,
+  widths: readonly number[],
+) {
+  if (!image) return;
+
+  const requestedWidths = new Set(widths);
+  const variants = image.variants.filter((variant) =>
+    requestedWidths.has(variant.width),
+  );
+  variants.push(image.source);
+  variants.sort((first, second) => first.width - second.width);
+
+  return variants.map((variant) => `${variant.url} ${variant.width}w`).join(', ');
 }

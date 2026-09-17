@@ -6,7 +6,12 @@ import T from '../../components/T.astro';
 import Prose from '../../components/Prose.astro';
 import { frontmatter as site } from '../../content/singletons/site.md';
 import { ui } from '../../i18n';
-import { LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../../images';
+import {
+  LARGE_IMAGE_WIDTHS,
+  responsiveSrcset,
+  THUMBNAIL_WIDTHS,
+} from '../../images';
+import { getResponsiveImage } from '../../server-images';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
@@ -17,6 +22,12 @@ const { project } = Astro.props;
 const d = project.data;
 
 const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
+const responsiveCover = await getResponsiveImage(d.cover);
+const thumbnailSrcsets = await Promise.all(
+  d.gallery.map(async ({ image }) =>
+    responsiveSrcset(await getResponsiveImage(image), THUMBNAIL_WIDTHS),
+  ),
+);
 ---
 
 <Base
@@ -47,7 +58,7 @@ const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
 
     <img
       src={d.cover}
-      srcset={responsiveSrcset(d.cover, LARGE_IMAGE_WIDTHS)}
+      srcset={responsiveSrcset(responsiveCover, LARGE_IMAGE_WIDTHS)}
       sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
       alt={d.title_en}
       class="w-full bg-neutral-100 object-cover"
@@ -60,6 +71,6 @@ const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
       class="prose prose-neutral mt-10 max-w-none dark:prose-invert"
     />
 
-    <Gallery images={d.gallery} client:visible />
+    <Gallery images={d.gallery} {thumbnailSrcsets} client:visible />
   </article>
 </Base>

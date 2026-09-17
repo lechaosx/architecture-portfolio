@@ -253,10 +253,17 @@ file and writes a path, with no import resolution involved.
 Before development or production builds, `scripts/generate-responsive-images.ts`
 finds raster uploads referenced by content and creates gamma-aware Lanczos
 resizes as lossless WebP files in the ignored `public/_responsive` directory.
-Reduced display surfaces provide those variants through `srcset` and accurate
+It probes each source first, generates only widths below the source width, and
+publishes a derivative only when its file is smaller than the original. A
+generated manifest records the dimensions, byte size, format, and
+content-addressed URL of every available representation.
+
+Reduced display surfaces build `srcset` from that manifest and provide accurate
 `sizes` hints, avoiding severe browser downsampling of detailed architectural
-linework. SVGs bypass the derivative pipeline. Full-screen lightbox images keep
-the original `/uploads/…` source so zooming never depends on a reduced asset.
+linework without assuming every configured size exists. The untouched original
+is the final, highest-resolution candidate. SVGs bypass the derivative pipeline.
+Full-screen lightbox images keep the original `/uploads/…` source so zooming
+never depends on a reduced asset.
 
 ### Image derivatives use a content-addressed build cache — [Explicit]
 
@@ -265,9 +272,10 @@ derived from the original bytes and the complete transformation recipe,
 including the Sharp and libvips versions. A changed upload or recipe gets a new
 cache entry; unrelated site changes reuse existing entries. Each build clears
 and rematerializes `public/_responsive` from the cache so removed content is not
-deployed. The official Astro GitHub Action persists `node_modules/.astro`
-between builds; a missing or evicted cache remains safe because the same build
-recreates it from the originals.
+deployed. Public derivative URLs contain the cache key, so a changed source or
+recipe cannot reuse a stale browser response. The official Astro GitHub Action
+persists `node_modules/.astro` between builds; a missing or evicted cache remains
+safe because the same build recreates it from the originals.
 
 ### Project gallery items are caption records — [Implicit]
 

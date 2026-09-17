@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import { frontmatter as home } from '../content/singletons/home.md';
 import { LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../images';
+import { getResponsiveImage } from '../server-images';
 
 const curated: string[] = home.gallery ?? [];
 const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
@@ -12,6 +13,9 @@ const images =
         p.data.cover,
         ...p.data.gallery.map((image) => image.image),
       ]);
+const displayImages = await Promise.all(
+  images.map(async (src) => ({ src, responsive: await getResponsiveImage(src) })),
+);
 ---
 
 {
@@ -27,7 +31,7 @@ const images =
           data-carousel-track
           class="no-scrollbar flex aspect-[16/9] snap-x snap-mandatory overflow-x-auto"
         >
-          {images.map((src, i) => (
+          {displayImages.map(({ src, responsive }, i) => (
             <div
               data-slide
               role="group"
@@ -37,7 +41,7 @@ const images =
             >
               <img
                 src={src}
-                srcset={responsiveSrcset(src, LARGE_IMAGE_WIDTHS)}
+                srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
                 sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
                 alt=""
                 loading={i === 0 ? 'eager' : 'lazy'}
@@ -67,7 +71,7 @@ const images =
               ›
             </button>
             <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-              {images.map((_, i) => (
+              {displayImages.map((_, i) => (
                 <button
                   type="button"
                   data-dot

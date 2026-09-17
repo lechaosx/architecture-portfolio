@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { imageCacheKey } from './image-cache';
+import {
+  derivativeWidths,
+  imageCacheKey,
+  shouldPublishDerivative,
+} from './image-cache';
 
 const source = new Uint8Array([1, 2, 3]);
 const recipe = { width: 640, format: 'webp' };
@@ -19,5 +23,17 @@ describe('imageCacheKey', () => {
     expect(imageCacheKey(source, recipe)).not.toBe(
       imageCacheKey(source, { ...recipe, width: 1280 }),
     );
+  });
+});
+
+describe('derivative selection', () => {
+  test('only resamples widths smaller than the source', () => {
+    expect(derivativeWidths(640, [320, 480, 640, 960])).toEqual([320, 480]);
+  });
+
+  test('publishes a derivative only when it is smaller than the source file', () => {
+    expect(shouldPublishDerivative(1_000, 999)).toBe(true);
+    expect(shouldPublishDerivative(1_000, 1_000)).toBe(false);
+    expect(shouldPublishDerivative(1_000, 1_001)).toBe(false);
   });
 });

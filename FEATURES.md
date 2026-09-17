@@ -250,7 +250,9 @@ Reduced views such as project cards, the home carousel, and gallery thumbnails
 use prefiltered responsive images instead of asking the browser to shrink the
 full multi-megapixel drawing in one step. This reduces resampling aliasing in
 fine plans and linework, including during thumbnail hover effects. The project
-lightbox continues to load the untouched original for detailed inspection.
+lightbox continues to load the untouched original for detailed inspection. The
+pipeline never enlarges an upload or publishes a preview that weighs as much as
+the original; the original remains the highest-resolution browser candidate.
 
 ### Lightbox inspection controls — [Explicit]
 
