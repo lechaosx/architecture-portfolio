@@ -161,6 +161,35 @@ gallery:
       and noise-intensive cultural activities, including open-air cinema and
       traditional folklore events.
   - image: /uploads/03 Situace areálu.png
+    title_cs: Půdorys areálu
+    title_en: Site Plan
+    description_cs: Půdorys areálu představuje nové funkční členění území a jeho
+      propojení s městským parkem. Do parku je vložen nový amfiteátr, který
+      posiluje jeho pobytovou a kulturní funkci. Sportovní nabídku rozšiřuje
+      multifunkční hřiště umožňující také tenis, venkovní squash, workoutové a
+      parkourové hřiště. Významným prvkem je nová tribuna s odpovídajícím
+      provozním zázemím, přesunutá na opačnou stranu oválu oproti původní
+      nevyhovující tribuně. Za ní je využito přirozeně stoupajícího terénu k
+      vytvoření modelovaného valu a běžeckého okruhu se stoupáním, který
+      rozšiřuje možnosti tréninku a přivádí do areálu další skupiny uživatelů.
+      Na místě původní tribuny tak vzniká prostor pro parkour. Přechod mezi
+      sportovním areálem a parkem vytváří dětské hřiště fungující jako
+      prostorový filtr – obě části vizuálně i funkčně propojuje, zároveň však
+      zachovává jejich čitelné vymezení.
+    description_en: The site plan presents the new functional layout of the area and
+      its connection to the municipal park. A new amphitheatre is integrated
+      into the park, strengthening its recreational and cultural role. The range
+      of sports activities is expanded by a multifunctional court also
+      accommodating tennis, an outdoor squash court, a workout area and a
+      parkour playground. A key element is the new grandstand with improved
+      supporting facilities, relocated to the opposite side of the running
+      track. Behind it, the naturally rising terrain is used to create a
+      landscaped mound with an uphill running route, expanding training
+      opportunities and attracting new users. The relocation of the grandstand
+      also frees up space for the new parkour area. Between the sports complex
+      and the park, a children’s playground acts as a spatial filter, visually
+      and functionally connecting the two areas while maintaining a subtle
+      boundary between them.
   - image: /uploads/04 Půdorys park.png
   - image: /uploads/07 Urbanistický detail + ŘEZ.png
 body_cs: |-
