@@ -4,7 +4,7 @@ title_en: Urban Study of a Part of the City | Kyjov
 year: 2025
 location_cs: Kyjov, Česká republika
 location_en: Kyjov, Czech Republic
-draft: false
+draft: true
 cover: /uploads/09 AXO s.webp
 gallery:
   - image: /uploads/04 SWOT - cyklostezky.png
