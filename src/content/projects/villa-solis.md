@@ -71,6 +71,35 @@ gallery:
       key drivers of life and identity in Kyjov, deserving a high-quality,
       representative and open space for its future development."
   - image: /uploads/05 SWOT - Sportoviště.png
+    title_cs: Sportovní vybavenost
+    title_en: Sports facilities
+    description_cs: Analýza sportovní vybavenosti sleduje zastoupení jednotlivých
+      sportů v Kyjově a množství prostorů, které jsou pro jejich provozování k
+      dispozici. Každý bod v diagramu představuje jedno existující sportoviště
+      či sportovní plochu určenou pro danou aktivitu. Světlejší body označují
+      sportoviště s nedostatečným či nevyhovujícím zázemím, zatímco tečkované
+      vyznačení určuje sporty, které jsou již zastoupeny přímo v řešeném areálu.
+      Porovnání současné nabídky s intenzitou sportovního života ve městě
+      ukazuje, které aktivity mají dostatečné zastoupení a které je naopak
+      vhodné posílit či doplnit. Další sportovní zázemí poskytují Sokol Kyjov a
+      Dům dětí a mládeže. Analýza zároveň poukazuje, že některé sporty v řešeném
+      území dnes chybí a jejichž začlenění by mohlo rozšířit nabídku aktivit,
+      oslovit nové skupiny uživatelů a zvýšit celkovou atraktivitu sportovního
+      areálu.
+    description_en: The analysis of sports facilities examines the representation of
+      individual sports in Kyjov and the number of spaces available for their
+      practice. Each point in the diagram represents one existing sports
+      facility or area dedicated to a particular activity. Lighter points
+      indicate facilities with insufficient or inadequate infrastructure, while
+      the dotted outline highlights sports already represented within the
+      project area. Comparing the current provision with the intensity of
+      sporting life in the town reveals which activities are sufficiently
+      represented and which should be strengthened or supplemented. Additional
+      sports facilities are provided by Sokol Kyjov and the Kyjov House of
+      Children and Youth. The analysis also identifies sports currently missing
+      from the project area, whose introduction could broaden the range of
+      activities, attract new user groups and enhance the overall appeal of the
+      sports complex.
   - image: /uploads/01 Problémová mapa +.png
   - image: /uploads/02 Problémová mapa -.png
   - image: /uploads/03 Situace areálu.png
