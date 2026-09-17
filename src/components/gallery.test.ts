@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import {
   clampPan,
+  containedImageSize,
+  deepZoomViewport,
+  focusWrapTarget,
   hasCaption,
   lightboxImageUrl,
   nativeZoomScale,
@@ -81,11 +84,66 @@ describe('lightbox gestures', () => {
     ).toEqual({ x: 300, y: -250 });
   });
 
+  test('panning stays locked at the base scale', () => {
+    expect(
+      clampPan(
+        { x: 200, y: -100 },
+        1,
+        { width: 800, height: 500 },
+        { width: 1000, height: 700 },
+      ),
+    ).toEqual({ x: 0, y: 0 });
+  });
+
+  test('fits landscape and portrait images inside the stage', () => {
+    expect(
+      containedImageSize(
+        { width: 4000, height: 2000 },
+        { width: 800, height: 600 },
+      ),
+    ).toEqual({ width: 800, height: 400 });
+    expect(
+      containedImageSize(
+        { width: 2000, height: 4000 },
+        { width: 800, height: 600 },
+      ),
+    ).toEqual({ width: 300, height: 600 });
+  });
+
+  test('maps immediate image transforms to a deep-zoom viewport', () => {
+    expect(
+      deepZoomViewport(
+        0.5,
+        { x: 0.5, y: 0.25 },
+        1000,
+        2,
+        { x: 100, y: -50 },
+      ),
+    ).toEqual({ zoom: 1, center: { x: 0.4, y: 0.3 } });
+  });
+
   test('horizontal swipes navigate only after the threshold', () => {
     expect(swipeDirection(-80, 10)).toBe(1);
     expect(swipeDirection(80, 10)).toBe(-1);
     expect(swipeDirection(40, 5)).toBe(0);
     expect(swipeDirection(80, 100)).toBe(0);
+  });
+});
+
+describe('lightbox focus trap', () => {
+  test('wraps focus at both ends of the dialog', () => {
+    expect(focusWrapTarget(0, 4, true)).toBe(3);
+    expect(focusWrapTarget(3, 4, false)).toBe(0);
+  });
+
+  test('lets the browser move focus between interior controls', () => {
+    expect(focusWrapTarget(1, 4, false)).toBeUndefined();
+    expect(focusWrapTarget(2, 4, true)).toBeUndefined();
+  });
+
+  test('moves focus into the dialog if it escaped', () => {
+    expect(focusWrapTarget(-1, 4, false)).toBe(0);
+    expect(focusWrapTarget(-1, 4, true)).toBe(3);
   });
 });
 
