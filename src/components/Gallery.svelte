@@ -1,7 +1,11 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import type { ResponsiveImage } from '../images';
+  import { ui } from '../i18n';
   import {
     clampPan,
     hasCaption,
+    lightboxImageUrl,
     panForPinch,
     panForZoom,
     scaleFromPinch,
@@ -14,9 +18,11 @@
   // This is the ONLY component that ships JS to the browser.
   let {
     images = [],
+    responsiveImages = [],
     thumbnailSrcsets = [],
   }: {
     images?: GalleryImage[];
+    responsiveImages?: (ResponsiveImage | undefined)[];
     thumbnailSrcsets?: (string | undefined)[];
   } = $props();
 
@@ -25,6 +31,9 @@
   let scale = $state(1);
   let pan = $state<Point>({ x: 0, y: 0 });
   let dragging = $state(false);
+  let stageWidth = $state(0);
+  let stageHeight = $state(0);
+  let devicePixelRatio = $state(1);
   let stage: HTMLDivElement;
   let image: HTMLImageElement;
   let dragStart: Point | null = null;
@@ -36,6 +45,25 @@
     center: Point;
     pan: Point;
   } | null = null;
+  let lightboxSrc = $derived(
+    responsiveImages[index]
+      ? lightboxImageUrl(
+          responsiveImages[index],
+          { width: stageWidth, height: stageHeight },
+          scale,
+          devicePixelRatio,
+        )
+      : images[index]?.image,
+  );
+  let originalSrc = $derived(
+    responsiveImages[index]?.source.url ?? images[index]?.image,
+  );
+
+  onMount(() => {
+    devicePixelRatio = window.devicePixelRatio || 1;
+    stageWidth = window.innerWidth;
+    stageHeight = window.innerHeight * 0.85;
+  });
 
   function resetView() {
     scale = 1;
@@ -272,23 +300,37 @@
     aria-modal="true"
     onclick={close}
   >
-    <button
-      type="button"
-      class="absolute top-4 left-4 z-20 min-w-16 cursor-pointer border border-white/40 px-3 py-2 text-sm tabular-nums text-white hover:border-white"
-      onclick={(e) => {
-        e.stopPropagation();
-        resetView();
-      }}
-    >
-      <span aria-hidden="true">{Math.round(scale * 100)}%</span>
-      <span lang="cs" class="sr-only">Obnovit přiblížení</span>
-      <span lang="en" class="sr-only">Reset zoom</span>
-    </button>
-    <button
-      class="absolute top-4 right-4 z-20 flex h-10 w-10 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white"
-      onclick={close}
-      aria-label="Close">×</button
-    >
+    <div class="absolute top-4 right-4 left-4 z-20 flex items-start justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="min-w-16 cursor-pointer border border-white/40 px-3 py-2 text-sm tabular-nums text-white hover:border-white"
+          onclick={(e) => {
+            e.stopPropagation();
+            resetView();
+          }}
+        >
+          <span aria-hidden="true">{Math.round(scale * 100)}%</span>
+          <span lang="cs" class="sr-only">Obnovit přiblížení</span>
+          <span lang="en" class="sr-only">Reset zoom</span>
+        </button>
+        <a
+          href={originalSrc}
+          target="_blank"
+          rel="noopener"
+          class="border border-white/40 px-3 py-2 text-sm text-white hover:border-white"
+          onclick={(e) => e.stopPropagation()}
+        >
+          <span lang="cs">{ui.cs.openOriginal}</span>
+          <span lang="en">{ui.en.openOriginal}</span>
+        </a>
+      </div>
+      <button
+        class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white"
+        onclick={close}
+        aria-label="Close">×</button
+      >
+    </div>
     <button
       class="absolute left-4 z-20 flex h-12 w-12 cursor-pointer items-center justify-center border border-white/40 text-4xl leading-none text-white hover:border-white"
       onclick={(e) => {
@@ -303,6 +345,8 @@
     >
       <div
         bind:this={stage}
+        bind:clientWidth={stageWidth}
+        bind:clientHeight={stageHeight}
         class="relative flex min-h-0 w-full flex-1 touch-none items-center justify-center overflow-hidden"
         style:cursor={scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'default'}
         {onwheel}
@@ -317,7 +361,7 @@
       >
         <img
           bind:this={image}
-          src={images[index].image}
+          src={lightboxSrc}
           alt=""
           draggable="false"
           class="max-h-full max-w-full object-contain select-none"

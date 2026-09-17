@@ -23,10 +23,11 @@ const d = project.data;
 
 const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
 const responsiveCover = await getResponsiveImage(d.cover);
-const thumbnailSrcsets = await Promise.all(
-  d.gallery.map(async ({ image }) =>
-    responsiveSrcset(await getResponsiveImage(image), THUMBNAIL_WIDTHS),
-  ),
+const responsiveImages = await Promise.all(
+  d.gallery.map(({ image }) => getResponsiveImage(image)),
+);
+const thumbnailSrcsets = responsiveImages.map((image) =>
+  responsiveSrcset(image, THUMBNAIL_WIDTHS),
 );
 ---
 
@@ -71,6 +72,11 @@ const thumbnailSrcsets = await Promise.all(
       class="prose prose-neutral mt-10 max-w-none dark:prose-invert"
     />
 
-    <Gallery images={d.gallery} {thumbnailSrcsets} client:visible />
+    <Gallery
+      images={d.gallery}
+      {responsiveImages}
+      {thumbnailSrcsets}
+      client:visible
+    />
   </article>
 </Base>

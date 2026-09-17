@@ -1,4 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
+import type { ResponsiveImage } from '../images';
 
 export type GalleryImage = CollectionEntry<'projects'>['data']['gallery'][number];
 
@@ -86,4 +87,23 @@ export function clampPan(
 export function swipeDirection(deltaX: number, deltaY: number) {
   if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY)) return 0;
   return deltaX < 0 ? 1 : -1;
+}
+
+export function lightboxImageUrl(
+  image: ResponsiveImage,
+  viewport: Size,
+  scale: number,
+  devicePixelRatio: number,
+) {
+  const aspectRatio = image.source.width / image.source.height;
+  const renderedWidth = Math.min(
+    viewport.width,
+    viewport.height * aspectRatio,
+  );
+  const requiredWidth = renderedWidth * scale * devicePixelRatio;
+  const variant = [...image.variants]
+    .sort((first, second) => first.width - second.width)
+    .find(({ width }) => width >= requiredWidth);
+
+  return variant?.url ?? image.source.url;
 }

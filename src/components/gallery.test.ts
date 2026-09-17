@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   clampPan,
   hasCaption,
+  lightboxImageUrl,
   panForPinch,
   panForZoom,
   scaleFromPinch,
@@ -9,6 +10,7 @@ import {
   swipeDirection,
   type GalleryImage,
 } from './gallery';
+import type { ResponsiveImage } from '../images';
 
 const image = (caption: Partial<GalleryImage> = {}): GalleryImage => ({
   image: '/uploads/project.jpg',
@@ -78,5 +80,39 @@ describe('lightbox gestures', () => {
     expect(swipeDirection(80, 10)).toBe(-1);
     expect(swipeDirection(40, 5)).toBe(0);
     expect(swipeDirection(80, 100)).toBe(0);
+  });
+});
+
+describe('lightbox image selection', () => {
+  const responsiveImage: ResponsiveImage = {
+    source: {
+      url: '/uploads/project.jpg',
+      width: 4000,
+      height: 3000,
+      bytes: 4_000_000,
+      format: 'jpeg',
+    },
+    variants: [640, 1280, 2560].map((width) => ({
+      url: `/_responsive/project/${width}.webp`,
+      width,
+      height: width * 0.75,
+      bytes: width * 100,
+      format: 'webp',
+    })),
+  };
+
+  test('chooses the smallest preview that covers the rendered pixels', () => {
+    expect(
+      lightboxImageUrl(responsiveImage, { width: 800, height: 600 }, 1, 1),
+    ).toBe('/_responsive/project/1280.webp');
+    expect(
+      lightboxImageUrl(responsiveImage, { width: 800, height: 600 }, 1, 2),
+    ).toBe('/_responsive/project/2560.webp');
+  });
+
+  test('uses the original when zoom exceeds the largest preview', () => {
+    expect(
+      lightboxImageUrl(responsiveImage, { width: 800, height: 600 }, 4, 1),
+    ).toBe('/uploads/project.jpg');
   });
 });
