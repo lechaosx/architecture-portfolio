@@ -14,6 +14,8 @@ import sharp from 'sharp';
 import { GENERATED_IMAGE_WIDTHS } from '../src/images';
 import type { ImageManifest, ImageVariant } from '../src/images';
 import {
+  deepZoomLevels,
+  deepZoomOverlap,
   derivativeWidths,
   imageCacheKey,
   shouldGenerateDeepZoom,
@@ -36,11 +38,13 @@ const recipe = {
   vips: sharp.versions.vips,
 };
 const deepZoomRecipe = {
-  version: 1,
+  version: 2,
   minimumLongestSide: 4096,
   gamma: 2.2,
+  kernel: sharp.kernel.lanczos3,
   tileSize: 512,
-  overlap: 1,
+  losslessOverlap: deepZoomOverlap(true),
+  lossyOverlap: deepZoomOverlap(false),
   layout: 'dz' as const,
   format: 'webp',
   sharp: sharp.versions.sharp,
@@ -159,13 +163,14 @@ for (const sourcePath of await referencedImages()) {
   if (
     shouldGenerateDeepZoom(sourceDimensions.width, sourceDimensions.height)
   ) {
+    const deepZoomTileOverlap = deepZoomOverlap(output.lossless);
     const deepZoomCacheKey = imageCacheKey(source, {
       ...deepZoomRecipe,
+      overlap: deepZoomTileOverlap,
       output,
     });
     const deepZoomCacheDirectory = join(cacheDirectory, deepZoomCacheKey);
     const deepZoomCachePath = join(deepZoomCacheDirectory, 'image.dzi');
-    const deepZoomTargetPath = join(deepZoomCacheDirectory, 'image.dz');
     const deepZoomOutputDirectory = join(outputDirectory, deepZoomCacheKey);
 
     try {
@@ -174,16 +179,50 @@ for (const sourcePath of await referencedImages()) {
     } catch {
       await rm(deepZoomCacheDirectory, { recursive: true, force: true });
       await mkdir(deepZoomCacheDirectory, { recursive: true });
-      await sharp(sourcePath, { limitInputPixels: false })
-        .autoOrient()
-        .gamma(deepZoomRecipe.gamma)
-        .webp(output)
-        .tile({
-          size: deepZoomRecipe.tileSize,
-          overlap: deepZoomRecipe.overlap,
-          layout: deepZoomRecipe.layout,
-        })
-        .toFile(deepZoomTargetPath);
+      const temporaryLevelsDirectory = join(
+        deepZoomCacheDirectory,
+        '.levels',
+      );
+      const levels = deepZoomLevels(
+        sourceDimensions.width,
+        sourceDimensions.height,
+      );
+
+      for (const level of levels) {
+        const levelDirectory = join(
+          temporaryLevelsDirectory,
+          String(level.level),
+        );
+        const levelTargetPath = join(levelDirectory, 'image.dz');
+        await mkdir(levelDirectory, { recursive: true });
+        await sharp(sourcePath, { limitInputPixels: false })
+          .autoOrient()
+          .gamma(deepZoomRecipe.gamma)
+          .resize({
+            width: level.width,
+            height: level.height,
+            fit: 'fill',
+            kernel: deepZoomRecipe.kernel,
+          })
+          .webp(output)
+          .tile({
+            size: deepZoomRecipe.tileSize,
+            overlap: deepZoomTileOverlap,
+            layout: deepZoomRecipe.layout,
+            depth: 'one',
+          })
+          .toFile(levelTargetPath);
+        await cp(
+          join(levelDirectory, 'image_files', '0'),
+          join(deepZoomCacheDirectory, 'image_files', String(level.level)),
+          { recursive: true },
+        );
+        if (level.level === levels.length - 1) {
+          await copyFile(join(levelDirectory, 'image.dzi'), deepZoomCachePath);
+        }
+        await rm(levelDirectory, { recursive: true, force: true });
+      }
+      await rm(temporaryLevelsDirectory, { recursive: true, force: true });
       pyramidsGenerated += 1;
     }
 
@@ -195,7 +234,7 @@ for (const sourcePath of await referencedImages()) {
       width: sourceDimensions.width,
       height: sourceDimensions.height,
       tileSize: deepZoomRecipe.tileSize,
-      overlap: deepZoomRecipe.overlap,
+      overlap: deepZoomTileOverlap,
       format: deepZoomRecipe.format,
     };
   }

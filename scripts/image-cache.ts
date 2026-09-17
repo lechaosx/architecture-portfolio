@@ -43,3 +43,19 @@ export function webpPolicy(format: string, hasAlpha: boolean) {
 export function shouldGenerateDeepZoom(width: number, height: number) {
   return Math.max(width, height) > 4096;
 }
+
+export function deepZoomLevels(width: number, height: number) {
+  const maximumLevel = Math.ceil(Math.log2(Math.max(width, height)));
+  return Array.from({ length: maximumLevel + 1 }, (_, level) => {
+    const divisor = 2 ** (maximumLevel - level);
+    return {
+      level,
+      width: Math.ceil(width / divisor),
+      height: Math.ceil(height / divisor),
+    };
+  });
+}
+
+export function deepZoomOverlap(lossless: boolean) {
+  return lossless ? 1 : 16;
+}

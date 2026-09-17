@@ -289,13 +289,17 @@ of browser display selection.
 ### Large gallery images use cached Deep Zoom pyramids — [Explicit]
 
 Referenced rasters whose longest oriented side exceeds 4096 px receive a DZI
-pyramid of 512 px WebP tiles with one pixel of overlap. This boundary avoids
-decoding full bitmaps above roughly 64 MiB of RGBA memory while leaving smaller
-images on the lower-overhead full-image path. OpenSeadragon is dynamically
-imported only when such an image opens. It requests the resolution levels and
-visible regions needed for the current viewport and stops at a 1:1 ratio with
-the finest source level. Smaller images select the least full-image derivative
-that covers their rendered pixels and use the same native-detail zoom limit.
+pyramid of 512 px WebP tiles. Each level is resized directly from the original
+with the same gamma-aware Lanczos3 filter as a full-image derivative; levels are
+not recursively block-shrunk. Lossless tiles have one pixel of overlap. Lossy
+tiles have 16 px—one WebP macroblock—so codec-edge filtering remains outside
+the visible tile core. This boundary avoids decoding full bitmaps above roughly
+64 MiB of RGBA memory while leaving smaller images on the lower-overhead
+full-image path. OpenSeadragon is dynamically imported only when such an image
+opens. It requests the resolution levels and visible regions needed for the
+current viewport and stops at a 1:1 ratio with the finest source level. Smaller
+images select the least full-image derivative that covers their rendered pixels
+and use the same native-detail zoom limit.
 
 Pyramids use the same lossless-versus-photographic WebP policy as full-image
 derivatives and have their own content-addressed cache keys. Their combined
