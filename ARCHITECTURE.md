@@ -109,9 +109,11 @@ stage dimensions stable across gallery entries and prevents text length from
 changing image selection or apparent size. Both rendering paths support
 pointer-centred wheel zoom, touch pinch and pan, and constrain maximum zoom to
 native image detail. At the base scale, horizontal mouse and one-finger gestures
-drive the same animated navigation. The caption's clipped inner layer mirrors
-that navigation offset and transition, while input listeners remain confined to
-the image stage so caption scrolling and text interaction cannot navigate.
+drive the same animated navigation. Previous, current, and next processed
+previews are neighboring DOM slides rather than an explicit JavaScript cache;
+one translation moves them as a continuous strip. The caption uses the same
+three-slide geometry, while input listeners remain confined to the image stage
+so caption scrolling and text interaction cannot navigate.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 
@@ -119,8 +121,10 @@ The component owns one scale/pan gesture state for both paths. OpenSeadragon's
 mouse, touch, and keyboard navigation is disabled; its viewport receives the
 shared state with immediate updates and remains responsible for tile selection,
 loading, caching, and drawing. A pyramid `minPixelRatio` of `0.5` selects the
-next higher DZI level instead of upscaling the level below the required display
-density.
+closest DZI level at or above the required physical-pixel density instead of
+upscaling the level below it. Tiled images retain that density-matched processed
+preview beneath the canvas, preventing unloaded tile regions from exposing the
+dark stage.
 
 ### Lightbox modal state — [Explicit]
 
