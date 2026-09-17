@@ -4,6 +4,8 @@ import {
   containedImageSize,
   deepZoomViewport,
   focusWrapTarget,
+  galleryImageHash,
+  galleryImageIndex,
   hasCaption,
   lightboxImageUrl,
   nativeZoomScale,
@@ -145,6 +147,25 @@ describe('lightbox focus trap', () => {
     expect(focusWrapTarget(-1, 4, false)).toBe(0);
     expect(focusWrapTarget(-1, 4, true)).toBe(3);
   });
+});
+
+describe('lightbox URLs', () => {
+  test('uses one-based image hashes', () => {
+    expect(galleryImageHash(0)).toBe('#image-1');
+    expect(galleryImageHash(11)).toBe('#image-12');
+  });
+
+  test('resolves valid image hashes to zero-based indexes', () => {
+    expect(galleryImageIndex('#image-1', 12)).toBe(0);
+    expect(galleryImageIndex('#image-12', 12)).toBe(11);
+  });
+
+  test.each(['', '#image-0', '#image-13', '#image-1-more', '#other-1'])(
+    'ignores invalid or out-of-range hash %s',
+    (hash) => {
+      expect(galleryImageIndex(hash, 12)).toBeUndefined();
+    },
+  );
 });
 
 describe('lightbox image selection', () => {

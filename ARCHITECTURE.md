@@ -94,15 +94,18 @@ component today (`src/components/Gallery.svelte`).
 ### The lightbox is the only browser-side JS — [Implicit]
 
 `Gallery.svelte` (the project image lightbox) is the sole hydrated island
-(`client:visible`). The only other browser JS is a few tiny first-party vanilla
+(`client:load`). Loading it with the project page lets a pasted image hash open
+without waiting for the thumbnail grid to enter the viewport; OpenSeadragon
+still loads only when a tiled image is opened. The only other browser JS is a
+few tiny first-party vanilla
 scripts (reveal-on-scroll, the home carousel, the language switch) and the
 View-Transitions router — no framework runtime ships beyond the lightbox.
 Images up to 4096 px use local transforms constrained to the image stage;
 larger images lazy-load OpenSeadragon as a separate chunk and use its tiled
 canvas. Desktop side gutters keep either stage separate from the navigation
 controls. Both paths support pointer-centred wheel zoom, touch pinch and pan,
-and constrain maximum zoom to native image detail. At the base scale, a
-completed one-finger horizontal gesture navigates between images instead.
+and constrain maximum zoom to native image detail. At the base scale,
+horizontal mouse and one-finger gestures drive the same animated navigation.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 
@@ -117,8 +120,17 @@ density.
 
 While open, the island owns modal focus and root scroll locking: focus enters
 the close control, Tab wraps within the dialog, and focus returns to the opening
-thumbnail on close. A `data-lang` observer keeps the dialog's accessible names
-aligned with the global language switch.
+thumbnail on close. The lock fixes the document body at its captured scroll
+coordinates because overflow locking alone does not contain touch scrolling in
+all browsers. A `data-lang` observer keeps the dialog's accessible names aligned
+with the global language switch.
+
+Each image maps to a one-based `#image-N` hash. Opening pushes one marked
+history entry; navigation replaces that entry, and the popstate handler closes
+or restores the lightbox for Back and Forward. On initial hydration, a valid
+image hash is placed after a base-page entry so Back first closes a directly
+linked lightbox. Image numbers intentionally follow gallery order and therefore
+change if the content owner reorders the gallery.
 
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 

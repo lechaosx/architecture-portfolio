@@ -117,6 +117,17 @@ export function swipeDirection(deltaX: number, deltaY: number) {
   return deltaX < 0 ? 1 : -1;
 }
 
+export function galleryImageHash(index: number) {
+  return `#image-${index + 1}`;
+}
+
+export function galleryImageIndex(hash: string, imageCount: number) {
+  const match = /^#image-([1-9]\d*)$/.exec(hash);
+  if (!match) return undefined;
+  const index = Number(match[1]) - 1;
+  return index < imageCount ? index : undefined;
+}
+
 export function focusWrapTarget(
   currentIndex: number,
   focusableCount: number,
