@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import { frontmatter as home } from '../content/singletons/home.md';
+import { LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../images';
 
 const curated: string[] = home.gallery ?? [];
 const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
@@ -36,6 +37,8 @@ const images =
             >
               <img
                 src={src}
+                srcset={responsiveSrcset(src, LARGE_IMAGE_WIDTHS)}
+                sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
                 alt=""
                 loading={i === 0 ? 'eager' : 'lazy'}
                 decoding="async"

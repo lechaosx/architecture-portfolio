@@ -6,6 +6,7 @@ import T from '../../components/T.astro';
 import Prose from '../../components/Prose.astro';
 import { frontmatter as site } from '../../content/singletons/site.md';
 import { ui } from '../../i18n';
+import { LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../../images';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
@@ -46,6 +47,8 @@ const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
 
     <img
       src={d.cover}
+      srcset={responsiveSrcset(d.cover, LARGE_IMAGE_WIDTHS)}
+      sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
       alt={d.title_en}
       class="w-full bg-neutral-100 object-cover"
       transition:name={`cover-${project.id}`}

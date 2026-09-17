@@ -244,6 +244,14 @@ sticky nav and View Transitions.)
 
 Project images open in a full-screen, keyboard-navigable lightbox (arrows, Esc).
 
+### High-detail architectural images — [Explicit]
+
+Reduced views such as project cards, the home carousel, and gallery thumbnails
+use prefiltered responsive images instead of asking the browser to shrink the
+full multi-megapixel drawing in one step. This reduces resampling aliasing in
+fine plans and linework, including during thumbnail hover effects. The project
+lightbox continues to load the untouched original for detailed inspection.
+
 ### Lightbox inspection controls — [Explicit]
 
 Desktop visitors can zoom toward the pointer with the mouse wheel and drag a
