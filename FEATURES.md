@@ -250,9 +250,12 @@ Reduced views such as project cards, the home carousel, and gallery thumbnails
 use prefiltered responsive images instead of asking the browser to shrink the
 full multi-megapixel drawing in one step. This reduces resampling aliasing in
 fine plans and linework, including during thumbnail hover effects. The project
-lightbox continues to load the untouched original for detailed inspection. The
-pipeline never enlarges an upload or publishes a preview that weighs as much as
-the original; the original remains the highest-resolution browser candidate.
+lightbox starts with a representation suited to its on-screen size and display
+density, then loads more detail as the visitor zooms. The untouched original is
+used when generated previews no longer have enough resolution and can also be
+opened directly. The pipeline never enlarges an upload or publishes a preview
+that weighs as much as the original; the original remains the highest-resolution
+browser candidate.
 Transparent and PNG previews preserve lossless detail, while photographic
 previews use conservative high-quality compression. Camera orientation and web
 colour are normalized in previews without changing the uploaded original.
@@ -264,7 +267,8 @@ zoomed image to inspect it. The current zoom percentage is always visible and
 clicking it resets zoom and pan to 100%. On desktop the image stays between the
 navigation controls. Touch visitors can pinch around the point between their
 fingers and drag a zoomed image with one finger. At 100%, a one-finger horizontal
-swipe moves between gallery images instead.
+swipe moves between gallery images instead. A bilingual control opens the
+untouched original in a separate browser tab.
 
 ### Optional image titles and descriptions — [Explicit]
 

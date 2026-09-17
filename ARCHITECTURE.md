@@ -265,8 +265,11 @@ Reduced display surfaces build `srcset` from that manifest and provide accurate
 `sizes` hints, avoiding severe browser downsampling of detailed architectural
 linework without assuming every configured size exists. The untouched original
 is the final, highest-resolution candidate. SVGs bypass the derivative pipeline.
-Full-screen lightbox images keep the original `/uploads/…` source so zooming
-never depends on a reduced asset.
+The full-screen lightbox selects the smallest representation that covers the
+contained image width at the current zoom and device-pixel ratio. It upgrades as
+the visitor zooms and falls back to the original `/uploads/…` source beyond the
+largest derivative. A direct original-image link remains available independently
+of that selection.
 
 ### Image derivatives use a content-addressed build cache — [Explicit]
 
