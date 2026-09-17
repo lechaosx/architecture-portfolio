@@ -246,6 +246,33 @@ gallery:
       everyday social activity. The accompanying section illustrates the height
       relationships between the buildings, public space and surrounding terrain,
       complementing the spatial arrangement shown in the plan.
+  - image: /uploads/09 AXO 1.webp
+    title_cs: Axonometrie areálu
+    title_en: Site axonometry
+  - image: /uploads/Image25_000.webp
+    title_cs: Vizualizace
+    title_en: Visualization
+  - image: /uploads/Image16.webp
+    title_cs: Vizualizace
+    title_en: Visualization
+  - image: /uploads/Image6_000.webp
+    title_cs: Vizualizace
+    title_en: Visualization
+  - image: /uploads/Image3.webp
+    title_cs: Vizualizace
+    title_en: Visualization
+  - image: /uploads/Image2.webp
+    title_cs: Vizualizace
+    title_en: Visualization
+  - image: /uploads/Image23_000.webp
+    title_cs: Vizualizace
+    title_en: Visualization
+  - image: /uploads/Image21_000.webp
+    title_cs: Vizualizace
+    title_en: Visualization
+  - image: /uploads/IMG_20250515_134436.jpg
+    title_cs: Model
+    title_en: Model
 body_cs: |-
   Soukromá rezidence zasazená do jižního svahu, uspořádaná kolem sledu
   zastíněných átrií. Místní kámen a vápenná omítka drží paletu v klidu, hluboké
