@@ -101,8 +101,10 @@ generated variants, while the lightbox uses the original upload. Encoded files
 are reused from `node_modules/.astro/images`; `bun run images` reports how many
 variants were generated, reused, or omitted because they were not smaller than
 the source. Widths at or above the source resolution are never generated. The
-deploy workflow's Astro action persists the cache between CI runs. Cache loss
-only makes the next build slower—it does not change its output.
+pipeline auto-orients derivatives and normalizes them to sRGB. PNG and
+alpha-bearing inputs use lossless WebP; other raster inputs use high-quality
+lossy WebP. The deploy workflow's Astro action persists the cache between CI
+runs. Cache loss only makes the next build slower—it does not change its output.
 
 ### Change the content schema — update BOTH places
 

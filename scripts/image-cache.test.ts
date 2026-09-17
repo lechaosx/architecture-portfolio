@@ -3,6 +3,7 @@ import {
   derivativeWidths,
   imageCacheKey,
   shouldPublishDerivative,
+  webpPolicy,
 } from './image-cache';
 
 const source = new Uint8Array([1, 2, 3]);
@@ -35,5 +36,21 @@ describe('derivative selection', () => {
     expect(shouldPublishDerivative(1_000, 999)).toBe(true);
     expect(shouldPublishDerivative(1_000, 1_000)).toBe(false);
     expect(shouldPublishDerivative(1_000, 1_001)).toBe(false);
+  });
+
+  test('preserves lossless and alpha-bearing sources losslessly', () => {
+    expect(webpPolicy('png', false)).toEqual({ lossless: true, effort: 4 });
+    expect(webpPolicy('jpeg', true)).toEqual({ lossless: true, effort: 4 });
+  });
+
+  test('uses conservative lossy settings for already-lossy sources', () => {
+    expect(webpPolicy('jpeg', false)).toEqual({
+      lossless: false,
+      quality: 90,
+      alphaQuality: 100,
+      smartSubsample: true,
+      effort: 4,
+      preset: 'picture',
+    });
   });
 });
