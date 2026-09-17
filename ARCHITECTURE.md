@@ -120,7 +120,10 @@ mouse, touch, and keyboard navigation is disabled; its viewport receives the
 shared state with immediate updates and remains responsible for tile selection,
 loading, caching, and drawing. A pyramid `minPixelRatio` of `0.5` selects the
 next higher DZI level instead of upscaling the level below the required display
-density.
+density. Tiled images keep a processed screen-sized preview beneath the canvas,
+and the component preloads and retains only the previous, current, and next
+previews. This prevents an empty frame while a canvas is created or revisited
+without retaining several memory-heavy OpenSeadragon viewers on mobile.
 
 ### Lightbox modal state — [Explicit]
 

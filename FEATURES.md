@@ -268,14 +268,17 @@ use prefiltered responsive images instead of asking the browser to shrink the
 full multi-megapixel drawing in one step. This reduces resampling aliasing in
 fine plans and linework, including during thumbnail hover effects. The project
 lightbox starts with a representation suited to its on-screen size and display
-density, then loads more detail as the visitor zooms. Drawings larger than 4096
-px use 512 px deep-zoom tiles, so the browser requests only useful resolution
-levels and visible regions instead of decoding the entire print-sized image.
-Smaller images progress through processed full-image variants. Both paths stop
-at native image detail. The untouched original is not displayed automatically;
-it can be opened directly from the lightbox. The pipeline never enlarges an
-upload, and a processed full-image candidate is published only when it is
-smaller than the original.
+density, then loads more detail as the visitor zooms. The current, previous, and
+next processed previews are preloaded and retained while the lightbox is open,
+so moving back to a recently viewed image does not reveal an empty stage.
+Drawings larger than 4096 px use 512 px deep-zoom tiles over that preview, so the
+browser requests
+only useful resolution levels and visible regions instead of decoding the
+entire print-sized image. Smaller images progress through processed full-image
+variants. Both paths stop at native image detail. The untouched original is not
+displayed automatically; it can be opened directly from the lightbox. The
+pipeline never enlarges an upload, and a processed full-image candidate is
+published only when it is smaller than the original.
 Transparent and PNG previews preserve lossless detail, while photographic
 previews use conservative high-quality compression. Camera orientation and web
 colour are normalized in previews without changing the uploaded original.
