@@ -4,8 +4,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "images": "bun scripts/generate-responsive-images.ts",
+    "predev": "bun run images",
     "dev": "astro dev",
-    "start": "astro dev",
+    "start": "bun run dev",
+    "prebuild": "bun run images",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
@@ -20,5 +23,8 @@
     "marked": "^18.0.6",
     "svelte": "^5.56.4",
     "tailwindcss": "^4.3.2"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
   }
 }

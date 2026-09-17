@@ -1,5 +1,6 @@
 ---
 import T from './T.astro';
+import { responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
 
 interface Props {
   href: string;
@@ -19,6 +20,8 @@ const { href, slug, titleCs, titleEn, year, locationCs, locationEn, cover } =
 <a href={href} class="reveal group relative block hover:z-10">
   <img
     src={cover}
+    srcset={responsiveSrcset(cover, THUMBNAIL_WIDTHS)}
+    sizes="(min-width: 1152px) 283px, (min-width: 1024px) calc((100vw - 304px) / 3), (min-width: 640px) calc((100vw - 96px) / 2), calc(100vw - 48px)"
     alt={titleEn}
     loading="lazy"
     decoding="async"

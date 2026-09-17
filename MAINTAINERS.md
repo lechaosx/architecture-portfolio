@@ -26,7 +26,7 @@ bun run preview      # serve the built dist/ locally
 ## Project layout
 
 ```
-flake.nix                     minimal dev shell (bun, x86_64-linux)
+flake.nix                     bun + Sharp runtime library (x86_64-linux)
 astro.config.mjs              site (for sitemap) + integrations; no base
 svelte.config.js              Svelte preprocess
 tsconfig.json                 extends astro/tsconfigs/strict
@@ -34,6 +34,7 @@ tsconfig.json                 extends astro/tsconfigs/strict
 .github/workflows/deploy.yml  build with bun + deploy to Pages on push to master
 
 src/
+  images.ts                    responsive derivative URL/srcset contract
   content.config.ts           projects collection schema (Zod); bilingual fields
   i18n.ts                      baked-in UI labels ({cs, en} dictionary)
   content/projects/*.md        one file per project (text in _cs/_en frontmatter)
@@ -56,9 +57,14 @@ src/
   styles/global.css            tailwind import, fonts, .reveal, .no-scrollbar, lang rule
 
 public/
-  uploads/                     images (placeholder .svg files here now)
+  uploads/                     original CMS image uploads
+  _responsive/                generated display derivatives (gitignored)
   favicon.svg
   CNAME                        the custom domain (committed, copied to dist/)
+
+scripts/
+  image-cache.ts                content + recipe cache fingerprint
+  generate-responsive-images.ts  builds referenced raster display sizes
 ```
 
 ---
@@ -88,6 +94,13 @@ gallery:
 ```
 
 The four caption fields are optional; omit them to show only the enlarged image.
+Raster uploads referenced by content are converted automatically before `dev`
+and `build`; do not commit `public/_responsive`. Reduced image surfaces use the
+generated variants, while the lightbox uses the original upload. Encoded files
+are reused from `node_modules/.astro/images`; `bun run images` reports how many
+variants were generated and how many came from that cache. The deploy workflow's
+Astro action persists this directory between CI runs. Cache loss only makes the
+next build slower—it does not change its output.
 
 ### Change the content schema — update BOTH places
 
@@ -174,10 +187,6 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
     `Prose.astro` renders those fields with `marked`, so the descriptions must
     land in frontmatter, not the body).
   If either is off, it's a small `.pages.yml` tweak.
-- **No image optimization.** Images are served as-is from `public/uploads` with
-  native lazy-loading. For automatic AVIF/WebP: move images into `src/`, add an
-  `image()` field to the collection schema, and render with `astro:assets`
-  `<Image>`/`<Picture>`. Note this complicates the CMS path handling — weigh it.
 - **Placeholders to replace before launch:** the `.svg` files in
   `public/uploads/`, the sample projects, and the domain (see above). Contact
   details are placeholders in `src/content/singletons/contact.md`

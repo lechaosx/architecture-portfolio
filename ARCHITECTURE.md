@@ -241,15 +241,30 @@ project photos; an empty approach list hides the section). All human-readable te
 is bilingual (paired `_cs`/`_en` fields); the Markdown file *bodies* are unused —
 even the bio and project descriptions live in `body_cs`/`body_en` frontmatter.
 
-### Images: `public/uploads`, referenced as string paths — [Implicit]
+### Images: original uploads plus responsive display derivatives — [Explicit]
 
 Images live in `public/uploads` and are referenced by root-absolute string paths
-(e.g. `/uploads/cover.jpg`), rendered with plain `<img loading="lazy">`. This was
-chosen over Astro's `astro:assets` optimizer specifically so the CMS flow stays
-bulletproof: the CMS just commits a file and writes a path, with no import
-resolution to get wrong. Trade-off: no automatic AVIF/WebP generation. The
-upgrade path (move images into `src/`, switch to `<Image>`) is documented in
-MAINTAINERS.md.
+(e.g. `/uploads/cover.jpg`). This keeps the CMS flow direct: the CMS commits a
+file and writes a path, with no import resolution involved.
+
+Before development or production builds, `scripts/generate-responsive-images.ts`
+finds raster uploads referenced by content and creates gamma-aware Lanczos
+resizes as lossless WebP files in the ignored `public/_responsive` directory.
+Reduced display surfaces provide those variants through `srcset` and accurate
+`sizes` hints, avoiding severe browser downsampling of detailed architectural
+linework. SVGs bypass the derivative pipeline. Full-screen lightbox images keep
+the original `/uploads/…` source so zooming never depends on a reduced asset.
+
+### Image derivatives use a content-addressed build cache — [Explicit]
+
+Encoding results are cached under `node_modules/.astro/images` by a SHA-256 key
+derived from the original bytes and the complete transformation recipe,
+including the Sharp and libvips versions. A changed upload or recipe gets a new
+cache entry; unrelated site changes reuse existing entries. Each build clears
+and rematerializes `public/_responsive` from the cache so removed content is not
+deployed. The official Astro GitHub Action persists `node_modules/.astro`
+between builds; a missing or evicted cache remains safe because the same build
+recreates it from the originals.
 
 ### Project gallery items are caption records — [Implicit]
 

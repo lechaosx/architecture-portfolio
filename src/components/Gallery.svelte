@@ -8,6 +8,7 @@
     type GalleryImage,
     type Point,
   } from './gallery';
+  import { responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
 
   // Interactive island: a keyboard-navigable image lightbox.
   // This is the ONLY component that ships JS to the browser.
@@ -148,6 +149,8 @@
       >
         <img
           src={img.image}
+          srcset={responsiveSrcset(img.image, THUMBNAIL_WIDTHS)}
+          sizes="(min-width: 896px) 275px, (min-width: 640px) calc((100vw - 72px) / 3), calc((100vw - 60px) / 2)"
           alt=""
           loading="lazy"
           decoding="async"
