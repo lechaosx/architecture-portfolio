@@ -244,12 +244,21 @@ sticky nav and View Transitions.)
 
 Project images open in a full-screen, keyboard-navigable lightbox (arrows, Esc).
 
+### Addressable lightbox images — [Explicit]
+
+Each open image has a position-based `#image-N` URL that can be copied or opened
+directly. Moving between images updates that address without adding more history
+steps: Back closes the lightbox in one step, and Forward reopens its last image.
+A directly loaded image link also closes to its project page before Back leaves
+the page.
+
 ### Accessible lightbox modal — [Explicit]
 
 Opening the lightbox moves keyboard focus to its controls and keeps focus inside
 until it closes. Closing it restores focus to the thumbnail that opened it.
-Background page scrolling is locked while the lightbox is open, and its dialog,
-thumbnail, close, and navigation labels follow the selected site language.
+The background page stays fixed at its exact scroll position while the lightbox
+is open, including on touch browsers. Its dialog, thumbnail, close, and
+navigation labels follow the selected site language.
 
 ### High-detail architectural images — [Explicit]
 
@@ -279,13 +288,18 @@ Desktop visitors can zoom toward the pointer with the mouse wheel and drag a
 zoomed image to inspect it. The current zoom percentage is always visible and
 clicking it resets zoom and pan to 100%. On desktop the image stays between the
 navigation controls. Touch visitors can pinch around the point between their
-fingers and drag a zoomed image with one finger. At 100%, a one-finger horizontal
-swipe moves between gallery images instead. Maximum zoom depends on the image
-and display density, ending when native image pixels reach display pixels. A
-bilingual control opens the untouched original in a separate browser tab.
-Tiled and full-image previews use the same immediate gesture response: neither
-can be dragged at 100%, and neither adds momentum or a settling animation.
-Pyramid previews request the first resolution level at or above the display's
+fingers and drag a zoomed image with one finger. At 100%, horizontal dragging
+with either a finger or mouse navigates between gallery images; completed
+navigation slides to the next image and an incomplete gesture snaps back.
+Buttons and arrow keys use the same short slide, while reduced-motion settings
+disable it. Maximum zoom depends on the image and display density, ending when
+native image pixels reach display pixels. A bilingual control opens the
+untouched original in a separate browser tab.
+
+Tiled and full-image previews use the same immediate gesture response. Zoomed
+inspection has no momentum or settling animation; at 100%, both previews move
+only with a live navigation gesture and then slide onward or snap back. Pyramid
+previews request the first resolution level at or above the display's
 physical-pixel requirement so their base view is not an upscaled lower level.
 
 ### Optional image titles and descriptions — [Explicit]

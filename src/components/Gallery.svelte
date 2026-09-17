@@ -8,6 +8,8 @@
     containedImageSize,
     deepZoomViewport,
     focusWrapTarget,
+    galleryImageHash,
+    galleryImageIndex,
     hasCaption,
     lightboxImageUrl,
     nativeZoomScale,
@@ -37,6 +39,11 @@
   let scale = $state(1);
   let pan = $state<Point>({ x: 0, y: 0 });
   let dragging = $state(false);
+  let swipeOffset = $state(0);
+  let swipeAnimating = $state(false);
+  let navigating = $state(false);
+  let closing = false;
+  let reduceMotion = $state(false);
   let stageWidth = $state(0);
   let stageHeight = $state(0);
   let devicePixelRatio = $state(1);
@@ -48,6 +55,9 @@
   let deepZoomElement = $state<HTMLDivElement>();
   let deepZoomViewer: OpenSeadragon.Viewer | undefined;
   let dragStart: Point | null = null;
+  let pointerSwipeStart: Point | null = null;
+  let swipeDeltaY = 0;
+  let navigationRun = 0;
   let touchStart: Point | null = null;
   let touchPanStart: Point | null = null;
   let pinchStart: {
@@ -70,6 +80,8 @@
     responsiveImages[index]?.source.url ?? images[index]?.image,
   );
   let deepZoom = $derived(responsiveImages[index]?.deepZoom);
+  const galleryHistoryKey = 'architecturePortfolioGallery';
+  const slideDuration = 180;
 
   $effect(() => {
     const descriptor = deepZoom;
@@ -112,14 +124,32 @@
 
   $effect(() => {
     if (!open) return;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const rootOverscrollBehavior = document.documentElement.style.overscrollBehavior;
     const rootOverflow = document.documentElement.style.overflow;
+    const bodyPosition = document.body.style.position;
+    const bodyTop = document.body.style.top;
+    const bodyLeft = document.body.style.left;
+    const bodyWidth = document.body.style.width;
     const bodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overscrollBehavior = 'none';
     document.documentElement.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `${-scrollY}px`;
+    document.body.style.left = `${-scrollX}px`;
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
 
     return () => {
+      document.documentElement.style.overscrollBehavior = rootOverscrollBehavior;
       document.documentElement.style.overflow = rootOverflow;
+      document.body.style.position = bodyPosition;
+      document.body.style.top = bodyTop;
+      document.body.style.left = bodyLeft;
+      document.body.style.width = bodyWidth;
       document.body.style.overflow = bodyOverflow;
+      window.scrollTo(scrollX, scrollY);
     };
   });
 
@@ -136,7 +166,36 @@
       attributes: true,
       attributeFilter: ['data-lang'],
     });
-    return () => languageObserver.disconnect();
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncMotion = () => {
+      reduceMotion = motionQuery.matches;
+    };
+    const onPopState = () => {
+      const imageIndex = galleryImageIndex(location.hash, images.length);
+      if (imageIndex === undefined) {
+        void closeFromHistory();
+      } else {
+        void showFromHistory(imageIndex);
+      }
+    };
+    syncMotion();
+    motionQuery.addEventListener('change', syncMotion);
+    window.addEventListener('popstate', onPopState);
+
+    const linkedImage = galleryImageIndex(location.hash, images.length);
+    if (linkedImage !== undefined) {
+      const baseUrl = `${location.pathname}${location.search}`;
+      const initialState = history.state;
+      history.replaceState(initialState, '', baseUrl);
+      history.pushState(galleryHistoryState(initialState), '', galleryImageHash(linkedImage));
+      void showFromHistory(linkedImage);
+    }
+
+    return () => {
+      languageObserver.disconnect();
+      motionQuery.removeEventListener('change', syncMotion);
+      window.removeEventListener('popstate', onPopState);
+    };
   });
 
   function resetView() {
@@ -145,6 +204,7 @@
     pan = { x: 0, y: 0 };
     dragging = false;
     dragStart = null;
+    pointerSwipeStart = null;
     touchStart = null;
     touchPanStart = null;
     pinchStart = null;
@@ -152,29 +212,83 @@
 
   async function show(i: number, source: HTMLButtonElement) {
     trigger = source;
+    history.pushState(galleryHistoryState(history.state), '', galleryImageHash(i));
+    await showFromHistory(i);
+  }
+  async function showFromHistory(i: number) {
+    cancelNavigation();
+    closing = false;
     index = i;
     resetView();
     open = true;
     await tick();
-    closeButton.focus();
+    closeButton?.focus();
   }
-  async function close() {
+  function requestClose() {
+    if (!open || closing) return;
+    closing = true;
+    if (isGalleryHistoryEntry()) {
+      history.back();
+      return;
+    }
+    history.replaceState(history.state, '', `${location.pathname}${location.search}`);
+    void closeFromHistory();
+  }
+  async function closeFromHistory() {
     if (!open) return;
+    cancelNavigation();
+    closing = false;
     open = false;
     resetView();
     await tick();
     trigger?.focus();
     trigger = undefined;
   }
-  function go(offset: number) {
+  async function go(offset: number) {
+    if (closing || navigating || images.length < 2) {
+      if (!navigating) void snapBack();
+      return;
+    }
+    const run = ++navigationRun;
+    navigating = true;
+    const direction = Math.sign(offset);
+
+    if (!reduceMotion) {
+      swipeAnimating = true;
+      swipeOffset = -direction * (stage?.clientWidth || window.innerWidth);
+      await waitForSlide();
+      if (run !== navigationRun || !open) return;
+    }
+
     index = (index + offset + images.length) % images.length;
     resetView();
+    history.replaceState(
+      galleryHistoryState(history.state),
+      '',
+      galleryImageHash(index),
+    );
+
+    if (!reduceMotion) {
+      swipeAnimating = false;
+      swipeOffset = direction * (stage?.clientWidth || window.innerWidth);
+      await tick();
+      await nextFrame();
+      if (run !== navigationRun || !open) return;
+      swipeAnimating = true;
+      swipeOffset = 0;
+      await waitForSlide();
+      if (run !== navigationRun || !open) return;
+    }
+
+    swipeOffset = 0;
+    swipeAnimating = false;
+    navigating = false;
   }
   function next() {
-    go(1);
+    void go(1);
   }
   function prev() {
-    go(-1);
+    void go(-1);
   }
   function onkeydown(e: KeyboardEvent) {
     if (!open) return;
@@ -182,7 +296,7 @@
       trapFocus(e);
       return;
     }
-    if (e.key === 'Escape') void close();
+    if (e.key === 'Escape') requestClose();
     else if (e.key === 'ArrowRight') next();
     else if (e.key === 'ArrowLeft') prev();
   }
@@ -206,6 +320,47 @@
     if (target === undefined) return;
     e.preventDefault();
     focusable[target].focus();
+  }
+
+  function galleryHistoryState(state: unknown) {
+    return {
+      ...(state !== null && typeof state === 'object' ? state : {}),
+      [galleryHistoryKey]: true,
+    };
+  }
+
+  function isGalleryHistoryEntry() {
+    return Boolean(
+      history.state &&
+        typeof history.state === 'object' &&
+        history.state[galleryHistoryKey] === true,
+    );
+  }
+
+  function cancelNavigation() {
+    navigationRun += 1;
+    navigating = false;
+    swipeAnimating = false;
+    swipeOffset = 0;
+  }
+
+  async function snapBack() {
+    if (swipeOffset === 0) return;
+    const run = ++navigationRun;
+    swipeAnimating = !reduceMotion;
+    swipeOffset = 0;
+    if (!reduceMotion) await waitForSlide();
+    if (run === navigationRun) swipeAnimating = false;
+  }
+
+  function waitForSlide() {
+    return new Promise<void>((resolve) => setTimeout(resolve, slideDuration));
+  }
+
+  function nextFrame() {
+    return new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
   }
 
   function constrainedPan(nextPan: Point, nextScale = scale) {
@@ -292,14 +447,25 @@
   }
 
   function onpointerdown(e: PointerEvent) {
-    if (e.pointerType !== 'mouse' || e.button !== 0 || scale === 1) return;
+    if (e.pointerType !== 'mouse' || e.button !== 0 || navigating) return;
     e.preventDefault();
     stage.setPointerCapture(e.pointerId);
     dragging = true;
-    dragStart = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+    if (scale === 1) {
+      swipeAnimating = false;
+      pointerSwipeStart = { x: e.clientX, y: e.clientY };
+      swipeDeltaY = 0;
+    } else {
+      dragStart = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+    }
   }
 
   function onpointermove(e: PointerEvent) {
+    if (pointerSwipeStart) {
+      swipeOffset = e.clientX - pointerSwipeStart.x;
+      swipeDeltaY = e.clientY - pointerSwipeStart.y;
+      return;
+    }
     if (!dragging || !dragStart) return;
     setView(
       scale,
@@ -313,12 +479,33 @@
   function onpointerup(e: PointerEvent) {
     if (!dragging) return;
     if (stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId);
+    if (pointerSwipeStart) {
+      const direction = swipeDirection(swipeOffset, swipeDeltaY);
+      pointerSwipeStart = null;
+      swipeDeltaY = 0;
+      dragging = false;
+      if (direction === 0) void snapBack();
+      else void go(direction);
+      return;
+    }
     dragging = false;
     dragStart = null;
   }
 
+  function onpointercancel(e: PointerEvent) {
+    if (stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId);
+    dragging = false;
+    dragStart = null;
+    pointerSwipeStart = null;
+    swipeDeltaY = 0;
+    void snapBack();
+  }
+
   function ontouchstart(e: TouchEvent) {
+    if (navigating) return;
     if (e.touches.length === 2) {
+      swipeAnimating = false;
+      swipeOffset = 0;
       const first = touchPoint(e.touches[0]);
       const second = touchPoint(e.touches[1]);
       pinchStart = {
@@ -334,6 +521,7 @@
 
     if (e.touches.length === 1) {
       const point = touchPoint(e.touches[0]);
+      swipeAnimating = false;
       touchStart = scale === 1 ? point : null;
       touchPanStart =
         scale > 1 ? { x: point.x - pan.x, y: point.y - pan.y } : null;
@@ -381,6 +569,13 @@
       return;
     }
 
+    if (e.touches.length === 1 && touchStart) {
+      const point = touchPoint(e.touches[0]);
+      swipeOffset = point.x - touchStart.x;
+      swipeDeltaY = point.y - touchStart.y;
+      return;
+    }
+
     if (e.touches.length !== 1) touchStart = null;
   }
 
@@ -406,14 +601,11 @@
       touchStart = null;
       return;
     }
-    const touch = e.changedTouches[0];
-    const direction = swipeDirection(
-      touch.clientX - touchStart.x,
-      touch.clientY - touchStart.y,
-    );
+    const direction = swipeDirection(swipeOffset, swipeDeltaY);
     touchStart = null;
-    if (direction === 1) next();
-    else if (direction === -1) prev();
+    swipeDeltaY = 0;
+    if (direction === 0) void snapBack();
+    else void go(direction);
   }
 
   function touchPoint(touch: Touch): Point {
@@ -436,6 +628,8 @@
     touchStart = null;
     touchPanStart = null;
     pinchStart = null;
+    swipeDeltaY = 0;
+    void snapBack();
   }
 </script>
 
@@ -472,7 +666,7 @@
     aria-modal="true"
     aria-label={ui[lang].imageViewer}
     tabindex="-1"
-    onclick={close}
+    onclick={requestClose}
   >
     <div class="absolute top-4 right-4 left-4 z-20 flex items-start justify-between gap-2">
       <div class="flex items-center gap-2">
@@ -505,7 +699,10 @@
         bind:this={closeButton}
         type="button"
         class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white"
-        onclick={close}
+        onclick={(e) => {
+          e.stopPropagation();
+          requestClose();
+        }}
         aria-label={ui[lang].close}>×</button
       >
     </div>
@@ -531,30 +728,40 @@
           ? dragging
             ? 'grabbing'
             : 'grab'
-          : 'default'}
+          : dragging
+            ? 'grabbing'
+            : 'grab'}
         {onwheel}
         {onpointerdown}
         {onpointermove}
         {onpointerup}
-        onpointercancel={onpointerup}
+        {onpointercancel}
         {ontouchstart}
         {ontouchmove}
         {ontouchend}
         ontouchcancel={resetTouchGesture}
       >
-        {#if deepZoom}
-          <div bind:this={deepZoomElement} class="h-full w-full"></div>
-        {:else}
-          <img
-            bind:this={image}
-            src={lightboxSrc}
-            alt=""
-            draggable="false"
-            class="max-h-full max-w-full object-contain select-none"
-            style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
-            onload={() => (pan = constrainedPan(pan))}
-          />
-        {/if}
+        <div
+          class="flex h-full w-full items-center justify-center"
+          style:transform={`translate3d(${swipeOffset}px, 0, 0)`}
+          style:transition={swipeAnimating
+            ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
+            : 'none'}
+        >
+          {#if deepZoom}
+            <div bind:this={deepZoomElement} class="h-full w-full"></div>
+          {:else}
+            <img
+              bind:this={image}
+              src={lightboxSrc}
+              alt=""
+              draggable="false"
+              class="max-h-full max-w-full object-contain select-none"
+              style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
+              onload={() => (pan = constrainedPan(pan))}
+            />
+          {/if}
+        </div>
       </div>
       {#if hasCaption(images[index])}
         <figcaption class="mt-4 w-full max-w-2xl text-white">

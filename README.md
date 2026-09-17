@@ -61,7 +61,8 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
   (The carousel images, bio, portrait, and approach are all editable in the CMS.)
 - A **Work** page with your projects in a grid.
 - A page per project with a description and a full-screen photo gallery whose
-  enlarged images can show optional titles and descriptions.
+  enlarged images can show optional titles and descriptions. Each open image
+  has a shareable `#image-N` address, and the browser Back button closes it.
 - A **Contact** page with your email, phone, and when you're reachable.
 - Smooth transitions between pages and gentle fade-ins — all riding the normal
   scrollbar (no janky scroll effects). Fast to load, works on phones.

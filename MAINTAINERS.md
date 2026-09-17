@@ -95,6 +95,9 @@ gallery:
 ```
 
 The four caption fields are optional; omit them to show only the enlarged image.
+Lightbox links use the gallery position (`#image-1`, `#image-2`, …), so reordering
+the gallery also changes those addresses. The Gallery island uses `client:load`
+so a directly opened image address is handled as soon as the project loads.
 Raster uploads referenced by content are converted automatically before `dev`
 and `build`; do not commit `public/_responsive`. Reduced image surfaces use the
 generated variants. The lightbox chooses among them using its rendered size,
