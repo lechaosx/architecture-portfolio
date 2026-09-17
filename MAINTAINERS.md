@@ -17,6 +17,7 @@ this way), [FEATURES.md](FEATURES.md) (why it behaves this way).
 
 ```sh
 nix develop          # shell with bun on PATH
+direnv allow         # alternatively, activate the flake shell automatically
 bun install          # install dependencies
 bun dev              # dev server at http://localhost:4321
 bun run build        # production build -> dist/
@@ -27,6 +28,7 @@ bun run preview      # serve the built dist/ locally
 
 ```
 flake.nix                     bun + Sharp runtime library (x86_64-linux)
+.envrc                        automatic flake shell activation with direnv
 astro.config.mjs              site (for sitemap) + integrations; no base
 svelte.config.js              Svelte preprocess
 tsconfig.json                 extends astro/tsconfigs/strict
@@ -192,7 +194,8 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
 
 - **Pages CMS behavior is untested end-to-end** (it's hosted; needs the live
   repo). After connecting, create one test project through the UI and confirm the
-  committed file matches the shape of `src/content/projects/villa-solis.md`. Two
+  committed file matches the shape of
+  `src/content/projects/urban-study-kyjov.md`. Two
   things to check specifically:
   - `filename: '{fields.title_en}.md'` produces a clean, slugified filename (Astro
     derives the URL slug from the filename).
