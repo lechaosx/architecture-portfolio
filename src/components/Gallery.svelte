@@ -33,6 +33,9 @@
     thumbnailSrcsets?: (string | undefined)[];
   } = $props();
 
+  const galleryHistoryKey = 'architecturePortfolioGallery';
+  const slideDuration = 180;
+
   let open = $state(false);
   let lang = $state<Lang>('en');
   let index = $state(0);
@@ -80,9 +83,18 @@
     responsiveImages[index]?.source.url ?? images[index]?.image,
   );
   let deepZoom = $derived(responsiveImages[index]?.deepZoom);
-  const galleryHistoryKey = 'architecturePortfolioGallery';
-  const slideDuration = 180;
-
+  let previousIndex = $derived(
+    images.length ? (index - 1 + images.length) % images.length : 0,
+  );
+  let nextIndex = $derived(images.length ? (index + 1) % images.length : 0);
+  let previousPreviewSrc = $derived(previewUrl(previousIndex));
+  let nextPreviewSrc = $derived(previewUrl(nextIndex));
+  let deepZoomPreviewSrc = $derived(previewUrl(index));
+  let slideTransition = $derived(
+    swipeAnimating
+      ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
+      : 'none',
+  );
   $effect(() => {
     const descriptor = deepZoom;
     const element = deepZoomElement;
@@ -210,6 +222,22 @@
     pinchStart = null;
   }
 
+  function previewUrl(imageIndex: number) {
+    const responsiveImage = responsiveImages[imageIndex];
+    return responsiveImage
+      ? lightboxImageUrl(
+          responsiveImage,
+          { width: stageWidth, height: stageHeight },
+          1,
+          devicePixelRatio,
+        )
+      : images[imageIndex]?.image;
+  }
+
+  function slideTransform(position: number) {
+    return `translate3d(${swipeOffset + position * stageWidth}px, 0, 0)`;
+  }
+
   async function show(i: number, source: HTMLButtonElement) {
     trigger = source;
     history.pushState(galleryHistoryState(history.state), '', galleryImageHash(i));
@@ -262,26 +290,13 @@
 
     index = (index + offset + images.length) % images.length;
     resetView();
+    swipeAnimating = false;
+    swipeOffset = 0;
     history.replaceState(
       galleryHistoryState(history.state),
       '',
       galleryImageHash(index),
     );
-
-    if (!reduceMotion) {
-      swipeAnimating = false;
-      swipeOffset = direction * (stage?.clientWidth || window.innerWidth);
-      await tick();
-      await nextFrame();
-      if (run !== navigationRun || !open) return;
-      swipeAnimating = true;
-      swipeOffset = 0;
-      await waitForSlide();
-      if (run !== navigationRun || !open) return;
-    }
-
-    swipeOffset = 0;
-    swipeAnimating = false;
     navigating = false;
   }
   function next() {
@@ -355,12 +370,6 @@
 
   function waitForSlide() {
     return new Promise<void>((resolve) => setTimeout(resolve, slideDuration));
-  }
-
-  function nextFrame() {
-    return new Promise<void>((resolve) =>
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-    );
   }
 
   function constrainedPan(nextPan: Point, nextScale = scale) {
@@ -633,6 +642,27 @@
   }
 </script>
 
+{#snippet captionContent(caption: GalleryImage)}
+  {#if hasCaption(caption)}
+    {#if caption.title_cs}
+      <p lang="cs" class="text-sm font-medium">{caption.title_cs}</p>
+    {/if}
+    {#if caption.title_en}
+      <p lang="en" class="text-sm font-medium">{caption.title_en}</p>
+    {/if}
+    {#if caption.description_cs}
+      <p lang="cs" class="mt-1 text-sm text-white/70">
+        {caption.description_cs}
+      </p>
+    {/if}
+    {#if caption.description_en}
+      <p lang="en" class="mt-1 text-sm text-white/70">
+        {caption.description_en}
+      </p>
+    {/if}
+  {/if}
+{/snippet}
+
 <svelte:window {onkeydown} />
 
 {#if images.length}
@@ -732,15 +762,38 @@
         {ontouchend}
         ontouchcancel={resetTouchGesture}
       >
+        {#if images.length > 1}
+          <div
+            class="lightbox-slide-previous pointer-events-none absolute inset-0 flex items-center justify-center"
+            style:transform={slideTransform(-1)}
+            style:transition={slideTransition}
+            aria-hidden="true"
+          >
+            <img
+              src={previousPreviewSrc}
+              alt=""
+              draggable="false"
+              decoding="async"
+              class="max-h-full max-w-full object-contain select-none"
+            />
+          </div>
+        {/if}
         <div
-          class="flex h-full w-full items-center justify-center"
-          style:transform={`translate3d(${swipeOffset}px, 0, 0)`}
-          style:transition={swipeAnimating
-            ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
-            : 'none'}
+          class="lightbox-slide-current absolute inset-0 flex items-center justify-center"
+          style:transform={slideTransform(0)}
+          style:transition={slideTransition}
         >
           {#if deepZoom}
-            <div bind:this={deepZoomElement} class="h-full w-full"></div>
+            <img
+              bind:this={image}
+              src={deepZoomPreviewSrc}
+              alt=""
+              draggable="false"
+              class="absolute max-h-full max-w-full object-contain select-none"
+              style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
+              onload={() => (pan = constrainedPan(pan))}
+            />
+            <div bind:this={deepZoomElement} class="absolute inset-0"></div>
           {:else}
             <img
               bind:this={image}
@@ -753,6 +806,22 @@
             />
           {/if}
         </div>
+        {#if images.length > 1}
+          <div
+            class="lightbox-slide-next pointer-events-none absolute inset-0 flex items-center justify-center"
+            style:transform={slideTransform(1)}
+            style:transition={slideTransition}
+            aria-hidden="true"
+          >
+            <img
+              src={nextPreviewSrc}
+              alt=""
+              draggable="false"
+              decoding="async"
+              class="max-h-full max-w-full object-contain select-none"
+            />
+          </div>
+        {/if}
       </div>
       <button
         type="button"
@@ -773,34 +842,35 @@
         aria-label={ui[lang].nextImage}>›</button
       >
       <figcaption
-        class="lightbox-caption w-full overflow-hidden text-white"
+        class="lightbox-caption relative w-full overflow-hidden text-white"
       >
+        {#if images.length > 1}
+          <div
+            class="lightbox-caption-previous pointer-events-none absolute inset-0 overflow-y-auto"
+            style:transform={slideTransform(-1)}
+            style:transition={slideTransition}
+            aria-hidden="true"
+          >
+            {@render captionContent(images[previousIndex])}
+          </div>
+        {/if}
         <div
-          class="h-full overflow-y-auto"
-          style:transform={`translate3d(${swipeOffset}px, 0, 0)`}
-          style:transition={swipeAnimating
-            ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
-            : 'none'}
+          class="lightbox-caption-current absolute inset-0 overflow-y-auto"
+          style:transform={slideTransform(0)}
+          style:transition={slideTransition}
         >
-          {#if hasCaption(images[index])}
-            {#if images[index].title_cs}
-              <p lang="cs" class="text-sm font-medium">{images[index].title_cs}</p>
-            {/if}
-            {#if images[index].title_en}
-              <p lang="en" class="text-sm font-medium">{images[index].title_en}</p>
-            {/if}
-            {#if images[index].description_cs}
-              <p lang="cs" class="mt-1 text-sm text-white/70">
-                {images[index].description_cs}
-              </p>
-            {/if}
-            {#if images[index].description_en}
-              <p lang="en" class="mt-1 text-sm text-white/70">
-                {images[index].description_en}
-              </p>
-            {/if}
-          {/if}
+          {@render captionContent(images[index])}
         </div>
+        {#if images.length > 1}
+          <div
+            class="lightbox-caption-next pointer-events-none absolute inset-0 overflow-y-auto"
+            style:transform={slideTransform(1)}
+            style:transition={slideTransition}
+            aria-hidden="true"
+          >
+            {@render captionContent(images[nextIndex])}
+          </div>
+        {/if}
       </figcaption>
     </figure>
   </div>

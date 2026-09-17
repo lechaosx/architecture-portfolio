@@ -269,13 +269,14 @@ full multi-megapixel drawing in one step. This reduces resampling aliasing in
 fine plans and linework, including during thumbnail hover effects. The project
 lightbox starts with a representation suited to its on-screen size and display
 density, then loads more detail as the visitor zooms. Drawings larger than 4096
-px use 512 px deep-zoom tiles, so the browser requests only useful resolution
-levels and visible regions instead of decoding the entire print-sized image.
-Smaller images progress through processed full-image variants. Both paths stop
-at native image detail. The untouched original is not displayed automatically;
-it can be opened directly from the lightbox. The pipeline never enlarges an
-upload, and a processed full-image candidate is published only when it is
-smaller than the original.
+px use 512 px deep-zoom tiles over a density-matched processed preview, so the
+browser requests only useful resolution levels and visible regions without
+showing dark gaps between arriving tiles or decoding the entire print-sized
+image. Smaller images progress through processed full-image variants. Both
+paths stop at native image detail. The untouched original is not displayed
+automatically; it can be opened directly from the lightbox. The pipeline never
+enlarges an upload, and a processed full-image candidate is published only when
+it is smaller than the original.
 Transparent and PNG previews preserve lossless detail, while photographic
 previews use conservative high-quality compression. Camera orientation and web
 colour are normalized in previews without changing the uploaded original.
@@ -294,9 +295,11 @@ zoomed image with one finger. At 100%, horizontal dragging with either a finger
 or mouse navigates between gallery images; completed navigation slides to the
 next image and an incomplete gesture snaps back.
 Buttons and arrow keys use the same short slide, while reduced-motion settings
-disable it. Maximum zoom depends on the image and display density, ending when
-native image pixels reach display pixels. A bilingual control opens the
-untouched original in a separate browser tab.
+disable it. Previous, current, and next images form a continuous strip, so one
+image enters directly as the other leaves without exposing the dark background.
+Maximum zoom depends on the image and display density, ending when native image
+pixels reach display pixels. A bilingual control opens the untouched original
+in a separate browser tab.
 
 Tiled and full-image previews use the same immediate gesture response. Zoomed
 inspection has no momentum or settling animation; at 100%, both previews move
