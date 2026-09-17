@@ -54,7 +54,6 @@
   let trigger: HTMLButtonElement | undefined;
   let deepZoomElement = $state<HTMLDivElement>();
   let deepZoomViewer: OpenSeadragon.Viewer | undefined;
-  const previewCache = new Map<string, HTMLImageElement>();
   let dragStart: Point | null = null;
   let pointerSwipeStart: Point | null = null;
   let swipeDeltaY = 0;
@@ -81,7 +80,6 @@
     responsiveImages[index]?.source.url ?? images[index]?.image,
   );
   let deepZoom = $derived(responsiveImages[index]?.deepZoom);
-  let deepZoomPreviewSrc = $derived(previewUrl(index));
   const galleryHistoryKey = 'architecturePortfolioGallery';
   const slideDuration = 180;
 
@@ -155,30 +153,6 @@
     };
   });
 
-  $effect(() => {
-    if (!open || images.length === 0) {
-      previewCache.clear();
-      return;
-    }
-
-    const previewUrls = new Set(
-      [-1, 0, 1]
-        .map((offset) => previewUrl((index + offset + images.length) % images.length))
-        .filter((url): url is string => Boolean(url)),
-    );
-    for (const url of previewUrls) {
-      if (previewCache.has(url)) continue;
-      const preview = new Image();
-      preview.decoding = 'async';
-      preview.src = url;
-      previewCache.set(url, preview);
-      void preview.decode().catch(() => undefined);
-    }
-    for (const url of previewCache.keys()) {
-      if (!previewUrls.has(url)) previewCache.delete(url);
-    }
-  });
-
   onMount(() => {
     devicePixelRatio = window.devicePixelRatio || 1;
     stageWidth = window.innerWidth;
@@ -234,18 +208,6 @@
     touchStart = null;
     touchPanStart = null;
     pinchStart = null;
-  }
-
-  function previewUrl(imageIndex: number) {
-    const responsiveImage = responsiveImages[imageIndex];
-    return responsiveImage
-      ? lightboxImageUrl(
-          responsiveImage,
-          { width: stageWidth, height: stageHeight },
-          1,
-          devicePixelRatio,
-        )
-      : images[imageIndex]?.image;
   }
 
   async function show(i: number, source: HTMLButtonElement) {
@@ -771,23 +733,14 @@
         ontouchcancel={resetTouchGesture}
       >
         <div
-          class="relative flex h-full w-full items-center justify-center"
+          class="flex h-full w-full items-center justify-center"
           style:transform={`translate3d(${swipeOffset}px, 0, 0)`}
           style:transition={swipeAnimating
             ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
             : 'none'}
         >
           {#if deepZoom}
-            <img
-              bind:this={image}
-              src={deepZoomPreviewSrc}
-              alt=""
-              draggable="false"
-              class="absolute max-h-full max-w-full object-contain select-none"
-              style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
-              onload={() => (pan = constrainedPan(pan))}
-            />
-            <div bind:this={deepZoomElement} class="absolute inset-0"></div>
+            <div bind:this={deepZoomElement} class="h-full w-full"></div>
           {:else}
             <img
               bind:this={image}
