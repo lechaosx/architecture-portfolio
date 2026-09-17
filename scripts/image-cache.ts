@@ -24,3 +24,18 @@ export function shouldPublishDerivative(
 ) {
   return derivativeBytes < sourceBytes;
 }
+
+export function webpPolicy(format: string, hasAlpha: boolean) {
+  if (format === 'png' || hasAlpha) {
+    return { lossless: true, effort: 4 } as const;
+  }
+
+  return {
+    lossless: false,
+    quality: 90,
+    alphaQuality: 100,
+    smartSubsample: true,
+    effort: 4,
+    preset: 'picture',
+  } as const;
+}

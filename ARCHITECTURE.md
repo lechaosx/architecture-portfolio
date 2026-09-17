@@ -252,10 +252,13 @@ file and writes a path, with no import resolution involved.
 
 Before development or production builds, `scripts/generate-responsive-images.ts`
 finds raster uploads referenced by content and creates gamma-aware Lanczos
-resizes as lossless WebP files in the ignored `public/_responsive` directory.
-It probes each source first, generates only widths below the source width, and
-publishes a derivative only when its file is smaller than the original. A
-generated manifest records the dimensions, byte size, format, and
+resizes as WebP files in the ignored `public/_responsive` directory. Derivatives
+are auto-oriented, converted to the web sRGB colour space, and stripped of
+metadata. PNG and alpha-bearing sources remain lossless; already-lossy sources
+use high-quality lossy WebP. The original upload is never modified. The pipeline
+probes each source first, generates only widths below its orientation-aware
+width, and publishes a derivative only when its file is smaller than the
+original. A generated manifest records the dimensions, byte size, format, and
 content-addressed URL of every available representation.
 
 Reduced display surfaces build `srcset` from that manifest and provide accurate

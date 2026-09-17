@@ -253,6 +253,9 @@ fine plans and linework, including during thumbnail hover effects. The project
 lightbox continues to load the untouched original for detailed inspection. The
 pipeline never enlarges an upload or publishes a preview that weighs as much as
 the original; the original remains the highest-resolution browser candidate.
+Transparent and PNG previews preserve lossless detail, while photographic
+previews use conservative high-quality compression. Camera orientation and web
+colour are normalized in previews without changing the uploaded original.
 
 ### Lightbox inspection controls — [Explicit]
 

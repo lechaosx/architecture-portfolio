@@ -16,6 +16,7 @@ import {
   derivativeWidths,
   imageCacheKey,
   shouldPublishDerivative,
+  webpPolicy,
 } from './image-cache';
 
 const sourceDirectory = resolve('public/uploads');
@@ -24,13 +25,11 @@ const outputDirectory = resolve('public/_responsive');
 const cacheDirectory = resolve('node_modules/.astro/images');
 const uploadReference = /\/uploads\/(.+?\.(?:avif|jpe?g|png|webp))/gi;
 const recipe = {
-  version: 1,
+  version: 2,
   widths: GENERATED_IMAGE_WIDTHS,
   gamma: 2.2,
   kernel: sharp.kernel.lanczos3,
   format: 'webp',
-  lossless: true,
-  effort: 4,
   sharp: sharp.versions.sharp,
   vips: sharp.versions.vips,
 };
@@ -76,7 +75,12 @@ for (const sourcePath of await referencedImages()) {
   if (!sourceMetadata.width || !sourceMetadata.height || !sourceMetadata.format) {
     throw new Error(`Could not read image metadata: ${sourcePath}`);
   }
-  const cacheKey = imageCacheKey(source, recipe);
+  const sourceDimensions = sourceMetadata.autoOrient ?? sourceMetadata;
+  const output = webpPolicy(
+    sourceMetadata.format,
+    Boolean(sourceMetadata.hasAlpha),
+  );
+  const cacheKey = imageCacheKey(source, { ...recipe, output });
   const sourceUrl = `/uploads/${relativePath
     .split(sep)
     .map((segment) => encodeURIComponent(segment))
@@ -84,7 +88,7 @@ for (const sourcePath of await referencedImages()) {
   const variants: ImageVariant[] = [];
 
   for (const width of derivativeWidths(
-    sourceMetadata.width,
+    sourceDimensions.width,
     GENERATED_IMAGE_WIDTHS,
   )) {
     const outputPath = join(outputDirectory, cacheKey, `${width}.webp`);
@@ -111,9 +115,10 @@ for (const sourcePath of await referencedImages()) {
     } catch {
       await mkdir(dirname(cachePath), { recursive: true });
       const result = await sharp(sourcePath, { limitInputPixels: false })
+        .autoOrient()
         .gamma(recipe.gamma)
         .resize({ width, kernel: recipe.kernel })
-        .webp({ lossless: recipe.lossless, effort: recipe.effort })
+        .webp(output)
         .toFile(cachePath);
       variant = {
         url: `/_responsive/${cacheKey}/${width}.webp`,
@@ -138,8 +143,8 @@ for (const sourcePath of await referencedImages()) {
   manifest.images[`/uploads/${relativePath.split(sep).join('/')}`] = {
     source: {
       url: sourceUrl,
-      width: sourceMetadata.width,
-      height: sourceMetadata.height,
+      width: sourceDimensions.width,
+      height: sourceDimensions.height,
       bytes: source.byteLength,
       format: sourceMetadata.format,
     },
