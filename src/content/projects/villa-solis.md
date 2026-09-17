@@ -101,6 +101,34 @@ gallery:
       activities, attract new user groups and enhance the overall appeal of the
       sports complex.
   - image: /uploads/01 Problémová mapa +.png
+    title_cs: Hodnoty území
+    title_en: Values of the Area
+    description_cs: Analýza vymezuje hlavní hodnoty a existující potenciály města,
+      na které může návrh přímo navázat. Mezi nejvýznamnější patří veřejná
+      prostranství – Masarykovo náměstí, Seifertovo náměstí a park při ulici
+      Újezd – společně s kulturní, sportovní a školskou vybaveností. Významnou
+      výhodou řešeného území je právě blízkost škol a jejich dobrá dostupnost ke
+      sportovnímu areálu, která vytváří potenciál pro jeho každodenní využívání.
+      Důležitou součást městské struktury tvoří také síť cyklostezek, která
+      propojuje území s městem i okolní krajinou. Výrazným přírodním prvkem je
+      řeka Kyjovka protékající v bezprostřední blízkosti areálu, která
+      představuje potenciál pro posílení rekreačního charakteru území. Hodnotou
+      je v neposlední řadě samotný sportovní areál – rozsáhlá plocha v centrální
+      části města, jejíž poloha a vazby na okolní funkce vytvářejí významný
+      potenciál pro další rozvoj.
+    description_en: The analysis identifies the key qualities and existing potential
+      of the town that the proposal can build upon. Among the most important are
+      public spaces such as Masaryk Square, Seifert Square and the park along
+      Újezd Street, together with cultural, sports and educational facilities. A
+      major advantage of the project area is the proximity of schools and their
+      easy access to the sports complex, creating potential for its everyday
+      use. The existing network of cycling routes provides connections to both
+      the town and the surrounding landscape. Another important natural element
+      is the Kyjovka River, flowing in the immediate vicinity of the site, with
+      the potential to strengthen its recreational character. Last but not
+      least, the sports complex itself represents an important asset – a large
+      area within the central part of Kyjov, whose location and connections to
+      surrounding functions provide strong potential for further development.
   - image: /uploads/02 Problémová mapa -.png
   - image: /uploads/03 Situace areálu.png
   - image: /uploads/04 Půdorys park.png
