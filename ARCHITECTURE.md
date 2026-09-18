@@ -46,13 +46,13 @@ visitors still land in the right place.
 
 ### CI/CD: GitHub Actions → Pages — [Explicit]
 
-`.github/workflows/deploy.yml` runs unit, Chromium, and Firefox interaction tests, builds
-with `withastro/action` (configured for bun), and deploys via
-`actions/deploy-pages`; a push to `master` is the trigger. Pushes whose complete
-diff is confined to `src/content/**` and `public/uploads/**` skip the test steps
-but still build and deploy, keeping CMS edit cycles short while retaining Astro
-content validation and responsive-image generation. Mixed changes and manual
-workflow runs execute the full suite.
+`.github/workflows/deploy.yml` runs static analysis, unit tests, and Chromium and
+Firefox interaction tests, builds with `withastro/action` (configured for bun),
+and deploys via `actions/deploy-pages`; a push to `master` is the trigger. Pushes
+whose complete diff is confined to `src/content/**` and `public/uploads/**` skip
+the test steps but still build and deploy, keeping CMS edit cycles short while
+retaining Astro content validation and responsive-image generation. Mixed
+changes and manual workflow runs execute the full suite.
 
 ---
 
@@ -67,8 +67,11 @@ content. The user accepted the recommended stack without pushback.
 ### Language: TypeScript — [Explicit]
 
 Chosen from the offered options (over plain JavaScript). Uses Astro's `strict`
-tsconfig. The content schema in `src/content.config.ts` is the main place types
-earn their keep.
+tsconfig. `bun run check` runs Astro's project checker across Astro, Svelte,
+TypeScript, and JavaScript sources and fails on errors, warnings, or hints. The
+tsconfig also checks JavaScript and reports unused or unreachable code so config
+files and scripts are held to the same zero-diagnostic rule. The content schema
+in `src/content.config.ts` is the main place types earn their keep — [Explicit].
 
 ### Runtime / package manager: bun — [Explicit]
 

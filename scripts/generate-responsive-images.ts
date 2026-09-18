@@ -11,7 +11,11 @@ import {
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import sharp from 'sharp';
 import { GENERATED_IMAGE_WIDTHS } from '../src/images';
-import type { ImageManifest, ImageVariant } from '../src/images';
+import type {
+  ImageManifest,
+  ImageVariant,
+  ResponsiveImage,
+} from '../src/images';
 import {
   deepZoomLevels,
   deepZoomOverlap,

@@ -8,10 +8,11 @@
     "predev": "bun run images",
     "dev": "astro dev",
     "start": "bun run dev",
+    "check": "astro check --minimumFailingSeverity hint",
     "test": "bun test --path-ignore-patterns 'tests/e2e/**'",
     "pretest:e2e": "bun run build",
     "test:e2e": "playwright test",
-    "test:all": "bun run test && bun run test:e2e",
+    "test:all": "bun run check && bun run test && bun run test:e2e",
     "prebuild": "bun run images",
     "build": "astro build",
     "preview": "astro preview",
@@ -30,7 +31,10 @@
     "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@playwright/test": "1.60.0",
-    "sharp": "^0.34.5"
+    "@types/bun": "^1.4.2",
+    "sharp": "^0.34.5",
+    "typescript": "^6.0.0"
   }
 }

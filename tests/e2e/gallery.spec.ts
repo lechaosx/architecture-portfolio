@@ -67,7 +67,7 @@ async function lightboxTransitionState(page: Page) {
       .getAnimations()
       .some(
         ({ effect }) =>
-          effect?.pseudoElement ===
+          (effect as KeyframeEffect | null)?.pseudoElement ===
           '::view-transition-group(lightbox-image)',
       ),
   );
@@ -75,7 +75,7 @@ async function lightboxTransitionState(page: Page) {
     const animations = document.getAnimations();
     const animation = animations.find(
       ({ effect }) =>
-        effect?.pseudoElement ===
+        (effect as KeyframeEffect | null)?.pseudoElement ===
         '::view-transition-group(lightbox-image)',
     )!;
     const keyframes = (animation.effect as KeyframeEffect).getKeyframes();
@@ -84,7 +84,7 @@ async function lightboxTransitionState(page: Page) {
     const imageScaleKeyframes = animations
       .filter(
         ({ effect }) =>
-          effect?.pseudoElement ===
+          (effect as KeyframeEffect | null)?.pseudoElement ===
           '::view-transition-new(lightbox-image)',
       )
       .map(({ effect }) => (effect as KeyframeEffect).getKeyframes())
@@ -280,7 +280,11 @@ test('closing a zoomed image uses the overlay transition without an image morph'
     await page.evaluate(() =>
       document
         .getAnimations()
-        .some(({ effect }) => effect?.pseudoElement?.includes('lightbox-image')),
+        .some(({ effect }) =>
+          (effect as KeyframeEffect | null)?.pseudoElement?.includes(
+            'lightbox-image',
+          ),
+        ),
     ),
   ).toBe(false);
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
@@ -456,7 +460,11 @@ test('an obscured thumbnail uses the overlay transition without an image morph',
   const openingMorphsImage = await page.evaluate(() =>
     document
       .getAnimations()
-      .some(({ effect }) => effect?.pseudoElement?.includes('lightbox-image')),
+      .some(({ effect }) =>
+        (effect as KeyframeEffect | null)?.pseudoElement?.includes(
+          'lightbox-image',
+        ),
+      ),
   );
   await waitForLightbox(page);
 
@@ -466,7 +474,11 @@ test('an obscured thumbnail uses the overlay transition without an image morph',
   const closingMorphsImage = await page.evaluate(() =>
     document
       .getAnimations()
-      .some(({ effect }) => effect?.pseudoElement?.includes('lightbox-image')),
+      .some(({ effect }) =>
+        (effect as KeyframeEffect | null)?.pseudoElement?.includes(
+          'lightbox-image',
+        ),
+      ),
   );
 
   expect({ openingMorphsImage, closingMorphsImage }).toEqual({
@@ -540,12 +552,15 @@ test('2x display density selects enough pixels without exceeding the source', as
   await waitForLightbox(page);
 
   const resolution = await page.locator('.lightbox-slide-current img').evaluate(
-    (image) => ({
-      naturalWidth: image.naturalWidth,
-      renderedWidth: image.getBoundingClientRect().width,
-      sourceWidth: Number(image.getAttribute('width')),
-      pixelRatio: devicePixelRatio,
-    }),
+    (element) => {
+      const image = element as HTMLImageElement;
+      return {
+        naturalWidth: image.naturalWidth,
+        renderedWidth: image.getBoundingClientRect().width,
+        sourceWidth: Number(image.getAttribute('width')),
+        pixelRatio: devicePixelRatio,
+      };
+    },
   );
   expect(resolution.naturalWidth).toBeGreaterThanOrEqual(
     Math.min(
@@ -592,7 +607,9 @@ test('a reopened pyramid matches its canvas to a changed display density', async
   await expect
     .poll(() =>
       canvas.evaluate(
-        (element) => element.width / element.getBoundingClientRect().width,
+        (element) =>
+          (element as HTMLCanvasElement).width /
+          element.getBoundingClientRect().width,
       ),
     )
     .toBe(2);
