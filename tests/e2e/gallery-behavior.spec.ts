@@ -255,6 +255,37 @@ test('mouse swipe, zoom, pan, and reset use the same direct manipulation model',
   await expect(currentImage).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
 });
 
+test('desktop navigation stays outside zoomed imagery and remains clickable', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  await galleryImage(page, 10).click();
+  await waitForLightbox(page);
+
+  const stage = page.locator('.lightbox-stage');
+  const previous = page.getByRole('button', { name: 'Previous image' });
+  const next = page.getByRole('button', { name: 'Next image' });
+  const [stageBox, previousBox, nextBox] = await Promise.all([
+    stage.boundingBox(),
+    previous.boundingBox(),
+    next.boundingBox(),
+  ]);
+  expect(previousBox!.x + previousBox!.width).toBeLessThanOrEqual(stageBox!.x);
+  expect(stageBox!.x + stageBox!.width).toBeLessThanOrEqual(nextBox!.x);
+
+  await stage.hover();
+  await page.mouse.wheel(0, -1200);
+  await expect(page.getByRole('button', { name: 'Reset zoom' })).not.toHaveText(
+    '100%',
+  );
+
+  await next.click();
+  await expect(page).toHaveURL(/#image-11$/);
+  await expect(page.getByRole('button', { name: 'Reset zoom' })).toHaveText(
+    '100%',
+  );
+});
+
 test('caption text follows the language but never handles navigation gestures', async ({
   page,
 }) => {

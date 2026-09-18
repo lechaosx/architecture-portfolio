@@ -19,6 +19,13 @@ const project = {
 };
 
 describe('project content schema', () => {
+  test('allows a project with no gallery images', () => {
+    const result = projectSchema.safeParse(project);
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.gallery).toEqual([]);
+  });
+
   test('treats an empty CMS gallery row as no image', () => {
     const result = projectSchema.safeParse({ ...project, gallery: [{}] });
 
