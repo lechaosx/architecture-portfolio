@@ -189,7 +189,10 @@ point is that the rest of the page ships no JS.
 2. The site serves from the custom domain in `public/CNAME`: add the same domain
    under Settings → Pages and point its DNS at GitHub Pages.
 3. Every push to `master` runs `.github/workflows/deploy.yml` (build with bun →
-   deploy). No manual step.
+   deploy). Pushes limited to `src/content/` and `public/uploads/` skip unit and
+   browser tests; the production build still validates and publishes the
+   content. Mixed content/code pushes and manual workflow runs execute the full
+   test suite. No manual step.
 
 ## Content editing setup (Pages CMS)
 
