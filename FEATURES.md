@@ -235,16 +235,16 @@ hijacking). Honors the explicit motion boundary.
 ### Dark mode — [Explicit]
 
 The architect's brief floated inverting the page to white-on-black ("after
-clicking — the opposite"). It now ships as a proper dark mode: the palette is the
-exact inverse of light — white background becomes black, black text becomes white,
-and the greys flip to match — while **photos and drawings are left untouched** (an
-image-forward site must never invert its imagery). **Light is always the default**:
-the page ignores the visitor's system preference and only goes dark when the
-visitor has explicitly asked for it. A **single toggle in the footer**, next to the
-language switch, flips the theme; it shows the mode it will switch _to_ — a moon in
-light mode, a sun in dark mode — cross-fading as it flips. The choice is remembered
-for next time and carries across page navigations. Both footer toggles use the same
-square hit area. (An earlier attempt using a CSS
+clicking — the opposite"). It now ships as a proper dark mode: a charcoal
+background, softened off-white text, and matching greys replace the harsher pure
+black/white inversion, while **photos and drawings are left untouched** (an
+image-forward site must never invert its imagery). With no saved choice, the page
+follows the visitor's browser or system preference and responds when it changes.
+A **single toggle in the footer**, next to the language switch, flips the theme
+and becomes an explicit override; it shows the mode it will switch _to_ — a moon
+in light mode, a sun in dark mode — cross-fading as it flips. The choice is
+remembered for next time and carries across page navigations. Both footer toggles
+use the same square hit area. (An earlier attempt using a CSS
 `filter` invert was dropped because it inverted the photos too and fought the
 sticky nav and View Transitions.)
 
