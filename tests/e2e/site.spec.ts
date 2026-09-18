@@ -94,6 +94,39 @@ test('theme follows the system and an explicit choice persists across navigation
   await context.close();
 });
 
+test('footer toggles share dimensions and show the state they switch to', async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/');
+
+  const theme = page.locator('[data-theme-toggle]');
+  const language = page.locator('[data-lang-toggle]');
+  const [themeBox, languageBox] = await Promise.all([
+    theme.boundingBox(),
+    language.boundingBox(),
+  ]);
+  expect({ width: languageBox!.width, height: languageBox!.height }).toEqual({
+    width: themeBox!.width,
+    height: themeBox!.height,
+  });
+
+  await expect(theme.locator('.theme-icon-moon')).toHaveCSS('opacity', '1');
+  await expect(theme.locator('.theme-icon-sun')).toHaveCSS('opacity', '0');
+  await expect(language.locator('.language-option-cs')).toHaveCSS('opacity', '1');
+  await expect(language.locator('.language-option-en')).toHaveCSS('opacity', '0');
+
+  await theme.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(theme.locator('.theme-icon-moon')).toHaveCSS('opacity', '0');
+  await expect(theme.locator('.theme-icon-sun')).toHaveCSS('opacity', '1');
+
+  await language.click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
+  await expect(language.locator('.language-option-cs')).toHaveCSS('opacity', '0');
+  await expect(language.locator('.language-option-en')).toHaveCSS('opacity', '1');
+});
+
 test('work projects are sorted and the grid follows its responsive breakpoints', async ({
   page,
 }) => {
