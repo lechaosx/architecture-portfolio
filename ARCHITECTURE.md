@@ -301,10 +301,14 @@ representation.
 
 Reduced display surfaces build `srcset` from that manifest and provide accurate
 `sizes` hints, avoiding severe browser downsampling of detailed architectural
-linework without assuming every configured size exists. The untouched original
-is replaced as the terminal browser candidate by a smaller processed
-native-resolution derivative whenever one is available. It remains the terminal
-candidate only when processing cannot reduce its byte size. SVGs bypass the
+linework without assuming every configured size exists. Square project-gallery
+thumbnails multiply their slot-size hint by a landscape source's aspect ratio,
+because `object-cover` scales those sources by height before cropping their
+sides. Portrait and square sources are width-constrained, which the normal
+slot-size hint already represents. The untouched original is replaced as the
+terminal browser candidate by a smaller processed native-resolution derivative
+whenever one is available. It remains the terminal candidate only when
+processing cannot reduce its byte size. SVGs bypass the
 derivative pipeline. A direct original-image link remains available independently
 of browser display selection.
 

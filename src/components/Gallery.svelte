@@ -10,6 +10,7 @@
     focusWrapTarget,
     galleryImageHash,
     galleryImageIndex,
+    galleryThumbnailSizes,
     hasCaption,
     lightboxImageUrl,
     nativeZoomScale,
@@ -668,6 +669,10 @@
 {#if images.length}
   <div class="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3">
     {#each images as img, i}
+      {@const responsiveImage = responsiveImages[i]}
+      {@const aspectRatio = responsiveImage
+        ? responsiveImage.source.width / responsiveImage.source.height
+        : 1}
       <button
         type="button"
         class="group aspect-square overflow-hidden bg-neutral-100"
@@ -677,7 +682,7 @@
         <img
           src={img.image}
           srcset={thumbnailSrcsets[i]}
-          sizes="(min-width: 896px) 275px, (min-width: 640px) calc((100vw - 72px) / 3), calc((100vw - 60px) / 2)"
+          sizes={galleryThumbnailSizes(aspectRatio)}
           alt=""
           loading="lazy"
           decoding="async"

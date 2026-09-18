@@ -6,6 +6,7 @@ import {
   focusWrapTarget,
   galleryImageHash,
   galleryImageIndex,
+  galleryThumbnailSizes,
   hasCaption,
   lightboxImageUrl,
   nativeZoomScale,
@@ -36,6 +37,22 @@ describe('hasCaption', () => {
     { description_en: 'Description' },
   ])('is true when a caption field is present', (caption) => {
     expect(hasCaption(image(caption))).toBe(true);
+  });
+});
+
+describe('gallery thumbnail image selection', () => {
+  test('accounts for the landscape crop when describing a square thumbnail', () => {
+    expect(galleryThumbnailSizes(16 / 9)).toBe(
+      '(min-width: 896px) 488.8889px, (min-width: 640px) calc(59.2593vw - 42.6667px), calc(88.8889vw - 53.3333px)',
+    );
+  });
+
+  test('keeps the default slot dimensions without a landscape aspect ratio', () => {
+    const expected =
+      '(min-width: 896px) 275px, (min-width: 640px) calc(33.3333vw - 24px), calc(50vw - 30px)';
+
+    expect(galleryThumbnailSizes(1)).toBe(expected);
+    expect(galleryThumbnailSizes(9 / 16)).toBe(expected);
   });
 });
 
