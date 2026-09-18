@@ -116,6 +116,20 @@
     swipeOffset = 0;
   });
   $effect(() => {
+    if (!lightboxTransitioning) return;
+    const preventGesture = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    const options = { capture: true, passive: false } as const;
+    window.addEventListener('wheel', preventGesture, options);
+    window.addEventListener('touchmove', preventGesture, options);
+    return () => {
+      window.removeEventListener('wheel', preventGesture, options);
+      window.removeEventListener('touchmove', preventGesture, options);
+    };
+  });
+  $effect(() => {
     const descriptor = deepZoom;
     const element = deepZoomElement;
     if (!open || !descriptor || !element || lightboxTransitioning) return;
@@ -235,6 +249,18 @@
     }
 
     lightboxTransitioning = true;
+    const sourceImage = source.querySelector('img');
+    const sourceScale = sourceImage
+      ? sourceImage.getBoundingClientRect().width / source.clientWidth
+      : 1;
+    if (sourceImage) {
+      sourceImage.style.transition = 'none';
+      sourceImage.style.scale = String(sourceScale);
+    }
+    document.documentElement.style.setProperty(
+      '--lightbox-source-scale',
+      String(sourceScale),
+    );
     source.style.viewTransitionName = 'lightbox-image';
     try {
       const transition = document.startViewTransition({
@@ -250,6 +276,9 @@
       source.style.viewTransitionName = '';
       if (!open) await showFromHistory(i);
     } finally {
+      sourceImage?.style.removeProperty('transition');
+      sourceImage?.style.removeProperty('scale');
+      document.documentElement.style.removeProperty('--lightbox-source-scale');
       lightboxTransitioning = false;
     }
   }
@@ -282,6 +311,7 @@
   async function closeFromHistory() {
     if (!open) return;
     const thumbnail = thumbnailButtons[index];
+    const morphImage = scale === 1;
     if (
       reducedMotion ||
       !thumbnail ||
@@ -293,11 +323,12 @@
     }
 
     lightboxTransitioning = true;
+    if (!morphImage) await tick();
     try {
       const transition = document.startViewTransition({
         update: async () => {
           await hideLightbox();
-          thumbnail.style.viewTransitionName = 'lightbox-image';
+          if (morphImage) thumbnail.style.viewTransitionName = 'lightbox-image';
         },
         types: ['lightbox-close'],
       });
@@ -475,6 +506,7 @@
 
   function onwheel(e: WheelEvent) {
     e.preventDefault();
+    if (lightboxTransitioning) return;
     const delta =
       e.deltaMode === WheelEvent.DOM_DELTA_LINE
         ? e.deltaY * 16
@@ -494,7 +526,14 @@
   }
 
   function onpointerdown(e: PointerEvent) {
-    if (e.pointerType !== 'mouse' || e.button !== 0 || navigating) return;
+    if (
+      lightboxTransitioning ||
+      e.pointerType !== 'mouse' ||
+      e.button !== 0 ||
+      navigating
+    ) {
+      return;
+    }
     e.preventDefault();
     stage.setPointerCapture(e.pointerId);
     dragging = true;
@@ -556,7 +595,7 @@
   }
 
   function ontouchstart(e: TouchEvent) {
-    if (navigating) return;
+    if (lightboxTransitioning || navigating) return;
     if (e.touches.length === 2) {
       swipeAnimating = false;
       swipeOffset = 0;
@@ -819,7 +858,7 @@
       >
         {#if images.length > 1}
           <div
-            class="lightbox-slide-previous pointer-events-none absolute inset-0 flex items-center justify-center"
+            class="lightbox-slide-previous pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
             style:transform={slideTransform(-1)}
             style:transition={slideTransition}
             aria-hidden="true"
@@ -836,7 +875,7 @@
           </div>
         {/if}
         <div
-          class="lightbox-slide-current absolute inset-0 flex items-center justify-center"
+          class="lightbox-slide-current absolute inset-0 flex items-center justify-center overflow-hidden"
           style:transform={slideTransform(0)}
           style:transition={slideTransition}
         >
@@ -854,7 +893,8 @@
               style:height={lightboxImageSize
                 ? `${lightboxImageSize.height}px`
                 : undefined}
-              class="lightbox-image absolute h-auto max-h-full w-auto max-w-full object-contain select-none"
+              class:lightbox-image={scale === 1}
+              class="absolute h-auto max-h-full w-auto max-w-full object-contain select-none"
               style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
               onload={() => (pan = constrainedPan(pan))}
             />
@@ -876,7 +916,8 @@
               style:height={lightboxImageSize
                 ? `${lightboxImageSize.height}px`
                 : undefined}
-              class="lightbox-image h-auto max-h-full w-auto max-w-full object-contain select-none"
+              class:lightbox-image={scale === 1}
+              class="h-auto max-h-full w-auto max-w-full object-contain select-none"
               style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
               onload={() => (pan = constrainedPan(pan))}
             />
@@ -884,7 +925,7 @@
         </div>
         {#if images.length > 1}
           <div
-            class="lightbox-slide-next pointer-events-none absolute inset-0 flex items-center justify-center"
+            class="lightbox-slide-next pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
             style:transform={slideTransform(1)}
             style:transition={slideTransition}
             aria-hidden="true"

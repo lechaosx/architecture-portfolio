@@ -146,18 +146,24 @@ aligned with the global language switch.
 
 Opening and closing use a same-document View Transition between the stable
 thumbnail frame and active preview. The image remains nested inside the named
-thumbnail frame, so a settled or in-progress hover transform cannot change the
-shared transition geometry. Image width and height metadata reserve geometry
-before a first download. The active preview's dimensions come from the source
-aspect ratio and measured stage, so cached image and tiled-renderer state cannot
-change the endpoint. The transition image pair clips both native snapshots while
-their box changes aspect ratio, progressively revealing the full image as the
-snapshots crossfade; the document snapshot supplies the overlay fade.
+thumbnail frame, so its hover transform cannot change the shared transition
+geometry. The current hover scale is frozen at click and applied to the opening
+snapshot, including midway through the hover transition. Image width and height
+metadata reserve geometry before a first download. The active preview's
+dimensions come from the source aspect ratio and measured stage, so cached image
+and tiled-renderer state cannot change the endpoint. The image pair clips the
+destination snapshot on opening and the source snapshot on closing while its box
+changes aspect ratio. Using one image snapshot avoids doubled edges from blending
+different crop states; the document snapshot supplies the overlay fade.
 Page-transition elements opt out while this lightbox-only transition is active,
 so their snapshots remain in the document's normal stacking order beneath the
 header and overlay. The tiled renderer starts after opening finishes so its
-canvas cannot appear beneath the moving image. Reduced-motion visitors use the
-immediate state change.
+canvas cannot appear beneath the moving image. Image gestures and window-level
+wheel or touch scrolling are captured during the shared transition, keeping both
+endpoints fixed without changing document layout. A zoomed preview is not a
+matching shared element, so closing it uses only the document fade. Reduced-motion
+visitors use the immediate state change. Each translated slide clips its own
+contents, so a transformed image cannot paint over the adjacent slide.
 
 Each image maps to a one-based `#image-N` hash. Opening pushes one marked
 history entry; navigation replaces that entry, and the popstate handler closes

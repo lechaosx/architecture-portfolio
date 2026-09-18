@@ -256,6 +256,10 @@ grid position on close, changing crop as its aspect ratio changes and waiting
 for the enlarged preview before it animates. The overlay fades over the page and
 its header; the header remains in place beneath it. Thumbnail hover remains
 independent, including when the lightbox opens partway through the hover effect.
+Image gestures and page scrolling wait for opening and closing transitions to
+finish. Closing a zoomed image fades the overlay without morphing the manipulated
+image into its thumbnail. Zoomed content stays inside its outgoing slide when
+moving to another image.
 
 ### Addressable lightbox images — [Explicit]
 

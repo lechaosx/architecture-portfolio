@@ -56,6 +56,32 @@ html:active-view-transition-type(lightbox-close) .project-cover {
   overflow: clip;
 }
 
+@keyframes lightbox-open-image {
+  from {
+    scale: var(--lightbox-source-scale, 1);
+  }
+  to {
+    scale: 1;
+  }
+}
+
+html:active-view-transition-type(lightbox-open)::view-transition-old(lightbox-image),
+html:active-view-transition-type(lightbox-close)::view-transition-new(lightbox-image) {
+  display: none;
+}
+
+html:active-view-transition-type(lightbox-open)::view-transition-new(lightbox-image) {
+  animation-name: lightbox-open-image;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
+html:active-view-transition-type(lightbox-close)::view-transition-old(lightbox-image) {
+  animation: none;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
 /* Dark mode is the exact inverse of the light palette. Tailwind v4 compiles
    colour utilities to var(--color-*), so remapping those tokens flips every
    existing bg-white/text-black/text-neutral-* at once — no per-component
