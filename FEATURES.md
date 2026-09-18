@@ -49,8 +49,8 @@ height on touch-sized screens. Everything sizes from one shared content width
 
 White background, black text throughout; greys are allowed for secondary text
 (dates, locations, captions). Any colour comes from the project imagery and the
-architect's drawings, never from the UI chrome. From her design brief, and in
-keeping with the near-monochrome reference sites she cited (maaus.cz,
+architect's drawings, never from the UI chrome. This follows the design brief
+and the near-monochrome reference sites cited there (maaus.cz,
 storyarchitekti.cz).
 
 ### Nav links have three states — [Explicit]
@@ -63,7 +63,7 @@ home page is reached by clicking the name wordmark. Each link has three states:
 - **Current page / clicked:** inverted — white text in a solid black box.
 
 Menu labels are set uppercase with wide tracking. (This supersedes the
-underline-based affordance in her original brief; she revised it to the
+underline-based affordance in the original brief; the architect revised it to the
 none → box → invert scheme.)
 
 This is the site's shared interaction vocabulary — **outline box on hover,
@@ -75,10 +75,10 @@ reads better inline than a box.
 ### Typeface: Roboto throughout — [Explicit]
 
 The whole page is set in Roboto — the same font as the nav's WORK/CONTACT links —
-at the architect's request. She had also listed Open Sans and DIN Pro as fonts she
-likes; Open Sans was the body font at first but was dropped when she asked for one
-typeface everywhere, and DIN Pro is commercial with no free web licence, so it is
-not used (see ARCHITECTURE.md → "Self-hosted webfonts").
+at the architect's request. Open Sans and DIN Pro were also listed as preferred
+fonts; Open Sans was the body font at first but was dropped when one typeface was
+requested everywhere, and DIN Pro is commercial with no free web licence, so it
+is not used (see ARCHITECTURE.md → "Self-hosted webfonts").
 
 ---
 
@@ -168,12 +168,12 @@ On narrower screens the grid steps down to two columns, then one — [Implicit].
 
 A section below the bio describing how the architect works, as a **vertical**
 stack of items (Place, Scale, Material, Thinking); each item's icon enlarges on
-hover. She asked for this space and preferred it laid out vertically rather than
-as the horizontal row on the reference site (maaus.cz), and without dividing
-lines between items. The items (label, text, and which of four line icons) are
-editable in the CMS (the Home entry) and can be added, removed, or reordered; the
-text ships as placeholder wording. The icon set (place/scale/material/thinking)
-is fixed in code — [Implicit].
+hover. The architect requested this space and preferred it laid out vertically
+rather than as the horizontal row on the reference site (maaus.cz), and without
+dividing lines between items. The items (label, text, and which of four line
+icons) are editable in the CMS (the Home entry) and can be added, removed, or
+reordered; the text ships as placeholder wording. The icon set
+(place/scale/material/thinking) is fixed in code — [Implicit].
 
 ---
 
@@ -184,7 +184,7 @@ is fixed in code — [Implicit].
 The whole site is bilingual. Every visible piece of text exists in both Czech and
 English: the baked-in labels (nav, section headings, screen-reader controls) and
 all CMS content (projects, bio, approach, contact, SEO). The architect provides
-both languages for the content she edits.
+both languages for all editable content.
 
 ### Manual switch, defaults to the visitor's browser — [Explicit]
 
@@ -346,13 +346,13 @@ configured, GitHub still 301-redirects the `*.github.io/<repo>/` URL to it.)
 Per-page title/description, Open Graph tags, and a generated sitemap so pages
 index and share cleanly.
 
-### Contact page — email, phone, and when she's reachable — [Explicit]
+### Contact page — email, phone, and availability — [Explicit]
 
 A dedicated `/contact` page (same content width as the rest of the site, laid out
 in two columns like the About section) shows the email (mailto) and phone (tel
 link), plus a **per-day availability schedule** under the heading "When to reach
-me" — framed as when she's active and likely to pick up, not formal "opening
-hours", with one row per day (hours, or "—" when she's not around). The email also appears in
+me" — framed as likely-to-answer times, not formal "opening hours", with one row
+per day (hours, or "—" when unavailable). The email also appears in
 the global footer. All of it — email, phone, and the day-by-day availability — is
 editable in the CMS (the Contact entry). No contact form (no backend to process
 one, and it keeps things simple).
