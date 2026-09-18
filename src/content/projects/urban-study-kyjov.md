@@ -1,6 +1,6 @@
 ---
-title_cs: Urbanistická studie části města | Kyjov
-title_en: Urban Study of a Part of the City | Kyjov
+title_cs: Drobný urbanismus | Kyjov
+title_en: Urban Intervention | Kyjov
 year: 2025
 location_cs: Kyjov, Česká republika
 location_en: Kyjov, Czech Republic
