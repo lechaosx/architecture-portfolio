@@ -270,8 +270,9 @@ fine plans and linework, including during thumbnail hover effects. The project
 gallery requests extra source width for landscape images cropped into square
 thumbnails, preventing those previews from being enlarged. The project lightbox
 starts with a representation suited to its on-screen size and display density,
-then loads more detail as the visitor zooms. Drawings larger than 4096
-px use 512 px deep-zoom tiles over a density-matched processed preview, so the
+updates that representation when browser zoom or screen density changes, and
+loads more detail as the visitor zooms. Drawings larger than 4096 px use 512 px
+deep-zoom tiles over a density-matched processed preview, so the
 browser requests only useful resolution levels and visible regions without
 showing dark gaps between arriving tiles or decoding the entire print-sized
 image. Smaller images progress through processed full-image variants. Both
