@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import { devicePixelRatio } from 'svelte/reactivity/window';
   import type OpenSeadragon from 'openseadragon';
   import type { ResponsiveImage } from '../images';
   import { ui, type Lang } from '../i18n';
@@ -46,7 +47,7 @@
   let reduceMotion = $state(false);
   let stageWidth = $state(0);
   let stageHeight = $state(0);
-  let devicePixelRatio = $state(1);
+  let pixelRatio = $derived(devicePixelRatio.current ?? 1);
   let stage: HTMLDivElement;
   let image: HTMLImageElement;
   let dialog: HTMLDivElement;
@@ -72,7 +73,7 @@
           responsiveImages[index],
           { width: stageWidth, height: stageHeight },
           scale,
-          devicePixelRatio,
+          pixelRatio,
         )
       : images[index]?.image,
   );
@@ -161,7 +162,6 @@
   });
 
   onMount(() => {
-    devicePixelRatio = window.devicePixelRatio || 1;
     stageWidth = window.innerWidth;
     stageHeight = window.innerHeight * 0.85;
     const syncLang = () => {
@@ -224,7 +224,7 @@
           responsiveImage,
           { width: stageWidth, height: stageHeight },
           1,
-          devicePixelRatio,
+          pixelRatio,
         )
       : images[imageIndex]?.image;
   }
@@ -397,7 +397,7 @@
     return nativeZoomScale(
       responsiveImage.source.width,
       imageSize.width,
-      devicePixelRatio,
+      pixelRatio,
     );
   }
 

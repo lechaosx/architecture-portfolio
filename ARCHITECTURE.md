@@ -325,7 +325,9 @@ full-image path. OpenSeadragon is dynamically imported only when such an image
 opens. It requests the resolution levels and visible regions needed for the
 current viewport and stops at a 1:1 ratio with the finest source level. Smaller
 images select the least full-image derivative that covers their rendered pixels
-and use the same native-detail zoom limit.
+and use the same native-detail zoom limit. Both calculations consume Svelte's
+reactive device-pixel ratio, keeping them synchronized with browser-reported
+density changes.
 
 Pyramids use the same lossless-versus-photographic WebP policy as full-image
 derivatives and have their own content-addressed cache keys. Their combined
