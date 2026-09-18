@@ -253,9 +253,6 @@ gallery:
   - image: /uploads/Image25_000.webp
     title_cs: Vizualizace
     title_en: Visualization
-  - image: /uploads/Image16.webp
-    title_cs: Vizualizace
-    title_en: Visualization
   - image: /uploads/Image6_000.webp
     title_cs: Vizualizace
     title_en: Visualization
