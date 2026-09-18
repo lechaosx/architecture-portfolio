@@ -182,9 +182,9 @@ is fixed in code — [Implicit].
 ### Dual language, Czech + English — [Explicit]
 
 The whole site is bilingual. Every visible piece of text exists in both Czech and
-English: the baked-in labels (nav, section headings) and all CMS content
-(projects, bio, approach, contact, SEO). The architect provides both languages for
-the content she edits.
+English: the baked-in labels (nav, section headings, screen-reader controls) and
+all CMS content (projects, bio, approach, contact, SEO). The architect provides
+both languages for the content she edits.
 
 ### Manual switch, defaults to the visitor's browser — [Explicit]
 

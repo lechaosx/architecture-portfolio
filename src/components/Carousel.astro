@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import { frontmatter as home } from '../content/singletons/home.md';
 import { LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../images';
 import { getResponsiveImage } from '../server-images';
+import { ui } from '../i18n';
 
 const curated: string[] = home.gallery ?? [];
 const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
@@ -21,12 +22,11 @@ const displayImages = await Promise.all(
 {
   images.length > 0 && (
     <section class="mx-auto max-w-6xl px-6 pt-8">
-      <div
-        data-carousel
-        class="relative border border-black"
-        aria-roledescription="carousel"
-        aria-label="Selected work"
-      >
+      <h2 class="sr-only">
+        <span lang="cs">{ui.cs.selectedWork}</span>
+        <span lang="en">{ui.en.selectedWork}</span>
+      </h2>
+      <div data-carousel class="relative border border-black">
         <div
           data-carousel-track
           class="no-scrollbar flex aspect-[16/9] snap-x snap-mandatory overflow-x-auto"
@@ -35,10 +35,14 @@ const displayImages = await Promise.all(
             <div
               data-slide
               role="group"
-              aria-roledescription="slide"
-              aria-label={`${i + 1} of ${images.length}`}
               class="h-full w-full shrink-0 snap-start"
             >
+              <span lang="cs" class="sr-only">
+                {i + 1} {ui.cs.positionOf} {images.length}
+              </span>
+              <span lang="en" class="sr-only">
+                {i + 1} {ui.en.positionOf} {images.length}
+              </span>
               <img
                 src={src}
                 srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
@@ -57,27 +61,35 @@ const displayImages = await Promise.all(
             <button
               type="button"
               data-carousel-prev
-              aria-label="Previous image"
               class="absolute top-1/2 left-3 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center border border-transparent bg-white/80 text-lg text-black hover:border-black hover:bg-white active:bg-black active:text-white"
             >
-              ‹
+              <span aria-hidden="true">‹</span>
+              <span lang="cs" class="sr-only">{ui.cs.previousImage}</span>
+              <span lang="en" class="sr-only">{ui.en.previousImage}</span>
             </button>
             <button
               type="button"
               data-carousel-next
-              aria-label="Next image"
               class="absolute top-1/2 right-3 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center border border-transparent bg-white/80 text-lg text-black hover:border-black hover:bg-white active:bg-black active:text-white"
             >
-              ›
+              <span aria-hidden="true">›</span>
+              <span lang="cs" class="sr-only">{ui.cs.nextImage}</span>
+              <span lang="en" class="sr-only">{ui.en.nextImage}</span>
             </button>
             <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
               {displayImages.map((_, i) => (
                 <button
                   type="button"
                   data-dot
-                  aria-label={`Go to image ${i + 1}`}
                   class="h-2.5 w-2.5 cursor-pointer rounded-full border border-black bg-white/80 aria-[current=true]:bg-black"
-                />
+                >
+                  <span lang="cs" class="sr-only">
+                    {ui.cs.goToImage} {i + 1}
+                  </span>
+                  <span lang="en" class="sr-only">
+                    {ui.en.goToImage} {i + 1}
+                  </span>
+                </button>
               ))}
             </div>
           </>
