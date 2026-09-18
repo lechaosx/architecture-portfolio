@@ -302,9 +302,6 @@ body_cs: >-
   potenciál místa, rozšiřuje nabídku aktivit a vrací rozsáhlé území do
   každodenního života Kyjova.
 body_en: >-
-  ### Sports Complex and Municipal Park | Kyjov
-
-
   The project focuses on the **revitalisation of the sports complex and the
   adjacent municipal park in Kyjov**. Its main objective is to transform the
   currently enclosed and disconnected area into an open part of the town,
