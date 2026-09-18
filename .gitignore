@@ -3,3 +3,4 @@ dist/
 .astro/
 public/_responsive/
 .direnv
+test-results/

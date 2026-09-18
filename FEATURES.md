@@ -219,8 +219,13 @@ Motion must ride the native scrollbar and stay subtle.
 
 ### Smooth page-to-page transitions — [Implicit]
 
-Navigating between pages crossfades instead of a hard reload, via the browser's
-native View Transitions. Delivers "smoothness" without a heavy SPA.
+In browsers with cross-document View Transitions, navigating between pages
+crossfades instead of a hard reload. Project covers move between the work grid
+and their project page, progressively changing crop between the square card and
+the full image, including on the first uncached visit. Other browsers use normal
+page navigation. Hover enlargement remains independent of the moving cover.
+Work cards skip the general fade-in-on-scroll effect so entering the Work page
+has one transition. Delivers "smoothness" without a heavy SPA.
 
 ### Fade-in-on-scroll — [Implicit]
 
@@ -245,7 +250,11 @@ sticky nav and View Transitions.)
 
 ### Image lightbox / gallery — [Implicit]
 
-Project images open in a full-screen, keyboard-navigable lightbox (arrows, Esc).
+Project images open in a viewport-filling, keyboard-navigable lightbox (arrows,
+Esc). The selected thumbnail expands into the lightbox image and returns to its
+grid position on close, changing crop as its aspect ratio changes and waiting
+for the enlarged preview before it animates. The overlay fades over the page and
+its header; the header remains in place beneath it.
 
 ### Addressable lightbox images — [Explicit]
 
@@ -258,11 +267,13 @@ the page.
 ### Accessible lightbox modal — [Explicit]
 
 Opening the lightbox moves keyboard focus to its controls and keeps focus inside
-until it closes. Closing it restores focus to the thumbnail that opened it.
-The background page stays fixed at its exact scroll position while the lightbox
-is open, including on touch browsers. Its dialog, thumbnail, close, and
-navigation labels follow the selected site language. The top controls and
-navigation buttons stay outside the image viewport, including while zoomed.
+until it closes. Closing it restores focus to the thumbnail that opened it
+without moving the page.
+The overlay contains wheel, touch, and keyboard scrolling, while deliberate
+scrollbar movement is left in place when the lightbox closes. Its dialog,
+thumbnail, close, and navigation labels follow the selected site language. The
+top controls and navigation buttons stay outside the image viewport, including
+while zoomed.
 
 ### High-detail architectural images — [Explicit]
 
@@ -300,8 +311,9 @@ Touch visitors can pinch around the point between their fingers and drag a
 zoomed image with one finger. At 100%, horizontal dragging with either a finger
 or mouse navigates between gallery images; completed navigation slides to the
 next image and an incomplete gesture snaps back.
-Buttons and arrow keys use the same short slide, while reduced-motion settings
-disable it. Previous, current, and next images form a continuous strip, so one
+Buttons and arrow keys use the same short slide. With reduced motion, swipes
+remain stationary and a completed gesture changes the image immediately.
+Previous, current, and next images form a continuous strip, so one
 image enters directly as the other leaves without exposing the dark background.
 Maximum zoom depends on the image and display density, ending when native image
 pixels reach display pixels. A bilingual control opens the untouched original
@@ -332,7 +344,8 @@ content must have an image.
 ### Respects reduced-motion preferences — [Implicit]
 
 Users who set `prefers-reduced-motion` get no fade/transform animation. Changes
-to that preference apply immediately.
+to that preference apply immediately. Lightbox open/close transitions and live
+swipe movement are also disabled.
 
 ---
 

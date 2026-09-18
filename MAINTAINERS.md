@@ -20,6 +20,9 @@ nix develop          # shell with bun on PATH
 direnv allow         # alternatively, activate the flake shell automatically
 bun install          # install dependencies
 bun dev              # dev server at http://localhost:4321
+bun run test         # unit tests
+bun run test:e2e     # Chromium + Firefox interaction and animation regressions
+bun run test:all     # unit + browser tests
 bun run build        # production build -> dist/
 bun run preview      # serve the built dist/ locally
 ```
@@ -27,13 +30,13 @@ bun run preview      # serve the built dist/ locally
 ## Project layout
 
 ```
-flake.nix                     bun + Sharp runtime library (x86_64-linux)
+flake.nix                     bun + packaged Playwright browsers (x86_64-linux)
 .envrc                        automatic flake shell activation with direnv
 astro.config.mjs              site (for sitemap) + integrations; no base
 svelte.config.js              Svelte preprocess
 tsconfig.json                 extends astro/tsconfigs/strict
 .pages.yml                    Pages CMS schema (the browser editing UI)
-.github/workflows/deploy.yml  build with bun + deploy to Pages on push to master
+.github/workflows/deploy.yml  test, build with bun, and deploy on push to master
 
 src/
   images.ts                    responsive derivative URL/srcset contract
@@ -47,7 +50,7 @@ src/
     work.astro                 project grid
     contact.astro              email, phone, per-day availability (from contact.md)
     projects/[...slug].astro   project detail page
-  layouts/Base.astro           html shell, <ClientRouter/>, reveal + language scripts
+  layouts/Base.astro           html shell, reveal + language scripts
   components/
     Nav.astro                  chrome (name from site.md)
     Footer.astro               chrome (email from contact.md) + language/theme toggles
@@ -68,6 +71,7 @@ public/
 scripts/
   image-cache.ts                content + recipe cache fingerprint
   generate-responsive-images.ts  builds referenced raster display sizes
+tests/e2e/                     browser-level interaction regressions
 ```
 
 ---

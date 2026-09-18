@@ -18,17 +18,21 @@ const { slug, titleCs, titleEn, year, locationCs, locationEn, cover } =
 const responsiveCover = await getResponsiveImage(cover);
 ---
 
-<a href={`/projects/${slug}/`} class="reveal group relative block hover:z-10">
-  <img
-    src={cover}
-    srcset={responsiveSrcset(responsiveCover, THUMBNAIL_WIDTHS)}
-    sizes="(min-width: 1152px) 283px, (min-width: 1024px) calc((100vw - 304px) / 3), (min-width: 640px) calc((100vw - 96px) / 2), calc(100vw - 48px)"
-    alt=""
-    loading="lazy"
-    decoding="async"
-    class="aspect-square w-full bg-neutral-100 object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]"
-    transition:name={`cover-${slug}`}
-  />
+<a href={`/projects/${slug}/`} class="group relative block hover:z-10">
+  <div
+    class="project-cover aspect-square overflow-hidden bg-neutral-100"
+    style={`view-transition-name: cover-${slug}`}
+  >
+    <img
+      src={cover}
+      srcset={responsiveSrcset(responsiveCover, THUMBNAIL_WIDTHS)}
+      sizes="(min-width: 1152px) 283px, (min-width: 1024px) calc((100vw - 304px) / 3), (min-width: 640px) calc((100vw - 96px) / 2), calc(100vw - 48px)"
+      alt=""
+      loading="lazy"
+      decoding="async"
+      class="h-full w-full object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]"
+    />
+  </div>
   <div class="mt-3 flex items-baseline justify-between">
     <T as="h3" cs={titleCs} en={titleEn} class="text-base font-medium" />
     <span class="text-sm text-neutral-500">{year}</span>

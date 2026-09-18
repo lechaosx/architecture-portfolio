@@ -12,9 +12,7 @@ const current = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const isActive = (href: string) => current === href;
 ---
 
-<header
-  class="sticky top-0 z-40 border-b border-black bg-white/90 backdrop-blur"
->
+<header class="sticky top-0 z-40 border-b border-black bg-white">
   <nav
     class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4"
   >

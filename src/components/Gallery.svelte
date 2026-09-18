@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { prefersReducedMotion } from 'svelte/motion';
   import {
     devicePixelRatio,
     innerHeight,
@@ -13,7 +12,7 @@
     clampPan,
     containedImageSize,
     deepZoomViewport,
-    focusWrapTarget,
+    displayedSwipeOffset,
     galleryImageHash,
     galleryImageIndex,
     galleryThumbnailSizes,
@@ -46,17 +45,22 @@
   let pan = $state<Point>({ x: 0, y: 0 });
   let dragging = $state(false);
   let swipeOffset = $state(0);
+  let swipeDeltaX = 0;
   let swipeAnimating = $state(false);
+  let lightboxTransitioning = $state(false);
   let navigating = $state(false);
+  let reducedMotion = $state(false);
   let closing = false;
+  let savedScrollRestoration: ScrollRestoration | undefined;
   let stageWidth = $state(0);
   let stageHeight = $state(0);
   let pixelRatio = $derived(devicePixelRatio.current ?? 1);
   let stage: HTMLDivElement;
   let image: HTMLImageElement;
-  let dialog: HTMLDivElement;
+  let dialog: HTMLDialogElement;
   let closeButton: HTMLButtonElement;
   let trigger: HTMLButtonElement | undefined;
+  let thumbnailImages: HTMLImageElement[] = [];
   let deepZoomElement = $state<HTMLDivElement>();
   let deepZoomViewer: OpenSeadragon.Viewer | undefined;
   let dragStart: Point | null = null;
@@ -81,6 +85,15 @@
         )
       : images[index]?.image,
   );
+  let lightboxImageSize = $derived.by(() => {
+    const responsiveImage = responsiveImages[index];
+    return responsiveImage && stageWidth > 0 && stageHeight > 0
+      ? containedImageSize(responsiveImage.source, {
+          width: stageWidth,
+          height: stageHeight,
+        })
+      : undefined;
+  });
   let originalSrc = $derived(
     responsiveImages[index]?.source.url ?? images[index]?.image,
   );
@@ -98,9 +111,14 @@
       : 'none',
   );
   $effect(() => {
+    if (!reducedMotion) return;
+    swipeAnimating = false;
+    swipeOffset = 0;
+  });
+  $effect(() => {
     const descriptor = deepZoom;
     const element = deepZoomElement;
-    if (!open || !descriptor || !element) return;
+    if (!open || !descriptor || !element || lightboxTransitioning) return;
 
     let cancelled = false;
     let viewer: OpenSeadragon.Viewer | undefined;
@@ -134,37 +152,6 @@
     };
   });
 
-  $effect(() => {
-    if (!open) return;
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-    const rootOverscrollBehavior = document.documentElement.style.overscrollBehavior;
-    const rootOverflow = document.documentElement.style.overflow;
-    const bodyPosition = document.body.style.position;
-    const bodyTop = document.body.style.top;
-    const bodyLeft = document.body.style.left;
-    const bodyWidth = document.body.style.width;
-    const bodyOverflow = document.body.style.overflow;
-    document.documentElement.style.overscrollBehavior = 'none';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `${-scrollY}px`;
-    document.body.style.left = `${-scrollX}px`;
-    document.body.style.width = '100%';
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.documentElement.style.overscrollBehavior = rootOverscrollBehavior;
-      document.documentElement.style.overflow = rootOverflow;
-      document.body.style.position = bodyPosition;
-      document.body.style.top = bodyTop;
-      document.body.style.left = bodyLeft;
-      document.body.style.width = bodyWidth;
-      document.body.style.overflow = bodyOverflow;
-      window.scrollTo(scrollX, scrollY);
-    };
-  });
-
   onMount(() => {
     const syncLang = () => {
       lang = document.documentElement.dataset.lang === 'cs' ? 'cs' : 'en';
@@ -175,23 +162,35 @@
       attributes: true,
       attributeFilter: ['data-lang'],
     });
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncMotionPreference = () => {
+      reducedMotion = motionQuery.matches;
+    };
+    syncMotionPreference();
+    motionQuery.addEventListener('change', syncMotionPreference);
 
     const linkedImage = galleryImageIndex(location.hash, images.length);
     if (linkedImage !== undefined) {
+      suspendScrollRestoration();
       const baseUrl = `${location.pathname}${location.search}`;
       const initialState = history.state;
       history.replaceState(initialState, '', baseUrl);
       history.pushState(galleryHistoryState(initialState), '', galleryImageHash(linkedImage));
       void showFromHistory(linkedImage);
     }
-
-    return () => languageObserver.disconnect();
+    return () => {
+      resumeScrollRestoration();
+      languageObserver.disconnect();
+      motionQuery.removeEventListener('change', syncMotionPreference);
+    };
   });
 
   function onpopstate() {
     const imageIndex = galleryImageIndex(location.hash, images.length);
+    if (!open && imageIndex === undefined) return;
+    suspendScrollRestoration();
     if (imageIndex === undefined) {
-      void closeFromHistory();
+      void closeFromHistory().finally(resumeScrollRestoration);
     } else {
       void showFromHistory(imageIndex);
     }
@@ -227,8 +226,33 @@
 
   async function show(i: number, source: HTMLButtonElement) {
     trigger = source;
+    source.blur();
+    suspendScrollRestoration();
     history.pushState(galleryHistoryState(history.state), '', galleryImageHash(i));
-    await showFromHistory(i);
+    const thumbnail = thumbnailImages[i];
+    if (reducedMotion || !thumbnail || !document.startViewTransition) {
+      await showFromHistory(i);
+      return;
+    }
+
+    lightboxTransitioning = true;
+    thumbnail.style.viewTransitionName = 'lightbox-image';
+    try {
+      const transition = document.startViewTransition({
+        update: async () => {
+          await showFromHistory(i);
+          await image.decode();
+          thumbnail.style.viewTransitionName = '';
+        },
+        types: ['lightbox-open'],
+      });
+      await transition.finished;
+    } catch {
+      thumbnail.style.viewTransitionName = '';
+      if (!open) await showFromHistory(i);
+    } finally {
+      lightboxTransitioning = false;
+    }
   }
   async function showFromHistory(i: number) {
     cancelNavigation();
@@ -239,26 +263,61 @@
     stageHeight = (innerHeight.current ?? 0) * 0.85;
     open = true;
     await tick();
+    dialog.showModal();
+    stageWidth = stage.clientWidth;
+    stageHeight = stage.clientHeight;
+    await tick();
     closeButton?.focus();
   }
   function requestClose() {
     if (!open || closing) return;
     closing = true;
     if (isGalleryHistoryEntry()) {
+      suspendScrollRestoration();
       history.back();
       return;
     }
     history.replaceState(history.state, '', `${location.pathname}${location.search}`);
-    void closeFromHistory();
+    void closeFromHistory().finally(resumeScrollRestoration);
   }
   async function closeFromHistory() {
     if (!open) return;
+    const thumbnail = thumbnailImages[index];
+    if (
+      reducedMotion ||
+      !thumbnail ||
+      !image ||
+      !document.startViewTransition
+    ) {
+      await hideLightbox();
+      return;
+    }
+
+    lightboxTransitioning = true;
+    try {
+      const transition = document.startViewTransition({
+        update: async () => {
+          await hideLightbox();
+          thumbnail.style.viewTransitionName = 'lightbox-image';
+        },
+        types: ['lightbox-close'],
+      });
+      await transition.finished;
+    } catch {
+      await hideLightbox();
+    } finally {
+      thumbnail.style.viewTransitionName = '';
+      lightboxTransitioning = false;
+    }
+  }
+  async function hideLightbox() {
     cancelNavigation();
     closing = false;
+    dialog.close();
     open = false;
     resetView();
     await tick();
-    trigger?.focus();
+    trigger?.focus({ preventScroll: true });
     trigger = undefined;
   }
   async function go(offset: number) {
@@ -270,7 +329,7 @@
     navigating = true;
     const direction = Math.sign(offset);
 
-    if (!prefersReducedMotion.current) {
+    if (!reducedMotion) {
       swipeAnimating = true;
       swipeOffset = -direction * (stage?.clientWidth || window.innerWidth);
       await waitForSlide();
@@ -296,34 +355,19 @@
   }
   function onkeydown(e: KeyboardEvent) {
     if (!open) return;
-    if (e.key === 'Tab') {
-      trapFocus(e);
-      return;
-    }
-    if (e.key === 'Escape') requestClose();
-    else if (e.key === 'ArrowRight') next();
-    else if (e.key === 'ArrowLeft') prev();
-  }
-
-  function trapFocus(e: KeyboardEvent) {
-    const focusable = Array.from(
-      dialog.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ),
-    ).filter((element) => element.getClientRects().length > 0);
-    if (focusable.length === 0) {
+    if (e.key === 'ArrowRight') {
       e.preventDefault();
-      dialog.focus();
-      return;
+      next();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prev();
+    } else if (
+      ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(
+        e.key,
+      )
+    ) {
+      e.preventDefault();
     }
-    const target = focusWrapTarget(
-      focusable.indexOf(document.activeElement as HTMLElement),
-      focusable.length,
-      e.shiftKey,
-    );
-    if (target === undefined) return;
-    e.preventDefault();
-    focusable[target].focus();
   }
 
   function galleryHistoryState(state: unknown) {
@@ -341,17 +385,31 @@
     );
   }
 
+  function suspendScrollRestoration() {
+    if (savedScrollRestoration !== undefined) return;
+    savedScrollRestoration = history.scrollRestoration;
+    history.scrollRestoration = 'manual';
+  }
+
+  function resumeScrollRestoration() {
+    if (savedScrollRestoration === undefined) return;
+    history.scrollRestoration = savedScrollRestoration;
+    savedScrollRestoration = undefined;
+  }
+
   function cancelNavigation() {
     navigationRun += 1;
     navigating = false;
     swipeAnimating = false;
     swipeOffset = 0;
+    swipeDeltaX = 0;
   }
 
   async function snapBack() {
+    swipeDeltaX = 0;
     if (swipeOffset === 0) return;
     const run = ++navigationRun;
-    const animate = !prefersReducedMotion.current;
+    const animate = !reducedMotion;
     swipeAnimating = animate;
     swipeOffset = 0;
     if (animate) await waitForSlide();
@@ -375,13 +433,7 @@
   }
 
   function renderedImageSize() {
-    const responsiveImage = responsiveImages[index];
-    if (responsiveImage && stage) {
-      return containedImageSize(responsiveImage.source, {
-        width: stage.clientWidth,
-        height: stage.clientHeight,
-      });
-    }
+    if (lightboxImageSize) return lightboxImageSize;
     if (image) return { width: image.clientWidth, height: image.clientHeight };
   }
 
@@ -450,6 +502,7 @@
     if (scale === 1) {
       swipeAnimating = false;
       pointerSwipeStart = { x: e.clientX, y: e.clientY };
+      swipeDeltaX = 0;
       swipeDeltaY = 0;
     } else {
       dragStart = { x: e.clientX - pan.x, y: e.clientY - pan.y };
@@ -458,7 +511,11 @@
 
   function onpointermove(e: PointerEvent) {
     if (pointerSwipeStart) {
-      swipeOffset = e.clientX - pointerSwipeStart.x;
+      swipeDeltaX = e.clientX - pointerSwipeStart.x;
+      swipeOffset = displayedSwipeOffset(
+        swipeDeltaX,
+        reducedMotion,
+      );
       swipeDeltaY = e.clientY - pointerSwipeStart.y;
       return;
     }
@@ -476,8 +533,9 @@
     if (!dragging) return;
     if (stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId);
     if (pointerSwipeStart) {
-      const direction = swipeDirection(swipeOffset, swipeDeltaY);
+      const direction = swipeDirection(swipeDeltaX, swipeDeltaY);
       pointerSwipeStart = null;
+      swipeDeltaX = 0;
       swipeDeltaY = 0;
       dragging = false;
       if (direction === 0) void snapBack();
@@ -493,6 +551,7 @@
     dragging = false;
     dragStart = null;
     pointerSwipeStart = null;
+    swipeDeltaX = 0;
     swipeDeltaY = 0;
     void snapBack();
   }
@@ -502,6 +561,7 @@
     if (e.touches.length === 2) {
       swipeAnimating = false;
       swipeOffset = 0;
+      swipeDeltaX = 0;
       const first = touchPoint(e.touches[0]);
       const second = touchPoint(e.touches[1]);
       pinchStart = {
@@ -519,6 +579,7 @@
       const point = touchPoint(e.touches[0]);
       swipeAnimating = false;
       touchStart = scale === 1 ? point : null;
+      swipeDeltaX = 0;
       touchPanStart =
         scale > 1 ? { x: point.x - pan.x, y: point.y - pan.y } : null;
       return;
@@ -567,7 +628,11 @@
 
     if (e.touches.length === 1 && touchStart) {
       const point = touchPoint(e.touches[0]);
-      swipeOffset = point.x - touchStart.x;
+      swipeDeltaX = point.x - touchStart.x;
+      swipeOffset = displayedSwipeOffset(
+        swipeDeltaX,
+        reducedMotion,
+      );
       swipeDeltaY = point.y - touchStart.y;
       return;
     }
@@ -597,8 +662,9 @@
       touchStart = null;
       return;
     }
-    const direction = swipeDirection(swipeOffset, swipeDeltaY);
+    const direction = swipeDirection(swipeDeltaX, swipeDeltaY);
     touchStart = null;
+    swipeDeltaX = 0;
     swipeDeltaY = 0;
     if (direction === 0) void snapBack();
     else void go(direction);
@@ -624,6 +690,7 @@
     touchStart = null;
     touchPanStart = null;
     pinchStart = null;
+    swipeDeltaX = 0;
     swipeDeltaY = 0;
     void snapBack();
   }
@@ -666,6 +733,7 @@
         aria-label={`${ui[lang].openImage} ${i + 1}`}
       >
         <img
+          bind:this={thumbnailImages[i]}
           src={img.image}
           srcset={thumbnailSrcsets[i]}
           sizes={galleryThumbnailSizes(aspectRatio)}
@@ -680,14 +748,18 @@
 {/if}
 
 {#if open}
-  <div
+  <dialog
     bind:this={dialog}
-    class="fixed inset-0 z-50 grid grid-rows-[auto_minmax(0,1fr)] gap-3 bg-black/90 p-4"
-    role="dialog"
-    aria-modal="true"
+    data-gallery-lightbox
+    class="lightbox fixed inset-0 m-0 h-screen max-h-none w-screen max-w-none touch-none grid-rows-[auto_minmax(0,1fr)] gap-3 border-0 bg-black/90 p-4 open:grid"
     aria-label={ui[lang].imageViewer}
-    tabindex="-1"
     onclick={requestClose}
+    oncancel={(event) => {
+      event.preventDefault();
+      requestClose();
+    }}
+    onwheel={(event) => event.preventDefault()}
+    ontouchmove={(event) => event.preventDefault()}
   >
     <div class="flex items-start justify-between gap-2">
       <div class="flex items-center gap-2">
@@ -755,10 +827,12 @@
           >
             <img
               src={previousPreviewSrc}
+              width={responsiveImages[previousIndex]?.source.width}
+              height={responsiveImages[previousIndex]?.source.height}
               alt=""
               draggable="false"
               decoding="async"
-              class="max-h-full max-w-full object-contain select-none"
+              class="h-auto max-h-full w-auto max-w-full object-contain select-none"
             />
           </div>
         {/if}
@@ -771,20 +845,39 @@
             <img
               bind:this={image}
               src={deepZoomPreviewSrc}
+              width={responsiveImages[index]?.source.width}
+              height={responsiveImages[index]?.source.height}
               alt=""
               draggable="false"
-              class="absolute max-h-full max-w-full object-contain select-none"
+              style:width={lightboxImageSize
+                ? `${lightboxImageSize.width}px`
+                : undefined}
+              style:height={lightboxImageSize
+                ? `${lightboxImageSize.height}px`
+                : undefined}
+              class="lightbox-image absolute h-auto max-h-full w-auto max-w-full object-contain select-none"
               style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
               onload={() => (pan = constrainedPan(pan))}
             />
-            <div bind:this={deepZoomElement} class="absolute inset-0"></div>
+            <div
+              bind:this={deepZoomElement}
+              class="absolute inset-0"
+            ></div>
           {:else}
             <img
               bind:this={image}
               src={lightboxSrc}
+              width={responsiveImages[index]?.source.width}
+              height={responsiveImages[index]?.source.height}
               alt=""
               draggable="false"
-              class="max-h-full max-w-full object-contain select-none"
+              style:width={lightboxImageSize
+                ? `${lightboxImageSize.width}px`
+                : undefined}
+              style:height={lightboxImageSize
+                ? `${lightboxImageSize.height}px`
+                : undefined}
+              class="lightbox-image h-auto max-h-full w-auto max-w-full object-contain select-none"
               style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
               onload={() => (pan = constrainedPan(pan))}
             />
@@ -799,10 +892,12 @@
           >
             <img
               src={nextPreviewSrc}
+              width={responsiveImages[nextIndex]?.source.width}
+              height={responsiveImages[nextIndex]?.source.height}
               alt=""
               draggable="false"
               decoding="async"
-              class="max-h-full max-w-full object-contain select-none"
+              class="h-auto max-h-full w-auto max-w-full object-contain select-none"
             />
           </div>
         {/if}
@@ -857,10 +952,15 @@
         {/if}
       </figcaption>
     </figure>
-  </div>
+  </dialog>
 {/if}
 
 <style>
+  .lightbox {
+    --color-black: #000;
+    --color-white: #fff;
+  }
+
   .lightbox-layout {
     display: grid;
     grid-template-areas:

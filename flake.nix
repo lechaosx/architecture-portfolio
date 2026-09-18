@@ -7,7 +7,8 @@
     in
     {
       devShells.x86_64-linux.default = pkgs.mkShell {
-        packages = [ pkgs.bun ];
+        packages = [ pkgs.bun pkgs.playwright-driver.browsers ];
+        PLAYWRIGHT_BROWSERS_PATH = pkgs.playwright-driver.browsers;
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.stdenv.cc.cc.lib ];
       };
     };
