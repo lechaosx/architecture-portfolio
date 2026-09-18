@@ -102,13 +102,12 @@ const displayImages = await Promise.all(
 <script>
   // Enhances a native scroll-snap strip with arrows, dots and auto-advance.
   // Vanilla, no island; re-inits after View Transition swaps.
-  let timer: number | undefined;
+  let carouselController: AbortController | undefined;
 
   function initCarousel() {
-    if (timer) {
-      clearInterval(timer);
-      timer = undefined;
-    }
+    carouselController?.abort();
+    carouselController = new AbortController();
+    const { signal } = carouselController;
     const root = document.querySelector<HTMLElement>('[data-carousel]');
     if (!root) return;
     const track = root.querySelector<HTMLElement>('[data-carousel-track]');
@@ -117,13 +116,13 @@ const displayImages = await Promise.all(
     const dots = Array.from(root.querySelectorAll<HTMLElement>('[data-dot]'));
     if (slides.length < 2) return;
 
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const indexNow = () => Math.round(track.scrollLeft / track.clientWidth);
     const goto = (i: number) => {
       const n = ((i % slides.length) + slides.length) % slides.length;
       track.scrollTo({
         left: n * track.clientWidth,
-        behavior: reduce ? 'auto' : 'smooth',
+        behavior: motionQuery.matches ? 'auto' : 'smooth',
       });
     };
     const sync = () => {
@@ -135,32 +134,43 @@ const displayImages = await Promise.all(
 
     root
       .querySelector('[data-carousel-prev]')
-      ?.addEventListener('click', () => goto(indexNow() - 1));
+      ?.addEventListener('click', () => goto(indexNow() - 1), { signal });
     root
       .querySelector('[data-carousel-next]')
-      ?.addEventListener('click', () => goto(indexNow() + 1));
-    dots.forEach((d, di) => d.addEventListener('click', () => goto(di)));
+      ?.addEventListener('click', () => goto(indexNow() + 1), { signal });
+    dots.forEach((dot, index) =>
+      dot.addEventListener('click', () => goto(index), { signal }),
+    );
     track.addEventListener('scroll', () => requestAnimationFrame(sync), {
       passive: true,
+      signal,
     });
     sync();
 
-    if (!reduce) {
-      const start = () => {
+    let timer: number | undefined;
+    const stop = () => {
+      if (timer === undefined) return;
+      clearInterval(timer);
+      timer = undefined;
+    };
+    const syncTimer = () => {
+      if (motionQuery.matches || root.matches(':hover, :focus-within')) {
+        stop();
+      } else if (timer === undefined) {
         timer = window.setInterval(() => goto(indexNow() + 1), 5000);
-      };
-      const stop = () => {
-        if (timer) {
-          clearInterval(timer);
-          timer = undefined;
-        }
-      };
-      root.addEventListener('pointerenter', stop);
-      root.addEventListener('pointerleave', start);
-      root.addEventListener('focusin', stop);
-      root.addEventListener('focusout', start);
-      start();
+      }
+    };
+    for (const event of [
+      'pointerenter',
+      'pointerleave',
+      'focusin',
+      'focusout',
+    ]) {
+      root.addEventListener(event, syncTimer, { signal });
     }
+    motionQuery.addEventListener('change', syncTimer, { signal });
+    signal.addEventListener('abort', stop, { once: true });
+    syncTimer();
   }
 
   document.addEventListener('astro:page-load', initCarousel);

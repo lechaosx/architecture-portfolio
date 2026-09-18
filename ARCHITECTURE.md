@@ -109,8 +109,11 @@ stage dimensions stable across gallery entries and prevents text length from
 changing image selection or apparent size. Both rendering paths support
 pointer-centred wheel zoom, touch pinch and pan, and constrain maximum zoom to
 native image detail. At the base scale, horizontal mouse and one-finger gestures
-drive the same animated navigation. Previous, current, and next processed
-previews are neighboring DOM slides rather than an explicit JavaScript cache;
+drive the same animated navigation. Browser-derived values come from Svelte's
+window and motion primitives: viewport and display-density changes update image
+selection, reduced-motion changes apply immediately, and `<svelte:window>` owns
+window-event cleanup. Previous, current, and next processed previews are
+neighboring DOM slides rather than an explicit JavaScript cache;
 one translation moves them as a continuous strip. The caption uses the same
 three-slide geometry, while input listeners remain confined to the image stage
 so caption scrolling and text interaction cannot navigate.
@@ -147,10 +150,12 @@ change if the content owner reorders the gallery.
 The carousel (`Carousel.astro`) is a native horizontal scroll-snap strip; a small
 vanilla script enhances it with arrows, dot indicators and a 5s auto-advance,
 pausing on hover/focus and skipping auto-advance under `prefers-reduced-motion`.
-No hydrated island — the same lightweight approach as the reveal script, so the
-"islands stay minimal" invariant holds. Because it scrolls its own container (not
-the page), it stays clear of the "don't reimplement scrolling" boundary. Images
-come from the Home singleton's `gallery` list, falling back to
+One abort controller owns its listeners and timer across View Transition swaps;
+the live media query updates both scrolling and auto-advance when the preference
+changes. No hydrated island — the same lightweight approach as the reveal
+script, so the "islands stay minimal" invariant holds. Because it scrolls its
+own container (not the page), it stays clear of the "don't reimplement scrolling"
+boundary. Images come from the Home singleton's `gallery` list, falling back to
 `getCollection('projects')` (cover + gallery) when it is empty, so there is no
 separate gallery content to maintain. The arrows/dots use the site's shared
 interaction language (outline box on hover, invert on press/current).
@@ -166,7 +171,8 @@ for "smoothness" without a heavy client router.
 Elements with `.reveal` fade in as they enter the viewport (script in
 `Base.astro`, styles in `global.css`). This explicitly avoids scroll-hijacking
 libraries — the user asked not to reimplement scrolling. Re-runs on
-`astro:page-load` so it works after View Transition navigations. Respects
+`astro:page-load` so it works after View Transition navigations, disconnecting
+the previous observer before it can retain swapped-out nodes. Respects
 `prefers-reduced-motion`.
 
 ---
@@ -395,10 +401,11 @@ An `is:inline` script in `<head>` (so it runs before first paint, no flash) sets
 `html[data-lang]` from, in order: `?lang=`, `localStorage`, `navigator.language`,
 else English. A second module script in `Base.astro` wires the footer language
 toggle (shows the other language, persists to `localStorage`, flips `data-lang`),
-syncs `<title>`/meta
-description to the active language, and on `astro:before-swap` copies the current
-language onto the incoming document so a View Transition doesn't reset it. No
-island — same "tiny vanilla script" approach as reveal/carousel.
+syncs `<title>`/meta description to the active language, and on
+`astro:before-swap` copies the current language onto the incoming document so a
+View Transition doesn't reset it. The delegated toggle listener remains valid
+when the footer is replaced. No island — same "tiny vanilla script" approach as
+reveal/carousel.
 
 ### Where the strings come from — `i18n.ts`, `T.astro`, `Prose.astro` — [Implicit]
 

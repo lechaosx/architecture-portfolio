@@ -1,6 +1,11 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { devicePixelRatio } from 'svelte/reactivity/window';
+  import { prefersReducedMotion } from 'svelte/motion';
+  import {
+    devicePixelRatio,
+    innerHeight,
+    innerWidth,
+  } from 'svelte/reactivity/window';
   import type OpenSeadragon from 'openseadragon';
   import type { ResponsiveImage } from '../images';
   import { ui, type Lang } from '../i18n';
@@ -44,7 +49,6 @@
   let swipeAnimating = $state(false);
   let navigating = $state(false);
   let closing = false;
-  let reduceMotion = $state(false);
   let stageWidth = $state(0);
   let stageHeight = $state(0);
   let pixelRatio = $derived(devicePixelRatio.current ?? 1);
@@ -162,8 +166,6 @@
   });
 
   onMount(() => {
-    stageWidth = window.innerWidth;
-    stageHeight = window.innerHeight * 0.85;
     const syncLang = () => {
       lang = document.documentElement.dataset.lang === 'cs' ? 'cs' : 'en';
     };
@@ -173,21 +175,6 @@
       attributes: true,
       attributeFilter: ['data-lang'],
     });
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const syncMotion = () => {
-      reduceMotion = motionQuery.matches;
-    };
-    const onPopState = () => {
-      const imageIndex = galleryImageIndex(location.hash, images.length);
-      if (imageIndex === undefined) {
-        void closeFromHistory();
-      } else {
-        void showFromHistory(imageIndex);
-      }
-    };
-    syncMotion();
-    motionQuery.addEventListener('change', syncMotion);
-    window.addEventListener('popstate', onPopState);
 
     const linkedImage = galleryImageIndex(location.hash, images.length);
     if (linkedImage !== undefined) {
@@ -198,12 +185,17 @@
       void showFromHistory(linkedImage);
     }
 
-    return () => {
-      languageObserver.disconnect();
-      motionQuery.removeEventListener('change', syncMotion);
-      window.removeEventListener('popstate', onPopState);
-    };
+    return () => languageObserver.disconnect();
   });
+
+  function onpopstate() {
+    const imageIndex = galleryImageIndex(location.hash, images.length);
+    if (imageIndex === undefined) {
+      void closeFromHistory();
+    } else {
+      void showFromHistory(imageIndex);
+    }
+  }
 
   function resetView() {
     deepZoomViewer?.viewport.goHome(true);
@@ -243,6 +235,8 @@
     closing = false;
     index = i;
     resetView();
+    stageWidth = innerWidth.current ?? 0;
+    stageHeight = (innerHeight.current ?? 0) * 0.85;
     open = true;
     await tick();
     closeButton?.focus();
@@ -276,7 +270,7 @@
     navigating = true;
     const direction = Math.sign(offset);
 
-    if (!reduceMotion) {
+    if (!prefersReducedMotion.current) {
       swipeAnimating = true;
       swipeOffset = -direction * (stage?.clientWidth || window.innerWidth);
       await waitForSlide();
@@ -357,9 +351,10 @@
   async function snapBack() {
     if (swipeOffset === 0) return;
     const run = ++navigationRun;
-    swipeAnimating = !reduceMotion;
+    const animate = !prefersReducedMotion.current;
+    swipeAnimating = animate;
     swipeOffset = 0;
-    if (!reduceMotion) await waitForSlide();
+    if (animate) await waitForSlide();
     if (run === navigationRun) swipeAnimating = false;
   }
 
@@ -655,7 +650,7 @@
   {/if}
 {/snippet}
 
-<svelte:window {onkeydown} />
+<svelte:window {onkeydown} {onpopstate} />
 
 {#if images.length}
   <div class="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3">

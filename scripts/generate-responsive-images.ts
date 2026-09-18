@@ -1,5 +1,4 @@
 import {
-  access,
   cp,
   copyFile,
   mkdir,
@@ -51,21 +50,16 @@ const deepZoomRecipe = {
   vips: sharp.versions.vips,
 };
 
-async function filePaths(directory: string): Promise<string[]> {
-  const entries = await readdir(directory, { withFileTypes: true });
-  const paths = await Promise.all(
-    entries.map((entry) => {
-      const path = join(directory, entry.name);
-      return entry.isDirectory() ? filePaths(path) : [path];
-    }),
-  );
-  return paths.flat();
-}
-
 async function referencedImages() {
   const paths = new Set<string>();
 
-  for (const contentPath of await filePaths(contentDirectory)) {
+  const entries = await readdir(contentDirectory, {
+    recursive: true,
+    withFileTypes: true,
+  });
+  for (const entry of entries) {
+    if (entry.isDirectory()) continue;
+    const contentPath = join(entry.parentPath, entry.name);
     const content = await readFile(contentPath, 'utf8');
     for (const match of content.matchAll(uploadReference)) {
       const sourcePath = resolve(sourceDirectory, match[1]);
@@ -115,7 +109,6 @@ for (const sourcePath of await referencedImages()) {
     let variant: ImageVariant;
 
     try {
-      await access(cachePath);
       const [metadata, file] = await Promise.all([
         sharp(cachePath).metadata(),
         stat(cachePath),
@@ -174,7 +167,7 @@ for (const sourcePath of await referencedImages()) {
     const deepZoomOutputDirectory = join(outputDirectory, deepZoomCacheKey);
 
     try {
-      await access(deepZoomCachePath);
+      await stat(deepZoomCachePath);
       pyramidsReused += 1;
     } catch {
       await rm(deepZoomCacheDirectory, { recursive: true, force: true });
