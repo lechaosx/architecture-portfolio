@@ -300,24 +300,24 @@ Dark mode is not a second set of utility classes; it's a remap of the palette
 `bg-white` → `background-color: var(--color-white)`), so overriding those tokens
 under `html[data-theme="dark"]` in `global.css` flips every existing
 `bg-white`/`text-black`/`text-neutral-*` at once — no `dark:` class on any
-component. `--color-white`/`--color-black` swap and the used neutral shades map to
-their mirror. The lightbox establishes local literal black/white tokens because
-its dark inspection surface is the same in both themes. This is why the old
+component. `--color-white`/`--color-black` become charcoal/off-white and the
+used neutral shades provide the intermediate contrast. The lightbox establishes
+local literal black/white tokens because its dark inspection surface is the same
+in both themes. This is why the old
 `filter: invert` approach was rejected: a filter
 also inverts `<img>` content, whereas a token remap leaves imagery alone. The one
 exception that needs a `dark:` variant is the typography plugin, whose prose
 colours are literal, not token-based — a registered `@custom-variant dark` plus
 `dark:prose-invert` on the two `.prose` blocks handles the Markdown bodies.
 
-The theme is selected before first paint by a tiny inline script in `Base.astro`,
-mirroring the language script but simpler: dark only when `localStorage.theme` is
-explicitly `"dark"`, otherwise light. Deliberately **not** keyed off
-`prefers-color-scheme` — light is the default regardless of the OS setting.
-`<html>` ships `data-theme="light"` so no-JS also falls back to light. A single
-footer button toggles `html[data-theme]` and persists to `localStorage`, and
-each normally loaded document reads that value before first paint. The toggle
-shows the mode it switches _to_ (moon in light, sun in dark); the two icons are
-cross-faded purely in CSS off `html[data-theme]`.
+The theme is selected before first paint by a tiny inline script in `Base.astro`.
+An explicit `localStorage.theme` wins; otherwise `prefers-color-scheme` supplies
+the initial theme and a media-query listener tracks live browser or system
+changes. The footer button toggles `html[data-theme]` and persists that choice,
+which stops the listener from overriding it. `<html>` ships `data-theme="light"`
+so no-JS still falls back to light. The toggle shows the mode it switches _to_
+(moon in light, sun in dark); the two icons are cross-faded purely in CSS off
+`html[data-theme]`.
 
 ---
 

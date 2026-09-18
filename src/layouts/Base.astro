@@ -41,15 +41,18 @@ const { title } = Astro.props;
       })();
     </script>
 
-    <!-- Pick the theme before first paint. Light is the default; dark only when
-         the visitor explicitly chose it (saved in localStorage). -->
+    <!-- Pick the saved theme or current system preference before first paint. -->
     <script is:inline>
       (function () {
         var saved = null;
         try {
           saved = localStorage.getItem('theme');
         } catch (e) {}
-        document.documentElement.dataset.theme = saved === 'dark' ? 'dark' : 'light';
+        var system = matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
+        document.documentElement.dataset.theme =
+          saved === 'dark' || saved === 'light' ? saved : system;
       })();
     </script>
 
@@ -115,6 +118,19 @@ const { title } = Astro.props;
         const content = description?.dataset[lang];
         if (description && content) description.content = content;
       }
+
+      const themeQuery = matchMedia('(prefers-color-scheme: dark)');
+      themeQuery.addEventListener('change', () => {
+        let saved = null;
+        try {
+          saved = localStorage.getItem('theme');
+        } catch {}
+        if (saved !== 'dark' && saved !== 'light') {
+          document.documentElement.dataset.theme = themeQuery.matches
+            ? 'dark'
+            : 'light';
+        }
+      });
 
       document.addEventListener('click', (event) => {
         if (!(event.target instanceof Element)) return;
