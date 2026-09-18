@@ -151,8 +151,9 @@ Home, not its own page.
 The home page opens with a big image carousel — one image at a time, with
 prev/next arrows and dot indicators, matching the architect's wireframe. It also
 auto-advances (every 5s), pausing when the visitor hovers or focuses it, and does
-not auto-advance for visitors who prefer reduced motion. The images can be curated in the CMS
-(the Home entry's gallery); when that list is left empty it falls back to every
+not auto-advance for visitors who prefer reduced motion. Preference changes take
+effect without reloading the page. The images can be curated in the CMS (the
+Home entry's gallery); when that list is left empty it falls back to every
 project's cover + gallery photos, so it stays current with no maintenance —
 [Implicit].
 
@@ -328,7 +329,8 @@ content must have an image.
 
 ### Respects reduced-motion preferences — [Implicit]
 
-Users who set `prefers-reduced-motion` get no fade/transform animation.
+Users who set `prefers-reduced-motion` get no fade/transform animation. Changes
+to that preference apply immediately.
 
 ---
 
