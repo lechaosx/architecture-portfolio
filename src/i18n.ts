@@ -1,8 +1,7 @@
 // Baked-in UI strings (section labels, nav, etc.) in both languages. Editable
 // CONTENT lives in the CMS singletons/projects; these are the fixed scaffolding
 // labels — see FEATURES.md "Dual language (Czech + English)".
-export const LANGS = ['cs', 'en'] as const;
-export type Lang = (typeof LANGS)[number];
+export type Lang = 'cs' | 'en';
 
 export const ui = {
   cs: {
