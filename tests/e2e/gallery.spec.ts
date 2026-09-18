@@ -376,6 +376,24 @@ test('hash history does not restore scroll or move the page cover', async ({
   expect(await page.evaluate(() => scrollY)).toBe(0);
 });
 
+test('lightbox reports its position and wraps at either end', async ({ page }) => {
+  await gotoProject(page);
+  const imageCount = await page
+    .getByRole('button', { name: /^Open image \d+$/ })
+    .count();
+  await galleryImage(page, 1).click();
+  await waitForLightbox(page);
+
+  const position = page.getByRole('status');
+  await expect(position).toHaveText(`1 / ${imageCount}`);
+
+  await page.getByRole('button', { name: 'Previous image' }).click();
+  await expect(position).toHaveText(`${imageCount} / ${imageCount}`);
+
+  await page.getByRole('button', { name: 'Next image' }).click();
+  await expect(position).toHaveText(`1 / ${imageCount}`);
+});
+
 test('header remains in place beneath the lightbox', async ({ page }) => {
   await gotoProject(page);
   await galleryImage(page, 1).scrollIntoViewIfNeeded();

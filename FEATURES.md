@@ -152,10 +152,14 @@ The home page opens with a big image carousel — one image at a time, with
 prev/next arrows and dot indicators, matching the architect's wireframe. It also
 auto-advances (every 5s), pausing when the visitor hovers or focuses it, and does
 not auto-advance for visitors who prefer reduced motion. Preference changes take
-effect without reloading the page. The images can be curated in the CMS (the
-Home entry's gallery); when that list is left empty it falls back to every
-project's cover + gallery photos, so it stays current with no maintenance —
-[Implicit].
+effect without reloading the page. Its arrow controls use the same size, symbols,
+and hover/press treatment as the project lightbox, while its native scrolling,
+cropped presentation, dots, and autoplay remain specific to the home page.
+Controls drawn over an image keep a theme-independent high-contrast palette;
+changing the page theme never turns the carousel dots into dark page chrome. The
+images can be curated in the CMS (the Home entry's gallery); when that list is
+left empty it falls back to every project's cover + gallery photos, so it stays
+current with no maintenance — [Implicit].
 
 ### Work page lists the projects — [Explicit]
 
@@ -256,6 +260,9 @@ grid position on close, changing crop as its aspect ratio changes and waiting
 for the enlarged preview before it animates. The overlay fades over the page and
 its header; the header remains in place beneath it. Thumbnail hover remains
 independent, including when the lightbox opens partway through the hover effect.
+The lightbox shows the current image and total count, and its navigation controls
+use the same visual language as the home carousel without adopting autoplay,
+cropping, or dot indicators.
 If the sticky header or viewport edge obscures a thumbnail, the lightbox uses
 only the overlay fade instead of lifting the hidden part into an image morph.
 Image gestures and page scrolling wait for opening and closing transitions to

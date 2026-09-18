@@ -82,6 +82,55 @@ html:active-view-transition-type(lightbox-close)::view-transition-old(lightbox-i
   opacity: 1;
 }
 
+.media-navigation-button {
+  display: flex;
+  width: 3rem;
+  height: 3rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 40%);
+  background: rgb(0 0 0 / 50%);
+  color: #fff;
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.media-navigation-button:hover {
+  border-color: #fff;
+  background: rgb(0 0 0 / 70%);
+}
+
+.media-navigation-button:active {
+  background: #fff;
+  color: #000;
+}
+
+.media-navigation-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.carousel-dot {
+  border: 1px solid rgb(255 255 255 / 90%);
+  background: rgb(255 255 255 / 35%);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 40%);
+  color: #fff;
+}
+
+.carousel-dot:hover {
+  background: rgb(255 255 255 / 65%);
+}
+
+.carousel-dot[aria-current="true"] {
+  background: #fff;
+}
+
+.carousel-dot:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 /* Tailwind v4 compiles colour utilities to var(--color-*), so remapping these
    tokens changes the whole page without affecting images. */
 html[data-theme="dark"] {

@@ -870,6 +870,13 @@
           <span lang="cs">{ui.cs.openOriginal}</span>
           <span lang="en">{ui.en.openOriginal}</span>
         </a>
+        <span
+          role="status"
+          aria-atomic="true"
+          class="self-center text-sm tabular-nums text-white"
+        >
+          {index + 1} / {images.length}
+        </span>
       </div>
       <button
         bind:this={closeButton}
@@ -990,7 +997,7 @@
       </div>
       <button
         type="button"
-        class="lightbox-previous flex h-12 w-12 cursor-pointer items-center justify-center self-center border border-white/40 text-4xl leading-none text-white hover:border-white"
+        class="media-navigation-button lightbox-previous self-center"
         onclick={(e) => {
           e.stopPropagation();
           prev();
@@ -999,7 +1006,7 @@
       >
       <button
         type="button"
-        class="lightbox-next flex h-12 w-12 cursor-pointer items-center justify-center self-center border border-white/40 text-4xl leading-none text-white hover:border-white"
+        class="media-navigation-button lightbox-next self-center"
         onclick={(e) => {
           e.stopPropagation();
           next();
