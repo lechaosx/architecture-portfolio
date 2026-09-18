@@ -52,15 +52,8 @@ html:active-view-transition-type(lightbox-close) .project-cover {
   object-fit: cover;
 }
 
-html:active-view-transition-type(lightbox-open)::view-transition-old(lightbox-image),
-html:active-view-transition-type(lightbox-close)::view-transition-new(lightbox-image) {
-  display: none;
-}
-
-html:active-view-transition-type(lightbox-open)::view-transition-new(lightbox-image),
-html:active-view-transition-type(lightbox-close)::view-transition-old(lightbox-image) {
-  animation: none;
-  opacity: 1;
+::view-transition-image-pair(lightbox-image) {
+  overflow: clip;
 }
 
 /* Dark mode is the exact inverse of the light palette. Tailwind v4 compiles

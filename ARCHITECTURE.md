@@ -144,12 +144,15 @@ black and white colour tokens so the global dark-mode swap cannot invert its
 overlay and controls. A `data-lang` observer keeps the dialog's accessible names
 aligned with the global language switch.
 
-Opening and closing use a same-document View Transition whose named image moves
-between the thumbnail and active preview. Image width and height metadata reserve
-geometry before a first download. The active preview's dimensions come from the
-source aspect ratio and measured stage, so cached image and tiled-renderer state
-cannot change the endpoint. The browser crops the image snapshot as its box
-changes aspect ratio, while the document snapshot supplies the overlay fade.
+Opening and closing use a same-document View Transition between the stable
+thumbnail frame and active preview. The image remains nested inside the named
+thumbnail frame, so a settled or in-progress hover transform cannot change the
+shared transition geometry. Image width and height metadata reserve geometry
+before a first download. The active preview's dimensions come from the source
+aspect ratio and measured stage, so cached image and tiled-renderer state cannot
+change the endpoint. The transition image pair clips both native snapshots while
+their box changes aspect ratio, progressively revealing the full image as the
+snapshots crossfade; the document snapshot supplies the overlay fade.
 Page-transition elements opt out while this lightbox-only transition is active,
 so their snapshots remain in the document's normal stacking order beneath the
 header and overlay. The tiled renderer starts after opening finishes so its

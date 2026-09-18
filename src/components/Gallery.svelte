@@ -60,7 +60,7 @@
   let dialog: HTMLDialogElement;
   let closeButton: HTMLButtonElement;
   let trigger: HTMLButtonElement | undefined;
-  let thumbnailImages: HTMLImageElement[] = [];
+  let thumbnailButtons: HTMLButtonElement[] = [];
   let deepZoomElement = $state<HTMLDivElement>();
   let deepZoomViewer: OpenSeadragon.Viewer | undefined;
   let dragStart: Point | null = null;
@@ -229,26 +229,25 @@
     source.blur();
     suspendScrollRestoration();
     history.pushState(galleryHistoryState(history.state), '', galleryImageHash(i));
-    const thumbnail = thumbnailImages[i];
-    if (reducedMotion || !thumbnail || !document.startViewTransition) {
+    if (reducedMotion || !document.startViewTransition) {
       await showFromHistory(i);
       return;
     }
 
     lightboxTransitioning = true;
-    thumbnail.style.viewTransitionName = 'lightbox-image';
+    source.style.viewTransitionName = 'lightbox-image';
     try {
       const transition = document.startViewTransition({
         update: async () => {
           await showFromHistory(i);
           await image.decode();
-          thumbnail.style.viewTransitionName = '';
+          source.style.viewTransitionName = '';
         },
         types: ['lightbox-open'],
       });
       await transition.finished;
     } catch {
-      thumbnail.style.viewTransitionName = '';
+      source.style.viewTransitionName = '';
       if (!open) await showFromHistory(i);
     } finally {
       lightboxTransitioning = false;
@@ -282,7 +281,7 @@
   }
   async function closeFromHistory() {
     if (!open) return;
-    const thumbnail = thumbnailImages[index];
+    const thumbnail = thumbnailButtons[index];
     if (
       reducedMotion ||
       !thumbnail ||
@@ -727,13 +726,13 @@
         ? responsiveImage.source.width / responsiveImage.source.height
         : 1}
       <button
+        bind:this={thumbnailButtons[i]}
         type="button"
         class="group aspect-square overflow-hidden bg-neutral-100"
         onclick={(event) => show(i, event.currentTarget)}
         aria-label={`${ui[lang].openImage} ${i + 1}`}
       >
         <img
-          bind:this={thumbnailImages[i]}
           src={img.image}
           srcset={thumbnailSrcsets[i]}
           sizes={galleryThumbnailSizes(aspectRatio)}

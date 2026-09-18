@@ -27,6 +27,11 @@ bun run build        # production build -> dist/
 bun run preview      # serve the built dist/ locally
 ```
 
+`test:e2e` builds the production site, including responsive images, before
+Playwright starts its preview server. Cold image processing is therefore not
+counted against the server startup timeout, and routes are not compiled during
+interaction tests.
+
 ## Project layout
 
 ```

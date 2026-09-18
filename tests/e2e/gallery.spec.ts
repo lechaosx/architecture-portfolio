@@ -61,27 +61,87 @@ async function expectLightboxTransition(page: Page, type: string) {
     .toBe(true);
 }
 
-test('native lightbox transitions keep endpoint geometry stable across repeated use', async ({
+async function lightboxTransitionState(page: Page) {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .some(
+        ({ effect }) =>
+          effect?.pseudoElement ===
+          '::view-transition-group(lightbox-image)',
+      ),
+  );
+  return page.evaluate(() => {
+    const animation = document
+      .getAnimations()
+      .find(
+        ({ effect }) =>
+          effect?.pseudoElement ===
+          '::view-transition-group(lightbox-image)',
+      )!;
+    const keyframes = (animation.effect as KeyframeEffect).getKeyframes();
+    const start = keyframes.at(0)!;
+    const end = keyframes.at(-1)!;
+    const oldImage = getComputedStyle(
+      document.documentElement,
+      '::view-transition-old(lightbox-image)',
+    );
+    const newImage = getComputedStyle(
+      document.documentElement,
+      '::view-transition-new(lightbox-image)',
+    );
+    return {
+      pairOverflow: getComputedStyle(
+        document.documentElement,
+        '::view-transition-image-pair(lightbox-image)',
+      ).overflow,
+      oldImageVisible: oldImage.display !== 'none',
+      oldImageAnimated: oldImage.animationName !== 'none',
+      newImageAnimated: newImage.animationName !== 'none',
+      startScale: new DOMMatrix(String(start.transform)).a,
+      endScale: new DOMMatrix(String(end.transform)).a,
+    };
+  });
+}
+
+test('native lightbox transitions compose with settled and active thumbnail hover', async ({
   page,
 }) => {
   await gotoProject(page);
   const thumbnail = galleryImage(page, 10);
   await thumbnail.scrollIntoViewIfNeeded();
+  const stableTransition = {
+    pairOverflow: 'clip',
+    oldImageVisible: true,
+    oldImageAnimated: true,
+    newImageAnimated: true,
+    startScale: 1,
+    endScale: 1,
+  };
 
+  await thumbnail.hover();
+  await page.waitForTimeout(100);
   await thumbnail.click();
   await expectLightboxTransition(page, 'lightbox-open');
+  expect(await lightboxTransitionState(page)).toEqual(stableTransition);
   const opening = await sampleBoxes(page.locator('.lightbox-slide-current img'));
   expect(new Set(opening.map((box) => JSON.stringify(box))).size).toBe(1);
   await waitForLightbox(page);
 
   await page.getByRole('button', { name: 'Close' }).click();
   await expectLightboxTransition(page, 'lightbox-close');
+  expect(await lightboxTransitionState(page)).toEqual(stableTransition);
   const closing = await sampleBoxes(thumbnail);
   expect(new Set(closing.map((box) => JSON.stringify(box))).size).toBe(1);
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
 
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(550);
+  await thumbnail.hover();
+  await page.waitForTimeout(550);
   await thumbnail.click();
   await expectLightboxTransition(page, 'lightbox-open');
+  expect(await lightboxTransitionState(page)).toEqual(stableTransition);
   await waitForLightbox(page);
 });
 
