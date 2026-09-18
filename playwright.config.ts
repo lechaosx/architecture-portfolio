@@ -11,7 +11,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'ASTRO_DEV_BACKGROUND=0 bun run dev -- --host 127.0.0.1',
+    command: 'exec bun node_modules/astro/bin/astro.mjs preview --host 127.0.0.1',
     url: 'http://127.0.0.1:4321',
     reuseExistingServer: true,
     timeout: 120_000,

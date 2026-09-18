@@ -254,7 +254,8 @@ Project images open in a viewport-filling, keyboard-navigable lightbox (arrows,
 Esc). The selected thumbnail expands into the lightbox image and returns to its
 grid position on close, changing crop as its aspect ratio changes and waiting
 for the enlarged preview before it animates. The overlay fades over the page and
-its header; the header remains in place beneath it.
+its header; the header remains in place beneath it. Thumbnail hover remains
+independent, including when the lightbox opens partway through the hover effect.
 
 ### Addressable lightbox images — [Explicit]
 
