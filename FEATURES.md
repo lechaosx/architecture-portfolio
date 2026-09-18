@@ -267,8 +267,10 @@ Reduced views such as project cards, the home carousel, and gallery thumbnails
 use prefiltered responsive images instead of asking the browser to shrink the
 full multi-megapixel drawing in one step. This reduces resampling aliasing in
 fine plans and linework, including during thumbnail hover effects. The project
-lightbox starts with a representation suited to its on-screen size and display
-density, then loads more detail as the visitor zooms. Drawings larger than 4096
+gallery requests extra source width for landscape images cropped into square
+thumbnails, preventing those previews from being enlarged. The project lightbox
+starts with a representation suited to its on-screen size and display density,
+then loads more detail as the visitor zooms. Drawings larger than 4096
 px use 512 px deep-zoom tiles over a density-matched processed preview, so the
 browser requests only useful resolution levels and visible regions without
 showing dark gaps between arriving tiles or decoding the entire print-sized

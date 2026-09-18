@@ -13,6 +13,13 @@ export interface Size {
   height: number;
 }
 
+export function galleryThumbnailSizes(aspectRatio: number) {
+  const cropFactor = Math.max(1, aspectRatio);
+  const formatted = (value: number) => String(Number(value.toFixed(4)));
+
+  return `(min-width: 896px) ${formatted(275 * cropFactor)}px, (min-width: 640px) calc(${formatted((100 / 3) * cropFactor)}vw - ${formatted(24 * cropFactor)}px), calc(${formatted(50 * cropFactor)}vw - ${formatted(30 * cropFactor)}px)`;
+}
+
 const MIN_SCALE = 1;
 function clampScale(scale: number, maxScale = Number.POSITIVE_INFINITY) {
   return Math.min(maxScale, Math.max(MIN_SCALE, scale));
