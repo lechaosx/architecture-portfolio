@@ -703,12 +703,11 @@
             e.stopPropagation();
             resetView();
           }}
+          aria-label={ui[lang].resetZoom}
         >
           <span aria-hidden="true">
             {Math.round(scale * 100)}%
           </span>
-          <span lang="cs" class="sr-only">Obnovit přiblížení</span>
-          <span lang="en" class="sr-only">Reset zoom</span>
         </button>
         <a
           href={originalSrc}
