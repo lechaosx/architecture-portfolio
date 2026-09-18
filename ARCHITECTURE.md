@@ -46,8 +46,9 @@ visitors still land in the right place.
 
 ### CI/CD: GitHub Actions → Pages — [Implicit]
 
-`.github/workflows/deploy.yml` builds with `withastro/action` (configured for
-bun) and deploys via `actions/deploy-pages`; a push to `master` is the trigger.
+`.github/workflows/deploy.yml` runs unit, Chromium, and Firefox interaction tests, builds
+with `withastro/action` (configured for bun), and deploys via
+`actions/deploy-pages`; a push to `master` is the trigger.
 
 ---
 
@@ -73,9 +74,9 @@ specific ships to production.
 
 ### Dev environment: minimal Nix flake — [Explicit]
 
-`flake.nix` provides only bun, for `x86_64-linux`, with no description or
-shellHook — the user explicitly asked for a minimal flake. `.gitignore` was
-likewise trimmed on request.
+`flake.nix` provides bun and the pinned Playwright browser package for
+`x86_64-linux`. It sets only the browser path needed by the test runner and has
+no description. `.gitignore` was likewise trimmed on request.
 
 ---
 
@@ -98,8 +99,8 @@ component today (`src/components/Gallery.svelte`).
 without waiting for the thumbnail grid to enter the viewport; OpenSeadragon
 still loads only when a tiled image is opened. The only other browser JS is a
 few tiny first-party vanilla
-scripts (reveal-on-scroll, the home carousel, the language switch) and the
-View-Transitions router — no framework runtime ships beyond the lightbox.
+scripts (reveal-on-scroll, the home carousel, and the language switch). Native
+cross-document View Transitions add no client router or framework runtime.
 Images up to 4096 px use local transforms constrained to the image stage;
 larger images lazy-load OpenSeadragon as a separate chunk and use its tiled
 canvas. Desktop side gutters keep either stage separate from the navigation
@@ -109,10 +110,12 @@ stage dimensions stable across gallery entries and prevents text length from
 changing image selection or apparent size. Both rendering paths support
 pointer-centred wheel zoom, touch pinch and pan, and constrain maximum zoom to
 native image detail. At the base scale, horizontal mouse and one-finger gestures
-drive the same animated navigation. Browser-derived values come from Svelte's
-window and motion primitives: viewport and display-density changes update image
-selection, reduced-motion changes apply immediately, and `<svelte:window>` owns
-window-event cleanup. Previous, current, and next processed previews are
+drive the same animated navigation. Svelte's window primitives update image
+selection when viewport size or display density changes; a live media query
+applies reduced-motion changes immediately. Gesture distance remains separate
+from its rendered
+offset so reduced-motion swipes can retain their navigation threshold without
+moving the slide. Previous, current, and next processed previews are
 neighboring DOM slides rather than an explicit JavaScript cache;
 one translation moves them as a continuous strip. The caption uses the same
 three-slide geometry, while input listeners remain confined to the image stage
@@ -131,28 +134,46 @@ dark stage.
 
 ### Lightbox modal state — [Explicit]
 
-While open, the island owns modal focus and root scroll locking: focus enters
-the close control, Tab wraps within the dialog, and focus returns to the opening
-thumbnail on close. The lock fixes the document body at its captured scroll
-coordinates because overflow locking alone does not contain touch scrolling in
-all browsers. A `data-lang` observer keeps the dialog's accessible names aligned
-with the global language switch.
+The lightbox is a native modal `<dialog>`, so the browser owns the top layer,
+focus containment, and Escape handling. Focus enters the close control and
+returns to the opening thumbnail without scrolling the page on close. The
+viewport-filling dialog suppresses wheel, touch, and keyboard scrolling without
+changing document overflow or positioning. The page and sticky header therefore
+retain their normal layout and position beneath it. The lightbox locally pins
+black and white colour tokens so the global dark-mode swap cannot invert its
+overlay and controls. A `data-lang` observer keeps the dialog's accessible names
+aligned with the global language switch.
+
+Opening and closing use a same-document View Transition whose named image moves
+between the thumbnail and active preview. Image width and height metadata reserve
+geometry before a first download. The active preview's dimensions come from the
+source aspect ratio and measured stage, so cached image and tiled-renderer state
+cannot change the endpoint. The browser crops the image snapshot as its box
+changes aspect ratio, while the document snapshot supplies the overlay fade.
+Page-transition elements opt out while this lightbox-only transition is active,
+so their snapshots remain in the document's normal stacking order beneath the
+header and overlay. The tiled renderer starts after opening finishes so its
+canvas cannot appear beneath the moving image. Reduced-motion visitors use the
+immediate state change.
 
 Each image maps to a one-based `#image-N` hash. Opening pushes one marked
 history entry; navigation replaces that entry, and the popstate handler closes
-or restores the lightbox for Back and Forward. On initial hydration, a valid
-image hash is placed after a base-page entry so Back first closes a directly
-linked lightbox. Image numbers intentionally follow gallery order and therefore
-change if the content owner reorders the gallery.
+or restores the lightbox for Back and Forward. The island selects manual browser
+scroll restoration while its history entry is active, preventing hash traversal
+from moving the page behind the overlay, and restores the previous setting when
+the lightbox closes. On initial hydration, a valid image hash is placed after a
+base-page entry so Back first closes a directly linked lightbox. Image numbers
+intentionally follow gallery order and therefore change if the content owner
+reorders the gallery.
 
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 
 The carousel (`Carousel.astro`) is a native horizontal scroll-snap strip; a small
 vanilla script enhances it with arrows, dot indicators and a 5s auto-advance,
 pausing on hover/focus and skipping auto-advance under `prefers-reduced-motion`.
-One abort controller owns its listeners and timer across View Transition swaps;
-the live media query updates both scrolling and auto-advance when the preference
-changes. No hydrated island — the same lightweight approach as the reveal
+The live media query updates both scrolling and auto-advance when the preference
+changes. Normal document navigation gives each page one script lifetime, so no
+client-router cleanup lifecycle is needed. No hydrated island — the same lightweight approach as the reveal
 script, so the "islands stay minimal" invariant holds. Because it scrolls its
 own container (not the page), it stays clear of the "don't reimplement scrolling"
 boundary. Images come from the Home singleton's `gallery` list, falling back to
@@ -162,18 +183,26 @@ interaction language (outline box on hover, invert on press/current).
 
 ### Page transitions: native View Transitions API — [Implicit]
 
-`<ClientRouter />` in `Base.astro` gives smooth crossfades between pages using
-the browser-native API, with near-zero JS. Chosen to satisfy the explicit want
-for "smoothness" without a heavy client router.
+`@view-transition { navigation: auto; }` opts ordinary same-origin document
+navigations into the browser's cross-document View Transitions. Pages remain a
+normal multi-page site: there is no client router, swapped DOM, persistence API,
+or script reinitialization lifecycle. Browsers without support perform ordinary
+navigation. Project covers use matching transition names between the work grid
+and project pages. A stable square wrapper owns that name while the nested image
+owns hover scaling, so hover and shared-element geometry do not compete. The
+project image carries its native dimensions so an uncached destination has
+stable geometry. One shared transition class keeps the image snapshots covering
+the changing box, progressively cropping or revealing them between the square
+card and the project image. Work cards skip the independent reveal effect because
+starting a second entrance animation during the page transition produces
+competing motion.
 
 ### Reveal-on-scroll: IntersectionObserver on the native scrollbar — [Implicit]
 
 Elements with `.reveal` fade in as they enter the viewport (script in
 `Base.astro`, styles in `global.css`). This explicitly avoids scroll-hijacking
-libraries — the user asked not to reimplement scrolling. Re-runs on
-`astro:page-load` so it works after View Transition navigations, disconnecting
-the previous observer before it can retain swapped-out nodes. Respects
-`prefers-reduced-motion`.
+libraries — the user asked not to reimplement scrolling. It initializes once
+for each normally loaded document and respects `prefers-reduced-motion`.
 
 ---
 
@@ -251,7 +280,9 @@ Dark mode is not a second set of utility classes; it's a remap of the palette
 under `html[data-theme="dark"]` in `global.css` flips every existing
 `bg-white`/`text-black`/`text-neutral-*` at once — no `dark:` class on any
 component. `--color-white`/`--color-black` swap and the used neutral shades map to
-their mirror. This is why the old `filter: invert` approach was rejected: a filter
+their mirror. The lightbox establishes local literal black/white tokens because
+its dark inspection surface is the same in both themes. This is why the old
+`filter: invert` approach was rejected: a filter
 also inverts `<img>` content, whereas a token remap leaves imagery alone. The one
 exception that needs a `dark:` variant is the typography plugin, whose prose
 colours are literal, not token-based — a registered `@custom-variant dark` plus
@@ -263,10 +294,9 @@ explicitly `"dark"`, otherwise light. Deliberately **not** keyed off
 `prefers-color-scheme` — light is the default regardless of the OS setting.
 `<html>` ships `data-theme="light"` so no-JS also falls back to light. A single
 footer button toggles `html[data-theme]` and persists to `localStorage`, and
-`astro:before-swap` carries the theme onto the incoming document so a View
-Transition navigation doesn't reset it — the same pattern used for `data-lang`.
-The toggle shows the mode it switches _to_ (moon in light, sun in dark); the two
-icons are cross-faded purely in CSS off `html[data-theme]`.
+each normally loaded document reads that value before first paint. The toggle
+shows the mode it switches _to_ (moon in light, sun in dark); the two icons are
+cross-faded purely in CSS off `html[data-theme]`.
 
 ---
 
@@ -401,11 +431,9 @@ An `is:inline` script in `<head>` (so it runs before first paint, no flash) sets
 `html[data-lang]` from, in order: `?lang=`, `localStorage`, `navigator.language`,
 else English. A second module script in `Base.astro` wires the footer language
 toggle (shows the other language, persists to `localStorage`, flips `data-lang`),
-syncs `<title>`/meta description to the active language, and on
-`astro:before-swap` copies the current language onto the incoming document so a
-View Transition doesn't reset it. The delegated toggle listener remains valid
-when the footer is replaced. No island — same "tiny vanilla script" approach as
-reveal/carousel.
+and syncs `<title>`/meta description to the active language. Each normally
+loaded document reads the persisted language before first paint. No island —
+same "tiny vanilla script" approach as reveal/carousel.
 
 ### Where the strings come from — `i18n.ts`, `T.astro`, `Prose.astro` — [Implicit]
 

@@ -3,7 +3,7 @@ import {
   clampPan,
   containedImageSize,
   deepZoomViewport,
-  focusWrapTarget,
+  displayedSwipeOffset,
   galleryImageHash,
   galleryImageIndex,
   galleryThumbnailSizes,
@@ -147,22 +147,10 @@ describe('lightbox gestures', () => {
     expect(swipeDirection(40, 5)).toBe(0);
     expect(swipeDirection(80, 100)).toBe(0);
   });
-});
 
-describe('lightbox focus trap', () => {
-  test('wraps focus at both ends of the dialog', () => {
-    expect(focusWrapTarget(0, 4, true)).toBe(3);
-    expect(focusWrapTarget(3, 4, false)).toBe(0);
-  });
-
-  test('lets the browser move focus between interior controls', () => {
-    expect(focusWrapTarget(1, 4, false)).toBeUndefined();
-    expect(focusWrapTarget(2, 4, true)).toBeUndefined();
-  });
-
-  test('moves focus into the dialog if it escaped', () => {
-    expect(focusWrapTarget(-1, 4, false)).toBe(0);
-    expect(focusWrapTarget(-1, 4, true)).toBe(3);
+  test('reduced motion keeps a swipe stationary until navigation', () => {
+    expect(displayedSwipeOffset(80, false)).toBe(80);
+    expect(displayedSwipeOffset(80, true)).toBe(0);
   });
 });
 

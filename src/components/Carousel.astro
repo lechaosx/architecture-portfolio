@@ -101,13 +101,7 @@ const displayImages = await Promise.all(
 
 <script>
   // Enhances a native scroll-snap strip with arrows, dots and auto-advance.
-  // Vanilla, no island; re-inits after View Transition swaps.
-  let carouselController: AbortController | undefined;
-
   function initCarousel() {
-    carouselController?.abort();
-    carouselController = new AbortController();
-    const { signal } = carouselController;
     const root = document.querySelector<HTMLElement>('[data-carousel]');
     if (!root) return;
     const track = root.querySelector<HTMLElement>('[data-carousel-track]');
@@ -134,16 +128,15 @@ const displayImages = await Promise.all(
 
     root
       .querySelector('[data-carousel-prev]')
-      ?.addEventListener('click', () => goto(indexNow() - 1), { signal });
+      ?.addEventListener('click', () => goto(indexNow() - 1));
     root
       .querySelector('[data-carousel-next]')
-      ?.addEventListener('click', () => goto(indexNow() + 1), { signal });
+      ?.addEventListener('click', () => goto(indexNow() + 1));
     dots.forEach((dot, index) =>
-      dot.addEventListener('click', () => goto(index), { signal }),
+      dot.addEventListener('click', () => goto(index)),
     );
     track.addEventListener('scroll', () => requestAnimationFrame(sync), {
       passive: true,
-      signal,
     });
     sync();
 
@@ -166,12 +159,11 @@ const displayImages = await Promise.all(
       'focusin',
       'focusout',
     ]) {
-      root.addEventListener(event, syncTimer, { signal });
+      root.addEventListener(event, syncTimer);
     }
-    motionQuery.addEventListener('change', syncTimer, { signal });
-    signal.addEventListener('abort', stop, { once: true });
+    motionQuery.addEventListener('change', syncTimer);
     syncTimer();
   }
 
-  document.addEventListener('astro:page-load', initCarousel);
+  initCarousel();
 </script>

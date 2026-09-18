@@ -10,6 +10,59 @@
   --duration-slow: 0.7s;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
+.project-cover {
+  view-transition-class: project-cover;
+}
+
+::view-transition-group(.project-cover) {
+  animation-duration: var(--duration-base);
+  animation-timing-function: ease;
+}
+
+::view-transition-old(.project-cover),
+::view-transition-new(.project-cover) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lightbox-image {
+  view-transition-name: lightbox-image;
+}
+
+::view-transition-group(root),
+::view-transition-group(lightbox-image) {
+  animation-duration: var(--duration-base);
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html:active-view-transition-type(lightbox-open) .project-cover,
+html:active-view-transition-type(lightbox-close) .project-cover {
+  view-transition-name: none !important;
+}
+
+::view-transition-old(lightbox-image),
+::view-transition-new(lightbox-image) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+html:active-view-transition-type(lightbox-open)::view-transition-old(lightbox-image),
+html:active-view-transition-type(lightbox-close)::view-transition-new(lightbox-image) {
+  display: none;
+}
+
+html:active-view-transition-type(lightbox-open)::view-transition-new(lightbox-image),
+html:active-view-transition-type(lightbox-close)::view-transition-old(lightbox-image) {
+  animation: none;
+  opacity: 1;
+}
+
 /* Dark mode is the exact inverse of the light palette. Tailwind v4 compiles
    colour utilities to var(--color-*), so remapping those tokens flips every
    existing bg-white/text-black/text-neutral-* at once — no per-component
@@ -70,6 +123,10 @@ html[data-theme="dark"] .theme-icon-moon {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+  }
+
   .theme-icon-sun,
   .theme-icon-moon,
   .language-option-cs,

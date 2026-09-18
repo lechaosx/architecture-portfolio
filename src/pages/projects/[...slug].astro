@@ -61,9 +61,11 @@ const thumbnailSrcsets = responsiveImages.map((image) =>
       src={d.cover}
       srcset={responsiveSrcset(responsiveCover, LARGE_IMAGE_WIDTHS)}
       sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
+      width={responsiveCover?.source.width}
+      height={responsiveCover?.source.height}
       alt=""
-      class="w-full bg-neutral-100 object-cover"
-      transition:name={`cover-${project.id}`}
+      class="project-cover w-full bg-neutral-100 object-cover"
+      style={`view-transition-name: cover-${project.id}`}
     />
 
     <Prose

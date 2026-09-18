@@ -123,6 +123,10 @@ export function swipeDirection(deltaX: number, deltaY: number) {
   return deltaX < 0 ? 1 : -1;
 }
 
+export function displayedSwipeOffset(deltaX: number, reducedMotion: boolean) {
+  return reducedMotion ? 0 : deltaX;
+}
+
 export function galleryImageHash(index: number) {
   return `#image-${index + 1}`;
 }
@@ -132,18 +136,6 @@ export function galleryImageIndex(hash: string, imageCount: number) {
   if (!match) return undefined;
   const index = Number(match[1]) - 1;
   return index < imageCount ? index : undefined;
-}
-
-export function focusWrapTarget(
-  currentIndex: number,
-  focusableCount: number,
-  backwards: boolean,
-) {
-  if (focusableCount === 0) return undefined;
-  if (currentIndex < 0) return backwards ? focusableCount - 1 : 0;
-  if (backwards && currentIndex === 0) return focusableCount - 1;
-  if (!backwards && currentIndex === focusableCount - 1) return 0;
-  return undefined;
 }
 
 export function nativeZoomScale(

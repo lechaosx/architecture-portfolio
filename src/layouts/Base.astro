@@ -1,5 +1,4 @@
 ---
-import { ClientRouter } from 'astro:transitions';
 import '@fontsource-variable/roboto';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
@@ -65,8 +64,6 @@ const { title } = Astro.props;
     <meta property="og:title" content={title.en} />
     <meta property="og:description" content={site.description_en} />
     <meta property="og:type" content="website" />
-    <!-- Smooth same-origin page swaps via the native View Transitions API. -->
-    <ClientRouter />
   </head>
   <body class="min-h-screen bg-white font-sans text-black antialiased">
     <Nav />
@@ -139,20 +136,8 @@ const { title } = Astro.props;
         }
       });
 
-      // Carry the chosen language and theme onto the incoming document so a View
-      // Transition navigation doesn't reset them to the static defaults.
-      document.addEventListener('astro:before-swap', (e) => {
-        const el = document.documentElement;
-        const incoming = e.newDocument.documentElement;
-        incoming.dataset.lang = el.dataset.lang || 'en';
-        incoming.lang = el.lang || 'en';
-        incoming.dataset.theme = el.dataset.theme || 'light';
-      });
-
-      document.addEventListener('astro:page-load', () => {
-        initReveal();
-        applyLang();
-      });
+      initReveal();
+      applyLang();
     </script>
   </body>
 </html>
