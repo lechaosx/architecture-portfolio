@@ -1,5 +1,6 @@
 ---
 import { ui, type UiKey } from '../i18n';
+import type { HTMLTag } from 'astro/types';
 
 // Renders both language variants inline; global.css hides whichever the active
 // language (html[data-lang]) is not. Pass a dictionary `k` for baked-in labels,
@@ -8,7 +9,7 @@ interface Props {
   k?: UiKey;
   cs?: string;
   en?: string;
-  as?: string;
+  as?: HTMLTag;
   class?: string;
 }
 

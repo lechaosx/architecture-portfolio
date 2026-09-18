@@ -20,9 +20,10 @@ nix develop          # shell with bun on PATH
 direnv allow         # alternatively, activate the flake shell automatically
 bun install          # install dependencies
 bun dev              # dev server at http://localhost:4321
+bun run check        # Astro, Svelte, TypeScript, and JavaScript diagnostics
 bun run test         # unit tests
 bun run test:e2e     # Chromium + Firefox interaction and animation regressions
-bun run test:all     # unit + browser tests
+bun run test:all     # static analysis + unit + browser tests
 bun run build        # production build -> dist/
 bun run preview      # serve the built dist/ locally
 ```

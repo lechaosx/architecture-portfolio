@@ -55,10 +55,10 @@
   let stageWidth = $state(0);
   let stageHeight = $state(0);
   let pixelRatio = $derived(devicePixelRatio.current ?? 1);
-  let stage: HTMLDivElement;
-  let image: HTMLImageElement;
-  let dialog: HTMLDialogElement;
-  let closeButton: HTMLButtonElement;
+  let stage = $state<HTMLDivElement>()!;
+  let image = $state<HTMLImageElement>()!;
+  let dialog = $state<HTMLDialogElement>()!;
+  let closeButton = $state<HTMLButtonElement>()!;
   let trigger: HTMLButtonElement | undefined;
   let thumbnailButtons: HTMLButtonElement[] = [];
   let deepZoomElement = $state<HTMLDivElement>();
@@ -340,6 +340,9 @@
     }
     history.replaceState(history.state, '', `${location.pathname}${location.search}`);
     void closeFromHistory().finally(resumeScrollRestoration);
+  }
+  function handleDialogClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) requestClose();
   }
   async function closeFromHistory() {
     if (!open) return;
@@ -837,7 +840,7 @@
     data-gallery-lightbox
     class="lightbox fixed inset-0 m-0 h-screen max-h-none w-screen max-w-none grid-rows-[auto_minmax(0,1fr)] gap-3 border-0 bg-black/90 p-4 open:grid"
     aria-label={ui[lang].imageViewer}
-    onclick={requestClose}
+    onclick={handleDialogClick}
     oncancel={(event) => {
       event.preventDefault();
       requestClose();
@@ -850,10 +853,7 @@
         <button
           type="button"
           class="min-w-16 cursor-pointer border border-white/40 px-3 py-2 text-sm tabular-nums text-white hover:border-white"
-          onclick={(e) => {
-            e.stopPropagation();
-            resetView();
-          }}
+          onclick={resetView}
           aria-label={ui[lang].resetZoom}
         >
           <span aria-hidden="true">
@@ -865,7 +865,6 @@
           target="_blank"
           rel="noopener"
           class="border border-white/40 px-3 py-2 text-sm text-white hover:border-white"
-          onclick={(e) => e.stopPropagation()}
         >
           <span lang="cs">{ui.cs.openOriginal}</span>
           <span lang="en">{ui.en.openOriginal}</span>
@@ -882,21 +881,16 @@
         bind:this={closeButton}
         type="button"
         class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white"
-        onclick={(e) => {
-          e.stopPropagation();
-          requestClose();
-        }}
+        onclick={requestClose}
         aria-label={ui[lang].close}>×</button
       >
     </div>
-    <figure
-      class="lightbox-layout min-h-0 w-full"
-      onclick={(e) => e.stopPropagation()}
-    >
+    <figure class="lightbox-layout min-h-0 w-full">
       <div
         bind:this={stage}
         bind:clientWidth={stageWidth}
         bind:clientHeight={stageHeight}
+        role="presentation"
         class="lightbox-stage relative flex min-h-0 w-full touch-none items-center justify-center overflow-hidden"
         style:cursor={dragging ? 'grabbing' : 'grab'}
         {onwheel}
@@ -998,19 +992,13 @@
       <button
         type="button"
         class="media-navigation-button lightbox-previous self-center"
-        onclick={(e) => {
-          e.stopPropagation();
-          prev();
-        }}
+        onclick={prev}
         aria-label={ui[lang].previousImage}>‹</button
       >
       <button
         type="button"
         class="media-navigation-button lightbox-next self-center"
-        onclick={(e) => {
-          e.stopPropagation();
-          next();
-        }}
+        onclick={next}
         aria-label={ui[lang].nextImage}>›</button
       >
       <figcaption

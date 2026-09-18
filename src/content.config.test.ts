@@ -8,6 +8,9 @@ mock.module('astro:content', () => ({
 
 const { collections } = await import('./content.config');
 const projectSchema = collections.projects.schema;
+if (!projectSchema || typeof projectSchema === 'function') {
+  throw new TypeError('Expected a static project schema');
+}
 
 const project = {
   title_cs: 'Projekt',
