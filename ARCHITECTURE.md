@@ -44,11 +44,15 @@ its own (its assets would need a `/<repo>/` prefix). This is fine because once t
 custom domain is configured, GitHub Pages 301-redirects that URL to the domain, so
 visitors still land in the right place.
 
-### CI/CD: GitHub Actions → Pages — [Implicit]
+### CI/CD: GitHub Actions → Pages — [Explicit]
 
 `.github/workflows/deploy.yml` runs unit, Chromium, and Firefox interaction tests, builds
 with `withastro/action` (configured for bun), and deploys via
-`actions/deploy-pages`; a push to `master` is the trigger.
+`actions/deploy-pages`; a push to `master` is the trigger. Pushes whose complete
+diff is confined to `src/content/**` and `public/uploads/**` skip the test steps
+but still build and deploy, keeping CMS edit cycles short while retaining Astro
+content validation and responsive-image generation. Mixed changes and manual
+workflow runs execute the full suite.
 
 ---
 

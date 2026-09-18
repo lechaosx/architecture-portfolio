@@ -20,15 +20,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+      - name: Check whether tests are needed
+        if: github.event_name == 'push'
+        id: changes
+        uses: dorny/paths-filter@v4
+        with:
+          predicate-quantifier: some-with-excludes
+          filters: |
+            code:
+              - '**'
+              - '!src/content/**'
+              - '!public/uploads/**'
       - name: Set up Bun
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         uses: oven-sh/setup-bun@v2
       - name: Install dependencies
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         run: bun install --frozen-lockfile
       - name: Run unit tests
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         run: bun run test
       - name: Install browsers
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         run: bunx playwright install --with-deps chromium firefox
       - name: Run browser tests
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         run: bun run test:e2e
 
   build:
