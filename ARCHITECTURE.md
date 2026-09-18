@@ -224,10 +224,10 @@ request, which keeps with "fast and clean". It is the single page typeface:
 headings and nav all share it. There is deliberately **no** separate
 display/heading token — Open Sans (body) and a `--font-display` seam were both
 tried and removed in favour of one typeface everywhere (the owner's call: "if I
-want separation later, I'll do it from scratch"). DIN Pro — also on her wishlist —
-is commercial with no free web licence and is omitted; to add it (or any distinct
-heading face) later, self-host the licensed `woff2`, reintroduce a `--font-display`
-token in `@theme`, and apply it to the headings/nav.
+want separation later, I'll do it from scratch"). DIN Pro — also on the owner's
+wishlist — is commercial with no free web licence and is omitted; to add it (or
+any distinct heading face) later, self-host the licensed `woff2`, reintroduce a
+`--font-display` token in `@theme`, and apply it to the headings/nav.
 
 ### Motion durations as `@theme` tokens — [Implicit]
 
