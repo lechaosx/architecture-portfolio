@@ -124,7 +124,8 @@ neighboring DOM slides rather than an explicit JavaScript cache;
 one translation moves them as a continuous strip. The caption uses the same
 three-slide geometry. Image gesture listeners remain confined to the stage;
 the caption retains native scrolling while the surrounding dialog contains
-page-scroll gestures.
+page-scroll gestures. A live status element reports the current gallery position
+without participating in the translated image/caption strip.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 
@@ -199,8 +200,12 @@ script, so the "islands stay minimal" invariant holds. Because it scrolls its
 own container (not the page), it stays clear of the "don't reimplement scrolling"
 boundary. Images come from the Home singleton's `gallery` list, falling back to
 `getCollection('projects')` (cover + gallery) when it is empty, so there is no
-separate gallery content to maintain. The arrows/dots use the site's shared
-interaction language (outline box on hover, invert on press/current).
+separate gallery content to maintain. The carousel and lightbox share only the
+global `.media-navigation-button` visual contract; their native scroll-snap and
+Svelte gesture/navigation implementations remain independent. Dots retain the
+same interaction language but use literal media-surface colours, including a
+dark edge for contrast over pale images, rather than inheriting page-theme
+tokens.
 
 ### Page transitions: native View Transitions API — [Implicit]
 
