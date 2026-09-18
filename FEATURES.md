@@ -256,6 +256,8 @@ grid position on close, changing crop as its aspect ratio changes and waiting
 for the enlarged preview before it animates. The overlay fades over the page and
 its header; the header remains in place beneath it. Thumbnail hover remains
 independent, including when the lightbox opens partway through the hover effect.
+If the sticky header or viewport edge obscures a thumbnail, the lightbox uses
+only the overlay fade instead of lifting the hidden part into an image morph.
 Image gestures and page scrolling wait for opening and closing transitions to
 finish. Closing a zoomed image fades the overlay without morphing the manipulated
 image into its thumbnail. Zoomed content stays inside its outgoing slide when
@@ -294,11 +296,12 @@ loads more detail as the visitor zooms. Drawings larger than 4096 px use 512 px
 deep-zoom tiles over a density-matched processed preview, so the
 browser requests only useful resolution levels and visible regions without
 showing dark gaps between arriving tiles or decoding the entire print-sized
-image. Smaller images progress through processed full-image variants. Both
-paths stop at native image detail. The untouched original is not displayed
-automatically; it can be opened directly from the lightbox. The pipeline never
-enlarges an upload, and a processed full-image candidate is published only when
-it is smaller than the original.
+image. Reopening a tiled image after changing browser zoom refreshes its canvas
+at the new display density. Smaller images progress through processed full-image
+variants. Both paths stop at native image detail. The untouched original is not
+displayed automatically; it can be opened directly from the lightbox. The
+pipeline never enlarges an upload, and a processed full-image candidate is
+published only when it is smaller than the original.
 Transparent and PNG previews preserve lossless detail, while photographic
 previews use conservative high-quality compression. Camera orientation and web
 colour are normalized in previews without changing the uploaded original.
