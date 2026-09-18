@@ -6,20 +6,11 @@ import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { frontmatter as site } from '../content/singletons/site.md';
 
-interface Bilingual {
-  cs: string;
-  en: string;
-}
-
 interface Props {
-  title: Bilingual;
-  description?: Bilingual;
+  title: { cs: string; en: string };
 }
 
-const {
-  title,
-  description = { cs: site.description_cs, en: site.description_en },
-} = Astro.props;
+const { title } = Astro.props;
 ---
 
 <!doctype html>
@@ -67,12 +58,12 @@ const {
     <meta name="page-title" data-cs={title.cs} data-en={title.en} />
     <meta
       name="description"
-      content={description.en}
-      data-cs={description.cs}
-      data-en={description.en}
+      content={site.description_en}
+      data-cs={site.description_cs}
+      data-en={site.description_en}
     />
     <meta property="og:title" content={title.en} />
-    <meta property="og:description" content={description.en} />
+    <meta property="og:description" content={site.description_en} />
     <meta property="og:type" content="website" />
     <!-- Smooth same-origin page swaps via the native View Transitions API. -->
     <ClientRouter />
@@ -106,7 +97,6 @@ const {
         els.forEach((el) => io.observe(el));
       }
 
-      // Sync the <title> and meta description to the active language.
       function applyLang() {
         const lang = document.documentElement.dataset.lang || 'en';
         const tm = document.querySelector('meta[name="page-title"]');
@@ -120,7 +110,6 @@ const {
         if (dm && dv) dm.setAttribute('content', dv);
       }
 
-      // Wire the language toggle: persist the choice and flip <html data-lang>.
       function wireToggle() {
         document.querySelectorAll<HTMLElement>('[data-lang-toggle]').forEach((btn) => {
           btn.addEventListener('click', () => {
@@ -137,8 +126,6 @@ const {
         });
       }
 
-      // Wire the theme toggle: flip <html data-theme> between light/dark and
-      // persist the choice.
       function wireTheme() {
         document.querySelectorAll<HTMLElement>('[data-theme-toggle]').forEach((btn) => {
           btn.addEventListener('click', () => {
@@ -156,7 +143,7 @@ const {
       // Transition navigation doesn't reset them to the static defaults.
       document.addEventListener('astro:before-swap', (e) => {
         const el = document.documentElement;
-        const incoming = (e as any).newDocument.documentElement as HTMLElement;
+        const incoming = e.newDocument.documentElement;
         incoming.dataset.lang = el.dataset.lang || 'en';
         incoming.lang = el.lang || 'en';
         incoming.dataset.theme = el.dataset.theme || 'light';

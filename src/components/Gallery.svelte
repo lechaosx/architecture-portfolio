@@ -24,14 +24,10 @@
   } from './gallery';
   // Interactive island: a keyboard-navigable image lightbox.
   // This is the ONLY component that ships JS to the browser.
-  let {
-    images = [],
-    responsiveImages = [],
-    thumbnailSrcsets = [],
-  }: {
-    images?: GalleryImage[];
-    responsiveImages?: (ResponsiveImage | undefined)[];
-    thumbnailSrcsets?: (string | undefined)[];
+  let { images, responsiveImages, thumbnailSrcsets }: {
+    images: GalleryImage[];
+    responsiveImages: (ResponsiveImage | undefined)[];
+    thumbnailSrcsets: (string | undefined)[];
   } = $props();
 
   const galleryHistoryKey = 'architecturePortfolioGallery';
@@ -106,7 +102,7 @@
 
     void import('openseadragon').then(({ default: createViewer }) => {
       if (cancelled) return;
-      viewer = createViewer({
+      const createdViewer = createViewer({
         element,
         tileSources: descriptor.url,
         mouseNavEnabled: false,
@@ -121,11 +117,9 @@
         animationTime: 0,
         immediateRender: true,
       });
-      deepZoomViewer = viewer;
-      viewer.addHandler('open', () => {
-        if (!viewer) return;
-        syncDeepZoomViewport(viewer);
-      });
+      viewer = createdViewer;
+      deepZoomViewer = createdViewer;
+      createdViewer.addHandler('open', () => syncDeepZoomViewport(scale, pan));
     });
 
     return () => {
@@ -407,11 +401,8 @@
     );
   }
 
-  function syncDeepZoomViewport(
-    viewer: OpenSeadragon.Viewer | undefined = deepZoomViewer,
-    nextScale = scale,
-    nextPan = pan,
-  ) {
+  function syncDeepZoomViewport(nextScale: number, nextPan: Point) {
+    const viewer = deepZoomViewer;
     if (!viewer || !stage?.clientWidth) return;
     const viewport = viewer.viewport;
     const homeCenter = viewport.getHomeBounds().getCenter();
@@ -433,7 +424,7 @@
   function setView(nextScale: number, nextPan: Point) {
     scale = nextScale;
     pan = nextPan;
-    syncDeepZoomViewport(undefined, nextScale, nextPan);
+    syncDeepZoomViewport(nextScale, nextPan);
   }
 
   function onwheel(e: WheelEvent) {
@@ -750,13 +741,7 @@
         bind:clientWidth={stageWidth}
         bind:clientHeight={stageHeight}
         class="lightbox-stage relative flex min-h-0 w-full touch-none items-center justify-center overflow-hidden"
-        style:cursor={scale > 1
-          ? dragging
-            ? 'grabbing'
-            : 'grab'
-          : dragging
-            ? 'grabbing'
-            : 'grab'}
+        style:cursor={dragging ? 'grabbing' : 'grab'}
         {onwheel}
         {onpointerdown}
         {onpointermove}

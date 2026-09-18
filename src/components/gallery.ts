@@ -20,9 +20,8 @@ export function galleryThumbnailSizes(aspectRatio: number) {
   return `(min-width: 896px) ${formatted(275 * cropFactor)}px, (min-width: 640px) calc(${formatted((100 / 3) * cropFactor)}vw - ${formatted(24 * cropFactor)}px), calc(${formatted(50 * cropFactor)}vw - ${formatted(30 * cropFactor)}px)`;
 }
 
-const MIN_SCALE = 1;
-function clampScale(scale: number, maxScale = Number.POSITIVE_INFINITY) {
-  return Math.min(maxScale, Math.max(MIN_SCALE, scale));
+function clampScale(scale: number, maxScale: number) {
+  return Math.min(maxScale, Math.max(1, scale));
 }
 
 export function hasCaption(image: GalleryImage) {
@@ -37,7 +36,7 @@ export function hasCaption(image: GalleryImage) {
 export function scaleFromWheel(
   scale: number,
   deltaY: number,
-  maxScale?: number,
+  maxScale: number,
 ) {
   return clampScale(scale * Math.exp(-deltaY * 0.002), maxScale);
 }
@@ -59,7 +58,7 @@ export function scaleFromPinch(
   scale: number,
   startDistance: number,
   distance: number,
-  maxScale?: number,
+  maxScale: number,
 ) {
   return startDistance > 0
     ? clampScale(scale * (distance / startDistance), maxScale)

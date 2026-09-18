@@ -58,9 +58,9 @@ describe('gallery thumbnail image selection', () => {
 
 describe('lightbox gestures', () => {
   test('wheel zoom stays between 1x and the native-detail limit', () => {
-    expect(scaleFromWheel(1, -100)).toBeGreaterThan(1);
+    expect(scaleFromWheel(1, -100, 4)).toBeGreaterThan(1);
     expect(scaleFromWheel(4, -100, 4)).toBe(4);
-    expect(scaleFromWheel(1, 100)).toBe(1);
+    expect(scaleFromWheel(1, 100, 4)).toBe(1);
   });
 
   test('wheel zoom keeps the image point beneath the pointer', () => {
@@ -70,9 +70,9 @@ describe('lightbox gestures', () => {
   });
 
   test('pinch zoom follows finger distance and stays within the zoom limits', () => {
-    expect(scaleFromPinch(1, 100, 250)).toBe(2.5);
+    expect(scaleFromPinch(1, 100, 250, 4)).toBe(2.5);
     expect(scaleFromPinch(3, 100, 200, 4)).toBe(4);
-    expect(scaleFromPinch(2, 100, 25)).toBe(1);
+    expect(scaleFromPinch(2, 100, 25, 4)).toBe(1);
   });
 
   test('native zoom matches source pixels to physical display pixels', () => {

@@ -4,7 +4,6 @@ import { responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
 import { getResponsiveImage } from '../server-images';
 
 interface Props {
-  href: string;
   slug: string;
   titleCs: string;
   titleEn: string;
@@ -14,12 +13,12 @@ interface Props {
   cover: string;
 }
 
-const { href, slug, titleCs, titleEn, year, locationCs, locationEn, cover } =
+const { slug, titleCs, titleEn, year, locationCs, locationEn, cover } =
   Astro.props;
 const responsiveCover = await getResponsiveImage(cover);
 ---
 
-<a href={href} class="reveal group relative block hover:z-10">
+<a href={`/projects/${slug}/`} class="reveal group relative block hover:z-10">
   <img
     src={cover}
     srcset={responsiveSrcset(responsiveCover, THUMBNAIL_WIDTHS)}

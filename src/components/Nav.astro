@@ -9,7 +9,7 @@ const links: { href: string; key: UiKey }[] = [
 ];
 
 const current = Astro.url.pathname.replace(/\/+$/, '') || '/';
-const isActive = (href: string) => current === (href === '/' ? '/' : href);
+const isActive = (href: string) => current === href;
 ---
 
 <header

@@ -15,7 +15,7 @@ interface Props {
 const { k, cs, en, as = 'span', class: cls } = Astro.props;
 const csText = k ? ui.cs[k] : (cs ?? '');
 const enText = k ? ui.en[k] : (en ?? '');
-const Tag = as as any;
+const Tag = as;
 ---
 
 <Tag lang="cs" class={cls} set:text={csText} /><Tag
