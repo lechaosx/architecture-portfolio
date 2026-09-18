@@ -185,7 +185,9 @@ reordered; the text ships as placeholder wording. The icon set
 The whole site is bilingual. Every visible piece of text exists in both Czech and
 English: the baked-in labels (nav, section headings, screen-reader controls) and
 all CMS content (projects, bio, approach, contact, SEO). The architect provides
-both languages for all editable content.
+both languages for all editable content. Project cover images are decorative to
+assistive technology because their adjacent bilingual project title already
+names the card or page.
 
 ### Manual switch, defaults to the visitor's browser — [Explicit]
 
