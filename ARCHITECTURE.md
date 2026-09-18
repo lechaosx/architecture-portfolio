@@ -118,8 +118,9 @@ offset so reduced-motion swipes can retain their navigation threshold without
 moving the slide. Previous, current, and next processed previews are
 neighboring DOM slides rather than an explicit JavaScript cache;
 one translation moves them as a continuous strip. The caption uses the same
-three-slide geometry, while input listeners remain confined to the image stage
-so caption scrolling and text interaction cannot navigate.
+three-slide geometry. Image gesture listeners remain confined to the stage;
+the caption retains native scrolling while the surrounding dialog contains
+page-scroll gestures.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 
@@ -128,9 +129,11 @@ mouse, touch, and keyboard navigation is disabled; its viewport receives the
 shared state with immediate updates and remains responsible for tile selection,
 loading, caching, and drawing. A pyramid `minPixelRatio` of `0.5` selects the
 closest DZI level at or above the required physical-pixel density instead of
-upscaling the level below it. Tiled images retain that density-matched processed
-preview beneath the canvas, preventing unloaded tile regions from exposing the
-dark stage.
+upscaling the level below it. OpenSeadragon caches display density at module
+scope, so each new viewer refreshes that value before sizing its canvas; this
+covers browser-zoom changes made while no viewer exists. Tiled images retain
+that density-matched processed preview beneath the canvas, preventing unloaded
+tile regions from exposing the dark stage.
 
 ### Lightbox modal state — [Explicit]
 
@@ -138,8 +141,9 @@ The lightbox is a native modal `<dialog>`, so the browser owns the top layer,
 focus containment, and Escape handling. Focus enters the close control and
 returns to the opening thumbnail without scrolling the page on close. The
 viewport-filling dialog suppresses wheel, touch, and keyboard scrolling without
-changing document overflow or positioning. The page and sticky header therefore
-retain their normal layout and position beneath it. The lightbox locally pins
+changing document overflow or positioning, except for native scrolling inside
+an overflowing caption. The page and sticky header therefore retain their
+normal layout and position beneath it. The lightbox locally pins
 black and white colour tokens so the global dark-mode swap cannot invert its
 overlay and controls. A `data-lang` observer keeps the dialog's accessible names
 aligned with the global language switch.
@@ -155,6 +159,10 @@ and tiled-renderer state cannot change the endpoint. The image pair clips the
 destination snapshot on opening and the source snapshot on closing while its box
 changes aspect ratio. Using one image snapshot avoids doubled edges from blending
 different crop states; the document snapshot supplies the overlay fade.
+The image morph runs only when the thumbnail is inside the viewport and does not
+overlap the sticky header. A clipped or header-overlapped thumbnail uses the
+document fade, avoiding the stacking discontinuity created when a View
+Transition isolates it above the header.
 Page-transition elements opt out while this lightbox-only transition is active,
 so their snapshots remain in the document's normal stacking order beneath the
 header and overlay. The tiled renderer starts after opening finishes so its

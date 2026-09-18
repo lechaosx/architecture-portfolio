@@ -412,6 +412,75 @@ test('header remains in place beneath the lightbox', async ({ page }) => {
     .toBe('cover-urban-study-kyjov');
 });
 
+test('an obscured thumbnail uses the overlay transition without an image morph', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 1);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await thumbnail.evaluate((button) => {
+    const header = document.querySelector('body > header')!;
+    const buttonBounds = button.getBoundingClientRect();
+    const headerBounds = header.getBoundingClientRect();
+    scrollBy(0, buttonBounds.top - headerBounds.bottom + 20);
+  });
+  const target = (await thumbnail.boundingBox())!;
+  const header = (await page.locator('body > header').boundingBox())!;
+  expect(target.y).toBeLessThan(header.y + header.height);
+  expect(target.y + target.height).toBeGreaterThan(header.y + header.height);
+
+  await page.mouse.click(
+    target.x + target.width / 2,
+    Math.max(header.y + header.height + 10, target.y + target.height / 2),
+  );
+  await expectLightboxTransition(page, 'lightbox-open');
+  await page.waitForTimeout(50);
+  const openingMorphsImage = await page.evaluate(() =>
+    document
+      .getAnimations()
+      .some(({ effect }) => effect?.pseudoElement?.includes('lightbox-image')),
+  );
+  await waitForLightbox(page);
+
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expectLightboxTransition(page, 'lightbox-close');
+  await page.waitForTimeout(50);
+  const closingMorphsImage = await page.evaluate(() =>
+    document
+      .getAnimations()
+      .some(({ effect }) => effect?.pseudoElement?.includes('lightbox-image')),
+  );
+
+  expect({ openingMorphsImage, closingMorphsImage }).toEqual({
+    openingMorphsImage: false,
+    closingMorphsImage: false,
+  });
+});
+
+test('the mouse wheel scrolls an overflowing caption without zooming the image', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  await galleryImage(page, 1).click();
+  await waitForLightbox(page);
+
+  const caption = page.locator('.lightbox-caption-current');
+  expect(
+    await caption.evaluate(
+      (element) => element.scrollHeight > element.clientHeight,
+    ),
+  ).toBe(true);
+  await caption.hover();
+  await page.mouse.wheel(0, 200);
+
+  await expect
+    .poll(() => caption.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(0);
+  await expect(page.getByRole('button', { name: 'Reset zoom' })).toHaveText(
+    '100%',
+  );
+});
+
 test('dark theme keeps the lightbox surface black and controls white', async ({
   page,
 }) => {
@@ -467,6 +536,48 @@ test('2x display density selects enough pixels without exceeding the source', as
     ),
   );
   expect(resolution.naturalWidth).toBeLessThanOrEqual(resolution.sourceWidth);
+  await context.close();
+});
+
+test('a reopened pyramid matches its canvas to a changed display density', async ({
+  browserName,
+  browser,
+}) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Playwright only exposes dynamic display density through CDP',
+  );
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 720 },
+  });
+  const page = await context.newPage();
+  await gotoProject(page);
+  await galleryImage(page, 1).click();
+  await waitForLightbox(page);
+  await page.locator('.openseadragon-canvas canvas').waitFor();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+
+  const session = await context.newCDPSession(page);
+  await session.send('Emulation.setDeviceMetricsOverride', {
+    width: 1280,
+    height: 720,
+    deviceScaleFactor: 2,
+    mobile: false,
+  });
+  await expect.poll(() => page.evaluate(() => devicePixelRatio)).toBe(2);
+  await galleryImage(page, 1).click();
+  await waitForLightbox(page);
+  const canvas = page.locator('.openseadragon-canvas canvas');
+  await canvas.waitFor();
+
+  await expect
+    .poll(() =>
+      canvas.evaluate(
+        (element) => element.width / element.getBoundingClientRect().width,
+      ),
+    )
+    .toBe(2);
   await context.close();
 });
 

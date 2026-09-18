@@ -139,6 +139,10 @@
 
     void import('openseadragon').then(({ default: createViewer }) => {
       if (cancelled) return;
+      // OpenSeadragon caches this module-wide, including while no viewer exists.
+      Object.assign(createViewer, {
+        pixelDensityRatio: createViewer.getCurrentPixelDensityRatio(),
+      });
       const createdViewer = createViewer({
         element,
         tileSources: descriptor.url,
@@ -234,6 +238,28 @@
       : images[imageIndex]?.image;
   }
 
+  function transitionTargetIsUnobscured(target: HTMLElement) {
+    const bounds = target.getBoundingClientRect();
+    const headerBounds = document
+      .querySelector<HTMLElement>('body > header')
+      ?.getBoundingClientRect();
+    const overlapsHeader =
+      headerBounds &&
+      bounds.left < headerBounds.right &&
+      bounds.right > headerBounds.left &&
+      bounds.top < headerBounds.bottom &&
+      bounds.bottom > headerBounds.top;
+    return (
+      bounds.width > 0 &&
+      bounds.height > 0 &&
+      bounds.left >= 0 &&
+      bounds.top >= 0 &&
+      bounds.right <= window.innerWidth &&
+      bounds.bottom <= window.innerHeight &&
+      !overlapsHeader
+    );
+  }
+
   function slideTransform(position: number) {
     return `translate3d(${swipeOffset + position * stageWidth}px, 0, 0)`;
   }
@@ -249,7 +275,8 @@
     }
 
     lightboxTransitioning = true;
-    const sourceImage = source.querySelector('img');
+    const morphImage = transitionTargetIsUnobscured(source);
+    const sourceImage = morphImage ? source.querySelector('img') : null;
     const sourceScale = sourceImage
       ? sourceImage.getBoundingClientRect().width / source.clientWidth
       : 1;
@@ -257,15 +284,20 @@
       sourceImage.style.transition = 'none';
       sourceImage.style.scale = String(sourceScale);
     }
-    document.documentElement.style.setProperty(
-      '--lightbox-source-scale',
-      String(sourceScale),
-    );
-    source.style.viewTransitionName = 'lightbox-image';
+    if (morphImage) {
+      document.documentElement.style.setProperty(
+        '--lightbox-source-scale',
+        String(sourceScale),
+      );
+      source.style.viewTransitionName = 'lightbox-image';
+    }
+    let transitionImage: HTMLImageElement | undefined;
     try {
       const transition = document.startViewTransition({
         update: async () => {
           await showFromHistory(i);
+          transitionImage = image;
+          if (!morphImage) transitionImage.style.viewTransitionName = 'none';
           await image.decode();
           source.style.viewTransitionName = '';
         },
@@ -279,6 +311,7 @@
       sourceImage?.style.removeProperty('transition');
       sourceImage?.style.removeProperty('scale');
       document.documentElement.style.removeProperty('--lightbox-source-scale');
+      transitionImage?.style.removeProperty('view-transition-name');
       lightboxTransitioning = false;
     }
   }
@@ -311,7 +344,6 @@
   async function closeFromHistory() {
     if (!open) return;
     const thumbnail = thumbnailButtons[index];
-    const morphImage = scale === 1;
     if (
       reducedMotion ||
       !thumbnail ||
@@ -322,8 +354,10 @@
       return;
     }
 
+    const morphImage = scale === 1 && transitionTargetIsUnobscured(thumbnail);
     lightboxTransitioning = true;
-    if (!morphImage) await tick();
+    const transitionImage = image;
+    if (!morphImage) transitionImage.style.viewTransitionName = 'none';
     try {
       const transition = document.startViewTransition({
         update: async () => {
@@ -337,6 +371,7 @@
       await hideLightbox();
     } finally {
       thumbnail.style.viewTransitionName = '';
+      transitionImage.style.removeProperty('view-transition-name');
       lightboxTransitioning = false;
     }
   }
@@ -523,6 +558,17 @@
       nextScale,
       constrainedPan(panForZoom(pan, scale, nextScale, pointer), nextScale),
     );
+  }
+
+  function preventPageScroll(event: WheelEvent | TouchEvent) {
+    if (
+      !(
+        event.target instanceof Element &&
+        event.target.closest('.lightbox-caption-current')
+      )
+    ) {
+      event.preventDefault();
+    }
   }
 
   function onpointerdown(e: PointerEvent) {
@@ -789,15 +835,15 @@
   <dialog
     bind:this={dialog}
     data-gallery-lightbox
-    class="lightbox fixed inset-0 m-0 h-screen max-h-none w-screen max-w-none touch-none grid-rows-[auto_minmax(0,1fr)] gap-3 border-0 bg-black/90 p-4 open:grid"
+    class="lightbox fixed inset-0 m-0 h-screen max-h-none w-screen max-w-none grid-rows-[auto_minmax(0,1fr)] gap-3 border-0 bg-black/90 p-4 open:grid"
     aria-label={ui[lang].imageViewer}
     onclick={requestClose}
     oncancel={(event) => {
       event.preventDefault();
       requestClose();
     }}
-    onwheel={(event) => event.preventDefault()}
-    ontouchmove={(event) => event.preventDefault()}
+    onwheel={preventPageScroll}
+    ontouchmove={preventPageScroll}
   >
     <div class="flex items-start justify-between gap-2">
       <div class="flex items-center gap-2">
@@ -974,7 +1020,7 @@
           </div>
         {/if}
         <div
-          class="lightbox-caption-current absolute inset-0 overflow-y-auto"
+          class="lightbox-caption-current absolute inset-0 overflow-y-auto overscroll-contain"
           style:transform={slideTransform(0)}
           style:transition={slideTransition}
         >
