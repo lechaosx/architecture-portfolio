@@ -18,8 +18,9 @@ content:
     label: Projects
     type: collection
     path: src/content/projects
-    filename: '{fields.title_en}.md' # slugified from the English title
+    filename: '{primary}.md' # slugified from view.primary
     view:
+      primary: title_en
       fields: [title_en, year, location_en]
     fields:
       - { name: title_cs, label: Title (Czech), type: string }

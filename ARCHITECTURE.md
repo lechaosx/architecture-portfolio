@@ -482,7 +482,10 @@ language-neutral fields (images, `year`, `email`, `phone`) stay single. This kee
 one file per project/singleton (rather than a file per language) and keeps the CMS
 a single form. The `projects` Zod schema and `.pages.yml` both encode the pairs and
 must stay in sync (see below). Sorting/slugs use the English field for stability
-(the project filename, hence URL slug, derives from `title_en`).
+(the project filename, hence URL slug, derives from `title_en`). Pages CMS names
+`title_en` as the collection's `view.primary` and builds filenames from its
+canonical `{primary}.md` template, keeping the list identity and slug source
+aligned.
 
 ---
 
