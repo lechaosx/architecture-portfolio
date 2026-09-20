@@ -25,13 +25,13 @@ content:
       primary: title_en
       fields: [title_en, year, location_en]
     fields:
-      - { name: title_cs, label: Title (Czech), type: string }
-      - { name: title_en, label: Title (English), type: string }
-      - { name: year, label: Year, type: number }
+      - { name: title_cs, label: Title (Czech), type: string, required: true }
+      - { name: title_en, label: Title (English), type: string, required: true }
+      - { name: year, label: Year, type: number, required: true }
       - { name: location_cs, label: Location (Czech), type: string, required: false }
       - { name: location_en, label: Location (English), type: string, required: false }
       - { name: draft, label: Draft (hide from site), type: boolean, default: false }
-      - { name: cover, label: Cover image, type: image }
+      - { name: cover, label: Cover image, type: image, required: true }
       - name: gallery
         label: Gallery
         type: object
@@ -43,8 +43,8 @@ content:
           - { name: title_en, label: Image title (English), type: string, required: false }
           - { name: description_cs, label: Image description (Czech), type: text, required: false }
           - { name: description_en, label: Image description (English), type: text, required: false }
-      - { name: body_cs, label: Description (Czech), type: rich-text }
-      - { name: body_en, label: Description (English), type: rich-text }
+      - { name: body_cs, label: Description (Czech), type: rich-text, required: true }
+      - { name: body_en, label: Description (English), type: rich-text, required: true }
 
   - name: home
     label: Home page

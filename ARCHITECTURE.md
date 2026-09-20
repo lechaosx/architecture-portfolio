@@ -510,7 +510,10 @@ time validation) and in `.pages.yml` (the editing UI). They must be kept in sync
 by hand — see MAINTAINERS.md and AGENTS.md. This applies to the `projects`
 collection. The singletons (Site, Home, Contact) have no Zod mirror — they are
 declared only in `.pages.yml` and read straight from their Markdown — so for those
-the pair to keep in sync is `.pages.yml` and the consuming component.
+the pair to keep in sync is `.pages.yml` and the consuming component. Pages CMS
+treats fields as optional unless `required: true` is explicit, so
+`src/content.config.test.ts` checks that every field required by the Astro project
+schema is also required in the editor.
 
 ### Empty project galleries — [Explicit]
 
