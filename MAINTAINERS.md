@@ -208,15 +208,12 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
 - **Pages CMS behavior is untested end-to-end** (it's hosted; needs the live
   repo). After connecting, create one test project through the UI and confirm the
   committed file matches the shape of
-  `src/content/projects/urban-study-kyjov.md`. Two
-  things to check specifically:
-  - `filename: '{fields.title_en}.md'` produces a clean, slugified filename (Astro
-    derives the URL slug from the filename).
-  - the two `rich-text` fields (`body_cs`, `body_en`) are written into
+  `src/content/projects/urban-study-kyjov.md`. Confirm that the two `rich-text`
+  fields (`body_cs`, `body_en`) are written into
     frontmatter as Markdown strings (the file's own Markdown body stays empty —
     `Prose.astro` renders those fields with `marked`, so the descriptions must
     land in frontmatter, not the body).
-  If either is off, it's a small `.pages.yml` tweak.
+  If this is off, it's a small `.pages.yml` tweak.
 - **Placeholders to replace before launch:** the `.svg` files in
   `public/uploads/`, the sample projects, and the domain (see above). Contact
   details are placeholders in `src/content/singletons/contact.md`
