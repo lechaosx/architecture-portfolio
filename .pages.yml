@@ -18,7 +18,9 @@ content:
     label: Projects
     type: collection
     path: src/content/projects
-    filename: '{primary}.md' # slugified from view.primary
+    filename:
+      template: '{primary}.md'
+      field: true
     view:
       primary: title_en
       fields: [title_en, year, location_en]

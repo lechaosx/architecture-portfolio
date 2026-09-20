@@ -34,9 +34,13 @@ there's only one of each.
 **Adding a project:** Projects → new → fill in title, year, location, upload a
 cover image and any gallery photos, optionally add Czech and English titles or
 short descriptions to individual gallery images, write the project description,
-save. The gallery may be left empty. Upload the best original available; the
-site builds optimized responsive previews and zoom tiles without enlarging it,
-while the project lightbox keeps a direct link to the untouched original.
+and set the **Filename**, then save. Keep the `.md` ending; the part before it
+becomes the project's web address (for example, `family-house.md` becomes
+`/projects/family-house/`). Changing the filename later changes that address, so
+existing links and bookmarks will stop working. The gallery may be left empty.
+Upload the best original available; the site builds optimized responsive previews
+and zoom tiles without enlarging it, while the project lightbox keeps a direct
+link to the untouched original.
 
 **Hiding a project:** turn on its **Draft** switch — it stays in the system but
 disappears from the public site until you turn it off.

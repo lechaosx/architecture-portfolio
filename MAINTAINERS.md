@@ -93,7 +93,9 @@ Two ways, same result (a Markdown file in `src/content/projects/`):
   frontmatter, drop images in `public/uploads/` and reference them as
   `/uploads/<file>`.
 
-Frontmatter shape is defined in `src/content.config.ts`.
+Frontmatter shape is defined in `src/content.config.ts`. The Markdown filename
+supplies the route under `/projects/`. Pages CMS exposes the complete filename;
+keep its `.md` extension when renaming it.
 
 Gallery entries are objects so captions stay attached to their images:
 

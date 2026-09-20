@@ -116,6 +116,12 @@ upload, no server to run. Saving commits to `master` and the site redeploys.
 The fields exposed for each project. `location` is optional; `title` and `year`
 are required.
 
+### Project URLs use an editable filename — [Explicit]
+
+Pages CMS shows the complete Markdown filename when creating and editing a
+project. The name before `.md` supplies the public URL segment, so renaming the
+file also changes the project URL and breaks old links and bookmarks.
+
 ### Editable site settings — [Explicit]
 
 A small "Site settings" CMS entry holds the owner's name, credential (e.g. "Ing.
