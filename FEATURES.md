@@ -116,6 +116,13 @@ upload, no server to run. Saving commits to `master` and the site redeploys.
 The fields exposed for each project. `location` is optional; `title` and `year`
 are required.
 
+### Incomplete projects cannot be saved — [Explicit]
+
+Pages CMS validates the same required project fields as the production build:
+both titles, year, cover image, and both descriptions. It blocks the save in the
+editor instead of committing content that would fail the deployment pipeline.
+The gallery and both locations remain optional.
+
 ### Project URLs use an editable filename — [Explicit]
 
 Pages CMS shows the complete Markdown filename when creating and editing a

@@ -140,7 +140,9 @@ The content shape is declared **twice** and they must agree:
 If you add/rename/remove a field in one, do the same in the other in the **same
 change**. A mismatch means either the build fails (schema stricter than CMS) or
 the architect can't edit a field the site expects (CMS missing a field). This is
-the project's sharpest maintenance edge — see AGENTS.md.
+the project's sharpest maintenance edge — see AGENTS.md. Pages CMS fields are
+optional unless `.pages.yml` sets `required: true`; the content-schema test keeps
+those flags aligned with Astro's required project fields.
 
 This double-declaration applies to the **`projects` collection**. The
 **singletons** (`src/content/singletons/*.md`: site, home, contact) have

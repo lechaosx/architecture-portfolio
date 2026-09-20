@@ -40,7 +40,8 @@ becomes the project's web address (for example, `family-house.md` becomes
 existing links and bookmarks will stop working. The gallery may be left empty.
 Upload the best original available; the site builds optimized responsive previews
 and zoom tiles without enlarging it, while the project lightbox keeps a direct
-link to the untouched original.
+link to the untouched original. Pages CMS requires both titles, the year, a cover
+image, and both descriptions before it will save a project.
 
 **Hiding a project:** turn on its **Draft** switch — it stays in the system but
 disappears from the public site until you turn it off.

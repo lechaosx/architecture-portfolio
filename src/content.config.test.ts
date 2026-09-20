@@ -1,4 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 import { z } from 'astro/zod';
 
 mock.module('astro:content', () => ({
@@ -12,6 +13,18 @@ if (!projectSchema || typeof projectSchema === 'function') {
   throw new TypeError('Expected a static project schema');
 }
 
+const pagesConfig = Bun.YAML.parse(readFileSync('.pages.yml', 'utf8')) as {
+  content: Array<{
+    name: string;
+    fields?: Array<{ name: string; required?: boolean }>;
+  }>;
+};
+const projectsEditor = pagesConfig.content.find(
+  (entry) => entry.name === 'projects',
+);
+if (!projectsEditor?.fields) throw new TypeError('Expected a projects editor');
+const projectEditorFields = projectsEditor.fields;
+
 const project = {
   title_cs: 'Projekt',
   title_en: 'Project',
@@ -22,6 +35,21 @@ const project = {
 };
 
 describe('project content schema', () => {
+  test('marks every build-required field as required in Pages CMS', () => {
+    for (const name of [
+      'title_cs',
+      'title_en',
+      'year',
+      'cover',
+      'body_cs',
+      'body_en',
+    ]) {
+      expect(
+        projectEditorFields.find((field) => field.name === name),
+      ).toMatchObject({ required: true });
+    }
+  });
+
   test('allows a project with no gallery images', () => {
     const result = projectSchema.safeParse(project);
 
