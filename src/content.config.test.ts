@@ -67,13 +67,13 @@ describe('project content schema', () => {
 
   test('accepts independently ordered text, gallery, and image-set blocks', () => {
     const blocks = [
-      { type: 'text', body_cs: 'Popis', body_en: 'Description' },
+      { type: 'text' as const, body_cs: 'Popis', body_en: 'Description' },
       {
-        type: 'gallery',
+        type: 'gallery' as const,
         images: [{ image: '/uploads/thumbnail.jpg' }],
       },
       {
-        type: 'image_set',
+        type: 'image_set' as const,
         images: [{ image: '/uploads/full-width.jpg' }],
       },
     ];

@@ -297,6 +297,13 @@ Markdown body, so they're rendered from their Markdown strings with `marked` (a
 tiny build-time dependency) inside `Prose.astro` rather than via Astro's
 `render()`. See "Internationalization" below.
 
+### Prose uses language-aware automatic hyphenation — [Explicit]
+
+The shared `.prose` rule applies `text-align: justify` and `hyphens: auto` to
+every Markdown body. `Prose.astro` emits separate `lang="cs"` and `lang="en"`
+wrappers, so the browser selects its Czech or English hyphenation dictionary
+rather than breaking both language variants by one generic rule.
+
 ### Self-hosted webfonts via @fontsource — [Implicit]
 
 Roboto ships as a variable webfont from `@fontsource-variable/roboto`, imported in
