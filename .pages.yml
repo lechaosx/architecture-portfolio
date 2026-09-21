@@ -80,9 +80,10 @@ content:
     fields:
       - { name: portrait, label: Portrait, type: image, required: false }
       - name: gallery
-        label: Gallery images (leave empty to use project photos)
+        label: Homepage images
         type: image
-        list: true
+        list: { min: 1 }
+        required: true
       - name: approaches
         label: Approach
         type: object

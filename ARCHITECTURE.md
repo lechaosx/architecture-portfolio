@@ -203,14 +203,14 @@ changes. Normal document navigation gives each page one script lifetime, so no
 client-router cleanup lifecycle is needed. No hydrated island — the same lightweight approach as the reveal
 script, so the "islands stay minimal" invariant holds. Because it scrolls its
 own container (not the page), it stays clear of the "don't reimplement scrolling"
-boundary. Images come from the Home singleton's `gallery` list, falling back to
-`getCollection('projects')` (cover + every project image block) when it is empty,
-so there is no separate gallery content to maintain. The carousel and lightbox share only the
-global `.media-navigation-button` visual contract; their native scroll-snap and
-Svelte gesture/navigation implementations remain independent. Dots retain the
-same interaction language but use literal media-surface colours, including a
-dark edge for contrast over pale images, rather than inheriting page-theme
-tokens.
+boundary. Images come only from the Home singleton's required `gallery` list. A
+single entry renders as a normal responsive image at its natural aspect ratio;
+two or more entries render through the carousel. The carousel and lightbox share
+only the global `.media-navigation-button` visual contract; their native
+scroll-snap and Svelte gesture/navigation implementations remain independent.
+Dots retain the same interaction language but use literal media-surface colours,
+including a dark edge for contrast over pale images, rather than inheriting
+page-theme tokens.
 
 ### Project media blocks render in Astro — [Explicit]
 
@@ -366,8 +366,8 @@ supplies the home page's bio + portrait + gallery + approaches in
 `index.astro`/`Carousel`/`Approaches`; `contact.md` in `contact.astro` and the
 footer; `site.md` in the layout/nav). They are not collections (each is a one-off)
 and are validated only through `.pages.yml` + their consuming code, not Zod.
-Components guard for missing/empty fields (e.g. an empty Home gallery falls back to
-project photos; an empty approach list hides the section). Project frontmatter
+Components guard optional fields where their content model permits them (e.g. an
+empty approach list hides the section). Project frontmatter
 stores an ordered discriminated block list: bilingual text, thumbnail gallery,
 or full-width image set. All human-readable text is bilingual (paired
 `_cs`/`_en` fields); the Markdown file *bodies* are unused — even the bio and
@@ -445,9 +445,7 @@ Each gallery or image-set item groups its root-absolute `image` path with option
 paired `title_cs`/`title_en` and `description_cs`/`description_en` fields. Keeping
 the caption beside its image preserves their association when items are reordered
 in Pages CMS. Both block types use the same record shape so the page-level
-lightbox can flatten them into one sequence. The home carousel fallback reads
-only the `image` path from these records; captions remain exclusive to the
-project lightbox.
+lightbox can flatten them into one sequence.
 
 ### Sitemap — [Implicit]
 

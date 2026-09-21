@@ -20,6 +20,7 @@ const pagesConfig = Bun.YAML.parse(readFileSync('.pages.yml', 'utf8')) as {
       name: string;
       type?: string;
       required?: boolean;
+      list?: boolean | { min?: number };
       blocks?: Array<{ name: string }>;
     }>;
   }>;
@@ -29,6 +30,9 @@ const projectsEditor = pagesConfig.content.find(
 );
 if (!projectsEditor?.fields) throw new TypeError('Expected a projects editor');
 const projectEditorFields = projectsEditor.fields;
+const homeEditor = pagesConfig.content.find((entry) => entry.name === 'home');
+if (!homeEditor?.fields) throw new TypeError('Expected a home editor');
+const homeEditorFields = homeEditor.fields;
 
 const project = {
   title_cs: 'Projekt',
@@ -96,6 +100,16 @@ describe('project content schema', () => {
     expect(projectEditorFields.find((field) => field.name === 'blocks')).toMatchObject({
       type: 'block',
       blocks: [{ name: 'text' }, { name: 'gallery' }, { name: 'image_set' }],
+    });
+  });
+});
+
+describe('home content schema', () => {
+  test('requires an explicit non-empty homepage image selection', () => {
+    expect(homeEditorFields.find((field) => field.name === 'gallery')).toMatchObject({
+      type: 'image',
+      required: true,
+      list: { min: 1 },
     });
   });
 });

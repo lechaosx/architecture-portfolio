@@ -100,7 +100,7 @@ Git, or Markdown. This is the core reason a CMS exists in the project at all.
 
 The architect asked for as much of the site as possible to be editable in Pages
 CMS, with only the general scaffolding baked into code. Editable: projects, the
-home page (bio, portrait, carousel images, Approach items), the contact details,
+home page (bio, portrait, homepage images, Approach items), the contact details,
 and a small set of Site settings (name, credential, SEO text) — the text among
 these is entered in **both languages** (see "Dual language" below). Baked in: page
 structure, navigation, and section labels ("Work", "About", "Approach",
@@ -162,25 +162,25 @@ year-then-alphabetical rule).
 
 The root URL (`/`) follows the architect's wireframe: a gallery at the top, an
 About section under it (bio on the left, portrait on the right), then the Approach
-section — all aligned to one content width. The whole home page — carousel images,
+section — all aligned to one content width. The whole home page — homepage images,
 bio, portrait, and approach — is edited from a single **Home** CMS entry
 (`home.md`); there is no separate "About page" entry, since About is a section of
 Home, not its own page.
 
-### Home-page image carousel — [Explicit]
+### Home-page image or carousel — [Explicit]
 
-The home page opens with a big image carousel — one image at a time, with
-prev/next arrows and dot indicators, matching the architect's wireframe. It also
+The architect explicitly selects and orders at least one homepage image in the
+Home CMS entry; project images are never added automatically. One selected image
+is displayed directly at its natural aspect ratio. Two or more form a carousel
+with prev/next arrows and dot indicators, matching the architect's wireframe. It
 auto-advances (every 5s), pausing when the visitor hovers or focuses it, and does
 not auto-advance for visitors who prefer reduced motion. Preference changes take
 effect without reloading the page. Its arrow controls use the same size, symbols,
 and hover/press treatment as the project lightbox, while its native scrolling,
-cropped presentation, dots, and autoplay remain specific to the home page.
+cropped presentation, dots, and autoplay remain specific to the multi-image case.
 Controls drawn over an image keep a theme-independent high-contrast palette;
 changing the page theme never turns the carousel dots into dark page chrome. The
-images can be curated in the CMS (the Home entry's gallery); when that list is
-left empty it falls back to every project's cover + image-block photos, so it stays
-current with no maintenance — [Implicit].
+selection itself is maintained in the Home CMS entry.
 
 ### Work page lists the projects — [Explicit]
 
