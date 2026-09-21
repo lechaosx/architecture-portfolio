@@ -20,6 +20,7 @@ gallery:
   - image: /uploads/09 AXONOMETRIE UBYTOVÁNÍ+.webp
   - image: /uploads/10 AXONOMETRIE PROVOZNÍ BUDOVY+.webp
   - image: /uploads/11 AXONOMETRIE DÍLNY+.webp
+  - image: /uploads/12 3dkce+popisy.webp
   - image: /uploads/Image_2.webp
   - image: /uploads/Scene 2_2.webp
   - image: /uploads/Scene 4_3.webp
