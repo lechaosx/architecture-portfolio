@@ -5,7 +5,7 @@ year: 2024
 location_cs: Česká republika, Brno
 location_en: Czech republic, Brno
 draft: false
-cover: /uploads/placeholder-cover.svg
+cover: /uploads/01 Situační výkres širších vztahů-2.png
 gallery:
   - image: /uploads/01 Situační výkres širších vztahů-1.png
   - image: /uploads/02 Situace místa stavby-1.png
