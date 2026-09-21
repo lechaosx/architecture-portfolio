@@ -16,7 +16,7 @@ gallery:
   - image: /uploads/05 Pohled jižní a severní.webp
   - image: /uploads/06 Pohled východní a západní.webp
   - image: /uploads/07 Řezy.webp
-  - image: /uploads/08  AXONOMETRIE AREÁLU.webp
+  - image: /uploads/08  AXONOMETRIE AREÁLU+.webp
   - image: /uploads/09 AXONOMETRIE UBYTOVÁNÍ+.webp
   - image: /uploads/10 AXONOMETRIE PROVOZNÍ BUDOVY+.webp
   - image: /uploads/11 AXONOMETRIE DÍLNY+.webp
