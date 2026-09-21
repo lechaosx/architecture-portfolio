@@ -15,7 +15,6 @@
     displayedSwipeOffset,
     galleryImageHash,
     galleryImageIndex,
-    galleryThumbnailSizes,
     hasCaption,
     lightboxImageUrl,
     nativeZoomScale,
@@ -29,10 +28,9 @@
   } from './gallery';
   // Interactive island: a keyboard-navigable image lightbox.
   // This is the ONLY component that ships JS to the browser.
-  let { images, responsiveImages, thumbnailSrcsets }: {
+  let { images, responsiveImages }: {
     images: GalleryImage[];
     responsiveImages: (ResponsiveImage | undefined)[];
-    thumbnailSrcsets: (string | undefined)[];
   } = $props();
 
   const galleryHistoryKey = 'architecturePortfolioGallery';
@@ -171,6 +169,16 @@
   });
 
   onMount(() => {
+    const triggerHandlers = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-lightbox-index]'),
+    ).flatMap((button) => {
+      const imageIndex = Number(button.dataset.lightboxIndex);
+      if (!Number.isInteger(imageIndex) || !images[imageIndex]) return [];
+      thumbnailButtons[imageIndex] = button;
+      const handler = () => void show(imageIndex, button);
+      button.addEventListener('click', handler);
+      return [{ button, handler }];
+    });
     const syncLang = () => {
       lang = document.documentElement.dataset.lang === 'cs' ? 'cs' : 'en';
     };
@@ -198,6 +206,9 @@
     }
     return () => {
       resumeScrollRestoration();
+      for (const { button, handler } of triggerHandlers) {
+        button.removeEventListener('click', handler);
+      }
       languageObserver.disconnect();
       motionQuery.removeEventListener('change', syncMotionPreference);
     };
@@ -805,34 +816,6 @@
 {/snippet}
 
 <svelte:window {onkeydown} {onpopstate} />
-
-{#if images.length}
-  <div class="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3">
-    {#each images as img, i}
-      {@const responsiveImage = responsiveImages[i]}
-      {@const aspectRatio = responsiveImage
-        ? responsiveImage.source.width / responsiveImage.source.height
-        : 1}
-      <button
-        bind:this={thumbnailButtons[i]}
-        type="button"
-        class="group aspect-square overflow-hidden bg-neutral-100"
-        onclick={(event) => show(i, event.currentTarget)}
-        aria-label={`${ui[lang].openImage} ${i + 1}`}
-      >
-        <img
-          src={img.image}
-          srcset={thumbnailSrcsets[i]}
-          sizes={galleryThumbnailSizes(aspectRatio)}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      </button>
-    {/each}
-  </div>
-{/if}
 
 {#if open}
   <dialog

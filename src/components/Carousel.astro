@@ -12,7 +12,9 @@ const images =
     ? curated
     : projects.flatMap((p) => [
         p.data.cover,
-        ...p.data.gallery.map((image) => image.image),
+        ...p.data.blocks.flatMap((block) =>
+          block.type === 'text' ? [] : block.images.map((image) => image.image),
+        ),
       ]);
 const displayImages = await Promise.all(
   images.map(async (src) => ({ src, responsive: await getResponsiveImage(src) })),

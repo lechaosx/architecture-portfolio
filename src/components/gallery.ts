@@ -1,7 +1,12 @@
 import type { CollectionEntry } from 'astro:content';
 import type { ResponsiveImage } from '../images';
 
-export type GalleryImage = CollectionEntry<'projects'>['data']['gallery'][number];
+type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
+
+export type GalleryImage = Extract<
+  ProjectBlock,
+  { type: 'gallery' | 'image_set' }
+>['images'][number];
 
 export interface Point {
   x: number;

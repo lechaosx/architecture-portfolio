@@ -16,7 +16,12 @@ if (!projectSchema || typeof projectSchema === 'function') {
 const pagesConfig = Bun.YAML.parse(readFileSync('.pages.yml', 'utf8')) as {
   content: Array<{
     name: string;
-    fields?: Array<{ name: string; required?: boolean }>;
+    fields?: Array<{
+      name: string;
+      type?: string;
+      required?: boolean;
+      blocks?: Array<{ name: string }>;
+    }>;
   }>;
 };
 const projectsEditor = pagesConfig.content.find(
@@ -30,8 +35,6 @@ const project = {
   title_en: 'Project',
   year: 2026,
   cover: '/uploads/cover.jpg',
-  body_cs: 'Popis',
-  body_en: 'Description',
 };
 
 describe('project content schema', () => {
@@ -41,8 +44,6 @@ describe('project content schema', () => {
       'title_en',
       'year',
       'cover',
-      'body_cs',
-      'body_en',
     ]) {
       expect(
         projectEditorFields.find((field) => field.name === name),
@@ -50,26 +51,51 @@ describe('project content schema', () => {
     }
   });
 
-  test('allows a project with no gallery images', () => {
+  test('allows a project with no content blocks', () => {
     const result = projectSchema.safeParse(project);
 
     expect(result.success).toBe(true);
-    if (result.success) expect(result.data.gallery).toEqual([]);
+    if (result.success) expect(result.data.blocks).toEqual([]);
   });
 
-  test('treats an empty CMS gallery row as no image', () => {
-    const result = projectSchema.safeParse({ ...project, gallery: [{}] });
+  test('treats an empty CMS block row as no content', () => {
+    const result = projectSchema.safeParse({ ...project, blocks: [{}] });
 
     expect(result.success).toBe(true);
-    if (result.success) expect(result.data.gallery).toEqual([]);
+    if (result.success) expect(result.data.blocks).toEqual([]);
   });
 
-  test('rejects a non-empty gallery row without an image', () => {
+  test('accepts independently ordered text, gallery, and image-set blocks', () => {
+    const blocks = [
+      { type: 'text', body_cs: 'Popis', body_en: 'Description' },
+      {
+        type: 'gallery',
+        images: [{ image: '/uploads/thumbnail.jpg' }],
+      },
+      {
+        type: 'image_set',
+        images: [{ image: '/uploads/full-width.jpg' }],
+      },
+    ];
+    const result = projectSchema.safeParse({ ...project, blocks });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.blocks).toEqual(blocks);
+  });
+
+  test('rejects an image block without images', () => {
     const result = projectSchema.safeParse({
       ...project,
-      gallery: [{ title_en: 'Missing image' }],
+      blocks: [{ type: 'gallery', images: [] }],
     });
 
     expect(result.success).toBe(false);
+  });
+
+  test('exposes all project block types in Pages CMS', () => {
+    expect(projectEditorFields.find((field) => field.name === 'blocks')).toMatchObject({
+      type: 'block',
+      blocks: [{ name: 'text' }, { name: 'gallery' }, { name: 'image_set' }],
+    });
   });
 });

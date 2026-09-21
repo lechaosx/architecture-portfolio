@@ -1,0 +1,229 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Prose from './Prose.astro';
+import { ui } from '../i18n';
+import {
+  LARGE_IMAGE_WIDTHS,
+  responsiveSrcset,
+  THUMBNAIL_WIDTHS,
+} from '../images';
+import type { ResponsiveImage } from '../images';
+import { galleryThumbnailSizes } from './gallery';
+
+type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
+
+interface Props {
+  blocks: ProjectBlock[];
+  lightboxIndexes: number[];
+  responsiveImages: (ResponsiveImage | undefined)[];
+}
+
+const { blocks, lightboxIndexes, responsiveImages } = Astro.props;
+let pageImageIndex = 1;
+const displayBlocks = blocks.map((block) =>
+  block.type === 'text'
+    ? block
+    : {
+        ...block,
+        images: block.images.map((item) => {
+          const index = lightboxIndexes[pageImageIndex++];
+          return { item, index, responsive: responsiveImages[index] };
+        }),
+      },
+);
+---
+
+{
+  displayBlocks.map((block) => {
+    if (block.type === 'text') {
+      return (
+        <Prose
+          cs={block.body_cs}
+          en={block.body_en}
+          class="prose prose-neutral mt-12 max-w-none dark:prose-invert"
+        />
+      );
+    }
+
+    if (block.type === 'gallery') {
+      return (
+        <div class="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {block.images.map(({ item, index, responsive }) => {
+            const aspectRatio = responsive
+              ? responsive.source.width / responsive.source.height
+              : 1;
+            return (
+              <button
+                type="button"
+                data-lightbox-index={index}
+                class="group aspect-square overflow-hidden bg-neutral-100"
+              >
+                <span lang="cs" class="sr-only">
+                  {ui.cs.openImage} {index + 1}
+                </span>
+                <span lang="en" class="sr-only">
+                  {ui.en.openImage} {index + 1}
+                </span>
+                <img
+                  src={item.image}
+                  srcset={responsiveSrcset(responsive, THUMBNAIL_WIDTHS)}
+                  sizes={galleryThumbnailSizes(aspectRatio)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (block.images.length === 1) {
+      const [{ item, index, responsive }] = block.images;
+      return (
+        <button
+          type="button"
+          data-lightbox-index={index}
+          class="group mt-12 block w-full overflow-hidden bg-neutral-100"
+        >
+          <span lang="cs" class="sr-only">
+            {ui.cs.openImage} {index + 1}
+          </span>
+          <span lang="en" class="sr-only">
+            {ui.en.openImage} {index + 1}
+          </span>
+          <img
+            src={item.image}
+            srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
+            sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
+            width={responsive?.source.width}
+            height={responsive?.source.height}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            class="w-full transition-transform duration-500 group-hover:scale-[1.02]"
+          />
+        </button>
+      );
+    }
+
+    return (
+      <div data-project-carousel class="relative mt-12 bg-neutral-100">
+        <div
+          data-project-carousel-track
+          class="no-scrollbar flex aspect-[16/9] snap-x snap-mandatory overflow-x-auto"
+        >
+          {block.images.map(({ item, index, responsive }) => (
+            <button
+              type="button"
+              data-lightbox-index={index}
+              data-project-slide
+              class="h-full w-full shrink-0 snap-start"
+            >
+              <span lang="cs" class="sr-only">
+                {ui.cs.openImage} {index + 1}
+              </span>
+              <span lang="en" class="sr-only">
+                {ui.en.openImage} {index + 1}
+              </span>
+              <img
+                src={item.image}
+                srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
+                sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
+                width={responsive?.source.width}
+                height={responsive?.source.height}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                class="h-full w-full object-contain"
+              />
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          data-project-carousel-prev
+          class="media-navigation-button absolute top-1/2 left-3 -translate-y-1/2"
+        >
+          <span aria-hidden="true">‹</span>
+          <span lang="cs" class="sr-only">{ui.cs.previousImage}</span>
+          <span lang="en" class="sr-only">{ui.en.previousImage}</span>
+        </button>
+        <button
+          type="button"
+          data-project-carousel-next
+          class="media-navigation-button absolute top-1/2 right-3 -translate-y-1/2"
+        >
+          <span aria-hidden="true">›</span>
+          <span lang="cs" class="sr-only">{ui.cs.nextImage}</span>
+          <span lang="en" class="sr-only">{ui.en.nextImage}</span>
+        </button>
+        <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
+          {block.images.map((_, index) => (
+            <button
+              type="button"
+              data-project-dot
+              class="carousel-dot h-2.5 w-2.5 rounded-full"
+            >
+              <span lang="cs" class="sr-only">
+                {ui.cs.goToImage} {index + 1}
+              </span>
+              <span lang="en" class="sr-only">
+                {ui.en.goToImage} {index + 1}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  })
+}
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>(
+    '[data-project-carousel]',
+  )) {
+    const track = root.querySelector<HTMLElement>(
+      '[data-project-carousel-track]',
+    );
+    if (!track) continue;
+    const slides = Array.from(
+      root.querySelectorAll<HTMLElement>('[data-project-slide]'),
+    );
+    const dots = Array.from(
+      root.querySelectorAll<HTMLElement>('[data-project-dot]'),
+    );
+    const indexNow = () => Math.round(track.scrollLeft / track.clientWidth);
+    const goTo = (index: number) => {
+      const next = ((index % slides.length) + slides.length) % slides.length;
+      track.scrollTo({
+        left: next * track.clientWidth,
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'auto'
+          : 'smooth',
+      });
+    };
+    const sync = () => {
+      const current = indexNow();
+      dots.forEach((dot, index) =>
+        dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
+      );
+    };
+
+    root
+      .querySelector('[data-project-carousel-prev]')
+      ?.addEventListener('click', () => goTo(indexNow() - 1));
+    root
+      .querySelector('[data-project-carousel-next]')
+      ?.addEventListener('click', () => goTo(indexNow() + 1));
+    dots.forEach((dot, index) =>
+      dot.addEventListener('click', () => goTo(index)),
+    );
+    track.addEventListener('scroll', () => requestAnimationFrame(sync), {
+      passive: true,
+    });
+    sync();
+  }
+</script>
