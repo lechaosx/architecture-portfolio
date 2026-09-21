@@ -25,6 +25,7 @@ gallery:
   - image: /uploads/Scene 2_2.webp
   - image: /uploads/Scene 4_3.webp
   - image: /uploads/Scene 6_2.webp
+  - image: /uploads/Scene 8_1-1.webp
   - image: /uploads/Scene 13_8.webp
   - image: /uploads/Scene 16_4-1.webp
   - image: /uploads/Scene 19_4.webp
