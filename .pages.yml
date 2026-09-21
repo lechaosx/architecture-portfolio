@@ -32,19 +32,46 @@ content:
       - { name: location_en, label: Location (English), type: string, required: false }
       - { name: draft, label: Draft (hide from site), type: boolean, default: false }
       - { name: cover, label: Cover image, type: image, required: true }
-      - name: gallery
-        label: Gallery
-        type: object
+      - name: blocks
+        label: Page content
+        type: block
         list: true
         required: false
-        fields:
-          - { name: image, label: Image, type: image, required: true }
-          - { name: title_cs, label: Image title (Czech), type: string, required: false }
-          - { name: title_en, label: Image title (English), type: string, required: false }
-          - { name: description_cs, label: Image description (Czech), type: text, required: false }
-          - { name: description_en, label: Image description (English), type: text, required: false }
-      - { name: body_cs, label: Description (Czech), type: rich-text, required: true }
-      - { name: body_en, label: Description (English), type: rich-text, required: true }
+        blockKey: type
+        blocks:
+          - name: text
+            label: Text
+            fields:
+              - { name: body_cs, label: Text (Czech), type: rich-text, required: true }
+              - { name: body_en, label: Text (English), type: rich-text, required: true }
+          - name: gallery
+            label: Thumbnail gallery
+            fields:
+              - name: images
+                label: Images
+                type: object
+                list: { min: 1 }
+                required: true
+                fields:
+                  - { name: image, label: Image, type: image, required: true }
+                  - { name: title_cs, label: Image title (Czech), type: string, required: false }
+                  - { name: title_en, label: Image title (English), type: string, required: false }
+                  - { name: description_cs, label: Image description (Czech), type: text, required: false }
+                  - { name: description_en, label: Image description (English), type: text, required: false }
+          - name: image_set
+            label: Full-width image set
+            fields:
+              - name: images
+                label: Images
+                type: object
+                list: { min: 1 }
+                required: true
+                fields:
+                  - { name: image, label: Image, type: image, required: true }
+                  - { name: title_cs, label: Image title (Czech), type: string, required: false }
+                  - { name: title_en, label: Image title (English), type: string, required: false }
+                  - { name: description_cs, label: Image description (Czech), type: text, required: false }
+                  - { name: description_en, label: Image description (English), type: text, required: false }
 
   - name: home
     label: Home page

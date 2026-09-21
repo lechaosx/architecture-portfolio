@@ -103,10 +103,12 @@ component today (`src/components/Gallery.svelte`).
 
 `Gallery.svelte` (the project image lightbox) is the sole hydrated island
 (`client:load`). Loading it with the project page lets a pasted image hash open
-without waiting for the thumbnail grid to enter the viewport; OpenSeadragon
-still loads only when a tiled image is opened. The only other browser JS is a
-few tiny first-party vanilla
-scripts (reveal-on-scroll, the home carousel, and the language switch). Native
+without waiting for an image trigger to enter the viewport; OpenSeadragon still
+loads only when a tiled image is opened. `ProjectBlocks.astro` renders those
+triggers on the server; the island attaches their lightbox behavior at load so
+multiple blocks still share one dialog and navigation state. The only other
+browser JS is a few tiny first-party vanilla scripts (reveal-on-scroll, the home
+and project image-set carousels, and the language switch). Native
 cross-document View Transitions add no client router or framework runtime.
 Images up to 4096 px use local transforms constrained to the image stage;
 larger images lazy-load OpenSeadragon as a separate chunk and use its tiled
@@ -188,8 +190,8 @@ scroll restoration while its history entry is active, preventing hash traversal
 from moving the page behind the overlay, and restores the previous setting when
 the lightbox closes. On initial hydration, a valid image hash is placed after a
 base-page entry so Back first closes a directly linked lightbox. Image numbers
-intentionally follow gallery order and therefore change if the content owner
-reorders the gallery.
+intentionally follow page order, starting with the cover, and therefore change
+if the content owner reorders blocks or their images.
 
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 
@@ -202,13 +204,29 @@ client-router cleanup lifecycle is needed. No hydrated island — the same light
 script, so the "islands stay minimal" invariant holds. Because it scrolls its
 own container (not the page), it stays clear of the "don't reimplement scrolling"
 boundary. Images come from the Home singleton's `gallery` list, falling back to
-`getCollection('projects')` (cover + gallery) when it is empty, so there is no
-separate gallery content to maintain. The carousel and lightbox share only the
+`getCollection('projects')` (cover + every project image block) when it is empty,
+so there is no separate gallery content to maintain. The carousel and lightbox share only the
 global `.media-navigation-button` visual contract; their native scroll-snap and
 Svelte gesture/navigation implementations remain independent. Dots retain the
 same interaction language but use literal media-surface colours, including a
 dark edge for contrast over pale images, rather than inheriting page-theme
 tokens.
+
+### Project media blocks render in Astro — [Explicit]
+
+`ProjectBlocks.astro` renders the ordered text, gallery, and image-set sequence
+without hydrating the full project body. Gallery items use the existing square
+thumbnail treatment. A one-item image set keeps the source aspect ratio at the
+project content width; a multi-item set uses a fixed 16:9 scroll-snap viewport
+with `object-contain`, arrows, and dots so drawings are not cropped. Its small
+vanilla script supports every carousel block on the page and does not autoplay.
+Every rendered image button exposes its flattened page index to the single
+`Gallery.svelte` island. Before responsive-image lookup, `uniqueProjectImages`
+deduplicates exact image paths by their last occurrence and returns both the
+unique sequence and an occurrence-to-lightbox index map. That map keeps earlier
+copies clickable without duplicating their responsive metadata or lightbox
+slide; the island's DOM-order trigger registration makes the last copy the
+transition target.
 
 ### Page transitions: native View Transitions API — [Implicit]
 
@@ -272,8 +290,8 @@ large display type is introduced later.
 
 ### Typography plugin for Markdown bodies — [Implicit]
 
-`@tailwindcss/typography` (`prose` classes) styles rendered Markdown bodies — the
-project descriptions and the home page's About text. Because those bodies are
+`@tailwindcss/typography` (`prose` classes) styles rendered Markdown bodies —
+project text blocks and the home page's About text. Because those bodies are
 bilingual they live in frontmatter fields (`body_cs`/`body_en`), not the file's
 Markdown body, so they're rendered from their Markdown strings with `marked` (a
 tiny build-time dependency) inside `Prose.astro` rather than via Astro's
@@ -342,9 +360,11 @@ supplies the home page's bio + portrait + gallery + approaches in
 footer; `site.md` in the layout/nav). They are not collections (each is a one-off)
 and are validated only through `.pages.yml` + their consuming code, not Zod.
 Components guard for missing/empty fields (e.g. an empty Home gallery falls back to
-project photos; an empty approach list hides the section). All human-readable text
-is bilingual (paired `_cs`/`_en` fields); the Markdown file *bodies* are unused —
-even the bio and project descriptions live in `body_cs`/`body_en` frontmatter.
+project photos; an empty approach list hides the section). Project frontmatter
+stores an ordered discriminated block list: bilingual text, thumbnail gallery,
+or full-width image set. All human-readable text is bilingual (paired
+`_cs`/`_en` fields); the Markdown file *bodies* are unused — even the bio and
+project text blocks live in `body_cs`/`body_en` frontmatter.
 
 ### Images: original uploads plus responsive display derivatives — [Explicit]
 
@@ -412,13 +432,15 @@ recipe cannot reuse a stale browser response. The official Astro GitHub Action
 persists `node_modules/.astro` between builds; a missing or evicted cache remains
 safe because the same build recreates it from the originals.
 
-### Project gallery items are caption records — [Implicit]
+### Project image-block items are caption records — [Explicit]
 
-Each project gallery item groups its root-absolute `image` path with optional
+Each gallery or image-set item groups its root-absolute `image` path with optional
 paired `title_cs`/`title_en` and `description_cs`/`description_en` fields. Keeping
 the caption beside its image preserves their association when items are reordered
-in Pages CMS. The home carousel fallback reads only the `image` path from these
-records; captions remain exclusive to the project lightbox.
+in Pages CMS. Both block types use the same record shape so the page-level
+lightbox can flatten them into one sequence. The home carousel fallback reads
+only the `image` path from these records; captions remain exclusive to the
+project lightbox.
 
 ### Sitemap — [Implicit]
 
@@ -515,9 +537,9 @@ treats fields as optional unless `required: true` is explicit, so
 `src/content.config.test.ts` checks that every field required by the Astro project
 schema is also required in the editor.
 
-### Empty project galleries — [Explicit]
+### Empty project block lists — [Explicit]
 
-Projects may have no gallery images. Pages CMS can serialize a blank row in an
-optional object list as `{}`, so the Astro schema removes completely empty
-gallery records before validating the remaining items. Any non-empty gallery
-record still requires an image; captions without an image fail validation.
+Projects may have no content blocks. Pages CMS can serialize a blank row in an
+optional block or nested image list as `{}`, so the Astro schema removes
+completely empty rows before validating the remaining items. Text blocks require
+both languages, and gallery/image-set blocks require at least one valid image.

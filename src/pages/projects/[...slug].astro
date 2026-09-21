@@ -2,14 +2,12 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Gallery from '../../components/Gallery.svelte';
+import ProjectBlocks from '../../components/ProjectBlocks.astro';
 import T from '../../components/T.astro';
-import Prose from '../../components/Prose.astro';
 import { frontmatter as site } from '../../content/singletons/site.md';
-import {
-  LARGE_IMAGE_WIDTHS,
-  responsiveSrcset,
-  THUMBNAIL_WIDTHS,
-} from '../../images';
+import { ui } from '../../i18n';
+import { LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../../images';
+import { uniqueProjectImages } from '../../project-images';
 import { getResponsiveImage } from '../../server-images';
 
 export async function getStaticPaths() {
@@ -21,13 +19,16 @@ const { project } = Astro.props;
 const d = project.data;
 
 const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
-const responsiveCover = await getResponsiveImage(d.cover);
+const pageImages = [
+  { image: d.cover },
+  ...d.blocks.flatMap((block) => (block.type === 'text' ? [] : block.images)),
+];
+const { images, indexes: lightboxIndexes } = uniqueProjectImages(pageImages);
 const responsiveImages = await Promise.all(
-  d.gallery.map(({ image }) => getResponsiveImage(image)),
+  images.map(({ image }) => getResponsiveImage(image)),
 );
-const thumbnailSrcsets = responsiveImages.map((image) =>
-  responsiveSrcset(image, THUMBNAIL_WIDTHS),
-);
+const coverIndex = lightboxIndexes[0];
+const responsiveCover = responsiveImages[coverIndex];
 ---
 
 <Base
@@ -56,28 +57,30 @@ const thumbnailSrcsets = responsiveImages.map((image) =>
       />
     </header>
 
-    <img
-      src={d.cover}
-      srcset={responsiveSrcset(responsiveCover, LARGE_IMAGE_WIDTHS)}
-      sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
-      width={responsiveCover?.source.width}
-      height={responsiveCover?.source.height}
-      alt=""
-      class="project-cover w-full bg-neutral-100 object-cover"
-      style={`view-transition-name: cover-${project.id}`}
-    />
+    <button
+      type="button"
+      data-lightbox-index={coverIndex}
+      class="group block w-full overflow-hidden bg-neutral-100"
+    >
+      <span lang="cs" class="sr-only">
+        {ui.cs.openImage} {coverIndex + 1}
+      </span>
+      <span lang="en" class="sr-only">
+        {ui.en.openImage} {coverIndex + 1}
+      </span>
+      <img
+        src={d.cover}
+        srcset={responsiveSrcset(responsiveCover, LARGE_IMAGE_WIDTHS)}
+        sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
+        width={responsiveCover?.source.width}
+        height={responsiveCover?.source.height}
+        alt=""
+        class="project-cover w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+        style={`view-transition-name: cover-${project.id}`}
+      />
+    </button>
 
-    <Prose
-      cs={d.body_cs}
-      en={d.body_en}
-      class="prose prose-neutral mt-10 max-w-none dark:prose-invert"
-    />
-
-    <Gallery
-      images={d.gallery}
-      {responsiveImages}
-      {thumbnailSrcsets}
-      client:load
-    />
+    <ProjectBlocks blocks={d.blocks} {lightboxIndexes} {responsiveImages} />
+    <Gallery {images} {responsiveImages} client:load />
   </article>
 </Base>

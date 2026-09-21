@@ -46,6 +46,7 @@ tsconfig.json                 extends astro/tsconfigs/strict
 
 src/
   images.ts                    responsive derivative URL/srcset contract
+  project-images.ts            deduplicates page images for the shared lightbox
   server-images.ts             reads the generated image manifest during builds
   content.config.ts           projects collection schema (Zod); bilingual fields
   i18n.ts                      baked-in UI labels ({cs, en} dictionary)
@@ -65,7 +66,8 @@ src/
     Carousel.astro             home hero carousel; images from home.md or projects
     Approaches.astro           vertical "how I work" list (items from home.md)
     ProjectCard.astro          grid card
-    Gallery.svelte             the ONLY hydrated island (lightbox)
+    ProjectBlocks.astro        ordered project text/gallery/image-set renderer
+    Gallery.svelte             the ONLY hydrated island (page-level lightbox)
   styles/global.css            tailwind import, fonts, .reveal, .no-scrollbar, lang rule
 
 public/
@@ -97,20 +99,31 @@ Frontmatter shape is defined in `src/content.config.ts`. The Markdown filename
 supplies the route under `/projects/`. Pages CMS exposes the complete filename;
 keep its `.md` extension when renaming it.
 
-Gallery entries are objects so captions stay attached to their images:
+Project pages are ordered block lists. Text is independent of image blocks;
+`image_set` displays one image directly or multiple images as a carousel:
 
 ```yaml
-gallery:
-  - image: /uploads/project.jpg
-    title_cs: České jméno
-    title_en: English title
-    description_cs: Krátký český popis.
-    description_en: A short English description.
+blocks:
+  - type: text
+    body_cs: Český text
+    body_en: English text
+  - type: gallery
+    images:
+      - image: /uploads/drawing.jpg
+  - type: image_set
+    images:
+      - image: /uploads/render-1.jpg
+        title_cs: České jméno
+        title_en: English title
+      - image: /uploads/render-2.jpg
 ```
 
 The four caption fields are optional; omit them to show only the enlarged image.
-Lightbox links use the gallery position (`#image-1`, `#image-2`, …), so reordering
-the gallery also changes those addresses. The Gallery island uses `client:load`
+The cover and every image block feed one lightbox in page order. Lightbox links
+use that position (`#image-1`, `#image-2`, …), so reordering blocks or images
+also changes those addresses. Repeated `image` paths produce one lightbox entry;
+the last occurrence determines its position and caption, while every rendered
+occurrence opens that entry. The Gallery island uses `client:load`
 so a directly opened image address is handled as soon as the project loads.
 Raster uploads referenced by content are converted automatically before `dev`
 and `build`; do not commit `public/_responsive`. Reduced image surfaces use the
@@ -212,11 +225,10 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
 - **Pages CMS behavior is untested end-to-end** (it's hosted; needs the live
   repo). After connecting, create one test project through the UI and confirm the
   committed file matches the shape of
-  `src/content/projects/urban-study-kyjov.md`. Confirm that the two `rich-text`
-  fields (`body_cs`, `body_en`) are written into
-    frontmatter as Markdown strings (the file's own Markdown body stays empty —
-    `Prose.astro` renders those fields with `marked`, so the descriptions must
-    land in frontmatter, not the body).
+  `src/content/projects/urban-study-kyjov.md`. Confirm that text-block
+  `body_cs`/`body_en` fields are written into frontmatter as Markdown strings
+  (the file's own Markdown body stays empty — `Prose.astro` renders those fields
+  with `marked`, so the text must land in frontmatter, not the body).
   If this is off, it's a small `.pages.yml` tweak.
 - **Placeholders to replace before launch:** the `.svg` files in
   `public/uploads/`, the sample projects, and the domain (see above). Contact

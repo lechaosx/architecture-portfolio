@@ -119,9 +119,10 @@ are required.
 ### Incomplete projects cannot be saved — [Explicit]
 
 Pages CMS validates the same required project fields as the production build:
-both titles, year, cover image, and both descriptions. It blocks the save in the
-editor instead of committing content that would fail the deployment pipeline.
-The gallery and both locations remain optional.
+both titles, year, and cover image. It blocks the save in the editor instead of
+committing content that would fail the deployment pipeline. Page blocks and both
+locations remain optional; text blocks require both language versions, and image
+blocks require at least one image.
 
 ### Project URLs use an editable filename — [Explicit]
 
@@ -171,7 +172,7 @@ cropped presentation, dots, and autoplay remain specific to the home page.
 Controls drawn over an image keep a theme-independent high-contrast palette;
 changing the page theme never turns the carousel dots into dark page chrome. The
 images can be curated in the CMS (the Home entry's gallery); when that list is
-left empty it falls back to every project's cover + gallery photos, so it stays
+left empty it falls back to every project's cover + image-block photos, so it stays
 current with no maintenance — [Implicit].
 
 ### Work page lists the projects — [Explicit]
@@ -265,14 +266,29 @@ use the same square hit area. (An earlier attempt using a CSS
 `filter` invert was dropped because it inverted the photos too and fought the
 sticky nav and View Transitions.)
 
-### Image lightbox / gallery — [Implicit]
+### Ordered project-page blocks — [Explicit]
 
-Project images open in a viewport-filling, keyboard-navigable lightbox (arrows,
-Esc). The selected thumbnail expands into the lightbox image and returns to its
-grid position on close, changing crop as its aspect ratio changes and waiting
-for the enlarged preview before it animates. The overlay fades over the page and
-its header; the header remains in place beneath it. Thumbnail hover remains
-independent, including when the lightbox opens partway through the hover effect.
+A project page is assembled from an ordered list of independent text, thumbnail
+gallery, and full-width image-set blocks. Text blocks carry required Czech and
+English rich text. Gallery blocks display square thumbnails. An image set spans
+the project content width: one item is a standalone image, while multiple items
+form a manually controlled scroll-snap carousel with arrows and dots. Blocks can
+be reordered and repeated freely, so a full-width drawing can sit between two
+galleries without belonging to either one.
+
+### Image lightbox / gallery — [Explicit]
+
+The cover and every image in every project block belong to one page-level,
+viewport-filling, keyboard-navigable lightbox (arrows, Esc), ordered as they
+appear on the page. Clicking any of those images opens its position in that
+sequence. The selected image expands into the lightbox and returns to its page
+position on close, changing crop as its aspect ratio changes and waiting for the
+enlarged preview before it animates. The overlay fades over the page and its
+header; the header remains in place beneath it. Image hover remains independent,
+including when the lightbox opens partway through the hover effect.
+If the same image path appears more than once, it occupies one lightbox position
+and every visible occurrence opens that position. Its last page occurrence wins:
+that occurrence determines the position, caption, and close-transition target.
 The lightbox shows the current image and total count, and its navigation controls
 use the same visual language as the home carousel without adopting autoplay,
 cropping, or dot indicators.
@@ -294,11 +310,11 @@ the page.
 ### Accessible lightbox modal — [Explicit]
 
 Opening the lightbox moves keyboard focus to its controls and keeps focus inside
-until it closes. Closing it restores focus to the thumbnail that opened it
+until it closes. Closing it restores focus to the image trigger that opened it
 without moving the page.
 The overlay contains wheel, touch, and keyboard scrolling, while deliberate
 scrollbar movement is left in place when the lightbox closes. Its dialog,
-thumbnail, close, and navigation labels follow the selected site language. The
+image, close, and navigation labels follow the selected site language. The
 top controls and navigation buttons stay outside the image viewport, including
 while zoomed.
 
@@ -337,7 +353,7 @@ clicking it resets zoom and pan to 100%. On desktop the image stays between the
 navigation controls; on mobile those controls sit in their own row below it.
 Touch visitors can pinch around the point between their fingers and drag a
 zoomed image with one finger. At 100%, horizontal dragging with either a finger
-or mouse navigates between gallery images; completed navigation slides to the
+or mouse navigates between page images; completed navigation slides to the
 next image and an incomplete gesture snaps back.
 Buttons and arrow keys use the same short slide. With reduced motion, swipes
 remain stationary and a completed gesture changes the image immediately.
@@ -355,19 +371,20 @@ physical-pixel requirement so their base view is not an upscaled lower level.
 
 ### Optional image titles and descriptions — [Explicit]
 
-Each project gallery image can have a short title and description in Czech and
+Each project-block image can have a short title and description in Czech and
 English. Both fields are optional and appear only beneath the enlarged image in
-the lightbox, keeping the thumbnail grid image-only. The caption occupies a
+the lightbox, keeping page imagery uncluttered. The caption occupies a
 fixed rail so switching between captioned and uncaptioned images does not resize
 the image viewport. It is left-aligned to the image and uses its available
 width; unusually long text scrolls within that rail. The caption slides with
 its image during navigation, but dragging or swiping the text never changes the
 image.
 
-### Project galleries are optional — [Explicit]
+### Project page content is optional — [Explicit]
 
-A project can have no gallery images. A gallery entry that contains caption
-content must have an image.
+A project can contain only its required cover and no content blocks. Every image
+block contains at least one image; an image record with caption content still
+requires its image.
 
 ### Respects reduced-motion preferences — [Implicit]
 

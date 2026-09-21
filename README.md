@@ -32,16 +32,17 @@ descriptions, your bio, day names). Images, year, email and phone are shared, so
 there's only one of each.
 
 **Adding a project:** Projects → new → fill in title, year, location, upload a
-cover image and any gallery photos, optionally add Czech and English titles or
-short descriptions to individual gallery images, write the project description,
-and set the **Filename**, then save. Keep the `.md` ending; the part before it
+cover image, and assemble **Page content** from text, thumbnail-gallery, and
+full-width image-set blocks. Add both language versions to each text block;
+image titles and short descriptions are optional. Set the **Filename**, then
+save. Keep the `.md` ending; the part before it
 becomes the project's web address (for example, `family-house.md` becomes
 `/projects/family-house/`). Changing the filename later changes that address, so
-existing links and bookmarks will stop working. The gallery may be left empty.
+existing links and bookmarks will stop working. Page content may be left empty.
 Upload the best original available; the site builds optimized responsive previews
 and zoom tiles without enlarging it, while the project lightbox keeps a direct
-link to the untouched original. Pages CMS requires both titles, the year, a cover
-image, and both descriptions before it will save a project.
+link to the untouched original. Pages CMS requires both titles, the year, and a
+cover image before it will save a project.
 
 **Hiding a project:** turn on its **Draft** switch — it stays in the system but
 disappears from the public site until you turn it off.
@@ -65,8 +66,10 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
 - A home page that's your "about": an image carousel, your bio, and your approach.
   (The carousel images, bio, portrait, and approach are all editable in the CMS.)
 - A **Work** page with your projects in a grid.
-- A page per project with a description and a full-screen photo gallery whose
-  enlarged images can show optional titles and descriptions. Each open image
+- A page per project assembled from interleaved text, thumbnail galleries, and
+  full-width images or carousels. Every image opens into one full-screen gallery;
+  repeated uses of the same upload share one slide. Enlarged images can show
+  optional titles and descriptions. Each open image
   has a shareable `#image-N` address, and the browser Back button closes it.
 - A **Contact** page with your email, phone, and when you're reachable.
 - Smooth transitions between pages and gentle fade-ins — all riding the normal

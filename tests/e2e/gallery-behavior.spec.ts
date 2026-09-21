@@ -33,23 +33,23 @@ test('buttons and arrow keys navigate one addressable lightbox history entry', a
   page,
 }) => {
   await gotoProject(page);
-  await galleryImage(page, 1).click();
+  await galleryImage(page, 2).click();
   await waitForLightbox(page);
-  await expect(page).toHaveURL(/#image-1$/);
+  await expect(page).toHaveURL(/#image-2$/);
   const firstCaption = await page
     .locator('.lightbox-caption-current')
     .innerText();
   expect(firstCaption.trim()).not.toBe('');
 
   await page.keyboard.press('ArrowRight');
-  await expect(page).toHaveURL(/#image-2$/);
+  await expect(page).toHaveURL(/#image-3$/);
   await expect
     .poll(() => page.locator('.lightbox-caption-current').innerText())
     .not.toBe(firstCaption);
   await page.keyboard.press('ArrowLeft');
-  await expect(page).toHaveURL(/#image-1$/);
-  await page.getByRole('button', { name: 'Next image' }).click();
   await expect(page).toHaveURL(/#image-2$/);
+  await page.getByRole('button', { name: 'Next image' }).click();
+  await expect(page).toHaveURL(/#image-3$/);
 
   await page.goBack();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
@@ -57,7 +57,7 @@ test('buttons and arrow keys navigate one addressable lightbox history entry', a
 
   await page.goForward();
   await waitForLightbox(page);
-  await expect(page).toHaveURL(/#image-2$/);
+  await expect(page).toHaveURL(/#image-3$/);
 });
 
 test('a directly linked image closes to its project before leaving the page', async ({
@@ -73,11 +73,70 @@ test('a directly linked image closes to its project before leaving the page', as
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
+test('separate Hangár galleries share a lightbox across the full-width drawing', async ({
+  page,
+}) => {
+  await page.goto('/projects/galerie-hangár/');
+  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+  const duplicateTriggers = page.locator(
+    'button[data-lightbox-index]:has(img[src="/uploads/Scene 16_4.webp"])',
+  );
+  await expect(duplicateTriggers).toHaveCount(2);
+  const cover = duplicateTriggers.first();
+  const lastGalleryDrawing = page.locator(
+    'button:has(img[src="/uploads/11 AXONOMETRIE DÍLNY+.webp"])',
+  );
+  const fullWidthDrawing = page.locator(
+    'button:has(img[src="/uploads/12 3dkce+popisy-1.webp"])',
+  );
+  const [coverBox, galleryBox, fullWidthBox] = await Promise.all([
+    cover.boundingBox(),
+    lastGalleryDrawing.boundingBox(),
+    fullWidthDrawing.boundingBox(),
+  ]);
+
+  expect(fullWidthBox!.width).toBeCloseTo(coverBox!.width, 0);
+  expect(galleryBox!.width).toBeLessThan(fullWidthBox!.width / 2);
+
+  const duplicateIndex = await cover.getAttribute('data-lightbox-index');
+  expect(duplicateIndex).toBe(
+    await duplicateTriggers.last().getAttribute('data-lightbox-index'),
+  );
+
+  await fullWidthDrawing.click();
+  await waitForLightbox(page);
+  const fullWidthIndex = Number(
+    await fullWidthDrawing.getAttribute('data-lightbox-index'),
+  );
+  await expect(page).toHaveURL(
+    new RegExp(`#image-${fullWidthIndex + 1}$`),
+  );
+
+  await page.getByRole('button', { name: 'Next image' }).click();
+  await expect(page.getByRole('link', { name: 'Open original' })).toHaveAttribute(
+    'href',
+    '/uploads/Image_2.webp',
+  );
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+
+  const duplicateUrl = new RegExp(`#image-${Number(duplicateIndex) + 1}$`);
+  await cover.click();
+  await waitForLightbox(page);
+  await expect(page).toHaveURL(duplicateUrl);
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+
+  await duplicateTriggers.last().click();
+  await waitForLightbox(page);
+  await expect(page).toHaveURL(duplicateUrl);
+});
+
 test('the original remains an explicit download while the lightbox uses processed imagery', async ({
   page,
 }) => {
   await gotoProject(page);
-  const thumbnail = galleryImage(page, 1);
+  const thumbnail = galleryImage(page, 2);
   const uploadedSource = await thumbnail.locator('img').getAttribute('src');
   await thumbnail.click();
   await waitForLightbox(page);
@@ -103,7 +162,7 @@ test('pyramid previews form a loaded strip with no navigation gutter', async ({
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await gotoProject(page);
-  await galleryImage(page, 1).click();
+  await galleryImage(page, 2).click();
   await waitForLightbox(page);
 
   const slides = [
@@ -162,7 +221,7 @@ test('pyramid previews form a loaded strip with no navigation gutter', async ({
     stageBox.y + stageBox.height / 2,
   );
   await page.mouse.up();
-  await expect(page).toHaveURL(/#image-1$/);
+  await expect(page).toHaveURL(/#image-2$/);
 });
 
 test('the pyramid requests the closest level that does not need upscaling', async ({
@@ -185,7 +244,7 @@ test('the pyramid requests the closest level that does not need upscaling', asyn
     if (match) tileLevels.push(Number(match[1]));
   });
   await gotoProject(page);
-  await galleryImage(page, 1).click();
+  await galleryImage(page, 2).click();
   await waitForLightbox(page);
   await expect.poll(() => tileLevels.length).toBeGreaterThan(0);
 
@@ -290,7 +349,7 @@ test('caption text follows the language but never handles navigation gestures', 
   page,
 }) => {
   await gotoProject(page, '?lang=cs');
-  await galleryImage(page, 1, 'Otevřít obrázek').click();
+  await galleryImage(page, 2, 'Otevřít obrázek').click();
   await waitForLightbox(page, 'Prohlížeč obrázků');
   const caption = page.locator('.lightbox-caption-current');
   await expect(caption.locator('[lang="cs"]').first()).toBeVisible();
@@ -304,7 +363,7 @@ test('caption text follows the language but never handles navigation gestures', 
   await page.mouse.down();
   await page.mouse.move(bounds.x + bounds.width / 2 - 150, bounds.y + 20);
   await page.mouse.up();
-  await expect(page).toHaveURL(/#image-1$/);
+  await expect(page).toHaveURL(/#image-2$/);
 });
 
 test('mobile touch stays inside the modal and keeps controls outside the image stage', async ({

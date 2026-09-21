@@ -491,7 +491,7 @@ test('the mouse wheel scrolls an overflowing caption without zooming the image',
   page,
 }) => {
   await gotoProject(page);
-  await galleryImage(page, 1).click();
+  await galleryImage(page, 2).click();
   await waitForLightbox(page);
 
   const caption = page.locator('.lightbox-caption-current');
@@ -585,7 +585,7 @@ test('a reopened pyramid matches its canvas to a changed display density', async
   });
   const page = await context.newPage();
   await gotoProject(page);
-  await galleryImage(page, 1).click();
+  await galleryImage(page, 2).click();
   await waitForLightbox(page);
   await page.locator('.openseadragon-canvas canvas').waitFor();
   await page.getByRole('button', { name: 'Close' }).click();
@@ -599,7 +599,7 @@ test('a reopened pyramid matches its canvas to a changed display density', async
     mobile: false,
   });
   await expect.poll(() => page.evaluate(() => devicePixelRatio)).toBe(2);
-  await galleryImage(page, 1).click();
+  await galleryImage(page, 2).click();
   await waitForLightbox(page);
   const canvas = page.locator('.openseadragon-canvas canvas');
   await canvas.waitFor();
