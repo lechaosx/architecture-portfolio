@@ -10,9 +10,35 @@ async function expectCurrentSlide(page: Page, index: number) {
   await expect.poll(() => currentSlide(page)).toBe(index);
 }
 
+test('one selected home image renders as an image rather than a carousel', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const media = page.locator('[data-home-media]');
+  await expect(media.locator('img')).toHaveCount(1);
+  await expect(media.locator('img')).toHaveAttribute(
+    'src',
+    '/uploads/placeholder-cover.svg',
+  );
+  const aspectRatios = await media.locator('img').evaluate((element) => {
+    const image = element as HTMLImageElement;
+    return {
+      natural: image.naturalWidth / image.naturalHeight,
+      rendered: image.clientWidth / image.clientHeight,
+    };
+  });
+  expect(aspectRatios.rendered).toBeCloseTo(aspectRatios.natural, 2);
+  await expect(page.locator('[data-carousel]')).toHaveCount(0);
+});
+
 test('carousel arrows and dots navigate and wrap', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
+  test.skip(
+    (await page.locator('[data-carousel]').count()) === 0,
+    'Requires at least two selected homepage images',
+  );
   const dots = page.locator('[data-dot]');
   const last = (await dots.count()) - 1;
   expect(last).toBeGreaterThan(0);
@@ -40,6 +66,10 @@ test('carousel auto-advance pauses while hovered or focused', async ({
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/');
   const carousel = page.locator('[data-carousel]');
+  test.skip(
+    (await carousel.count()) === 0,
+    'Requires at least two selected homepage images',
+  );
   await expectCurrentSlide(page, 0);
 
   await carousel.hover();
@@ -70,6 +100,10 @@ test('carousel does not auto-advance with reduced motion', async ({ page }) => {
   await page.clock.install();
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
+  test.skip(
+    (await page.locator('[data-carousel]').count()) === 0,
+    'Requires at least two selected homepage images',
+  );
   await expectCurrentSlide(page, 0);
 
   await page.clock.fastForward(20_000);

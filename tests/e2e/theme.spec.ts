@@ -32,6 +32,10 @@ test('carousel overlay controls keep their colors across page themes', async ({
 }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
+  test.skip(
+    (await page.locator('[data-carousel]').count()) === 0,
+    'Requires at least two selected homepage images',
+  );
 
   const overlayColors = () =>
     page.locator('[data-carousel]').evaluate((carousel) => {

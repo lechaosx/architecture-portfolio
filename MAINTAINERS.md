@@ -53,7 +53,7 @@ src/
   content/projects/*.md        one file per project (text in _cs/_en frontmatter)
   content/singletons/          CMS singletons: site.md, home.md, contact.md
   pages/
-    index.astro                home: carousel + home.md (bio, portrait, approach)
+    index.astro                home: image/carousel + home.md (bio, portrait, approach)
     work.astro                 project grid
     contact.astro              email, phone, per-day availability (from contact.md)
     projects/[...slug].astro   project detail page
@@ -63,7 +63,7 @@ src/
     Footer.astro               chrome (email from contact.md) + language/theme toggles
     T.astro                    renders both languages of a label/string (CSS hides one)
     Prose.astro                renders both languages of a rich-text body (via marked)
-    Carousel.astro             home hero carousel; images from home.md or projects
+    Carousel.astro             home hero image/carousel; images from home.md
     Approaches.astro           vertical "how I work" list (items from home.md)
     ProjectCard.astro          grid card
     ProjectBlocks.astro        ordered project text/gallery/image-set renderer

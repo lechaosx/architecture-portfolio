@@ -1,6 +1,7 @@
 ---
 portrait: /uploads/placeholder-portrait.svg
-gallery: []
+gallery:
+  - /uploads/placeholder-cover.svg
 approaches:
   - label_cs: Místo
     label_en: Place

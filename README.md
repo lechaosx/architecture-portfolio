@@ -21,7 +21,7 @@ in your browser. Nothing to install.
 
 1. Go to app.pagescms.org and sign in with GitHub.
 2. Open this project (a one-time access grant lets it read the repo).
-3. Edit any entry with simple forms — **Home page** (carousel images, your bio +
+3. Edit any entry with simple forms — **Home page** (homepage images, your bio +
    portrait, and your approach), **Projects**, **Contact**, or **Site settings**
    (your name, credential, and search-engine description).
 4. Click save. The site rebuilds and updates on its own in a couple of minutes.
@@ -50,6 +50,10 @@ disappears from the public site until you turn it off.
 **Project order:** projects sort automatically — newest year first, then A–Z by
 title within the same year. Nothing to set.
 
+**Homepage images:** choose at least one image in the **Home page** entry. One
+image is displayed directly; two or more form the homepage carousel in the order
+you choose. Project images are never added automatically.
+
 ### How do I change my name, email, phone, or hours?
 
 All editable in the CMS: your **name** and **credential** live in **Site
@@ -63,8 +67,9 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
   browser automatically, and a footer language button lets them change it by
   hand (it shows the language it will switch to, and remembers their choice).
   Sharing `yoursite/work?lang=en` forces English for that link.
-- A home page that's your "about": an image carousel, your bio, and your approach.
-  (The carousel images, bio, portrait, and approach are all editable in the CMS.)
+- A home page that's your "about": a selected image or image carousel, your bio,
+  and your approach. (The images, bio, portrait, and approach are all editable
+  in the CMS.)
 - A **Work** page with your projects in a grid.
 - A page per project assembled from interleaved text, thumbnail galleries, and
   full-width images or carousels. Every image opens into one full-screen gallery;
