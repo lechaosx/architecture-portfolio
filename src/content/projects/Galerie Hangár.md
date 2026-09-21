@@ -1,6 +1,6 @@
 ---
 title_cs: Galerie Hangár
-title_en: Gallery Hanfar
+title_en: Gallery Hangar
 year: 2026
 location_cs: Brno, Medlánky
 location_en: Brno, Medlánky
