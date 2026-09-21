@@ -80,6 +80,13 @@ fonts; Open Sans was the body font at first but was dropped when one typeface wa
 requested everywhere, and DIN Pro is commercial with no free web licence, so it
 is not used (see ARCHITECTURE.md → "Self-hosted webfonts").
 
+### Justified, language-aware prose — [Explicit]
+
+Rich-text bodies are justified and use automatic hyphenation. Each Czech and
+English prose variant keeps its own `lang` attribute, allowing the browser to
+apply the corresponding language's word-breaking and hyphenation rules. Short
+interface labels, metadata, and image captions remain normally aligned.
+
 ---
 
 ## Content & maintenance

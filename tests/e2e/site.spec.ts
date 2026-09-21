@@ -185,6 +185,29 @@ test('contact details remain actionable in both languages', async ({ page }) => 
   await expect(main.locator('li [lang="en"]').first()).toBeHidden();
 });
 
+test('prose is justified and hyphenates according to its language', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const prose = page.locator('.prose');
+
+  expect(
+    await prose.evaluateAll((elements) =>
+      elements.map((element) => {
+        const style = getComputedStyle(element);
+        return {
+          lang: element.getAttribute('lang'),
+          textAlign: style.textAlign,
+          hyphens: style.hyphens,
+        };
+      }),
+    ),
+  ).toEqual([
+    { lang: 'cs', textAlign: 'justify', hyphens: 'auto' },
+    { lang: 'en', textAlign: 'justify', hyphens: 'auto' },
+  ]);
+});
+
 test('reduced motion exposes reveal content without animation', async ({ page }) => {
   await page.goto('/');
   const reveal = page.locator('.reveal').first();
