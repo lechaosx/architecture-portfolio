@@ -31,6 +31,72 @@ gallery:
   - image: /uploads/Scene 27_1.webp
   - image: /uploads/Scene 29.webp
   - image: /uploads/Scene 28.webp
-body_cs: bla bla
-body_en: bla bla
+body_cs: >-
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras congue interdum
+  orci at suscipit. Morbi ullamcorper risus sed diam hendrerit, ac finibus nunc
+  egestas. Phasellus mattis vitae sem sed fermentum. Nullam euismod lorem nibh,
+  gravida sodales eros consequat vel. Praesent sed purus vestibulum, varius
+  sapien vitae, finibus lorem. Praesent placerat nulla sem, non tempus magna
+  maximus quis. Proin vitae ullamcorper felis.
+
+
+  Nam commodo justo sit amet ornare volutpat. Sed eleifend pretium purus tempus
+  dictum. Donec non aliquet urna, ac egestas quam. Fusce rutrum volutpat risus.
+  Fusce rhoncus porttitor dolor ac sagittis. Proin accumsan dolor orci, vel
+  rhoncus nibh maximus id. Pellentesque habitant morbi tristique senectus et
+  netus et malesuada fames ac turpis egestas. Nam quis efficitur augue.
+  Vestibulum quis purus est. Nulla sed volutpat sem.
+
+
+  Pellentesque et bibendum quam. Etiam maximus pellentesque dapibus. Curabitur
+  metus ligula, condimentum vel vehicula et, aliquam ut est. Curabitur commodo
+  enim ut sapien maximus finibus. Quisque cursus tellus sit amet nunc pulvinar,
+  sit amet ornare enim porta. Aenean a ullamcorper mauris, sit amet lobortis
+  velit. Curabitur fermentum aliquet nulla nec interdum. Nullam sit amet diam
+  mauris. In pellentesque, urna sit amet sagittis dignissim, purus massa
+  pharetra risus, porta porttitor urna quam non augue. Curabitur et enim nulla.
+  Ut sed turpis suscipit, malesuada quam a, viverra ex.
+
+
+  Pellentesque nisl lorem, lacinia vel molestie eu, sagittis et quam. Morbi ante
+  felis, aliquam vel enim et, hendrerit bibendum mi. Cras non auctor risus.
+  Donec interdum tellus auctor, volutpat dui et, consectetur libero. Fusce
+  viverra maximus justo sit amet dignissim. Etiam sit amet odio ligula. Morbi
+  vel ligula sit amet risus pellentesque fermentum. Vivamus vulputate faucibus
+  urna, ac interdum massa gravida vitae. Aliquam semper elit augue, a placerat
+  leo aliquam mollis. Proin non justo et ex accumsan vulputate.
+body_en: >-
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras congue interdum
+  orci at suscipit. Morbi ullamcorper risus sed diam hendrerit, ac finibus nunc
+  egestas. Phasellus mattis vitae sem sed fermentum. Nullam euismod lorem nibh,
+  gravida sodales eros consequat vel. Praesent sed purus vestibulum, varius
+  sapien vitae, finibus lorem. Praesent placerat nulla sem, non tempus magna
+  maximus quis. Proin vitae ullamcorper felis.
+
+
+  Nam commodo justo sit amet ornare volutpat. Sed eleifend pretium purus tempus
+  dictum. Donec non aliquet urna, ac egestas quam. Fusce rutrum volutpat risus.
+  Fusce rhoncus porttitor dolor ac sagittis. Proin accumsan dolor orci, vel
+  rhoncus nibh maximus id. Pellentesque habitant morbi tristique senectus et
+  netus et malesuada fames ac turpis egestas. Nam quis efficitur augue.
+  Vestibulum quis purus est. Nulla sed volutpat sem.
+
+
+  Pellentesque et bibendum quam. Etiam maximus pellentesque dapibus. Curabitur
+  metus ligula, condimentum vel vehicula et, aliquam ut est. Curabitur commodo
+  enim ut sapien maximus finibus. Quisque cursus tellus sit amet nunc pulvinar,
+  sit amet ornare enim porta. Aenean a ullamcorper mauris, sit amet lobortis
+  velit. Curabitur fermentum aliquet nulla nec interdum. Nullam sit amet diam
+  mauris. In pellentesque, urna sit amet sagittis dignissim, purus massa
+  pharetra risus, porta porttitor urna quam non augue. Curabitur et enim nulla.
+  Ut sed turpis suscipit, malesuada quam a, viverra ex.
+
+
+  Pellentesque nisl lorem, lacinia vel molestie eu, sagittis et quam. Morbi ante
+  felis, aliquam vel enim et, hendrerit bibendum mi. Cras non auctor risus.
+  Donec interdum tellus auctor, volutpat dui et, consectetur libero. Fusce
+  viverra maximus justo sit amet dignissim. Etiam sit amet odio ligula. Morbi
+  vel ligula sit amet risus pellentesque fermentum. Vivamus vulputate faucibus
+  urna, ac interdum massa gravida vitae. Aliquam semper elit augue, a placerat
+  leo aliquam mollis. Proin non justo et ex accumsan vulputate.
 ---
