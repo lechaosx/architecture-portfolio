@@ -83,8 +83,12 @@ blocks:
   - type: image_set
     images:
       - image: /uploads/00 KONCEPT-1.webp
-      - image: /uploads/01 ANALÝZA DOPRAVY A PŘÍRODNÍCH POMĚRŮ-1.webp
-      - image: /uploads/01 HISTORIE LETIŠTĚ-1.webp
+  - type: image_set
+    images:
+      - image: /uploads/01 ANALÝZA DOPRAVY A PŘÍRODNÍCH POMĚRŮ-2.webp
+  - type: image_set
+    images:
+      - image: /uploads/01 HISTORIE LETIŠTĚ-2.webp
   - type: gallery
     images:
       - image: /uploads/02 GALERIE - Půdorys 1NP+.webp
