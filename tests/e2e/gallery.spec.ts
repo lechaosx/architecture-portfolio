@@ -305,23 +305,17 @@ test('a zoomed image stays clipped to its slide during navigation', async ({
   await page
     .getByRole('button', { name: 'Next image' })
     .evaluate((button: HTMLButtonElement) => button.click());
-  await page.waitForFunction(() =>
-    document
-      .getAnimations()
-      .some(
-        ({ effect }) =>
-          effect instanceof KeyframeEffect &&
-          (effect.target as Element | null)?.classList.contains(
-            'lightbox-slide-current',
-          ),
-      ),
-  );
+  await page.waitForFunction(() => {
+    const slide = document.querySelector('.lightbox-slide-current');
+    const animation = slide?.getAnimations().at(0);
+    if (!animation) return false;
+    animation.pause();
+    animation.currentTime = 90;
+    return true;
+  });
 
   const bleedsPastSlide = await page.locator('.lightbox-slide-current').evaluate(
     (slide) => {
-      const animation = slide.getAnimations().at(0)!;
-      animation.pause();
-      animation.currentTime = 90;
       const image = slide.querySelector('img')!;
       const slideRect = slide.getBoundingClientRect();
       const imageRect = image.getBoundingClientRect();

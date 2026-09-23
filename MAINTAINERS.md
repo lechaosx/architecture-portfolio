@@ -31,7 +31,8 @@ bun run preview      # serve the built dist/ locally
 `test:e2e` builds the production site, including responsive images, before
 Playwright starts its preview server. Cold image processing is therefore not
 counted against the server startup timeout, and routes are not compiled during
-interaction tests.
+interaction tests. CI persists `node_modules/.astro` after that prebuild; the
+deployment build and later workflow runs reuse its content-addressed image cache.
 
 ## Project layout
 
