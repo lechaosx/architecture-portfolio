@@ -215,7 +215,9 @@ page-theme tokens.
 ### Project media blocks render in Astro — [Explicit]
 
 `ProjectBlocks.astro` renders the ordered text, gallery, and image-set sequence
-without hydrating the full project body. Gallery items use the existing square
+without hydrating the full project body. The project page uses the shared
+`max-w-6xl` frame; text blocks are constrained to `max-w-2xl`, while the cover
+and media blocks can use the full frame. Gallery items use the existing square
 thumbnail treatment. A one-item image set keeps the source aspect ratio at the
 project content width; a multi-item set uses a fixed 16:9 scroll-snap viewport
 with `object-contain`, arrows, and dots so drawings are not cropped. Its small
@@ -393,14 +395,14 @@ representation.
 
 Reduced display surfaces build `srcset` from that manifest and provide accurate
 `sizes` hints, avoiding severe browser downsampling of detailed architectural
-linework without assuming every configured size exists. Square project-gallery
-thumbnails multiply their slot-size hint by a landscape source's aspect ratio,
-because `object-cover` scales those sources by height before cropping their
-sides. Portrait and square sources are width-constrained, which the normal
-slot-size hint already represents. The untouched original is replaced as the
-terminal browser candidate by a smaller processed native-resolution derivative
-whenever one is available. It remains the terminal candidate only when
-processing cannot reduce its byte size. SVGs bypass the
+linework without assuming every configured size exists. Every `object-cover`
+surface uses `coverSizes` to multiply its slot-width hint when the source is
+wider than the frame, because those images scale by height before their sides
+are cropped. The hint also includes any hover enlargement. Width-constrained
+sources keep the normal slot-size hint. The untouched original is replaced as
+the terminal browser candidate by a smaller processed native-resolution
+derivative whenever one is available. It remains the terminal candidate only
+when processing cannot reduce its byte size. SVGs bypass the
 derivative pipeline. A direct original-image link remains available independently
 of browser display selection.
 

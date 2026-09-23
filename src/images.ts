@@ -30,6 +30,30 @@ export interface ImageManifest {
   images: Record<string, ResponsiveImage>;
 }
 
+type CoverSizeSlot =
+  | { media?: string; fixed: number }
+  | { media?: string; viewport: number; gutter: number };
+
+export function coverSizes(
+  imageAspectRatio: number,
+  boxAspectRatio: number,
+  slots: readonly CoverSizeSlot[],
+  scale = 1,
+) {
+  const factor = Math.max(1, imageAspectRatio / boxAspectRatio) * scale;
+  const formatted = (value: number) => String(Number(value.toFixed(4)));
+
+  return slots
+    .map((slot) => {
+      const size =
+        'fixed' in slot
+          ? `${formatted(slot.fixed * factor)}px`
+          : `calc(${formatted(slot.viewport * factor)}vw - ${formatted(slot.gutter * factor)}px)`;
+      return slot.media ? `${slot.media} ${size}` : size;
+    })
+    .join(', ');
+}
+
 export function responsiveSrcset(
   image: ResponsiveImage | undefined,
   widths: readonly number[],
