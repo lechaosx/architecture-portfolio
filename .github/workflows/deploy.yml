@@ -41,7 +41,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         uses: actions/cache@v6
         with:
-          path: node_modules/.astro
+          path: ./node_modules/.astro
           key: astro-cache-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             astro-cache-${{ runner.os }}-
