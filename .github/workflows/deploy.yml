@@ -37,6 +37,14 @@ jobs:
       - name: Install dependencies
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         run: bun install --frozen-lockfile
+      - name: Cache Astro build assets
+        if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
+        uses: actions/cache@v6
+        with:
+          path: node_modules/.astro
+          key: astro-cache-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            astro-cache-${{ runner.os }}-
       - name: Run static analysis
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         run: bun run check

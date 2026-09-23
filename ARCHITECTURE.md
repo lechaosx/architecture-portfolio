@@ -52,7 +52,9 @@ and deploys via `actions/deploy-pages`; a push to `master` is the trigger. Pushe
 whose complete diff is confined to `src/content/**` and `public/uploads/**` skip
 the test steps but still build and deploy, keeping CMS edit cycles short while
 retaining Astro content validation and responsive-image generation. Mixed
-changes and manual workflow runs execute the full suite.
+changes and manual workflow runs execute the full suite. The test job and Astro
+build action share the same `node_modules/.astro` cache key, so the browser-test
+prebuild populates the cache consumed by the deployment build.
 
 ---
 
@@ -437,9 +439,11 @@ including the Sharp and libvips versions. A changed upload or recipe gets a new
 cache entry; unrelated site changes reuse existing entries. Each build clears
 and rematerializes `public/_responsive` from the cache so removed content is not
 deployed. Public derivative URLs contain the cache key, so a changed source or
-recipe cannot reuse a stale browser response. The official Astro GitHub Action
-persists `node_modules/.astro` between builds; a missing or evicted cache remains
-safe because the same build recreates it from the originals.
+recipe cannot reuse a stale browser response. The test job and official Astro
+GitHub Action persist `node_modules/.astro` under matching keys, sharing the
+browser-test prebuild's results with the deployment build and later runs. A
+missing or evicted cache remains safe because the same build recreates it from
+the originals.
 
 ### Project image-block items are caption records — [Explicit]
 
