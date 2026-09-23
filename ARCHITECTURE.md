@@ -218,12 +218,14 @@ page-theme tokens.
 
 `ProjectBlocks.astro` renders the ordered text, gallery, and image-set sequence
 without hydrating the full project body. The project page uses the shared
-`max-w-6xl` frame; text blocks are constrained to `max-w-2xl`, while the cover
-and media blocks can use the full frame. Gallery items use the existing square
-thumbnail treatment. A one-item image set keeps the source aspect ratio at the
-project content width; a multi-item set uses a fixed 16:9 scroll-snap viewport
-with `object-contain`, arrows, and dots so drawings are not cropped. Its small
-vanilla script supports every carousel block on the page and does not autoplay.
+`max-w-6xl` frame; text blocks are constrained to `max-w-2xl` below the `lg`
+breakpoint and use two columns across the full frame from `lg` onward. Cover and
+media blocks use the full frame at every width. Gallery items use the existing
+square thumbnail treatment. A one-item image set keeps the source aspect ratio
+at the project content width; a multi-item set uses a fixed 16:9 scroll-snap
+viewport with `object-contain`, arrows, and dots so drawings are not cropped.
+Its small vanilla script supports every carousel block on the page and does not
+autoplay.
 Every rendered image button exposes its flattened page index to the single
 `Gallery.svelte` island. Before responsive-image lookup, `uniqueProjectImages`
 deduplicates exact image paths by their last occurrence and returns both the
