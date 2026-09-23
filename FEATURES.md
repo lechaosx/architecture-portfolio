@@ -277,11 +277,14 @@ sticky nav and View Transitions.)
 
 A project page is assembled from an ordered list of independent text, thumbnail
 gallery, and full-width image-set blocks. Text blocks carry required Czech and
-English rich text. Gallery blocks display square thumbnails. An image set spans
-the project content width: one item is a standalone image, while multiple items
-form a manually controlled scroll-snap carousel with arrows and dots. Blocks can
-be reordered and repeated freely, so a full-width drawing can sit between two
-galleries without belonging to either one.
+English rich text and use a narrower reading width within the site's shared
+content frame. The cover, gallery blocks, and image sets use the full frame so
+project imagery aligns with the rest of the site. Gallery blocks display square
+thumbnails. An image set spans the project content width: one item is a
+standalone image, while multiple items form a manually controlled scroll-snap
+carousel with arrows and dots. Blocks can be reordered and repeated freely, so
+a full-width drawing can sit between two galleries without belonging to either
+one.
 
 ### Image lightbox / gallery — [Explicit]
 
@@ -330,11 +333,12 @@ while zoomed.
 Reduced views such as project cards, the home carousel, and gallery thumbnails
 use prefiltered responsive images instead of asking the browser to shrink the
 full multi-megapixel drawing in one step. This reduces resampling aliasing in
-fine plans and linework, including during thumbnail hover effects. The project
-gallery requests extra source width for landscape images cropped into square
-thumbnails, preventing those previews from being enlarged. The project lightbox
-starts with a representation suited to its on-screen size and display density,
-updates that representation when browser zoom or screen density changes, and
+fine plans and linework, including during thumbnail hover effects. Every cropped
+preview requests enough source width to fill its frame by height as well as
+width, including any hover enlargement, preventing landscape images from being
+upscaled after the browser selects a candidate. The project lightbox starts with
+a representation suited to its on-screen size and display density, updates that
+representation when browser zoom or screen density changes, and
 loads more detail as the visitor zooms. Drawings larger than 4096 px use 512 px
 deep-zoom tiles over a density-matched processed preview, so the
 browser requests only useful resolution levels and visible regions without

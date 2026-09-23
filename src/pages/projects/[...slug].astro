@@ -37,7 +37,7 @@ const responsiveCover = responsiveImages[coverIndex];
     en: `${d.title_en} — ${site.name}`,
   }}
 >
-  <article class="mx-auto max-w-4xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
+  <article class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
     <a href="/work" class="text-sm text-neutral-500 hover:text-neutral-900">
       <T k="backToWork" />
     </a>
@@ -71,7 +71,7 @@ const responsiveCover = responsiveImages[coverIndex];
       <img
         src={d.cover}
         srcset={responsiveSrcset(responsiveCover, LARGE_IMAGE_WIDTHS)}
-        sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
+        sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
         width={responsiveCover?.source.width}
         height={responsiveCover?.source.height}
         alt=""

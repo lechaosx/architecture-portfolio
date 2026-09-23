@@ -1,12 +1,25 @@
 ---
 import { frontmatter as home } from '../content/singletons/home.md';
-import { LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../images';
+import { coverSizes, LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../images';
 import { getResponsiveImage } from '../server-images';
 import { ui } from '../i18n';
 
 const images: string[] = home.gallery;
 const displayImages = await Promise.all(
-  images.map(async (src) => ({ src, responsive: await getResponsiveImage(src) })),
+  images.map(async (src) => {
+    const responsive = await getResponsiveImage(src);
+    const aspectRatio = responsive
+      ? responsive.source.width / responsive.source.height
+      : 16 / 9;
+    return {
+      src,
+      responsive,
+      coverSizes: coverSizes(aspectRatio, 16 / 9, [
+        { media: '(min-width: 1152px)', fixed: 1104 },
+        { viewport: 100, gutter: 48 },
+      ]),
+    };
+  }),
 );
 const singleImage = displayImages[0];
 ---
@@ -36,7 +49,7 @@ const singleImage = displayImages[0];
             data-carousel-track
             class="no-scrollbar flex aspect-[16/9] snap-x snap-mandatory overflow-x-auto"
           >
-            {displayImages.map(({ src, responsive }, i) => (
+            {displayImages.map(({ src, responsive, coverSizes }, i) => (
               <div
                 data-slide
                 role="group"
@@ -51,7 +64,7 @@ const singleImage = displayImages[0];
                 <img
                   src={src}
                   srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
-                  sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
+                  sizes={coverSizes}
                   alt=""
                   loading={i === 0 ? 'eager' : 'lazy'}
                   decoding="async"

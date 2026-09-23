@@ -3,12 +3,12 @@ import type { CollectionEntry } from 'astro:content';
 import Prose from './Prose.astro';
 import { ui } from '../i18n';
 import {
+  coverSizes,
   LARGE_IMAGE_WIDTHS,
   responsiveSrcset,
   THUMBNAIL_WIDTHS,
 } from '../images';
 import type { ResponsiveImage } from '../images';
-import { galleryThumbnailSizes } from './gallery';
 
 type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
 
@@ -40,7 +40,7 @@ const displayBlocks = blocks.map((block) =>
         <Prose
           cs={block.body_cs}
           en={block.body_en}
-          class="prose prose-neutral mt-12 max-w-none dark:prose-invert"
+          class="prose prose-neutral mt-12 max-w-2xl dark:prose-invert"
         />
       );
     }
@@ -67,7 +67,20 @@ const displayBlocks = blocks.map((block) =>
                 <img
                   src={item.image}
                   srcset={responsiveSrcset(responsive, THUMBNAIL_WIDTHS)}
-                  sizes={galleryThumbnailSizes(aspectRatio)}
+                  sizes={coverSizes(
+                    aspectRatio,
+                    1,
+                    [
+                      { media: '(min-width: 1152px)', fixed: 360 },
+                      {
+                        media: '(min-width: 640px)',
+                        viewport: 100 / 3,
+                        gutter: 24,
+                      },
+                      { viewport: 50, gutter: 30 },
+                    ],
+                    1.05,
+                  )}
                   alt=""
                   loading="lazy"
                   decoding="async"
@@ -97,7 +110,7 @@ const displayBlocks = blocks.map((block) =>
           <img
             src={item.image}
             srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
-            sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
+            sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
             width={responsive?.source.width}
             height={responsive?.source.height}
             alt=""
@@ -131,7 +144,7 @@ const displayBlocks = blocks.map((block) =>
               <img
                 src={item.image}
                 srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
-                sizes="(min-width: 896px) 848px, calc(100vw - 48px)"
+                sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
                 width={responsive?.source.width}
                 height={responsive?.source.height}
                 alt=""
