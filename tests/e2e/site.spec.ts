@@ -208,6 +208,26 @@ test('prose is justified and hyphenates according to its language', async ({
   ]);
 });
 
+test('project prose becomes two columns only on wide screens', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/projects/galerie-hang%C3%A1r/');
+  const prose = page.locator('article .prose[lang="en"]').first();
+  await expect(prose).toBeVisible();
+
+  const layout = () =>
+    prose.evaluate((element) => ({
+      columnCount: getComputedStyle(element).columnCount,
+      width: element.getBoundingClientRect().width,
+    }));
+
+  expect(await layout()).toEqual({ columnCount: '2', width: 1104 });
+
+  await page.setViewportSize({ width: 900, height: 900 });
+  expect(await layout()).toEqual({ columnCount: 'auto', width: 672 });
+});
+
 test('reduced motion exposes reveal content without animation', async ({ page }) => {
   await page.goto('/');
   const reveal = page.locator('.reveal').first();
