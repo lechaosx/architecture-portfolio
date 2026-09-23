@@ -10,6 +10,28 @@ async function expectCurrentSlide(page: Page, index: number) {
   await expect.poll(() => currentSlide(page)).toBe(index);
 }
 
+test('carousels do not widen the page on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  let carousels = 0;
+
+  for (const [path, selector] of [
+    ['/', '[data-carousel]'],
+    ['/projects/galerie-hangár/', '[data-project-carousel]'],
+  ] as const) {
+    await page.goto(path);
+    if ((await page.locator(selector).count()) === 0) continue;
+    carousels += 1;
+
+    const overflow = await page.evaluate(() => ({
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    }));
+    expect(overflow.pageWidth).toBeLessThanOrEqual(overflow.viewportWidth);
+  }
+
+  test.skip(carousels === 0, 'Requires an active carousel');
+});
+
 test('one selected home image renders as an image rather than a carousel', async ({
   page,
 }) => {

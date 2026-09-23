@@ -43,7 +43,8 @@ on smaller viewports (the airy desktop gutter would be too wide for a phone);
 section vertical padding tightens on small screens so there's less empty
 scrolling; and tap targets (nav links and footer controls) get more
 height on touch-sized screens. Everything sizes from one shared content width
-(`max-w-6xl`) with `px` gutters, so pages line up at every breakpoint.
+(`max-w-6xl`) with `px` gutters, so pages line up at every breakpoint. Off-screen
+carousel slides remain inside their horizontal scroller and never widen the page.
 
 ### Black-and-white visual language — [Explicit]
 
