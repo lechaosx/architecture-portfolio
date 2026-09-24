@@ -346,6 +346,8 @@ test('lightbox traps focus, closes with Escape, and restores its trigger', async
   await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(dialog.locator(':focus')).toHaveCount(1);
+  await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused();
 
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
