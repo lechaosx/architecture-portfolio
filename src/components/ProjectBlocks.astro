@@ -15,11 +15,10 @@ type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
 
 interface Props {
   blocks: ProjectBlock[];
-  lightboxIndexes: number[];
   responsiveImages: (ResponsiveImage | undefined)[];
 }
 
-const { blocks, lightboxIndexes, responsiveImages } = Astro.props;
+const { blocks, responsiveImages } = Astro.props;
 let pageImageIndex = 1;
 const displayBlocks = blocks.map((block) =>
   block.type === 'text'
@@ -27,7 +26,7 @@ const displayBlocks = blocks.map((block) =>
     : {
         ...block,
         images: block.images.map((item) => {
-          const index = lightboxIndexes[pageImageIndex++];
+          const index = pageImageIndex++;
           return { item, index, responsive: responsiveImages[index] };
         }),
       },
