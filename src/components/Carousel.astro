@@ -86,7 +86,16 @@ const singleImage = displayImages[0];
                 data-carousel-prev
                 class="media-navigation-button absolute top-1/2 left-3 -translate-y-1/2"
               >
-                <span aria-hidden="true">‹</span>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  class="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M15.5 5l-7 7 7 7" />
+                </svg>
                 <span lang="cs" class="sr-only">{ui.cs.previousImage}</span>
                 <span lang="en" class="sr-only">{ui.en.previousImage}</span>
               </button>
@@ -95,7 +104,16 @@ const singleImage = displayImages[0];
                 data-carousel-next
                 class="media-navigation-button absolute top-1/2 right-3 -translate-y-1/2"
               >
-                <span aria-hidden="true">›</span>
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  class="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M8.5 5l7 7-7 7" />
+                </svg>
                 <span lang="cs" class="sr-only">{ui.cs.nextImage}</span>
                 <span lang="en" class="sr-only">{ui.en.nextImage}</span>
               </button>

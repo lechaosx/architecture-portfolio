@@ -114,8 +114,7 @@ and project image-set carousels, and the language switch). Native
 cross-document View Transitions add no client router or framework runtime.
 Images up to 4096 px use local transforms constrained to the image stage;
 larger images lazy-load OpenSeadragon as a separate chunk and use its tiled
-canvas. Desktop side gutters keep either stage separate from the navigation
-controls; the mobile grid moves those controls into a row below the stage. A
+canvas. A
 fixed-height, full-stage-width, independently scrollable caption row keeps the
 stage dimensions stable across gallery entries and prevents text length from
 changing image selection or apparent size. Both rendering paths support
@@ -139,11 +138,8 @@ single-row strip occupies the space left of the close button and scrolls
 horizontally when its intrinsic width exceeds that area. Its wheel handler maps
 the dominant wheel delta to `scrollLeft` and consumes the event, while native
 horizontal touch panning remains enabled. A reactive effect brings the active
-button into view after opening or switching images. Zoom controls are
-fixed to the stage's top-right viewport corner, while image position and the
-original-file link are fixed to its bottom-right corner. Keeping these controls
-outside the transformed image layers prevents pan, zoom, and aspect-ratio changes
-from moving them. That path updates the active page index without calling the normal slide
+button into view after opening or switching images. Switching within a set
+updates the active page index without calling the normal slide
 navigation or resetting the shared scale/pan state. The incoming processed
 preview is decoded first; outgoing and incoming preview layers then crossfade at
 the retained transform. The active image still initializes its ordinary full-
@@ -151,6 +147,20 @@ image or OpenSeadragon renderer, and the temporary outgoing layer is removed
 after the blend. While a set member is active, the wheel and pinch ceiling is the
 minimum `nativeZoomScale` across the set's responsive sources. Reduced-motion
 mode switches immediately.
+
+### Lightbox stage overlays — [Explicit]
+
+Previous/Next sit at the stage's vertical centre edges, zoom controls in its
+top-right corner, and image position with the original-file link in its
+bottom-right corner, so the stage and caption span the full dialog width with no
+navigation gutters. The overlays are children of the stage but siblings of the
+transformed slide layers, so pan, zoom, swipe offset, and aspect-ratio changes
+never move them. The stage's pointer and touch handlers ignore targets inside
+`.lightbox-stage-controls`, so pressing a control never starts a pan or swipe.
+Every overlay button uses the global `.media-navigation-button` contract. It
+lives in `@layer components` so a control such as the zoom readout can widen
+itself with utilities. Arrow icons are centred SVG chevrons rather than text
+glyphs, whose font metrics sit them off-centre in the box.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 

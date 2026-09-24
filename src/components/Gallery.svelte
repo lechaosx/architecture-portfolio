@@ -1142,19 +1142,53 @@
             />
           </div>
         {/if}
+        <button
+          type="button"
+          class="media-navigation-button lightbox-stage-controls absolute top-1/2 left-2 z-20 -translate-y-1/2"
+          onclick={prev}
+          aria-label={ui[lang].previousImage}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            class="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M15.5 5l-7 7 7 7" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="media-navigation-button lightbox-stage-controls absolute top-1/2 right-2 z-20 -translate-y-1/2"
+          onclick={next}
+          aria-label={ui[lang].nextImage}
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            class="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M8.5 5l7 7-7 7" />
+          </svg>
+        </button>
         <div
           class="lightbox-stage-controls absolute top-2 right-2 z-20 flex items-center text-white"
         >
           <button
             type="button"
-            class="flex h-10 w-10 cursor-pointer items-center justify-center border border-white/40 bg-black/60 text-2xl leading-none hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-40 disabled:hover:bg-black/60 disabled:hover:text-white"
+            class="media-navigation-button"
             aria-label={ui[lang].zoomOut}
             disabled={scale <= 1}
             onclick={() => zoomBy(0.8)}>−</button
           >
           <button
             type="button"
-            class="-ml-px h-10 min-w-16 cursor-pointer border border-white/40 bg-black/60 px-2 text-sm tabular-nums hover:bg-white hover:text-black"
+            class="media-navigation-button -ml-px w-auto min-w-16 px-2 text-sm tabular-nums"
             onclick={resetView}
             aria-label={ui[lang].resetZoom}
           >
@@ -1162,7 +1196,7 @@
           </button>
           <button
             type="button"
-            class="-ml-px flex h-10 w-10 cursor-pointer items-center justify-center border border-white/40 bg-black/60 text-2xl leading-none hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-40 disabled:hover:bg-black/60 disabled:hover:text-white"
+            class="media-navigation-button -ml-px"
             aria-label={ui[lang].zoomIn}
             disabled={scale >= maxScale}
             onclick={() => zoomBy(1.25)}>+</button
@@ -1182,7 +1216,7 @@
             href={originalSrc}
             target="_blank"
             rel="noopener"
-            class="-ml-px flex h-10 w-10 items-center justify-center border border-white/40 bg-black/60 hover:bg-white hover:text-black"
+            class="media-navigation-button -ml-px"
             aria-label={ui[lang].openOriginal}
           >
             <svg
@@ -1199,18 +1233,6 @@
           </a>
         </div>
       </div>
-      <button
-        type="button"
-        class="media-navigation-button lightbox-previous self-center"
-        onclick={prev}
-        aria-label={ui[lang].previousImage}>‹</button
-      >
-      <button
-        type="button"
-        class="media-navigation-button lightbox-next self-center"
-        onclick={next}
-        aria-label={ui[lang].nextImage}>›</button
-      >
       <figcaption
         class="lightbox-caption relative w-full overflow-hidden text-white"
       >
@@ -1254,31 +1276,8 @@
 
   .lightbox-layout {
     display: grid;
-    grid-template-areas:
-      'stage stage'
-      'caption caption'
-      'previous next';
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) 6rem 3rem;
+    grid-template-rows: minmax(0, 1fr) 6rem;
     gap: 0.75rem;
-  }
-
-  .lightbox-stage {
-    grid-area: stage;
-  }
-
-  .lightbox-caption {
-    grid-area: caption;
-  }
-
-  .lightbox-previous {
-    grid-area: previous;
-    justify-self: start;
-  }
-
-  .lightbox-next {
-    grid-area: next;
-    justify-self: end;
   }
 
   .lightbox-comparison-current {
@@ -1292,14 +1291,4 @@
     }
   }
 
-  @media (min-width: 640px) {
-    .lightbox-layout {
-      grid-template-areas:
-        'previous stage next'
-        '. caption .';
-      grid-template-columns: 3rem minmax(0, 1fr) 3rem;
-      grid-template-rows: minmax(0, 1fr) 6rem;
-      column-gap: 1rem;
-    }
-  }
 </style>
