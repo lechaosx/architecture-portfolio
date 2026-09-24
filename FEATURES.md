@@ -297,9 +297,8 @@ position on close, changing crop as its aspect ratio changes and waiting for the
 enlarged preview before it animates. The overlay fades over the page and its
 header; the header remains in place beneath it. Image hover remains independent,
 including when the lightbox opens partway through the hover effect.
-If the same image path appears more than once, it occupies one lightbox position
-and every visible occurrence opens that position. Its last page occurrence wins:
-that occurrence determines the position, caption, and close-transition target.
+Every occurrence of an image is its own lightbox position with its own caption,
+including when the same upload is used more than once on a page — [Explicit].
 The lightbox shows the current image and total count, and its navigation controls
 use the same visual language as the home carousel without adopting autoplay,
 cropping, or dot indicators.

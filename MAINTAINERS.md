@@ -48,7 +48,6 @@ tsconfig.json                 extends astro/tsconfigs/strict
 
 src/
   images.ts                    responsive derivative URL/srcset contract
-  project-images.ts            deduplicates page images for the shared lightbox
   server-images.ts             reads the generated image manifest during builds
   content.config.ts           projects collection schema (Zod); bilingual fields
   i18n.ts                      baked-in UI labels ({cs, en} dictionary)
@@ -134,9 +133,8 @@ name the lightbox shortcuts. Grouping is lightbox-only and does not change how
 each preview is rendered on the project page.
 The cover and every image block feed one lightbox in page order. Lightbox links
 use that position (`#image-1`, `#image-2`, …), so reordering blocks or images
-also changes those addresses. Repeated `image` paths produce one lightbox entry;
-the last occurrence determines its position and caption, while every rendered
-occurrence opens that entry. The Gallery island uses `client:load`
+also changes those addresses. A repeated `image` path is a separate lightbox
+entry at each occurrence. The Gallery island uses `client:load`
 so a directly opened image address is handled as soon as the project loads.
 Raster uploads referenced by content are converted automatically before `dev`
 and `build`; do not commit `public/_responsive`. Reduced image surfaces use the

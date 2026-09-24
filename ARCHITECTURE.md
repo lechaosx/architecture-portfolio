@@ -257,12 +257,8 @@ viewport with `object-contain`, arrows, and dots so drawings are not cropped.
 Its small vanilla script supports every carousel block on the page and does not
 autoplay.
 Every rendered image button exposes its flattened page index to the single
-`Gallery.svelte` island. Before responsive-image lookup, `uniqueProjectImages`
-deduplicates exact image paths by their last occurrence and returns both the
-unique sequence and an occurrence-to-lightbox index map. That map keeps earlier
-copies clickable without duplicating their responsive metadata or lightbox
-slide; the island's DOM-order trigger registration makes the last copy the
-transition target.
+`Gallery.svelte` island, so each occurrence of an image is its own lightbox
+slide and close-transition target.
 
 ### Page transitions: native View Transitions API — [Implicit]
 
@@ -492,8 +488,7 @@ paired `title_cs`/`title_en` and `description_cs`/`description_en` fields, plus 
 optional language-neutral `comparison_set` identifier. Keeping that metadata
 beside its image preserves the associations when items are reordered in Pages
 CMS. Both block types use the same record shape so the page-level lightbox can
-flatten them into one sequence. After exact-path deduplication, the final
-occurrence supplies both the caption and comparison membership.
+flatten them into one sequence.
 
 ### Sitemap — [Implicit]
 

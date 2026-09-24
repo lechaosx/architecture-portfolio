@@ -75,8 +75,8 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
   in the CMS.)
 - A **Work** page with your projects in a grid.
 - A page per project assembled from interleaved text, thumbnail galleries, and
-  full-width images or carousels. Every image opens into one full-screen gallery;
-  repeated uses of the same upload share one slide. Enlarged images can show
+  full-width images or carousels. Every image opens into one full-screen gallery,
+  in the order it appears on the page. Enlarged images can show
   optional titles and descriptions. Related drawings can be switched with a
   crossfade that keeps the inspected zoom and position. Each open image
   has a shareable `#image-N` address, and the browser Back button closes it.

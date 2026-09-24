@@ -100,10 +100,12 @@ test('separate Hangár galleries share a lightbox across the full-width drawing'
   expect(fullWidthBox!.width).toBeCloseTo(coverBox!.width, 0);
   expect(galleryBox!.width).toBeLessThan(fullWidthBox!.width / 2);
 
-  const duplicateIndex = await cover.getAttribute('data-lightbox-index');
-  expect(duplicateIndex).toBe(
-    await duplicateTriggers.last().getAttribute('data-lightbox-index'),
-  );
+  const [coverIndex, repeatIndex] = await Promise.all([
+    cover.getAttribute('data-lightbox-index'),
+    duplicateTriggers.last().getAttribute('data-lightbox-index'),
+  ]);
+  expect(coverIndex).toBe('0');
+  expect(repeatIndex).not.toBe(coverIndex);
 
   await fullWidthDrawing.click();
   await waitForLightbox(page);
@@ -113,6 +115,9 @@ test('separate Hangár galleries share a lightbox across the full-width drawing'
   await expect(page).toHaveURL(
     new RegExp(`#image-${fullWidthIndex + 1}$`),
   );
+  await expect(
+    page.getByRole('dialog', { name: 'Image viewer' }).getByRole('status'),
+  ).toHaveText(`${fullWidthIndex + 1} / 27`);
 
   await page.getByRole('button', { name: 'Next image' }).click();
   await expect(page.getByRole('link', { name: 'Open original' })).toHaveAttribute(
@@ -122,16 +127,17 @@ test('separate Hangár galleries share a lightbox across the full-width drawing'
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
 
-  const duplicateUrl = new RegExp(`#image-${Number(duplicateIndex) + 1}$`);
   await cover.click();
   await waitForLightbox(page);
-  await expect(page).toHaveURL(duplicateUrl);
+  await expect(page).toHaveURL(/#image-1$/);
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
 
   await duplicateTriggers.last().click();
   await waitForLightbox(page);
-  await expect(page).toHaveURL(duplicateUrl);
+  await expect(page).toHaveURL(
+    new RegExp(`#image-${Number(repeatIndex) + 1}$`),
+  );
 });
 
 test('the original remains an explicit download while the lightbox uses processed imagery', async ({
@@ -371,9 +377,9 @@ test('comparison shortcuts preserve the inspected area without changing page pre
   });
   await page.goto('/projects/galerie-hang%C3%A1r/');
   await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
-  const groundFloorPreview = galleryImage(page, 4);
-  const basementPreview = galleryImage(page, 5);
-  const roofPreview = galleryImage(page, 6);
+  const groundFloorPreview = galleryImage(page, 5);
+  const basementPreview = galleryImage(page, 6);
+  const roofPreview = galleryImage(page, 7);
   await expect(groundFloorPreview).toBeVisible();
   await expect(basementPreview).toBeVisible();
   await expect(roofPreview).toBeVisible();
@@ -422,7 +428,7 @@ test('comparison shortcuts preserve the inspected area without changing page pre
   });
   await comparison.getByRole('button', { name: 'Basement floor plan' }).click();
   const blend = await blendPromise;
-  await expect(page).toHaveURL(/#image-5$/);
+  await expect(page).toHaveURL(/#image-6$/);
   const blendState = await blend.jsonValue();
   if (!blendState) throw new Error('Expected an active comparison blend');
   expect(blendState.currentOpacity).toBeGreaterThan(0);
@@ -444,7 +450,7 @@ test('comparison shortcuts preserve the inspected area without changing page pre
   await expect(page.getByRole('button', { name: 'Reset zoom' })).toHaveText(
     '100%',
   );
-  await expect(page).toHaveURL(/#image-6$/);
+  await expect(page).toHaveURL(/#image-7$/);
   await page.getByRole('button', { name: 'Next image' }).click();
   await expect(page.getByRole('navigation', { name: 'Compare drawings' })).toHaveCount(0);
 });

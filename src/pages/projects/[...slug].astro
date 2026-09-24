@@ -11,7 +11,6 @@ import {
   LARGE_IMAGE_WIDTHS,
   responsiveSrcset,
 } from '../../images';
-import { uniqueProjectImages } from '../../project-images';
 import { getResponsiveImage } from '../../server-images';
 
 export async function getStaticPaths() {
@@ -23,16 +22,14 @@ const { project } = Astro.props;
 const d = project.data;
 
 const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
-const pageImages = [
+const images = [
   { image: d.cover },
   ...d.blocks.flatMap((block) => (block.type === 'text' ? [] : block.images)),
 ];
-const { images, indexes: lightboxIndexes } = uniqueProjectImages(pageImages);
 const responsiveImages = await Promise.all(
   images.map(({ image }) => getResponsiveImage(image)),
 );
-const coverIndex = lightboxIndexes[0];
-const responsiveCover = responsiveImages[coverIndex];
+const responsiveCover = responsiveImages[0];
 ---
 
 <Base
@@ -63,14 +60,14 @@ const responsiveCover = responsiveImages[coverIndex];
 
     <button
       type="button"
-      data-lightbox-index={coverIndex}
+      data-lightbox-index={0}
       class="group block w-full overflow-hidden bg-neutral-100"
     >
       <span lang="cs" class="sr-only">
-        {ui.cs.openImage} {coverIndex + 1}
+        {ui.cs.openImage} 1
       </span>
       <span lang="en" class="sr-only">
-        {ui.en.openImage} {coverIndex + 1}
+        {ui.en.openImage} 1
       </span>
       <img
         src={displayImageUrl(responsiveCover, d.cover)}
@@ -84,7 +81,7 @@ const responsiveCover = responsiveImages[coverIndex];
       />
     </button>
 
-    <ProjectBlocks blocks={d.blocks} {lightboxIndexes} {responsiveImages} />
+    <ProjectBlocks blocks={d.blocks} {responsiveImages} />
     <Gallery {images} {responsiveImages} client:load />
   </article>
 </Base>
