@@ -49,6 +49,7 @@ tsconfig.json                 extends astro/tsconfigs/strict
 src/
   images.ts                    responsive derivative URL/srcset contract
   server-images.ts             reads the generated image manifest during builds
+  site-title.ts                credential + owner name used in browser tab titles
   content.config.ts           projects collection schema (Zod); bilingual fields
   i18n.ts                      baked-in UI labels ({cs, en} dictionary)
   content/projects/*.md        one file per project (text in _cs/_en frontmatter)

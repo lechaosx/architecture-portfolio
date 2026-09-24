@@ -67,6 +67,28 @@ test('language selection follows URL, saved choice, and browser preference', asy
   await context.close();
 });
 
+test('tab titles name the page and the credentialed architect in both languages', async ({
+  page,
+}) => {
+  const owner = 'Ing. arch. Tereza Kalábková';
+  const titles = [
+    ['/', `${owner} | Architecture`, `${owner} | Architektura`],
+    ['/work', `Work | ${owner}`, `Práce | ${owner}`],
+    ['/contact', `Contact | ${owner}`, `Kontakt | ${owner}`],
+    [
+      '/projects/urban-study-kyjov/',
+      `Urban Intervention | Kyjov | ${owner}`,
+      `Drobný urbanismus | Kyjov | ${owner}`,
+    ],
+  ];
+  for (const [path, en, cs] of titles) {
+    await page.goto(`${path}?lang=en`);
+    await expect(page).toHaveTitle(en);
+    await page.goto(`${path}?lang=cs`);
+    await expect(page).toHaveTitle(cs);
+  }
+});
+
 test('theme follows the system and an explicit choice persists across navigation', async ({
   browser,
 }) => {
