@@ -194,10 +194,10 @@ On narrower screens the grid steps down to two columns, then one — [Implicit].
 ### "Approach" section on the home page — [Explicit]
 
 A section below the bio describing how the architect works, as a **vertical**
-stack of items (Place, Scale, Material, Thinking); each item's icon enlarges on
-hover. The architect requested this space and preferred it laid out vertically
-rather than as the horizontal row on the reference site (maaus.cz), and without
-dividing lines between items. The items (label, text, and which of four line
+stack of items (Place, Scale, Material, Thinking); each item's icon enlarges from
+its centre on hover — [Explicit]. The architect requested this space and
+preferred it laid out vertically rather than as the horizontal row on the
+reference site (maaus.cz), and without dividing lines between items. The items (label, text, and which of four line
 icons) are editable in the CMS (the Home entry) and can be added, removed, or
 reordered; the text ships as placeholder wording. The icon set
 (place/scale/material/thinking) is fixed in code — [Implicit].
