@@ -248,8 +248,11 @@ Motion must ride the native scrollbar and stay subtle.
 In browsers with cross-document View Transitions, navigating between pages
 crossfades instead of a hard reload. Project covers move between the work grid
 and their project page, progressively changing crop between the square card and
-the full image, including on the first uncached visit. Other browsers use normal
-page navigation. Hover enlargement remains independent of the moving cover.
+the full image, including on the first uncached visit. Like the lightbox, the
+moving cover is a single full image cropped by its changing frame rather than a
+blend of the two crops, and it starts from the card's hover zoom — [Explicit].
+Other browsers use normal page navigation. Hover enlargement remains independent
+of the moving cover.
 Work cards skip the general fade-in-on-scroll effect so entering the Work page
 has one transition. Delivers "smoothness" without a heavy SPA.
 

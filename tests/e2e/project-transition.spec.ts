@@ -83,3 +83,71 @@ test('non-square project cover uses the shared crop transition class', async ({
   const box = (await cover.boundingBox())!;
   expect(box.width / box.height).toBeGreaterThan(1.2);
 });
+
+test('project covers morph one uncropped snapshot in both directions', async ({
+  browserName,
+  page,
+}) => {
+  test.skip(
+    browserName === 'firefox',
+    'The pinned Firefox does not support cross-document View Transitions',
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => {
+    addEventListener('pagereveal', (event) => {
+      const transition = (event as PageRevealEvent).viewTransition;
+      if (!transition) return;
+      void transition.ready.then(() => {
+        const pseudo = (part: string) =>
+          `::view-transition-${part}(cover-urban-study-kyjov)`;
+        // A hidden snapshot generates no pseudo-element, so it has no animation.
+        const animated = (part: string) =>
+          document
+            .getAnimations()
+            .filter(
+              (animation) =>
+                (animation.effect as KeyframeEffect).pseudoElement ===
+                pseudo(part),
+            );
+        const opening = animated('new')[0];
+        opening?.pause();
+        if (opening) opening.currentTime = 0;
+        const style = (part: string) =>
+          getComputedStyle(document.documentElement, pseudo(part));
+        sessionStorage.setItem(
+          'cover-snapshots',
+          JSON.stringify({
+            oldAnimated: animated('old').length > 0,
+            oldAnimation: style('old').animationName,
+            newAnimated: animated('new').length > 0,
+            newScale: Number(style('new').scale) || 1,
+          }),
+        );
+        opening?.play();
+      });
+    });
+  });
+  const snapshots = () =>
+    page.evaluate(() =>
+      JSON.parse(sessionStorage.getItem('cover-snapshots') ?? 'null'),
+    );
+
+  await page.goto('/work');
+  const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
+  await project.hover();
+  await page.waitForTimeout(350);
+  await project.click();
+  await expect(page).toHaveURL(/\/projects\/urban-study-kyjov\/$/);
+  await expect
+    .poll(snapshots)
+    .toMatchObject({ oldAnimated: false, newAnimated: true });
+  expect((await snapshots()).newScale).toBeCloseTo(1.03, 2);
+
+  await page.evaluate(() => sessionStorage.removeItem('cover-snapshots'));
+  await page.getByRole('link', { name: 'Back to work' }).click();
+  await expect(page).toHaveURL(/\/work\/?$/);
+  // The retained project snapshot holds still while its box shrinks to the card.
+  await expect
+    .poll(snapshots)
+    .toMatchObject({ oldAnimation: 'none', newAnimated: false });
+});
