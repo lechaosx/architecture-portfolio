@@ -134,12 +134,16 @@ the caption retains native scrolling while the surrounding dialog contains
 page-scroll gestures. A live status element reports the current gallery position
 without participating in the translated image/caption strip.
 
-Images with the same non-empty `comparison_set` expose centred toolbar controls.
-They share the main control row from the medium breakpoint upward and occupy a
-full-width second row below it on narrow screens. The strip scrolls horizontally
-when its intrinsic width exceeds its grid area, and a reactive effect centres the
-active button after opening or switching images. That path updates the active
-page index without calling the normal slide
+Images with the same non-empty `comparison_set` expose toolbar controls. The
+single-row strip occupies the space left of the close button and scrolls
+horizontally when its intrinsic width exceeds that area. Its wheel handler maps
+the dominant wheel delta to `scrollLeft` and consumes the event, while native
+horizontal touch panning remains enabled. A reactive effect brings the active
+button into view after opening or switching images. Zoom controls are
+fixed to the stage's top-right viewport corner, while image position and the
+original-file link are fixed to its bottom-right corner. Keeping these controls
+outside the transformed image layers prevents pan, zoom, and aspect-ratio changes
+from moving them. That path updates the active page index without calling the normal slide
 navigation or resetting the shared scale/pan state. The incoming processed
 preview is decoded first; outgoing and incoming preview layers then crossfade at
 the retained transform. The active image still initializes its ordinary full-

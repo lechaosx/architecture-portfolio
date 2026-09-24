@@ -119,6 +119,7 @@
   let nextPreviewSrc = $derived(previewUrl(nextIndex));
   let deepZoomPreviewSrc = $derived(previewUrl(index));
   let comparisonIndexes = $derived(comparisonSetIndexes(images, index));
+  let maxScale = $derived.by(maximumScale);
   let slideTransition = $derived(
     swipeAnimating
       ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
@@ -267,6 +268,15 @@
     touchStart = null;
     touchPanStart = null;
     pinchStart = null;
+  }
+  function zoomBy(factor: number) {
+    if (lightboxTransitioning || comparisonTransitioning) return;
+    const nextScale = Math.min(maxScale, Math.max(1, scale * factor));
+    const nextPan = constrainedPan(
+      panForZoom(pan, scale, nextScale, { x: 0, y: 0 }),
+      nextScale,
+    );
+    setView(nextScale, nextPan);
   }
 
   function previewUrl(imageIndex: number) {
@@ -621,10 +631,10 @@
 
   function maximumScaleFor(imageIndex: number) {
     const responsiveImage = responsiveImages[imageIndex];
-    if (!responsiveImage || !stage?.clientWidth || !stage.clientHeight) return 1;
+    if (!responsiveImage || !stageWidth || !stageHeight) return 1;
     const imageSize = containedImageSize(responsiveImage.source, {
-      width: stage.clientWidth,
-      height: stage.clientHeight,
+      width: stageWidth,
+      height: stageHeight,
     });
     return nativeZoomScale(
       responsiveImage.source.width,
@@ -673,7 +683,7 @@
         : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
           ? e.deltaY * stage.clientHeight
           : e.deltaY;
-    const nextScale = scaleFromWheel(scale, delta, maximumScale());
+    const nextScale = scaleFromWheel(scale, delta, maxScale);
     const bounds = stage.getBoundingClientRect();
     const pointer = {
       x: e.clientX - (bounds.left + bounds.width / 2),
@@ -698,10 +708,23 @@
     }
   }
 
+  function onComparisonWheel(event: WheelEvent) {
+    const navigation = event.currentTarget as HTMLElement;
+    const delta =
+      Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.deltaY;
+    event.preventDefault();
+    event.stopPropagation();
+    navigation.scrollLeft += delta;
+  }
+
   function onpointerdown(e: PointerEvent) {
     if (
       lightboxTransitioning ||
       comparisonTransitioning ||
+      (e.target instanceof Element &&
+        Boolean(e.target.closest('.lightbox-stage-controls'))) ||
       e.pointerType !== 'mouse' ||
       e.button !== 0 ||
       navigating
@@ -769,7 +792,15 @@
   }
 
   function ontouchstart(e: TouchEvent) {
-    if (lightboxTransitioning || comparisonTransitioning || navigating) return;
+    if (
+      lightboxTransitioning ||
+      comparisonTransitioning ||
+      navigating ||
+      (e.target instanceof Element &&
+        Boolean(e.target.closest('.lightbox-stage-controls')))
+    ) {
+      return;
+    }
     if (e.touches.length === 2) {
       swipeAnimating = false;
       swipeOffset = 0;
@@ -808,7 +839,7 @@
         pinchStart.scale,
         pinchStart.distance,
         touchDistance(first, second),
-        maximumScale(),
+        maxScale,
       );
       setView(
         nextScale,
@@ -944,46 +975,19 @@
     onwheel={preventPageScroll}
     ontouchmove={preventPageScroll}
   >
-    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)]">
-      <div class="flex min-w-0 items-center gap-2 md:justify-self-start">
-        <button
-          type="button"
-          class="min-w-16 cursor-pointer border border-white/40 px-3 py-2 text-sm tabular-nums text-white hover:border-white"
-          onclick={resetView}
-          aria-label={ui[lang].resetZoom}
-        >
-          <span aria-hidden="true">
-            {Math.round(scale * 100)}%
-          </span>
-        </button>
-        <a
-          href={originalSrc}
-          target="_blank"
-          rel="noopener"
-          class="border border-white/40 px-3 py-2 text-sm text-white hover:border-white"
-        >
-          <span lang="cs">{ui.cs.openOriginal}</span>
-          <span lang="en">{ui.en.openOriginal}</span>
-        </a>
-        <span
-          role="status"
-          aria-atomic="true"
-          class="self-center text-sm tabular-nums text-white"
-        >
-          {index + 1} / {images.length}
-        </span>
-      </div>
+    <div class="flex min-w-0 items-start gap-2">
       {#if comparisonIndexes.length > 1}
         <nav
           bind:this={comparisonNav}
           aria-label={ui[lang].compareDrawings}
-          class="lightbox-comparison-options no-scrollbar col-span-2 row-start-2 w-full min-w-0 touch-pan-x scroll-px-4 overflow-x-auto px-4 md:col-span-1 md:col-start-2 md:row-start-1 md:max-w-[50vw] md:justify-self-center md:px-0"
+          class="lightbox-comparison-options no-scrollbar min-w-0 flex-1 touch-pan-x scroll-px-2 overflow-x-auto pr-2"
+          onwheel={onComparisonWheel}
         >
-          <div class="mx-auto flex w-max gap-2">
+          <div class="flex w-max gap-2">
             {#each comparisonIndexes as comparisonIndex}
               <button
                 type="button"
-                class="shrink-0 cursor-pointer border border-white/40 px-3 py-2 text-sm text-white hover:border-white disabled:cursor-default disabled:border-white disabled:bg-white disabled:text-black"
+                class="h-10 shrink-0 cursor-pointer border border-white/40 px-3 text-sm text-white hover:border-white disabled:cursor-default disabled:border-white disabled:bg-white disabled:text-black"
                 aria-current={comparisonIndex === index ? 'true' : undefined}
                 disabled={comparisonIndex === index}
                 onclick={() => void compareTo(comparisonIndex)}
@@ -993,13 +997,11 @@
             {/each}
           </div>
         </nav>
-      {:else}
-        <div class="hidden md:block md:justify-self-center"></div>
       {/if}
       <button
         bind:this={closeButton}
         type="button"
-        class="col-start-2 row-start-1 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white md:col-start-3 md:justify-self-end"
+        class="ml-auto flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-2xl leading-none text-white hover:border-white"
         onclick={requestClose}
         aria-label={ui[lang].close}>×</button
       >
@@ -1130,6 +1132,62 @@
             />
           </div>
         {/if}
+        <div
+          class="lightbox-stage-controls absolute top-2 right-2 z-20 flex items-center text-white"
+        >
+          <button
+            type="button"
+            class="flex h-10 w-10 cursor-pointer items-center justify-center border border-white/40 bg-black/60 text-2xl leading-none hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-40 disabled:hover:bg-black/60 disabled:hover:text-white"
+            aria-label={ui[lang].zoomOut}
+            disabled={scale <= 1}
+            onclick={() => zoomBy(0.8)}>−</button
+          >
+          <button
+            type="button"
+            class="-ml-px h-10 min-w-16 cursor-pointer border border-white/40 bg-black/60 px-2 text-sm tabular-nums hover:bg-white hover:text-black"
+            onclick={resetView}
+            aria-label={ui[lang].resetZoom}
+          >
+            <span aria-hidden="true">{Math.round(scale * 100)}%</span>
+          </button>
+          <button
+            type="button"
+            class="-ml-px flex h-10 w-10 cursor-pointer items-center justify-center border border-white/40 bg-black/60 text-2xl leading-none hover:bg-white hover:text-black disabled:cursor-default disabled:opacity-40 disabled:hover:bg-black/60 disabled:hover:text-white"
+            aria-label={ui[lang].zoomIn}
+            disabled={scale >= maxScale}
+            onclick={() => zoomBy(1.25)}>+</button
+          >
+        </div>
+        <div
+          class="lightbox-stage-controls absolute right-2 bottom-2 z-20 flex items-center text-white"
+        >
+          <span
+            role="status"
+            aria-atomic="true"
+            class="flex h-10 items-center border border-white/40 bg-black/60 px-3 text-sm tabular-nums"
+          >
+            {index + 1} / {images.length}
+          </span>
+          <a
+            href={originalSrc}
+            target="_blank"
+            rel="noopener"
+            class="-ml-px flex h-10 w-10 items-center justify-center border border-white/40 bg-black/60 hover:bg-white hover:text-black"
+            aria-label={ui[lang].openOriginal}
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              class="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M14 5h5v5M19 5l-9 9" />
+              <path d="M11 5H5v14h14v-6" />
+            </svg>
+          </a>
+        </div>
       </div>
       <button
         type="button"

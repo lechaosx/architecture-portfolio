@@ -445,7 +445,7 @@ test('comparison shortcuts remain usable when the toolbar is narrow', async ({
 }) => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 2,
+    deviceScaleFactor: 1,
   });
   const page = await context.newPage();
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -458,19 +458,69 @@ test('comparison shortcuts remain usable when the toolbar is narrow', async ({
   const comparison = page.getByRole('navigation', {
     name: 'Compare drawings',
   });
-  const [dialogBox, resetBox, closeBox, comparisonBox] = await Promise.all([
+  const selected = comparison.getByRole('button', { name: 'Roof plan' });
+  const [
+    dialogBox,
+    closeBox,
+    comparisonBox,
+    selectedBox,
+    originalBox,
+    positionBox,
+    stageBox,
+    zoomOutBox,
+    resetBox,
+    zoomInBox,
+  ] = await Promise.all([
     dialog.boundingBox(),
-    page.getByRole('button', { name: 'Reset zoom' }).boundingBox(),
     page.getByRole('button', { name: 'Close' }).boundingBox(),
     comparison.boundingBox(),
+    selected.boundingBox(),
+    page.getByRole('link', { name: 'Open original' }).boundingBox(),
+    dialog.getByRole('status').boundingBox(),
+    page.locator('.lightbox-stage').boundingBox(),
+    page.getByRole('button', { name: 'Zoom out' }).boundingBox(),
+    page.getByRole('button', { name: 'Reset zoom' }).boundingBox(),
+    page.getByRole('button', { name: 'Zoom in' }).boundingBox(),
   ]);
-  expect(comparisonBox!.y).toBeGreaterThanOrEqual(
-    Math.max(resetBox!.y + resetBox!.height, closeBox!.y + closeBox!.height),
-  );
-  expect(comparisonBox!.x).toBeGreaterThanOrEqual(dialogBox!.x);
+  expect(comparisonBox!.y).toBeCloseTo(closeBox!.y, 0);
+  expect(selectedBox!.y).toBeCloseTo(closeBox!.y, 0);
+  expect(selectedBox!.height).toBe(closeBox!.height);
+  expect(comparisonBox!.x).toBeCloseTo(dialogBox!.x + 16, 0);
   expect(comparisonBox!.x + comparisonBox!.width).toBeLessThanOrEqual(
-    dialogBox!.x + dialogBox!.width,
+    closeBox!.x,
   );
+  expect(zoomOutBox!.y).toBeCloseTo(resetBox!.y, 0);
+  expect(zoomInBox!.y).toBeCloseTo(resetBox!.y, 0);
+  expect(zoomOutBox!.height).toBe(closeBox!.height);
+  expect(resetBox!.height).toBe(closeBox!.height);
+  expect(zoomInBox!.height).toBe(closeBox!.height);
+  expect(zoomInBox!.x + zoomInBox!.width).toBeLessThanOrEqual(
+    stageBox!.x + stageBox!.width,
+  );
+  expect(
+    stageBox!.x + stageBox!.width - zoomInBox!.x - zoomInBox!.width,
+  ).toBeLessThanOrEqual(16);
+  expect(originalBox!.y + originalBox!.height / 2).toBeCloseTo(
+    positionBox!.y + positionBox!.height / 2,
+    0,
+  );
+  expect(originalBox!.x + originalBox!.width).toBeLessThanOrEqual(
+    stageBox!.x + stageBox!.width,
+  );
+  expect(originalBox!.height).toBe(closeBox!.height);
+  expect(positionBox!.height).toBe(closeBox!.height);
+  expect(positionBox!.x + positionBox!.width).toBeLessThanOrEqual(
+    stageBox!.x + stageBox!.width,
+  );
+  expect(
+    stageBox!.x + stageBox!.width - originalBox!.x - originalBox!.width,
+  ).toBeLessThanOrEqual(16);
+  expect(positionBox!.y + positionBox!.height).toBeLessThanOrEqual(
+    stageBox!.y + stageBox!.height,
+  );
+  expect(
+    stageBox!.y + stageBox!.height - positionBox!.y - positionBox!.height,
+  ).toBeLessThanOrEqual(16);
 
   const visibility = await comparison.evaluate((navigation) => {
     const selected = navigation.querySelector<HTMLElement>(
@@ -488,7 +538,45 @@ test('comparison shortcuts remain usable when the toolbar is narrow', async ({
   expect(visibility.selectedLeft).toBeGreaterThanOrEqual(0);
   expect(visibility.selectedRight).toBeGreaterThanOrEqual(0);
 
+  await comparison.evaluate((navigation) => (navigation.scrollLeft = 0));
+  const pageScroll = await page.evaluate(() => scrollY);
+  await comparison.hover();
+  await page.mouse.wheel(0, 120);
+  await expect
+    .poll(() => comparison.evaluate((navigation) => navigation.scrollLeft))
+    .toBeGreaterThan(0);
+  expect(await page.evaluate(() => scrollY)).toBe(pageScroll);
+
   await context.close();
+});
+
+test('viewport zoom controls step and reset without moving with the image', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  await galleryImage(page, 11).click();
+  await waitForLightbox(page);
+
+  const zoomIn = page.getByRole('button', { name: 'Zoom in' });
+  const zoomOut = page.getByRole('button', { name: 'Zoom out' });
+  const reset = page.getByRole('button', { name: 'Reset zoom' });
+  const position = page.getByRole('status');
+  const [zoomInBox, positionBox] = await Promise.all([
+    zoomIn.boundingBox(),
+    position.boundingBox(),
+  ]);
+
+  await expect(zoomOut).toBeDisabled();
+  await expect(zoomIn).toBeEnabled();
+  await zoomIn.click();
+  await expect(reset).not.toHaveText('100%');
+  expect(await zoomIn.boundingBox()).toEqual(zoomInBox);
+  expect(await position.boundingBox()).toEqual(positionBox);
+  await zoomOut.click();
+  await expect(reset).toHaveText('100%');
+  await zoomIn.click();
+  await reset.click();
+  await expect(reset).toHaveText('100%');
 });
 
 test('caption text follows the language but never handles navigation gestures', async ({

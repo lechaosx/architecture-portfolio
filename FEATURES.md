@@ -392,9 +392,13 @@ gallery or image-set position. Opening any member adds named shortcuts for the
 whole set, centred in the lightbox toolbar. A shortcut crossfades to
 the selected image while retaining zoom and pan, so aligned plans can be
 compared without losing the inspected location.
-On narrow screens the shortcuts occupy a separate centred row beneath the main
-controls. At any viewport width, an overflowing shortcut row scrolls horizontally
-and brings the selected image into view.
+The shortcuts remain in one left-aligned, horizontally scrollable row at every
+viewport width and bring the selected image into view. Touch dragging and a
+mouse wheel over the row both move the shortcuts horizontally without scrolling
+the page. The top bar otherwise contains only the close control. A fixed viewport overlay provides zoom-out,
+reset, and zoom-in controls at the top right; image position and a compact
+original-file link occupy another fixed overlay at the bottom right. Neither
+overlay moves with the image while it is panned or zoomed.
 The selected image continues to use the same responsive or tiled deep-zoom
 renderer as every other lightbox image. A set's zoom limit is the lowest native
 detail limit among its members, so every target can display the retained view
