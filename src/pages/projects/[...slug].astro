@@ -4,7 +4,7 @@ import Base from '../../layouts/Base.astro';
 import Gallery from '../../components/Gallery.svelte';
 import ProjectBlocks from '../../components/ProjectBlocks.astro';
 import T from '../../components/T.astro';
-import { frontmatter as site } from '../../content/singletons/site.md';
+import { credentialedName } from '../../site-title';
 import { ui } from '../../i18n';
 import {
   displayImageUrl,
@@ -34,8 +34,8 @@ const responsiveCover = responsiveImages[0];
 
 <Base
   title={{
-    cs: `${d.title_cs} — ${site.name}`,
-    en: `${d.title_en} — ${site.name}`,
+    cs: `${d.title_cs} | ${credentialedName}`,
+    en: `${d.title_en} | ${credentialedName}`,
   }}
 >
   <article class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">

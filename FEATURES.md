@@ -142,8 +142,8 @@ file also changes the project URL and breaks old links and bookmarks.
 
 A small "Site settings" CMS entry holds the owner's name, credential (e.g. "Ing.
 arch."), and the SEO description (in both languages). These feed the nav wordmark,
-the footer copyright, and the default meta description, so they are changed in one
-place rather than being scattered through the code.
+the footer copyright, the browser tab titles, and the default meta description,
+so they are changed in one place rather than being scattered through the code.
 
 ### Draft flag to hide unfinished projects — [Implicit]
 
@@ -449,6 +449,9 @@ configured, GitHub still 301-redirects the `*.github.io/<repo>/` URL to it.)
 
 Per-page title/description, Open Graph tags, and a generated sitemap so pages
 index and share cleanly.
+Browser tab titles pair the page name with the credentialed owner name, separated
+by `|` — for example "Work | Ing. arch. Tereza Kalábková", or "Ing. arch. Tereza
+Kalábková | Architecture" on the home page — [Explicit].
 
 ### Contact page — email, phone, and availability — [Explicit]
 

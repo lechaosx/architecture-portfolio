@@ -5,7 +5,7 @@ import Approaches from '../components/Approaches.astro';
 import T from '../components/T.astro';
 import Prose from '../components/Prose.astro';
 import { frontmatter as home } from '../content/singletons/home.md';
-import { frontmatter as site } from '../content/singletons/site.md';
+import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { getResponsiveImage } from '../server-images';
 import { displayImageUrl } from '../images';
@@ -17,8 +17,8 @@ const responsivePortrait = home.portrait
 
 <Base
   title={{
-    cs: `${site.name} — ${ui.cs.tagline}`,
-    en: `${site.name} — ${ui.en.tagline}`,
+    cs: `${credentialedName} | ${ui.cs.tagline}`,
+    en: `${credentialedName} | ${ui.en.tagline}`,
   }}
 >
   <Carousel />

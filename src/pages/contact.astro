@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import T from '../components/T.astro';
-import { frontmatter as site } from '../content/singletons/site.md';
+import { credentialedName } from '../site-title';
 import { frontmatter as contact } from '../content/singletons/contact.md';
 import { ui } from '../i18n';
 
@@ -12,8 +12,8 @@ const hours: { day_cs: string; day_en: string; hours: string }[] =
 
 <Base
   title={{
-    cs: `${ui.cs.contact} — ${site.name}`,
-    en: `${ui.en.contact} — ${site.name}`,
+    cs: `${ui.cs.contact} | ${credentialedName}`,
+    en: `${ui.en.contact} | ${credentialedName}`,
   }}
 >
   <section class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
