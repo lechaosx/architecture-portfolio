@@ -110,7 +110,8 @@ loads only when a tiled image is opened. `ProjectBlocks.astro` renders those
 triggers on the server; the island attaches their lightbox behavior at load so
 multiple blocks still share one dialog and navigation state. The only other
 browser JS is a few tiny first-party vanilla scripts (reveal-on-scroll, the home
-and project image-set carousels, and the language switch). Native
+and project image-set carousels, the language switch, and the project-cover
+transition direction). Native
 cross-document View Transitions add no client router or framework runtime.
 Images up to 4096 px use local transforms constrained to the image stage;
 larger images lazy-load OpenSeadragon as a separate chunk and use its tiled
@@ -272,7 +273,14 @@ owns hover scaling, so hover and shared-element geometry do not compete. The
 project image carries its native dimensions so an uncached destination has
 stable geometry. One shared transition class keeps the image snapshots covering
 the changing box, progressively cropping or revealing them between the square
-card and the project image. Work cards skip the independent reveal effect because
+card and the project image. As in the lightbox, only the project page's
+full-image snapshot is drawn, clipped by the image pair, because blending it
+with the card's crop doubles the image's edges. An inline `<head>` script tags
+each navigation's transition `project-open` (arriving on a project page) or
+`project-close` from `pagereveal`, which must run before the first frame, and
+CSS picks the snapshot by type. On `pageswap` it stores the hovered card
+image's scale in `sessionStorage`; the opening snapshot animates from that scale
+so the hover zoom does not jump. Work cards skip the independent reveal effect because
 starting a second entrance animation during the page transition produces
 competing motion.
 

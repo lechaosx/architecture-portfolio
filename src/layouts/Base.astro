@@ -56,6 +56,45 @@ const { title } = Astro.props;
       })();
     </script>
 
+    <!-- Tag cover transitions with their direction; pagereveal must be handled
+         before the first frame. The clicked card's hover scale is carried over
+         so the opening snapshot starts where the card image was. -->
+    <script is:inline>
+      (function () {
+        var key = 'project-cover-scale';
+        addEventListener('pageswap', function (event) {
+          if (!/** @type {PageSwapEvent} */ (event).viewTransition) return;
+          var cover = document.querySelector('a:hover > .project-cover');
+          var image = cover && cover.querySelector('img');
+          if (!cover || !image) return;
+          try {
+            sessionStorage.setItem(
+              key,
+              String(image.getBoundingClientRect().width / cover.clientWidth),
+            );
+          } catch (e) {}
+        });
+        addEventListener('pagereveal', function (event) {
+          var scale = null;
+          try {
+            scale = sessionStorage.getItem(key);
+            sessionStorage.removeItem(key);
+          } catch (e) {}
+          var transition = /** @type {PageRevealEvent} */ (event).viewTransition;
+          if (!transition) return;
+          var opening = location.pathname.indexOf('/projects/') === 0;
+          transition.types.add(opening ? 'project-open' : 'project-close');
+          if (opening && scale) {
+            var root = document.documentElement;
+            root.style.setProperty('--project-source-scale', scale);
+            transition.finished.finally(function () {
+              root.style.removeProperty('--project-source-scale');
+            });
+          }
+        });
+      })();
+    </script>
+
     <title>{title.en}</title>
     <meta name="page-title" data-cs={title.cs} data-en={title.en} />
     <meta

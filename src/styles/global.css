@@ -35,6 +35,38 @@
   object-fit: cover;
 }
 
+::view-transition-image-pair(.project-cover) {
+  overflow: clip;
+}
+
+/* Only the project page's full-image snapshot is drawn: blending it with the
+   square card crop doubles the image's edges. */
+html:active-view-transition-type(project-open)::view-transition-old(.project-cover),
+html:active-view-transition-type(project-close)::view-transition-new(.project-cover) {
+  display: none;
+}
+
+@keyframes project-open-cover {
+  from {
+    scale: var(--project-source-scale, 1);
+  }
+  to {
+    scale: 1;
+  }
+}
+
+html:active-view-transition-type(project-open)::view-transition-new(.project-cover) {
+  animation-name: project-open-cover;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
+html:active-view-transition-type(project-close)::view-transition-old(.project-cover) {
+  animation: none;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
 .lightbox-image {
   view-transition-name: lightbox-image;
 }
