@@ -1,6 +1,11 @@
 ---
 import { frontmatter as home } from '../content/singletons/home.md';
-import { coverSizes, LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../images';
+import {
+  coverSizes,
+  displayImageUrl,
+  LARGE_IMAGE_WIDTHS,
+  responsiveSrcset,
+} from '../images';
 import { getResponsiveImage } from '../server-images';
 import { ui } from '../i18n';
 
@@ -33,7 +38,7 @@ const singleImage = displayImages[0];
       </h2>
       {images.length === 1 && singleImage ? (
         <img
-          src={singleImage.src}
+          src={displayImageUrl(singleImage.responsive, singleImage.src)}
           srcset={responsiveSrcset(singleImage.responsive, LARGE_IMAGE_WIDTHS)}
           sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
           width={singleImage.responsive?.source.width}
@@ -62,7 +67,7 @@ const singleImage = displayImages[0];
                   {i + 1} {ui.en.positionOf} {images.length}
                 </span>
                 <img
-                  src={src}
+                  src={displayImageUrl(responsive, src)}
                   srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
                   sizes={coverSizes}
                   alt=""

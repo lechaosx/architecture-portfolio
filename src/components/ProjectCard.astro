@@ -1,6 +1,11 @@
 ---
 import T from './T.astro';
-import { coverSizes, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
+import {
+  coverSizes,
+  displayImageUrl,
+  responsiveSrcset,
+  THUMBNAIL_WIDTHS,
+} from '../images';
 import { getResponsiveImage } from '../server-images';
 
 interface Props {
@@ -38,7 +43,7 @@ const sizes = coverSizes(
     style={`view-transition-name: cover-${slug}`}
   >
     <img
-      src={cover}
+      src={displayImageUrl(responsiveCover, cover)}
       srcset={responsiveSrcset(responsiveCover, THUMBNAIL_WIDTHS)}
       {sizes}
       alt=""

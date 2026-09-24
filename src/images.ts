@@ -13,6 +13,7 @@ export interface ImageVariant {
 }
 
 export interface ResponsiveImage {
+  originalUrl: string;
   source: ImageVariant;
   variants: ImageVariant[];
   deepZoom?: {
@@ -26,8 +27,17 @@ export interface ResponsiveImage {
 }
 
 export interface ImageManifest {
-  version: 2;
+  version: 3;
   images: Record<string, ResponsiveImage>;
+}
+
+export function displayImageUrl(
+  image: ResponsiveImage | undefined,
+  fallback: string,
+) {
+  return image && image.source.url !== image.originalUrl
+    ? image.source.url
+    : fallback;
 }
 
 type CoverSizeSlot =

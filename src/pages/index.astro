@@ -7,6 +7,12 @@ import Prose from '../components/Prose.astro';
 import { frontmatter as home } from '../content/singletons/home.md';
 import { frontmatter as site } from '../content/singletons/site.md';
 import { ui } from '../i18n';
+import { getResponsiveImage } from '../server-images';
+import { displayImageUrl } from '../images';
+
+const responsivePortrait = home.portrait
+  ? await getResponsiveImage(home.portrait)
+  : undefined;
 ---
 
 <Base
@@ -30,7 +36,7 @@ import { ui } from '../i18n';
       {
         home.portrait && (
           <img
-            src={home.portrait}
+            src={displayImageUrl(responsivePortrait, home.portrait)}
             alt=""
             loading="lazy"
             class="reveal w-full bg-neutral-100 md:order-last"

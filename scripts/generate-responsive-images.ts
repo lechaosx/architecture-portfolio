@@ -8,7 +8,7 @@ import {
   stat,
   writeFile,
 } from 'node:fs/promises';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import sharp from 'sharp';
 import { GENERATED_IMAGE_WIDTHS } from '../src/images';
 import type {
@@ -20,6 +20,7 @@ import {
   deepZoomLevels,
   deepZoomOverlap,
   derivativeWidths,
+  displaySourceUrl,
   imageCacheKey,
   shouldGenerateDeepZoom,
   shouldPublishDerivative,
@@ -81,7 +82,7 @@ let reused = 0;
 let omitted = 0;
 let pyramidsGenerated = 0;
 let pyramidsReused = 0;
-const manifest: ImageManifest = { version: 2, images: {} };
+const manifest: ImageManifest = { version: 3, images: {} };
 
 for (const sourcePath of await referencedImages()) {
   const relativePath = relative(sourceDirectory, sourcePath);
@@ -98,10 +99,25 @@ for (const sourcePath of await referencedImages()) {
     Boolean(sourceMetadata.hasAlpha),
   );
   const cacheKey = imageCacheKey(source, { ...recipe, output });
-  const sourceUrl = `/uploads/${relativePath
+  const originalUrl = `/uploads/${relativePath
     .split(sep)
     .map((segment) => encodeURIComponent(segment))
     .join('/')}`;
+  const sourceExtension = extname(relativePath).slice(1).toLowerCase();
+  const sourceUrl = displaySourceUrl(
+    originalUrl,
+    cacheKey,
+    sourceExtension,
+  );
+  if (sourceUrl !== originalUrl) {
+    const sourceOutputPath = join(
+      outputDirectory,
+      cacheKey,
+      `source.${sourceExtension}`,
+    );
+    await mkdir(dirname(sourceOutputPath), { recursive: true });
+    await copyFile(sourcePath, sourceOutputPath);
+  }
   const variants: ImageVariant[] = [];
 
   for (const width of derivativeWidths(
@@ -237,6 +253,7 @@ for (const sourcePath of await referencedImages()) {
   }
 
   manifest.images[`/uploads/${relativePath.split(sep).join('/')}`] = {
+    originalUrl,
     source: {
       url: sourceUrl,
       width: sourceDimensions.width,

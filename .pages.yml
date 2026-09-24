@@ -54,8 +54,9 @@ content:
                 required: true
                 fields:
                   - { name: image, label: Image, type: image, required: true }
-                  - { name: title_cs, label: Image title (Czech), type: string, required: false }
-                  - { name: title_en, label: Image title (English), type: string, required: false }
+                  - { name: comparison_set, label: Comparison set, type: string, required: false, description: "Images with the same value get lightbox comparison shortcuts." }
+                  - { name: title_cs, label: Image name/title (Czech), type: string, required: false }
+                  - { name: title_en, label: Image name/title (English), type: string, required: false }
                   - { name: description_cs, label: Image description (Czech), type: text, required: false }
                   - { name: description_en, label: Image description (English), type: text, required: false }
           - name: image_set
@@ -68,8 +69,9 @@ content:
                 required: true
                 fields:
                   - { name: image, label: Image, type: image, required: true }
-                  - { name: title_cs, label: Image title (Czech), type: string, required: false }
-                  - { name: title_en, label: Image title (English), type: string, required: false }
+                  - { name: comparison_set, label: Comparison set, type: string, required: false, description: "Images with the same value get lightbox comparison shortcuts." }
+                  - { name: title_cs, label: Image name/title (Czech), type: string, required: false }
+                  - { name: title_en, label: Image name/title (English), type: string, required: false }
                   - { name: description_cs, label: Image description (Czech), type: text, required: false }
                   - { name: description_en, label: Image description (English), type: text, required: false }
 

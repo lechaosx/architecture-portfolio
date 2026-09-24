@@ -323,6 +323,8 @@ the page.
 Opening the lightbox moves keyboard focus to its controls and keeps focus inside
 until it closes. Closing it restores focus to the image trigger that opened it
 without moving the page.
+Clicking the dark area around the image keeps the lightbox open; users close it
+with the dedicated close control, Escape, or browser Back.
 The overlay contains wheel, touch, and keyboard scrolling, while deliberate
 scrollbar movement is left in place when the lightbox closes. Its dialog,
 image, close, and navigation labels follow the selected site language. The
@@ -380,6 +382,24 @@ inspection has no momentum or settling animation; at 100%, both previews move
 only with a live navigation gesture and then slide onward or snap back. Pyramid
 previews request the first resolution level at or above the display's
 physical-pixel requirement so their base view is not an upscaled lower level.
+
+### Aligned-drawing comparison sets — [Explicit]
+
+The architect can assign otherwise ordinary project images to a named comparison
+set and give each image a Czech and English title. Set membership does not change
+the project page: every preview remains an individual image in its existing
+gallery or image-set position. Opening any member adds named shortcuts for the
+whole set, centred in the lightbox toolbar. A shortcut crossfades to
+the selected image while retaining zoom and pan, so aligned plans can be
+compared without losing the inspected location.
+On narrow screens the shortcuts occupy a separate centred row beneath the main
+controls. At any viewport width, an overflowing shortcut row scrolls horizontally
+and brings the selected image into view.
+The selected image continues to use the same responsive or tiled deep-zoom
+renderer as every other lightbox image. A set's zoom limit is the lowest native
+detail limit among its members, so every target can display the retained view
+without being enlarged past its available pixels. Normal Previous/Next
+navigation keeps its slide transition and resets the view.
 
 ### Optional image titles and descriptions — [Explicit]
 

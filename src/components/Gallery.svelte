@@ -10,6 +10,7 @@
   import { ui, type Lang } from '../i18n';
   import {
     clampPan,
+    comparisonSetIndexes,
     containedImageSize,
     deepZoomViewport,
     displayedSwipeOffset,
@@ -22,6 +23,7 @@
     panForZoom,
     scaleFromPinch,
     scaleFromWheel,
+    sharedMaximumScale,
     swipeDirection,
     type GalleryImage,
     type Point,
@@ -34,6 +36,7 @@
   } = $props();
 
   const galleryHistoryKey = 'architecturePortfolioGallery';
+  const comparisonDuration = 180;
   const slideDuration = 180;
 
   let open = $state(false);
@@ -46,6 +49,16 @@
   let swipeDeltaX = 0;
   let swipeAnimating = $state(false);
   let lightboxTransitioning = $state(false);
+  let comparisonTransitioning = $state(false);
+  let comparisonPrevious = $state<{
+    src: string;
+    sourceWidth?: number;
+    sourceHeight?: number;
+    width?: number;
+    height?: number;
+    scale: number;
+    pan: Point;
+  }>();
   let navigating = $state(false);
   let reducedMotion = $state(false);
   let closing = false;
@@ -57,6 +70,7 @@
   let image = $state<HTMLImageElement>()!;
   let dialog = $state<HTMLDialogElement>()!;
   let closeButton = $state<HTMLButtonElement>()!;
+  let comparisonNav = $state<HTMLElement>();
   let trigger: HTMLButtonElement | undefined;
   let thumbnailButtons: HTMLButtonElement[] = [];
   let deepZoomElement = $state<HTMLDivElement>();
@@ -64,6 +78,7 @@
   let dragStart: Point | null = null;
   let pointerSwipeStart: Point | null = null;
   let swipeDeltaY = 0;
+  let comparisonRun = 0;
   let navigationRun = 0;
   let touchStart: Point | null = null;
   let touchPanStart: Point | null = null;
@@ -93,7 +108,7 @@
       : undefined;
   });
   let originalSrc = $derived(
-    responsiveImages[index]?.source.url ?? images[index]?.image,
+    responsiveImages[index]?.originalUrl ?? images[index]?.image,
   );
   let deepZoom = $derived(responsiveImages[index]?.deepZoom);
   let previousIndex = $derived(
@@ -103,11 +118,28 @@
   let previousPreviewSrc = $derived(previewUrl(previousIndex));
   let nextPreviewSrc = $derived(previewUrl(nextIndex));
   let deepZoomPreviewSrc = $derived(previewUrl(index));
+  let comparisonIndexes = $derived(comparisonSetIndexes(images, index));
   let slideTransition = $derived(
     swipeAnimating
       ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
       : 'none',
   );
+  $effect(() => {
+    const nav = comparisonNav;
+    const selectedIndex = index;
+    if (!open || !nav || !comparisonIndexes.includes(selectedIndex)) return;
+    void tick().then(() => {
+      if (!open || nav !== comparisonNav || index !== selectedIndex) return;
+      const selected = nav.querySelector<HTMLElement>('[aria-current="true"]');
+      if (!selected) return;
+      nav.scrollTo({
+        left:
+          selected.offsetLeft -
+          (nav.clientWidth - selected.offsetWidth) / 2,
+        behavior: reducedMotion ? 'auto' : 'smooth',
+      });
+    });
+  });
   $effect(() => {
     if (!reducedMotion) return;
     swipeAnimating = false;
@@ -249,6 +281,25 @@
       : images[imageIndex]?.image;
   }
 
+  function imageUrl(imageIndex: number, imageScale = scale) {
+    const responsiveImage = responsiveImages[imageIndex];
+    return responsiveImage
+      ? lightboxImageUrl(
+          responsiveImage,
+          { width: stageWidth, height: stageHeight },
+          imageScale,
+          pixelRatio,
+        )
+      : images[imageIndex]?.image;
+  }
+
+  function comparisonLabel(imageIndex: number) {
+    const comparisonImage = images[imageIndex];
+    const title =
+      lang === 'cs' ? comparisonImage?.title_cs : comparisonImage?.title_en;
+    return title?.trim() || `${ui[lang].image} ${imageIndex + 1}`;
+  }
+
   function transitionTargetIsUnobscured(target: HTMLElement) {
     const bounds = target.getBoundingClientRect();
     const headerBounds = document
@@ -352,9 +403,6 @@
     history.replaceState(history.state, '', `${location.pathname}${location.search}`);
     void closeFromHistory().finally(resumeScrollRestoration);
   }
-  function handleDialogClick(event: MouseEvent) {
-    if (event.target === event.currentTarget) requestClose();
-  }
   async function closeFromHistory() {
     if (!open) return;
     const thumbnail = thumbnailButtons[index];
@@ -400,7 +448,7 @@
     trigger = undefined;
   }
   async function go(offset: number) {
-    if (closing || navigating || images.length < 2) {
+    if (closing || navigating || comparisonTransitioning || images.length < 2) {
       if (!navigating) void snapBack();
       return;
     }
@@ -425,6 +473,58 @@
       galleryImageHash(index),
     );
     navigating = false;
+  }
+  async function compareTo(nextIndex: number) {
+    if (
+      nextIndex === index ||
+      closing ||
+      navigating ||
+      comparisonTransitioning ||
+      !comparisonIndexes.includes(nextIndex)
+    ) {
+      return;
+    }
+
+    const run = ++comparisonRun;
+    comparisonTransitioning = true;
+    if (!reducedMotion) {
+      const preload = new Image();
+      preload.src = responsiveImages[nextIndex]?.deepZoom
+        ? previewUrl(nextIndex)
+        : imageUrl(nextIndex);
+      try {
+        await preload.decode();
+      } catch {}
+      if (run !== comparisonRun || !open) return;
+      comparisonPrevious = {
+        src: image.currentSrc || image.src,
+        sourceWidth: responsiveImages[index]?.source.width,
+        sourceHeight: responsiveImages[index]?.source.height,
+        width: lightboxImageSize?.width,
+        height: lightboxImageSize?.height,
+        scale,
+        pan: { ...pan },
+      };
+    }
+
+    index = nextIndex;
+    history.replaceState(
+      galleryHistoryState(history.state),
+      '',
+      galleryImageHash(index),
+    );
+    await tick();
+    pan = constrainedPan(pan);
+    syncDeepZoomViewport(scale, pan);
+
+    if (!reducedMotion) {
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, comparisonDuration),
+      );
+    }
+    if (run !== comparisonRun) return;
+    comparisonPrevious = undefined;
+    comparisonTransitioning = false;
   }
   function next() {
     void go(1);
@@ -477,7 +577,10 @@
   }
 
   function cancelNavigation() {
+    comparisonRun += 1;
     navigationRun += 1;
+    comparisonTransitioning = false;
+    comparisonPrevious = undefined;
     navigating = false;
     swipeAnimating = false;
     swipeOffset = 0;
@@ -516,15 +619,23 @@
     if (image) return { width: image.clientWidth, height: image.clientHeight };
   }
 
-  function maximumScale() {
-    const responsiveImage = responsiveImages[index];
-    const imageSize = renderedImageSize();
-    if (!responsiveImage || !imageSize) return 1;
+  function maximumScaleFor(imageIndex: number) {
+    const responsiveImage = responsiveImages[imageIndex];
+    if (!responsiveImage || !stage?.clientWidth || !stage.clientHeight) return 1;
+    const imageSize = containedImageSize(responsiveImage.source, {
+      width: stage.clientWidth,
+      height: stage.clientHeight,
+    });
     return nativeZoomScale(
       responsiveImage.source.width,
       imageSize.width,
       pixelRatio,
     );
+  }
+
+  function maximumScale() {
+    const indexes = comparisonIndexes.length ? comparisonIndexes : [index];
+    return sharedMaximumScale(indexes.map(maximumScaleFor));
   }
 
   function syncDeepZoomViewport(nextScale: number, nextPan: Point) {
@@ -555,7 +666,7 @@
 
   function onwheel(e: WheelEvent) {
     e.preventDefault();
-    if (lightboxTransitioning) return;
+    if (lightboxTransitioning || comparisonTransitioning) return;
     const delta =
       e.deltaMode === WheelEvent.DOM_DELTA_LINE
         ? e.deltaY * 16
@@ -578,7 +689,9 @@
     if (
       !(
         event.target instanceof Element &&
-        event.target.closest('.lightbox-caption-current')
+        event.target.closest(
+          '.lightbox-caption-current, .lightbox-comparison-options',
+        )
       )
     ) {
       event.preventDefault();
@@ -588,6 +701,7 @@
   function onpointerdown(e: PointerEvent) {
     if (
       lightboxTransitioning ||
+      comparisonTransitioning ||
       e.pointerType !== 'mouse' ||
       e.button !== 0 ||
       navigating
@@ -655,7 +769,7 @@
   }
 
   function ontouchstart(e: TouchEvent) {
-    if (lightboxTransitioning || navigating) return;
+    if (lightboxTransitioning || comparisonTransitioning || navigating) return;
     if (e.touches.length === 2) {
       swipeAnimating = false;
       swipeOffset = 0;
@@ -823,7 +937,6 @@
     data-gallery-lightbox
     class="lightbox fixed inset-0 m-0 h-screen max-h-none w-screen max-w-none grid-rows-[auto_minmax(0,1fr)] gap-3 border-0 bg-black/90 p-4 open:grid"
     aria-label={ui[lang].imageViewer}
-    onclick={handleDialogClick}
     oncancel={(event) => {
       event.preventDefault();
       requestClose();
@@ -831,8 +944,8 @@
     onwheel={preventPageScroll}
     ontouchmove={preventPageScroll}
   >
-    <div class="flex items-start justify-between gap-2">
-      <div class="flex items-center gap-2">
+    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)]">
+      <div class="flex min-w-0 items-center gap-2 md:justify-self-start">
         <button
           type="button"
           class="min-w-16 cursor-pointer border border-white/40 px-3 py-2 text-sm tabular-nums text-white hover:border-white"
@@ -860,10 +973,33 @@
           {index + 1} / {images.length}
         </span>
       </div>
+      {#if comparisonIndexes.length > 1}
+        <nav
+          bind:this={comparisonNav}
+          aria-label={ui[lang].compareDrawings}
+          class="lightbox-comparison-options no-scrollbar col-span-2 row-start-2 w-full min-w-0 touch-pan-x scroll-px-4 overflow-x-auto px-4 md:col-span-1 md:col-start-2 md:row-start-1 md:max-w-[50vw] md:justify-self-center md:px-0"
+        >
+          <div class="mx-auto flex w-max gap-2">
+            {#each comparisonIndexes as comparisonIndex}
+              <button
+                type="button"
+                class="shrink-0 cursor-pointer border border-white/40 px-3 py-2 text-sm text-white hover:border-white disabled:cursor-default disabled:border-white disabled:bg-white disabled:text-black"
+                aria-current={comparisonIndex === index ? 'true' : undefined}
+                disabled={comparisonIndex === index}
+                onclick={() => void compareTo(comparisonIndex)}
+              >
+                {comparisonLabel(comparisonIndex)}
+              </button>
+            {/each}
+          </div>
+        </nav>
+      {:else}
+        <div class="hidden md:block md:justify-self-center"></div>
+      {/if}
       <button
         bind:this={closeButton}
         type="button"
-        class="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white"
+        class="col-start-2 row-start-1 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-3xl leading-none text-white hover:border-white md:col-start-3 md:justify-self-end"
         onclick={requestClose}
         aria-label={ui[lang].close}>×</button
       >
@@ -906,6 +1042,7 @@
         {/if}
         <div
           class="lightbox-slide-current absolute inset-0 flex items-center justify-center overflow-hidden"
+          class:lightbox-comparison-current={Boolean(comparisonPrevious)}
           style:transform={slideTransform(0)}
           style:transition={slideTransition}
         >
@@ -953,6 +1090,28 @@
             />
           {/if}
         </div>
+        {#if comparisonPrevious}
+          <div
+            class="lightbox-comparison-previous pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+            aria-hidden="true"
+          >
+            <img
+              src={comparisonPrevious.src}
+              width={comparisonPrevious.sourceWidth}
+              height={comparisonPrevious.sourceHeight}
+              alt=""
+              draggable="false"
+              style:width={comparisonPrevious.width
+                ? `${comparisonPrevious.width}px`
+                : undefined}
+              style:height={comparisonPrevious.height
+                ? `${comparisonPrevious.height}px`
+                : undefined}
+              style:transform={`translate3d(${comparisonPrevious.pan.x}px, ${comparisonPrevious.pan.y}px, 0) scale(${comparisonPrevious.scale})`}
+              class="h-auto max-h-full w-auto max-w-full object-contain select-none"
+            />
+          </div>
+        {/if}
         {#if images.length > 1}
           <div
             class="lightbox-slide-next pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
@@ -1052,6 +1211,17 @@
   .lightbox-next {
     grid-area: next;
     justify-self: end;
+  }
+
+  .lightbox-comparison-current {
+    z-index: 10;
+    animation: comparison-in 180ms ease-out;
+  }
+
+  @keyframes comparison-in {
+    from {
+      opacity: 0;
+    }
   }
 
   @media (min-width: 640px) {

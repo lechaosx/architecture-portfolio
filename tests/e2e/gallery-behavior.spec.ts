@@ -83,12 +83,14 @@ test('separate Hangár galleries share a lightbox across the full-width drawing'
   );
   await expect(duplicateTriggers).toHaveCount(2);
   const cover = duplicateTriggers.first();
-  const lastGalleryDrawing = page.locator(
-    'button:has(img[src="/uploads/11 AXONOMETRIE DÍLNY+.webp"])',
-  );
-  const fullWidthDrawing = page.locator(
-    'button:has(img[src="/uploads/12 3dkce+popisy-1.webp"])',
-  );
+  const lastGalleryDrawing = page
+    .locator('article > div.mt-12.grid')
+    .first()
+    .locator('button')
+    .last();
+  const fullWidthDrawing = page
+    .locator('article > button.mt-12[data-lightbox-index]')
+    .last();
   const [coverBox, galleryBox, fullWidthBox] = await Promise.all([
     cover.boundingBox(),
     lastGalleryDrawing.boundingBox(),
@@ -343,6 +345,150 @@ test('desktop navigation stays outside zoomed imagery and remains clickable', as
   await expect(page.getByRole('button', { name: 'Reset zoom' })).toHaveText(
     '100%',
   );
+});
+
+test('comparison shortcuts preserve the inspected area without changing page previews', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const failedSetImages: string[] = [];
+  page.on('response', (response) => {
+    if (
+      response.status() >= 400 &&
+      decodeURIComponent(response.url()).includes('GALERIE - Půdorys')
+    ) {
+      failedSetImages.push(response.url());
+    }
+  });
+  await page.goto('/projects/galerie-hang%C3%A1r/');
+  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+  const groundFloorPreview = galleryImage(page, 4);
+  const basementPreview = galleryImage(page, 5);
+  const roofPreview = galleryImage(page, 6);
+  await expect(groundFloorPreview).toBeVisible();
+  await expect(basementPreview).toBeVisible();
+  await expect(roofPreview).toBeVisible();
+
+  await groundFloorPreview.click();
+  await waitForLightbox(page);
+  const comparison = page.getByRole('navigation', {
+    name: 'Compare drawings',
+  });
+  await expect(comparison.getByRole('button', { name: 'Ground floor plan' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+
+  const stage = page.locator('.lightbox-stage');
+  const bounds = (await stage.boundingBox())!;
+  await stage.hover();
+  await page.mouse.wheel(0, -800);
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width / 2 + 60, bounds.y + bounds.height / 2 + 30);
+  await page.mouse.up();
+  const zoom = await page.getByRole('button', { name: 'Reset zoom' }).innerText();
+  const transform = await page
+    .locator('.lightbox-slide-current > img')
+    .evaluate((image: HTMLImageElement) => image.style.transform);
+
+  const blendPromise = page.waitForFunction(() => {
+    const current = document.querySelector<HTMLElement>(
+      '.lightbox-comparison-current',
+    );
+    const previous = document.querySelector<HTMLElement>(
+      '.lightbox-comparison-previous',
+    );
+    const animation = current?.getAnimations()[0];
+    if (!current || !previous || !animation) return false;
+    animation.pause();
+    animation.currentTime = 90;
+    return {
+      currentOpacity: Number(getComputedStyle(current).opacity),
+      previousOpacity: Number(getComputedStyle(previous).opacity),
+      selectedButtons: document.querySelectorAll(
+        '[aria-label="Compare drawings"] button:disabled',
+      ).length,
+    };
+  });
+  await comparison.getByRole('button', { name: 'Basement floor plan' }).click();
+  const blend = await blendPromise;
+  await expect(page).toHaveURL(/#image-5$/);
+  const blendState = await blend.jsonValue();
+  if (!blendState) throw new Error('Expected an active comparison blend');
+  expect(blendState.currentOpacity).toBeGreaterThan(0);
+  expect(blendState.currentOpacity).toBeLessThan(1);
+  expect(blendState.previousOpacity).toBe(1);
+  expect(blendState.selectedButtons).toBe(1);
+  await expect(page.getByRole('button', { name: 'Reset zoom' })).toHaveText(zoom);
+  await expect
+    .poll(() =>
+      page
+        .locator('.lightbox-slide-current > img')
+        .evaluate((image: HTMLImageElement) => image.style.transform),
+    )
+    .toBe(transform);
+  expect(failedSetImages).toEqual([]);
+  await expect(page.locator('.lightbox-comparison-previous')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Next image' }).click();
+  await expect(page.getByRole('button', { name: 'Reset zoom' })).toHaveText(
+    '100%',
+  );
+  await expect(page).toHaveURL(/#image-6$/);
+  await page.getByRole('button', { name: 'Next image' }).click();
+  await expect(page.getByRole('navigation', { name: 'Compare drawings' })).toHaveCount(0);
+});
+
+test('comparison shortcuts remain usable when the toolbar is narrow', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/projects/galerie-hang%C3%A1r/');
+  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+  await galleryImage(page, 6).click();
+  await waitForLightbox(page);
+
+  const dialog = page.getByRole('dialog', { name: 'Image viewer' });
+  const comparison = page.getByRole('navigation', {
+    name: 'Compare drawings',
+  });
+  const [dialogBox, resetBox, closeBox, comparisonBox] = await Promise.all([
+    dialog.boundingBox(),
+    page.getByRole('button', { name: 'Reset zoom' }).boundingBox(),
+    page.getByRole('button', { name: 'Close' }).boundingBox(),
+    comparison.boundingBox(),
+  ]);
+  expect(comparisonBox!.y).toBeGreaterThanOrEqual(
+    Math.max(resetBox!.y + resetBox!.height, closeBox!.y + closeBox!.height),
+  );
+  expect(comparisonBox!.x).toBeGreaterThanOrEqual(dialogBox!.x);
+  expect(comparisonBox!.x + comparisonBox!.width).toBeLessThanOrEqual(
+    dialogBox!.x + dialogBox!.width,
+  );
+
+  const visibility = await comparison.evaluate((navigation) => {
+    const selected = navigation.querySelector<HTMLElement>(
+      '[aria-current="true"]',
+    )!;
+    const navigationBox = navigation.getBoundingClientRect();
+    const selectedBox = selected.getBoundingClientRect();
+    return {
+      overflows: navigation.scrollWidth > navigation.clientWidth,
+      selectedLeft: selectedBox.left - navigationBox.left,
+      selectedRight: navigationBox.right - selectedBox.right,
+    };
+  });
+  expect(visibility.overflows).toBe(true);
+  expect(visibility.selectedLeft).toBeGreaterThanOrEqual(0);
+  expect(visibility.selectedRight).toBeGreaterThanOrEqual(0);
+
+  await context.close();
 });
 
 test('caption text follows the language but never handles navigation gestures', async ({

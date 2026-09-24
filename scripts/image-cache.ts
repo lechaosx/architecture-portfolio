@@ -25,6 +25,16 @@ export function shouldPublishDerivative(
   return derivativeBytes < sourceBytes;
 }
 
+export function displaySourceUrl(
+  originalUrl: string,
+  cacheKey: string,
+  extension: string,
+) {
+  return /%2b/i.test(originalUrl)
+    ? `/_responsive/${cacheKey}/source.${extension}`
+    : originalUrl;
+}
+
 export function webpPolicy(format: string, hasAlpha: boolean) {
   if (format === 'png' || hasAlpha) {
     return { lossless: true, effort: 4 } as const;
