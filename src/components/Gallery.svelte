@@ -544,7 +544,17 @@
   }
   function onkeydown(e: KeyboardEvent) {
     if (!open) return;
-    if (e.key === 'ArrowRight') {
+    if (e.key === 'Tab') {
+      // A modal <dialog> lets Tab leave for the browser chrome at either end.
+      const focusable = [
+        ...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]'),
+      ].filter((element) => !element.closest('[aria-hidden="true"]'));
+      const edge = e.shiftKey ? focusable[0] : focusable.at(-1);
+      if (document.activeElement === edge) {
+        e.preventDefault();
+        (e.shiftKey ? focusable.at(-1) : focusable[0])?.focus();
+      }
+    } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       next();
     } else if (e.key === 'ArrowLeft') {

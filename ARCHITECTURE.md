@@ -168,7 +168,9 @@ tile regions from exposing the dark stage.
 ### Lightbox modal state — [Explicit]
 
 The lightbox is a native modal `<dialog>`, so the browser owns the top layer,
-focus containment, and Escape handling. Focus enters the close control and
+inertness of the page behind it, and Escape handling. A modal dialog still lets
+Tab and Shift+Tab leave for the browser chrome at either end, so the keydown
+handler wraps focus between the first and last enabled control. Focus enters the close control and
 returns to the opening thumbnail without scrolling the page on close. The
 viewport-filling dialog suppresses wheel, touch, and keyboard scrolling without
 changing document overflow or positioning, except for native scrolling inside
