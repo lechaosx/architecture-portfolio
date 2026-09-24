@@ -316,7 +316,7 @@ test('mouse swipe, zoom, pan, and reset use the same direct manipulation model',
   await expect(currentImage).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
 });
 
-test('desktop navigation stays outside zoomed imagery and remains clickable', async ({
+test('desktop navigation overlays the full-width stage and stays clickable while zoomed', async ({
   page,
 }) => {
   await gotoProject(page);
@@ -326,13 +326,22 @@ test('desktop navigation stays outside zoomed imagery and remains clickable', as
   const stage = page.locator('.lightbox-stage');
   const previous = page.getByRole('button', { name: 'Previous image' });
   const next = page.getByRole('button', { name: 'Next image' });
-  const [stageBox, previousBox, nextBox] = await Promise.all([
+  const [stageBox, captionBox, previousBox, nextBox] = await Promise.all([
     stage.boundingBox(),
+    page.locator('.lightbox-caption').boundingBox(),
     previous.boundingBox(),
     next.boundingBox(),
   ]);
-  expect(previousBox!.x + previousBox!.width).toBeLessThanOrEqual(stageBox!.x);
-  expect(stageBox!.x + stageBox!.width).toBeLessThanOrEqual(nextBox!.x);
+  expect(stageBox!.x).toBeCloseTo(captionBox!.x, 0);
+  expect(stageBox!.width).toBeCloseTo(captionBox!.width, 0);
+  expect(previousBox!.x).toBeGreaterThanOrEqual(stageBox!.x);
+  expect(previousBox!.x - stageBox!.x).toBeLessThan(stageBox!.width / 4);
+  expect(nextBox!.x + nextBox!.width).toBeLessThanOrEqual(
+    stageBox!.x + stageBox!.width,
+  );
+  expect(stageBox!.x + stageBox!.width - nextBox!.x).toBeLessThan(
+    stageBox!.width / 4,
+  );
 
   await stage.hover();
   await page.mouse.wheel(0, -1200);
@@ -600,7 +609,7 @@ test('caption text follows the language but never handles navigation gestures', 
   await expect(page).toHaveURL(/#image-2$/);
 });
 
-test('mobile touch stays inside the modal and keeps controls outside the image stage', async ({
+test('mobile touch stays inside the modal and navigation overlays the image stage', async ({
   browserName,
   browser,
 }) => {
@@ -631,7 +640,10 @@ test('mobile touch stays inside the modal and keeps controls outside the image s
   const toolbarBox = (await toolbar.boundingBox())!;
   const previousBox = (await previous.boundingBox())!;
   expect(toolbarBox.y + toolbarBox.height).toBeLessThanOrEqual(stageBox.y);
-  expect(stageBox.y + stageBox.height).toBeLessThanOrEqual(previousBox.y);
+  expect(previousBox.y).toBeGreaterThanOrEqual(stageBox.y);
+  expect(previousBox.y + previousBox.height).toBeLessThanOrEqual(
+    stageBox.y + stageBox.height,
+  );
   await expect(stage).toHaveCSS('overflow', 'hidden');
 
   const session = await context.newCDPSession(page);

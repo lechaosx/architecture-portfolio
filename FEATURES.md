@@ -327,9 +327,12 @@ Clicking the dark area around the image keeps the lightbox open; users close it
 with the dedicated close control, Escape, or browser Back.
 The overlay contains wheel, touch, and keyboard scrolling, while deliberate
 scrollbar movement is left in place when the lightbox closes. Its dialog,
-image, close, and navigation labels follow the selected site language. The
-top controls and navigation buttons stay outside the image viewport, including
-while zoomed.
+image, close, and navigation labels follow the selected site language.
+Previous/Next overlay the left and right edges of the image viewport, and the
+zoom and position controls overlay its corners. None of them move with the
+image while it is panned, zoomed, or swiped, and the image uses the full width
+of the lightbox. All overlay controls share one 40 px size and the site's
+outline-on-hover, invert-on-press treatment — [Explicit].
 
 ### High-detail architectural images — [Explicit]
 
@@ -389,16 +392,16 @@ The architect can assign otherwise ordinary project images to a named comparison
 set and give each image a Czech and English title. Set membership does not change
 the project page: every preview remains an individual image in its existing
 gallery or image-set position. Opening any member adds named shortcuts for the
-whole set, centred in the lightbox toolbar. A shortcut crossfades to
+whole set in the lightbox toolbar. A shortcut crossfades to
 the selected image while retaining zoom and pan, so aligned plans can be
 compared without losing the inspected location.
 The shortcuts remain in one left-aligned, horizontally scrollable row at every
 viewport width and bring the selected image into view. Touch dragging and a
 mouse wheel over the row both move the shortcuts horizontally without scrolling
-the page. The top bar otherwise contains only the close control. A fixed viewport overlay provides zoom-out,
-reset, and zoom-in controls at the top right; image position and a compact
-original-file link occupy another fixed overlay at the bottom right. Neither
-overlay moves with the image while it is panned or zoomed.
+the page. The top bar otherwise contains only the close control. A fixed
+viewport overlay provides zoom-out, reset, and zoom-in controls at the top
+right; image position and a compact original-file link occupy another fixed
+overlay at the bottom right.
 The selected image continues to use the same responsive or tiled deep-zoom
 renderer as every other lightbox image. A set's zoom limit is the lowest native
 detail limit among its members, so every target can display the retained view
