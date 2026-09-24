@@ -352,6 +352,18 @@ test('lightbox traps focus, closes with Escape, and restores its trigger', async
   await expect(thumbnail).toBeFocused();
 });
 
+test('clicking the lightbox backdrop keeps it open', async ({ page }) => {
+  await gotoProject(page);
+  await galleryImage(page, 10).click();
+  await waitForLightbox(page);
+
+  const dialog = page.getByRole('dialog', { name: 'Image viewer' });
+  await page.mouse.click(4, 4);
+
+  await expect(dialog).toBeVisible();
+  await expect(page).toHaveURL(/#image-10$/);
+});
+
 test('hash history does not restore scroll or move the page cover', async ({
   page,
 }) => {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   clampPan,
+  comparisonSetIndexes,
   containedImageSize,
   deepZoomViewport,
   displayedSwipeOffset,
@@ -13,6 +14,7 @@ import {
   panForZoom,
   scaleFromPinch,
   scaleFromWheel,
+  sharedMaximumScale,
   swipeDirection,
   type GalleryImage,
 } from './gallery';
@@ -156,8 +158,33 @@ describe('lightbox URLs', () => {
   );
 });
 
+describe('comparison sets', () => {
+  const images = [
+    image({ comparison_set: 'site-plan' }),
+    image(),
+    image({ comparison_set: ' site-plan ' }),
+    image({ comparison_set: 'sections' }),
+  ];
+
+  test('finds every image in the current image set in page order', () => {
+    expect(comparisonSetIndexes(images, 0)).toEqual([0, 2]);
+    expect(comparisonSetIndexes(images, 2)).toEqual([0, 2]);
+  });
+
+  test('does not expose a shortcut for an ungrouped or single-member image', () => {
+    expect(comparisonSetIndexes(images, 1)).toEqual([]);
+    expect(comparisonSetIndexes(images, 3)).toEqual([]);
+  });
+
+  test('limits shared zoom to the least detailed set member', () => {
+    expect(sharedMaximumScale([4, 2.5, 3])).toBe(2.5);
+    expect(sharedMaximumScale([])).toBe(1);
+  });
+});
+
 describe('lightbox image selection', () => {
   const responsiveImage: ResponsiveImage = {
+    originalUrl: '/uploads/project.jpg',
     source: {
       url: '/uploads/project.jpg',
       width: 4000,

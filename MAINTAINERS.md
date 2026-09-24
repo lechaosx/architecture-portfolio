@@ -29,9 +29,10 @@ bun run preview      # serve the built dist/ locally
 ```
 
 `test:e2e` builds the production site, including responsive images, before
-Playwright starts its preview server. Cold image processing is therefore not
-counted against the server startup timeout, and routes are not compiled during
-interaction tests. CI persists `node_modules/.astro` after that prebuild; the
+Playwright starts its preview server on `http://127.0.0.1:4322`, separate from
+Astro's default development port. Cold image processing is therefore not counted
+against the server startup timeout, and routes are not compiled during interaction
+tests. CI persists `node_modules/.astro` after that prebuild; the
 deployment build and later workflow runs reuse its content-addressed image cache.
 
 ## Project layout
@@ -111,6 +112,13 @@ blocks:
   - type: gallery
     images:
       - image: /uploads/drawing.jpg
+        comparison_set: site-plan
+        title_cs: Původní stav
+        title_en: Existing condition
+      - image: /uploads/proposal.jpg
+        comparison_set: site-plan
+        title_cs: Návrh
+        title_en: Proposal
   - type: image_set
     images:
       - image: /uploads/render-1.jpg
@@ -120,6 +128,10 @@ blocks:
 ```
 
 The four caption fields are optional; omit them to show only the enlarged image.
+An optional language-neutral `comparison_set` groups records with the same exact
+value across any image blocks on that project. The existing bilingual titles
+name the lightbox shortcuts. Grouping is lightbox-only and does not change how
+each preview is rendered on the project page.
 The cover and every image block feed one lightbox in page order. Lightbox links
 use that position (`#image-1`, `#image-2`, …), so reordering blocks or images
 also changes those addresses. Repeated `image` paths produce one lightbox entry;
@@ -143,6 +155,12 @@ than recursively reduced. Lossless tiles overlap by 1 px; lossy tiles overlap by
 16 px so WebP boundary filtering does not reach their visible cores. The deploy
 workflow's Astro action persists the cache between CI runs. Cache loss only
 makes the next build slower—it does not change its output.
+
+Uploads may keep spaces, accents, and `+` characters in their filenames. The
+manifest stores the original upload URL separately from its display fallback.
+For a `+` path, the build publishes the same source bytes at a hash-only display
+URL because Astro preview cannot serve that encoded path reliably; **Open
+original** still uses the untouched upload and its real filename.
 
 ### Change the content schema — update BOTH places
 

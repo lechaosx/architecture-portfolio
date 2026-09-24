@@ -134,6 +134,20 @@ the caption retains native scrolling while the surrounding dialog contains
 page-scroll gestures. A live status element reports the current gallery position
 without participating in the translated image/caption strip.
 
+Images with the same non-empty `comparison_set` expose centred toolbar controls.
+They share the main control row from the medium breakpoint upward and occupy a
+full-width second row below it on narrow screens. The strip scrolls horizontally
+when its intrinsic width exceeds its grid area, and a reactive effect centres the
+active button after opening or switching images. That path updates the active
+page index without calling the normal slide
+navigation or resetting the shared scale/pan state. The incoming processed
+preview is decoded first; outgoing and incoming preview layers then crossfade at
+the retained transform. The active image still initializes its ordinary full-
+image or OpenSeadragon renderer, and the temporary outgoing layer is removed
+after the blend. While a set member is active, the wheel and pinch ceiling is the
+minimum `nativeZoomScale` across the set's responsive sources. Reduced-motion
+mode switches immediately.
+
 ### Shared lightbox input and tiled rendering — [Explicit]
 
 The component owns one scale/pan gesture state for both paths. OpenSeadragon's
@@ -447,13 +461,23 @@ browser-test prebuild's results with the deployment build and later runs. A
 missing or evicted cache remains safe because the same build recreates it from
 the originals.
 
+The manifest separates each upload's `originalUrl` from the `source.url` used as
+the responsive ladder's lossless fallback. They normally match. When an encoded
+path contains `%2B`, the generator copies the untouched bytes to a hash-only
+`source.<ext>` URL and uses that for display because Astro's static preview
+misresolves plus signs during file lookup. The lightbox's **Open original** link
+continues to use `originalUrl`, so filename safety does not replace or re-encode
+the architect's file.
+
 ### Project image-block items are caption records — [Explicit]
 
 Each gallery or image-set item groups its root-absolute `image` path with optional
-paired `title_cs`/`title_en` and `description_cs`/`description_en` fields. Keeping
-the caption beside its image preserves their association when items are reordered
-in Pages CMS. Both block types use the same record shape so the page-level
-lightbox can flatten them into one sequence.
+paired `title_cs`/`title_en` and `description_cs`/`description_en` fields, plus an
+optional language-neutral `comparison_set` identifier. Keeping that metadata
+beside its image preserves the associations when items are reordered in Pages
+CMS. Both block types use the same record shape so the page-level lightbox can
+flatten them into one sequence. After exact-path deduplication, the final
+occurrence supplies both the caption and comparison membership.
 
 ### Sitemap — [Implicit]
 

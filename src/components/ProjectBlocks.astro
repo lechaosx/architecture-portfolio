@@ -4,6 +4,7 @@ import Prose from './Prose.astro';
 import { ui } from '../i18n';
 import {
   coverSizes,
+  displayImageUrl,
   LARGE_IMAGE_WIDTHS,
   responsiveSrcset,
   THUMBNAIL_WIDTHS,
@@ -65,7 +66,7 @@ const displayBlocks = blocks.map((block) =>
                   {ui.en.openImage} {index + 1}
                 </span>
                 <img
-                  src={item.image}
+                  src={displayImageUrl(responsive, item.image)}
                   srcset={responsiveSrcset(responsive, THUMBNAIL_WIDTHS)}
                   sizes={coverSizes(
                     aspectRatio,
@@ -108,7 +109,7 @@ const displayBlocks = blocks.map((block) =>
             {ui.en.openImage} {index + 1}
           </span>
           <img
-            src={item.image}
+            src={displayImageUrl(responsive, item.image)}
             srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
             sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
             width={responsive?.source.width}
@@ -142,7 +143,7 @@ const displayBlocks = blocks.map((block) =>
                 {ui.en.openImage} {index + 1}
               </span>
               <img
-                src={item.image}
+                src={displayImageUrl(responsive, item.image)}
                 srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
                 sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
                 width={responsive?.source.width}

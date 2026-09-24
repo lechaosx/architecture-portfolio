@@ -13,16 +13,19 @@ if (!projectSchema || typeof projectSchema === 'function') {
   throw new TypeError('Expected a static project schema');
 }
 
+interface CmsField {
+  name: string;
+  type?: string;
+  required?: boolean;
+  list?: boolean | { min?: number };
+  fields?: CmsField[];
+  blocks?: Array<{ name: string; fields?: CmsField[] }>;
+}
+
 const pagesConfig = Bun.YAML.parse(readFileSync('.pages.yml', 'utf8')) as {
   content: Array<{
     name: string;
-    fields?: Array<{
-      name: string;
-      type?: string;
-      required?: boolean;
-      list?: boolean | { min?: number };
-      blocks?: Array<{ name: string }>;
-    }>;
+    fields?: CmsField[];
   }>;
 };
 const projectsEditor = pagesConfig.content.find(
@@ -78,7 +81,12 @@ describe('project content schema', () => {
       },
       {
         type: 'image_set' as const,
-        images: [{ image: '/uploads/full-width.jpg' }],
+        images: [
+          {
+            image: '/uploads/full-width.jpg',
+            comparison_set: 'plans',
+          },
+        ],
       },
     ];
     const result = projectSchema.safeParse({ ...project, blocks });
@@ -101,6 +109,21 @@ describe('project content schema', () => {
       type: 'block',
       blocks: [{ name: 'text' }, { name: 'gallery' }, { name: 'image_set' }],
     });
+  });
+
+  test('exposes comparison-set membership for both image block types', () => {
+    const pageContent = projectEditorFields.find(
+      (field) => field.name === 'blocks',
+    );
+    for (const blockName of ['gallery', 'image_set']) {
+      const imageFields = pageContent?.blocks
+        ?.find((block) => block.name === blockName)
+        ?.fields?.find((field) => field.name === 'images')?.fields;
+      expect(imageFields?.find((field) => field.name === 'comparison_set')).toMatchObject({
+        type: 'string',
+        required: false,
+      });
+    }
   });
 });
 

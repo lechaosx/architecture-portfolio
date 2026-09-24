@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import {
   coverSizes,
+  displayImageUrl,
   responsiveSrcset,
   type ResponsiveImage,
 } from './images';
 
 const plan: ResponsiveImage = {
+  originalUrl: '/uploads/P%C5%AFdorys%201.NP.png',
   source: {
     url: '/uploads/P%C5%AFdorys%201.NP.png',
     width: 1000,
@@ -37,6 +39,23 @@ const plan: ResponsiveImage = {
     },
   ],
 };
+
+describe('displayImageUrl', () => {
+  test('uses a safe source alias only when it differs from the original URL', () => {
+    expect(displayImageUrl(plan, '/uploads/Půdorys 1.NP.png')).toBe(
+      '/uploads/Půdorys 1.NP.png',
+    );
+    expect(
+      displayImageUrl(
+        {
+          ...plan,
+          source: { ...plan.source, url: '/_responsive/hash/source.png' },
+        },
+        '/uploads/Plan+changes.png',
+      ),
+    ).toBe('/_responsive/hash/source.png');
+  });
+});
 
 describe('responsiveSrcset', () => {
   test('uses a processed native-resolution derivative as its ceiling', () => {

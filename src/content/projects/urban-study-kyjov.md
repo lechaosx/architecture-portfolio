@@ -74,6 +74,7 @@ blocks:
   - type: gallery
     images:
       - image: /uploads/04 SWOT - cyklostezky.png
+        comparison_set: kyjov-analyses
         title_cs: Analýza cyklo dopravy
         title_en: Cycling Transport Analysis
         description_cs: Analýza cyklodopravy se zaměřuje na hlavní cyklistické trasy
@@ -104,6 +105,7 @@ blocks:
           seating, secure bicycle parking, basic service facilities and e-bike
           charging.
       - image: /uploads/03 SWOT - život v Kyjově.png
+        comparison_set: kyjov-analyses
         title_cs: Život ve městě
         title_en: Life at the city
         description_cs: "Analýza života v Kyjově sleduje aktivity, které nejvýrazněji
@@ -138,6 +140,7 @@ blocks:
           key drivers of life and identity in Kyjov, deserving a high-quality,
           representative and open space for its future development."
       - image: /uploads/05 SWOT - Sportoviště.png
+        comparison_set: kyjov-analyses
         title_cs: Sportovní vybavenost
         title_en: Sports facilities
         description_cs: Analýza sportovní vybavenosti sleduje zastoupení jednotlivých
@@ -168,6 +171,7 @@ blocks:
           activities, attract new user groups and enhance the overall appeal of the
           sports complex.
       - image: /uploads/01 Problémová mapa +.png
+        comparison_set: kyjov-analyses
         title_cs: Hodnoty území
         title_en: Values of the Area
         description_cs: Analýza vymezuje hlavní hodnoty a existující potenciály města,
@@ -197,6 +201,7 @@ blocks:
           area within the central part of Kyjov, whose location and connections to
           surrounding functions provide strong potential for further development.
       - image: /uploads/02 Problémová mapa -.png
+        comparison_set: kyjov-analyses
         title_cs: Limity území
         title_en: Limitations of the Area
         description_cs: Analýza identifikuje hlavní prostorové a provozní nedostatky

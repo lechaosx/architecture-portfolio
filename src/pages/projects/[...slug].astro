@@ -6,7 +6,11 @@ import ProjectBlocks from '../../components/ProjectBlocks.astro';
 import T from '../../components/T.astro';
 import { frontmatter as site } from '../../content/singletons/site.md';
 import { ui } from '../../i18n';
-import { LARGE_IMAGE_WIDTHS, responsiveSrcset } from '../../images';
+import {
+  displayImageUrl,
+  LARGE_IMAGE_WIDTHS,
+  responsiveSrcset,
+} from '../../images';
 import { uniqueProjectImages } from '../../project-images';
 import { getResponsiveImage } from '../../server-images';
 
@@ -69,7 +73,7 @@ const responsiveCover = responsiveImages[coverIndex];
         {ui.en.openImage} {coverIndex + 1}
       </span>
       <img
-        src={d.cover}
+        src={displayImageUrl(responsiveCover, d.cover)}
         srcset={responsiveSrcset(responsiveCover, LARGE_IMAGE_WIDTHS)}
         sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
         width={responsiveCover?.source.width}

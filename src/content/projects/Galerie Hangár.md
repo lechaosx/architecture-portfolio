@@ -92,8 +92,17 @@ blocks:
   - type: gallery
     images:
       - image: /uploads/02 GALERIE - Půdorys 1NP+.webp
+        comparison_set: galerie-plans
+        title_cs: Půdorys 1. NP
+        title_en: Ground floor plan
       - image: /uploads/03 GALERIE - Půdorys 1PP+.webp
+        comparison_set: galerie-plans
+        title_cs: Půdorys 1. PP
+        title_en: Basement floor plan
       - image: /uploads/04 GALERIE - Půdorys - výkres střechy.webp
+        comparison_set: galerie-plans
+        title_cs: Půdorys střechy
+        title_en: Roof plan
       - image: /uploads/05 Pohled jižní a severní.webp
       - image: /uploads/06 Pohled východní a západní.webp
       - image: /uploads/07 Řezy.webp

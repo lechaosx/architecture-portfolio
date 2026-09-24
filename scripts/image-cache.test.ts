@@ -3,6 +3,7 @@ import {
   deepZoomLevels,
   deepZoomOverlap,
   derivativeWidths,
+  displaySourceUrl,
   imageCacheKey,
   shouldPublishDerivative,
   shouldGenerateDeepZoom,
@@ -31,6 +32,15 @@ describe('imageCacheKey', () => {
 });
 
 describe('derivative selection', () => {
+  test('uses a hash-only display URL when an upload path contains a plus sign', () => {
+    expect(
+      displaySourceUrl('/uploads/Plan%2Bchanges.webp', 'abc123', 'webp'),
+    ).toBe('/_responsive/abc123/source.webp');
+    expect(
+      displaySourceUrl('/uploads/P%C5%AFdorys%201.NP.png', 'abc123', 'png'),
+    ).toBe('/uploads/P%C5%AFdorys%201.NP.png');
+  });
+
   test('ends the derivative ladder at the native source width', () => {
     expect(derivativeWidths(640, [320, 480, 640, 960])).toEqual([
       320, 480, 640,

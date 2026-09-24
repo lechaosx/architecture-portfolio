@@ -15,6 +15,7 @@ const withoutEmptyCmsRows = (value: unknown) =>
 
 const projectImage = z.object({
   image: z.string(),
+  comparison_set: z.string().optional(),
   title_cs: z.string().optional(),
   title_en: z.string().optional(),
   description_cs: z.string().optional(),

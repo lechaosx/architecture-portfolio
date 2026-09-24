@@ -31,6 +31,22 @@ export function hasCaption(image: GalleryImage) {
   ].some((value) => Boolean(value?.trim()));
 }
 
+export function comparisonSetIndexes(
+  images: GalleryImage[],
+  currentIndex: number,
+) {
+  const set = images[currentIndex]?.comparison_set?.trim();
+  if (!set) return [];
+  const indexes = images.flatMap((image, index) =>
+    image.comparison_set?.trim() === set ? [index] : [],
+  );
+  return indexes.length > 1 ? indexes : [];
+}
+
+export function sharedMaximumScale(maxScales: number[]) {
+  return maxScales.length ? Math.min(...maxScales) : 1;
+}
+
 export function scaleFromWheel(
   scale: number,
   deltaY: number,
