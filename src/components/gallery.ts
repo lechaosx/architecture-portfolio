@@ -161,6 +161,81 @@ export function clampPan(
   };
 }
 
+/** At or below this width the side arrows step aside while the text shows. */
+export const PHONE_WIDTH = 480;
+const TEXT_MEASURE = 672;
+const PHONE_MARGIN = 24;
+
+export function cardPadding(cardWidth: number) {
+  return Math.min(64, Math.max(24, 0.06 * cardWidth));
+}
+
+/** The text column: the page measure, inside the card's padding and the viewport's limit. */
+export function cardColumn(cardWidth: number, columnLimit: number) {
+  return Math.min(
+    TEXT_MEASURE,
+    cardWidth - 2 * cardPadding(cardWidth),
+    columnLimit,
+  );
+}
+
+/** The widest text column the stage offers: clear of the side arrows, or the page margins on phones. */
+export function textColumnLimit(stageWidth: number, band: number) {
+  return (
+    stageWidth - 2 * (stageWidth <= PHONE_WIDTH ? PHONE_MARGIN : band)
+  );
+}
+
+/**
+ * The smallest scale, at least 1, of the rest-fitted image at which its card
+ * holds the text: `textHeight` measures the text at a column width.
+ */
+export function cardScale(
+  restImage: Size,
+  columnLimit: number,
+  textHeight: (columnWidth: number) => number,
+) {
+  const overflows = (scale: number) => {
+    const width = restImage.width * scale;
+    return (
+      textHeight(cardColumn(width, columnLimit)) + 2 * cardPadding(width) >
+      restImage.height * scale
+    );
+  };
+  if (!overflows(1)) return 1;
+  let low = 1;
+  let high = 2;
+  while (overflows(high)) [low, high] = [high, 2 * high];
+  for (let step = 0; step < 24; step += 1) {
+    const middle = (low + high) / 2;
+    if (overflows(middle)) low = middle;
+    else high = middle;
+  }
+  return high;
+}
+
+/** Where the back shows its card, always centred across the stage. */
+export interface CardView {
+  scale: number;
+  /** Offset of the card's centre below the stage centre. */
+  y: number;
+}
+
+/**
+ * The view that shows a card of `scale` × the rest-fitted image: centred, or,
+ * when taller than the rest area, with its top at the top band and moved up by
+ * `scrollTop`.
+ */
+export function cardView(
+  restImage: Size,
+  restArea: Size,
+  scale: number,
+  scrollTop: number,
+): CardView {
+  const overflow = Math.max(0, restImage.height * scale - restArea.height);
+  return { scale, y: overflow / 2 - Math.min(scrollTop, overflow) };
+}
+
 export function containedImageSize(image: Size, viewport: Size): Size {
   const fit = Math.min(
     viewport.width / image.width,

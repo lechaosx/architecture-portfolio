@@ -61,7 +61,9 @@ function pausedCardMove(page: Page, time: number) {
         getComputedStyle(sheet.querySelector(`${face} .lightbox-incoming`) ?? sheet)
           .opacity,
       );
-    const m11 = new DOMMatrix(getComputedStyle(sheet).transform).m11;
+    const m11 = new DOMMatrix(
+      getComputedStyle(sheet.querySelector('.lightbox-front')!).transform,
+    ).m11;
     return {
       hash: location.hash,
       turn: Math.acos(Math.max(-1, Math.min(1, m11))) / Math.PI,
@@ -77,8 +79,8 @@ function pausedCardMove(page: Page, time: number) {
 /** Horizontal scale of the current card's turn: 1 drawing side up, −1 text side up. */
 async function sheetTurn(page: Page) {
   return page
-    .locator('[data-lightbox-sheet]')
-    .evaluate((sheet) => new DOMMatrix(getComputedStyle(sheet).transform).m11);
+    .locator('.lightbox-front')
+    .evaluate((front) => new DOMMatrix(getComputedStyle(front).transform).m11);
 }
 
 /** Sends one-finger touch events at height 420; no `x` lifts the finger. */
@@ -89,6 +91,138 @@ async function oneFinger(context: BrowserContext, page: Page) {
       type,
       touchPoints: x === undefined ? [] : [{ x, y: 420 }],
     });
+}
+
+/**
+ * Serves `path` with test-only description text for the image uploaded as
+ * `file`, by rewriting the gallery island's serialized props; `responsive:
+ * false` also drops the image's responsive entry.
+ */
+async function withDescription(
+  page: Page,
+  path: string,
+  file: string,
+  text: string | { en: string; cs: string },
+  { responsive = true } = {},
+) {
+  const { en, cs } = typeof text === 'string' ? { en: text, cs: text } : text;
+  const decode = (value: string) =>
+    value
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&amp;', '&');
+  const encode = (value: string) =>
+    value
+      .replaceAll('&', '&amp;')
+      .replaceAll('"', '&quot;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;');
+  await page.route(
+    (url) => decodeURIComponent(url.pathname) === decodeURIComponent(path),
+    async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace(
+        /(<astro-island[^>]*? props=")([^"]*)"/,
+        (_, start: string, props: string) => {
+          const island = JSON.parse(decode(props));
+          const at = island.images[1].findIndex(
+            ([, item]: [number, { image: [number, string] }]) =>
+              item.image[1] === file,
+          );
+          const record = island.images[1][at][1];
+          record.description_en = [0, en];
+          record.description_cs = [0, cs];
+          // Astro serializes undefined as a bare [0].
+          if (!responsive) island.responsiveImages[1][at] = [0];
+          return `${start}${encode(JSON.stringify(island))}"`;
+        },
+      );
+      await route.fulfill({ response, body });
+    },
+  );
+}
+
+const LONG_TEXT = Array.from(
+  { length: 24 },
+  () =>
+    'The study follows how the square, the park and the stadium meet along the river, and where a new path could join them.',
+).join(' ');
+
+/** The card's box and its text column's. */
+function boxes(page: Page) {
+  return page.evaluate(() => {
+    const rect = (element: Element | null) => {
+      const box = element!.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height };
+    };
+    return {
+      card: rect(document.querySelector('.lightbox-card')),
+      article: rect(document.querySelector('.lightbox-card article')),
+    };
+  });
+}
+
+async function settled(page: Page) {
+  await expect
+    .poll(() => page.evaluate(() => document.getAnimations().length))
+    .toBe(0);
+}
+
+/** The front drawing's computed transform, as scale and offset. */
+function drawingView(page: Page) {
+  return page.locator('.lightbox-front > img').evaluate((image) => {
+    const matrix = new DOMMatrix(getComputedStyle(image).transform);
+    return { scale: matrix.a, x: matrix.e, y: matrix.f };
+  });
+}
+
+/**
+ * Clicks the flip button with every animation paused together, so each face's
+ * own timing stays in step; the returned function seeks to a turn and reports
+ * the card's and the front drawing's projected boxes there.
+ */
+async function pausedFlip(page: Page) {
+  const paused = page.waitForFunction(() => {
+    const sheet = document.querySelector('[data-lightbox-sheet]')!;
+    if (!sheet.getAnimations().length) return false;
+    for (const animation of document.getAnimations()) animation.pause();
+    return true;
+  });
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await paused;
+  return (turn: number) =>
+    page.evaluate((target) => {
+      const sheet = document.querySelector<HTMLElement>(
+        '[data-lightbox-sheet]',
+      )!;
+      const [turning] = sheet.getAnimations();
+      const at = (time: number) => {
+        for (const animation of document.getAnimations())
+          animation.currentTime = time;
+        return Number(
+          getComputedStyle(sheet).getPropertyValue('--lightbox-turn'),
+        );
+      };
+      let [low, high] = [0, Number(turning.effect!.getTiming().duration)];
+      // Seeking to the very end would finish, and so remove, the transition.
+      const turningOver = at(high / 2) > at(low);
+      for (let step = 0; step < 30; step += 1) {
+        const middle = (low + high) / 2;
+        if (at(middle) < target === turningOver) low = middle;
+        else high = middle;
+      }
+      at(high);
+      const box = (selector: string) => {
+        const rect = document.querySelector(selector)!.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      };
+      return {
+        card: box('.lightbox-card'),
+        front: box('.lightbox-front > img'),
+      };
+    }, turn);
 }
 
 async function pixelAt(page: Page, x: number, y: number) {
@@ -366,12 +500,16 @@ test('mouse swipe, zoom, pan, and reset use the same direct manipulation model',
   await page.mouse.wheel(0, -800);
   await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
   const currentImage = page.locator('.lightbox-slide-current img');
-  const transformBeforePan = await currentImage.getAttribute('style');
+  const transformBeforePan = await currentImage.evaluate(
+    (image) => getComputedStyle(image).transform,
+  );
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
   await page.mouse.move(start.x + 80, start.y + 40);
   await page.mouse.up();
-  expect(await currentImage.getAttribute('style')).not.toBe(transformBeforePan);
+  expect(
+    await currentImage.evaluate((image) => getComputedStyle(image).transform),
+  ).not.toBe(transformBeforePan);
 
   await page.mouse.dblclick(start.x, start.y);
   await expect(currentImage).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
@@ -451,7 +589,7 @@ test('comparison shortcuts preserve the inspected area without changing page pre
   expect(zoom).toBeGreaterThan(1);
   const transform = await page
     .locator('.lightbox-front > img')
-    .evaluate((image: HTMLImageElement) => image.style.transform);
+    .evaluate((image: HTMLImageElement) => getComputedStyle(image).transform);
 
   const blend = pausedCardMove(page, 90);
   await comparison.getByRole('button', { name: 'Basement floor plan' }).click();
@@ -473,7 +611,7 @@ test('comparison shortcuts preserve the inspected area without changing page pre
     .poll(() =>
       page
         .locator('.lightbox-front > img')
-        .evaluate((image: HTMLImageElement) => image.style.transform),
+        .evaluate((image: HTMLImageElement) => getComputedStyle(image).transform),
     )
     .toBe(transform);
   expect(failedSetImages).toEqual([]);
@@ -637,7 +775,7 @@ test('the description is on the back of the drawing', async ({ page }) => {
   await expect(paragraph).toHaveCSS('text-align', 'justify');
   expect((await paragraph.boundingBox())!.width).toBeLessThanOrEqual(672);
   const [textBox, closeBox, nextBox] = await Promise.all([
-    text.boundingBox(),
+    text.locator('article').boundingBox(),
     dialog.getByRole('button', { name: 'Close' }).boundingBox(),
     dialog.getByRole('button', { name: 'Next image' }).boundingBox(),
   ]);
@@ -692,12 +830,9 @@ test('long text scrolls inside the back and the wheel never zooms the hidden dra
   await waitForLightbox(page);
   await page.getByRole('button', { name: 'Show description' }).click();
   const text = page.getByRole('region', { name: 'Life at the city' });
-  const mask = () => text.evaluate((element) => getComputedStyle(element).maskImage);
-  const maskAtTop = await mask();
   await text.hover();
   await page.mouse.wheel(0, 150);
   await expect.poll(() => text.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
-  await expect.poll(mask).not.toBe(maskAtTop);
 
   await page.getByRole('button', { name: 'Show description' }).click();
   expect(await imageZoom(page)).toBeCloseTo(1, 2);
@@ -880,13 +1015,14 @@ test('reduced motion swaps the faces without rotating', async ({ page }) => {
   await galleryImage(page, 3).click();
   await waitForLightbox(page);
   await page.getByRole('button', { name: 'Show description' }).click();
-  const transform = await page
-    .getByRole('region', { name: 'Life at the city' })
-    .evaluate(
-      (element) =>
-        getComputedStyle(element.closest('[data-lightbox-sheet]')!).transform,
-    );
-  expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(transform);
+  const transforms = await page.evaluate(() =>
+    ['.lightbox-front', '.lightbox-card'].map(
+      (selector) => getComputedStyle(document.querySelector(selector)!).transform,
+    ),
+  );
+  for (const transform of transforms) {
+    expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(transform);
+  }
 });
 
 test('without reduced motion the card turns over both ways', async ({ page }) => {
@@ -941,7 +1077,9 @@ test('Next from the description slides the card away without turning it', async 
       slideX: slide.getBoundingClientRect().x,
       text: text?.getAttribute('aria-label'),
       textVisible: Boolean(text?.checkVisibility({ visibilityProperty: true })),
-      sheetTurn: new DOMMatrix(getComputedStyle(sheet).transform).m11,
+      sheetTurn: new DOMMatrix(
+        getComputedStyle(sheet.querySelector('.lightbox-front')!).transform,
+      ).m11,
       sheetAnimations: sheet.getAnimations().length,
     };
   });
@@ -1054,7 +1192,7 @@ test('Next inside a set blends and keeps the view; leaving the set slides', asyn
   const zoom = await imageZoom(page);
   const transform = await page
     .locator('.lightbox-front > img')
-    .evaluate((image: HTMLImageElement) => image.style.transform);
+    .evaluate((image: HTMLImageElement) => getComputedStyle(image).transform);
 
   const midBlend = pausedCardMove(page, 90);
   await page.getByRole('button', { name: 'Next image' }).click();
@@ -1072,7 +1210,7 @@ test('Next inside a set blends and keeps the view; leaving the set slides', asyn
   expect(
     await page
       .locator('.lightbox-front > img')
-      .evaluate((image: HTMLImageElement) => image.style.transform),
+      .evaluate((image: HTMLImageElement) => getComputedStyle(image).transform),
   ).toBe(transform);
 
   await page.keyboard.press('ArrowRight');
@@ -1193,7 +1331,9 @@ test('a drag on the text towards a variant turns and blends together', async ({
       const opacity = (face: string) =>
         Number(getComputedStyle(sheet.querySelector(`${face} .lightbox-incoming`)!).opacity);
       return {
-        turn: new DOMMatrix(getComputedStyle(sheet).transform).m11,
+        turn: new DOMMatrix(
+          getComputedStyle(sheet.querySelector('.lightbox-front')!).transform,
+        ).m11,
         front: opacity('.lightbox-front'),
         back: opacity('.lightbox-back'),
       };
@@ -1390,6 +1530,705 @@ for (const input of ['mouse', 'touch'] as const) {
   });
 }
 
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+]) {
+  test(`a short description's card is the drawing at rest (${viewport.width}×${viewport.height})`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await withDescription(
+      page,
+      projectPath,
+      '/uploads/03 SWOT - život v Kyjově.png',
+      'A short note.',
+    );
+    await gotoProject(page, '#image-3');
+    await waitForLightbox(page);
+    const front = (await page.locator('.lightbox-front > img').boundingBox())!;
+    await page.getByRole('button', { name: 'Show description' }).click();
+    await settled(page);
+    const { card } = await boxes(page);
+    expect(card.x).toBeCloseTo(front.x, 0);
+    expect(card.y).toBeCloseTo(front.y, 0);
+    expect(card.width).toBeCloseTo(front.width, 0);
+    expect(card.height).toBeCloseTo(front.height, 0);
+  });
+
+  test(`a long description's card grows to fit it and scrolls as a whole (${viewport.width}×${viewport.height})`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    const wide = '/uploads/Image25_000.webp'; // 2560 × 1440
+    await withDescription(page, projectPath, wide, LONG_TEXT);
+    await gotoProject(page, '#image-11');
+    await waitForLightbox(page);
+    await page.getByRole('button', { name: 'Show description' }).click();
+    await settled(page);
+    const scroller = page.getByRole('region', { name: 'Visualization' });
+    const band = await page
+      .getByRole('button', { name: 'Close' })
+      .evaluate(
+        (close) =>
+          2 * close.getBoundingClientRect().y +
+          close.getBoundingClientRect().height,
+      );
+
+    let { card, article } = await boxes(page);
+    expect(card.width / card.height).toBeCloseTo(2560 / 1440, 2);
+    expect(card.height).toBeGreaterThan(viewport.height);
+    expect(card.width).toBeGreaterThan(viewport.width);
+    expect(card.y).toBeCloseTo(band, 0);
+    // The text fits the card, centred in the viewport and clear of its edges.
+    expect(article.y).toBeGreaterThanOrEqual(card.y);
+    expect(article.y + article.height).toBeLessThanOrEqual(
+      card.y + card.height,
+    );
+    expect(article.x + article.width / 2).toBeCloseTo(viewport.width / 2, 0);
+    expect(article.x).toBeGreaterThanOrEqual(24);
+    expect(article.x + article.width).toBeLessThanOrEqual(viewport.width - 24);
+    // The browser's own scrollbar (headless Firefox hides every scrollbar).
+    expect(
+      await scroller.evaluate((element) => ({
+        scrollbar: getComputedStyle(element).scrollbarWidth,
+        overflows: element.scrollHeight > element.clientHeight,
+      })),
+    ).toEqual({
+      scrollbar: await page.evaluate(
+        () => getComputedStyle(document.documentElement).scrollbarWidth,
+      ),
+      overflows: true,
+    });
+
+    await scroller.evaluate((element) =>
+      element.scrollTo(0, element.scrollHeight),
+    );
+    ({ card } = await boxes(page));
+    expect(card.y).toBeLessThan(0);
+    expect(card.y + card.height).toBeCloseTo(viewport.height - band, 0);
+  });
+}
+
+test('a long description on a square drawing grows its card on a phone', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+  const band = await page
+    .getByRole('button', { name: 'Close' })
+    .evaluate(
+      (close) =>
+        2 * close.getBoundingClientRect().y +
+        close.getBoundingClientRect().height,
+    );
+  const { card, article } = await boxes(page);
+  expect(card.width / card.height).toBeCloseTo(1, 2);
+  // Taller than the rest area, so it opens at its top edge below the controls.
+  expect(card.height).toBeGreaterThan(844 - 2 * band);
+  expect(card.y).toBeCloseTo(band, 0);
+  expect(article.y + article.height).toBeLessThanOrEqual(card.y + card.height);
+  expect(Math.round(article.width)).toBe(390 - 48);
+});
+
+test('flipping from a zoomed corner turns about the card and zooms out to the card', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const rest = (await page.locator('.lightbox-front > img').boundingBox())!;
+  await page.mouse.move(rest.x + 20, rest.y + 20);
+  await page.mouse.wheel(0, -1200);
+  await expect
+    .poll(async () => (await drawingView(page)).scale)
+    .toBeGreaterThan(2);
+  const zoomed = await drawingView(page);
+  const zoomedTransform = await page
+    .locator('.lightbox-front > img')
+    .evaluate((image) => getComputedStyle(image).transform);
+  const flip = page.getByRole('button', { name: 'Show description' });
+
+  const midFlip = page.waitForFunction(() => {
+    const sheet = document.querySelector('[data-lightbox-sheet]')!;
+    const animations = sheet.getAnimations();
+    if (!animations.length) return false;
+    for (const animation of animations) {
+      animation.pause();
+      animation.currentTime = 280;
+    }
+    const matrix = new DOMMatrix(
+      getComputedStyle(document.querySelector('.lightbox-front > img')!)
+        .transform,
+    );
+    const front = sheet.querySelector<HTMLElement>('.lightbox-front')!;
+    const [originX] = getComputedStyle(front).transformOrigin.split(' ');
+    return {
+      scale: matrix.a,
+      x: matrix.e,
+      originX: parseFloat(originX),
+      sheetWidth: front.offsetWidth,
+    };
+  });
+  await flip.click();
+  const middle = await (await midFlip).jsonValue();
+  if (!middle) throw new Error('Expected a running flip');
+  expect(middle.scale).toBeLessThan(zoomed.scale);
+  expect(middle.scale).toBeGreaterThan(1);
+  expect(Math.abs(middle.x)).toBeLessThan(Math.abs(zoomed.x));
+  expect(middle.originX).toBeCloseTo(middle.sheetWidth / 2, 0);
+  await page.evaluate(() =>
+    document.getAnimations().forEach((animation) => animation.play()),
+  );
+  await settled(page);
+
+  // The back view: the whole card, centred on the turning axis.
+  expect(await drawingView(page)).toEqual({ scale: 1, x: 0, y: 0 });
+  const { card } = await boxes(page);
+  expect(card.x + card.width / 2).toBeCloseTo(middle.sheetWidth / 2, 0);
+
+  await flip.click();
+  await settled(page);
+  expect(
+    await page
+      .locator('.lightbox-front > img')
+      .evaluate((image) => getComputedStyle(image).transform),
+  ).toBe(zoomedTransform);
+});
+
+test('flip and blend to a variant zooms back into the saved view', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const rest = (await page.locator('.lightbox-front > img').boundingBox())!;
+  await page.mouse.move(rest.x + 20, rest.y + 20);
+  await page.mouse.wheel(0, -1200);
+  await expect
+    .poll(async () => (await drawingView(page)).scale)
+    .toBeGreaterThan(2);
+  const zoomed = await drawingView(page);
+  const zoomedTransform = await page
+    .locator('.lightbox-front > img')
+    .evaluate((image) => getComputedStyle(image).transform);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+
+  const midTurn = pausedCardMove(page, 280);
+  await page.getByRole('button', { name: 'Next image' }).click();
+  expect(await (await midTurn).jsonValue()).toBeTruthy();
+  const middle = await drawingView(page);
+  expect(middle.scale).toBeGreaterThan(1);
+  expect(middle.scale).toBeLessThan(zoomed.scale);
+  await page.evaluate(() =>
+    document.getAnimations().forEach((animation) => animation.play()),
+  );
+
+  await expect(page).toHaveURL(/#image-4$/);
+  await settled(page);
+  expect(
+    await page
+      .locator('.lightbox-front > img')
+      .evaluate((image) => getComputedStyle(image).transform),
+  ).toBe(zoomedTransform);
+});
+
+test('a resize while reading resizes the card and keeps the reading position', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await withDescription(
+    page,
+    projectPath,
+    '/uploads/03 SWOT - život v Kyjově.png',
+    LONG_TEXT,
+  );
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+  const text = page.getByRole('region', { name: 'Life at the city' });
+  const position = () =>
+    text.evaluate(
+      (element) =>
+        element.scrollTop / (element.scrollHeight - element.clientHeight),
+    );
+  await text.evaluate((element) =>
+    element.scrollTo(0, (element.scrollHeight - element.clientHeight) / 2),
+  );
+  await expect.poll(position).toBeCloseTo(0.5, 2);
+  const before = (await boxes(page)).card;
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect
+    .poll(async () => (await boxes(page)).card.width)
+    .not.toBeCloseTo(before.width, 0);
+  await expect.poll(position).toBeCloseTo(0.5, 1);
+});
+
+test('both faces keep one outline throughout a turn from a zoomed corner', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const rest = (await page.locator('.lightbox-front > img').boundingBox())!;
+  await page.mouse.move(rest.x + 30, rest.y + 30);
+  await page.mouse.wheel(0, -1200);
+  await expect
+    .poll(async () => (await drawingView(page)).scale)
+    .toBeGreaterThan(2);
+
+  const frameAt = await pausedFlip(page);
+  const dark = async (x: number, y: number) => {
+    if (x < 60 || x > 1380) return true; // under the edge arrows or off the screen
+    return Math.max(...(await pixelAt(page, x, y))) < 80;
+  };
+
+  for (const turn of [0.1, 0.25, 0.4, 0.6, 0.75, 0.9]) {
+    const { card, front } = await frameAt(turn);
+    expect(card.x).toBeCloseTo(front.x, 0);
+    expect(card.width).toBeCloseTo(front.width, 0);
+    expect(card.y).toBeCloseTo(front.y, 0);
+    expect(card.height).toBeCloseTo(front.height, 0);
+    await page.waitForTimeout(100);
+    const middle = Math.min(Math.max(card.y + card.height / 2, 100), 800);
+    // Beside the card only the backdrop shows: no drawing, and no light back.
+    expect(await dark(card.x - 6, middle)).toBe(true);
+    expect(await dark(card.x + card.width + 6, middle)).toBe(true);
+  }
+
+  // While the drawing faces the viewer, the card is not drawn at all.
+  await frameAt(0.25);
+  const front = page.locator('.lightbox-front');
+  await front.evaluate((face: HTMLElement) => (face.style.display = 'none'));
+  await page.waitForTimeout(100);
+  for (const [x, y] of [
+    [400, 300],
+    [720, 450],
+    [1000, 600],
+  ]) {
+    expect(await dark(x, y)).toBe(true);
+  }
+  await front.evaluate((face: HTMLElement) => (face.style.display = ''));
+
+  // While the back faces the viewer, the drawing is not drawn at all.
+  await frameAt(0.75);
+  await page
+    .locator('.lightbox-back')
+    .evaluate((back: HTMLElement) => (back.style.display = 'none'));
+  await page.waitForTimeout(100);
+  for (const [x, y] of [
+    [400, 300],
+    [720, 450],
+    [1000, 600],
+  ]) {
+    expect(await dark(x, y)).toBe(true);
+  }
+});
+
+for (const [name, file, hash] of [
+  ['a wide drawing', '/uploads/Image25_000.webp', '#image-11'],
+  ['a square drawing', '/uploads/03 SWOT - život v Kyjově.png', '#image-3'],
+] as const) {
+  test(`mid-turn a card larger than the screen keeps its full outline (${name})`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await withDescription(page, projectPath, file, LONG_TEXT);
+    await gotoProject(page, hash);
+    await waitForLightbox(page);
+    const frameAt = await pausedFlip(page);
+    // A point may fall on a line of text, so the card shows within a line's
+    // height of it.
+    const surface = async (x: number, y: number) => {
+      const png = await page.screenshot({
+        clip: { x, y: y - 16, width: 1, height: 32 },
+      });
+      const pixels = await sharp(png).raw().toBuffer({ resolveWithObject: true });
+      const { channels } = pixels.info;
+      for (let at = 0; at < pixels.data.length; at += channels) {
+        if (Math.min(...pixels.data.subarray(at, at + 3)) > 230) return true;
+      }
+      return false;
+    };
+    const dark = async (x: number, y: number) =>
+      Math.max(...(await pixelAt(page, x, y))) < 80;
+
+    for (const turn of [0.6, 0.75, 0.9]) {
+      const { card } = await frameAt(turn);
+      // The card turns about the screen's vertical centre line, where
+      // perspective leaves its top and bottom edges where they would lie flat.
+      const { flat, view } = await page
+        .locator('.lightbox-card')
+        .evaluate((element: HTMLElement) => {
+          element.style.setProperty('--lightbox-back-angle', '0deg');
+          const { y, height } = element.getBoundingClientRect();
+          element.style.removeProperty('--lightbox-back-angle');
+          // The scroller spans the screen, with any gutters on both sides.
+          const { clientWidth } = element.closest('[data-lightbox-scroll]')!;
+          const gutter = (innerWidth - clientWidth) / 2;
+          return {
+            flat: { top: y, bottom: y + height },
+            view: { left: gutter, right: innerWidth - gutter },
+          };
+        });
+      await page.waitForTimeout(100);
+      // Just inside the outline, within the screen beside any scrollbar
+      // gutters: the card surface.
+      const left = Math.max(card.x + 6, view.left + 4);
+      const right = Math.min(card.x + card.width - 6, view.right - 4);
+      const top = Math.max(flat.top + 6, 70);
+      const bottom = Math.min(flat.bottom - 6, 774);
+      const middle = (top + bottom) / 2;
+      expect(await surface(left, middle)).toBe(true);
+      expect(await surface(right, middle)).toBe(true);
+      expect(await surface(195, top)).toBe(true);
+      expect(await surface(195, bottom)).toBe(true);
+      // Just beyond an edge that is on screen: the backdrop.
+      if (card.x > 10) expect(await dark(card.x - 6, middle)).toBe(true);
+      if (flat.top > 76) expect(await dark(195, flat.top - 6)).toBe(true);
+    }
+  });
+}
+
+test("with classic scrollbars the back's scrollbar shows only while the back faces the viewer", async ({
+  playwright,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'only Chromium hides scrollbars by a launch flag');
+  const browser = await playwright.chromium.launch({
+    ignoreDefaultArgs: ['--hide-scrollbars'],
+  });
+  try {
+    const page = await browser.newPage({
+      baseURL: test.info().project.use.baseURL,
+      viewport: { width: 1440, height: 900 },
+      reducedMotion: 'no-preference',
+    });
+    await withDescription(page, projectPath, '/uploads/Image25_000.webp', LONG_TEXT);
+    await gotoProject(page, '#image-11');
+    await waitForLightbox(page);
+    const scroller = page.locator('.lightbox-verso');
+    const scrollbarShows = async () => {
+      const { right, gutter } = await scroller.evaluate((element: HTMLElement) => ({
+        right: element.getBoundingClientRect().right,
+        gutter: (element.offsetWidth - element.clientWidth) / 2,
+      }));
+      expect(gutter).toBeGreaterThan(0);
+      // Between the close button and the edge arrow.
+      const clip = { x: right - gutter, y: 100, width: gutter, height: 300 };
+      await page.waitForTimeout(100);
+      const shown = await page.screenshot({ clip });
+      await scroller.evaluate((element: HTMLElement) => (element.style.visibility = 'hidden'));
+      await page.waitForTimeout(100);
+      const hidden = await page.screenshot({ clip });
+      await scroller.evaluate((element: HTMLElement) => (element.style.visibility = ''));
+      return !shown.equals(hidden);
+    };
+
+    await settled(page);
+    const overAt = await pausedFlip(page);
+    for (const [turn, shows] of [
+      [0.1, false],
+      [0.3, false],
+      [0.6, true],
+      [0.9, true],
+    ] as const) {
+      await overAt(turn);
+      expect(await scrollbarShows(), `turning over, at ${turn}`).toBe(shows);
+    }
+    await page.evaluate(() => {
+      for (const animation of document.getAnimations()) animation.finish();
+    });
+    await settled(page);
+
+    const backAt = await pausedFlip(page);
+    for (const [turn, shows] of [
+      [0.9, true],
+      [0.6, true],
+      [0.3, false],
+      [0.1, false],
+    ] as const) {
+      await backAt(turn);
+      expect(await scrollbarShows(), `turning back, at ${turn}`).toBe(shows);
+    }
+  } finally {
+    await browser.close();
+  }
+});
+
+test('an image without responsive variants still turns over to its description', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await withDescription(
+    page,
+    projectPath,
+    '/uploads/03 SWOT - život v Kyjově.png',
+    'A short note.',
+    { responsive: false },
+  );
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const drawing = page.locator('.lightbox-front > img');
+  await expect(drawing).toHaveJSProperty('complete', true);
+  await settled(page);
+  const { rest, band } = await drawing.evaluate((image: HTMLImageElement) => {
+    const { x, y, width, height } = image.getBoundingClientRect();
+    const dialog = image.closest<HTMLElement>('.lightbox')!;
+    return {
+      rest: { x, y, width, height },
+      band: parseFloat(dialog.style.getPropertyValue('--lightbox-band')),
+    };
+  });
+  // Like every drawing, it rests inside the area between the control bands.
+  expect(rest.width).toBeGreaterThan(0);
+  expect(rest.y).toBeGreaterThanOrEqual(band - 0.5);
+  expect(rest.y + rest.height).toBeLessThanOrEqual(900 - band + 0.5);
+
+  const flip = page.getByRole('button', { name: 'Show description' });
+  await expect(flip).toBeVisible();
+  const frameAt = await pausedFlip(page);
+  // A short text's card is the drawing at rest, so the turn moves nothing.
+  for (const turn of [0.25, 0.5, 0.75]) {
+    await frameAt(turn);
+    const flat = await page.locator('.lightbox-card').evaluate((card: HTMLElement) => {
+      card.style.setProperty('--lightbox-back-angle', '0deg');
+      const { x, y, width, height } = card.getBoundingClientRect();
+      card.style.removeProperty('--lightbox-back-angle');
+      return { x, y, width, height };
+    });
+    for (const key of ['x', 'y', 'width', 'height'] as const) {
+      expect(flat[key], `${key} at ${turn}`).toBeCloseTo(rest[key], 0);
+    }
+  }
+  await page.evaluate(() => {
+    for (const animation of document.getAnimations()) animation.finish();
+  });
+  await settled(page);
+  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
+  const { card } = await boxes(page);
+  expect(card.width).toBeCloseTo(rest.width, 0);
+  expect(card.height).toBeCloseTo(rest.height, 0);
+  const scroll = await page
+    .locator('.lightbox-verso')
+    .evaluate((scroller) => [scroller.scrollHeight, scroller.clientHeight]);
+  expect(scroll[0]).toBe(scroll[1]);
+});
+
+test('a web font that arrives while reading re-sizes the card', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await withDescription(
+    page,
+    projectPath,
+    '/uploads/03 SWOT - život v Kyjově.png',
+    LONG_TEXT,
+  );
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+  const slackBeyondPadding = () =>
+    page.evaluate(() => {
+      const card = document
+        .querySelector('.lightbox-card')!
+        .getBoundingClientRect();
+      const article = document
+        .querySelector('.lightbox-card article')!
+        .getBoundingClientRect();
+      // cardPadding: 6% of the card's width within 24–64 px, above and below.
+      const padding = Math.min(64, Math.max(24, 0.06 * card.width));
+      return Math.round(card.height - article.height - 2 * padding);
+    });
+  expect(await slackBeyondPadding()).toBe(0);
+  const before = (await boxes(page)).card;
+
+  // A face that finishes loading now and sets the text larger, as a late
+  // subset does with different metrics.
+  await page.evaluate(async () => {
+    const rule = [...document.styleSheets]
+      .flatMap((sheet) => [...sheet.cssRules])
+      .find(
+        (candidate): candidate is CSSFontFaceRule =>
+          candidate instanceof CSSFontFaceRule &&
+          candidate.style
+            .getPropertyValue('unicode-range')
+            .startsWith('U+0-FF'),
+      )!;
+    const face = new FontFace(
+      'Roboto Variable',
+      rule.style.getPropertyValue('src'),
+      {
+        unicodeRange: 'U+0-FF',
+        sizeAdjust: '130%',
+      } as FontFaceDescriptors,
+    );
+    document.fonts.add(face);
+    await face.load();
+  });
+  await expect.poll(slackBeyondPadding).toBe(0);
+  expect((await boxes(page)).card.height).toBeGreaterThan(before.height + 100);
+});
+
+test('the card back is the page surface in either theme, following a live switch', async ({
+  page,
+}) => {
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+  const colours = () =>
+    page.evaluate(() => {
+      const card = getComputedStyle(document.querySelector('.lightbox-card')!);
+      const body = getComputedStyle(document.body);
+      return {
+        card: [card.backgroundColor, card.color],
+        page: [body.backgroundColor, body.color],
+      };
+    });
+
+  let seen = await colours();
+  expect(seen.card).toEqual(seen.page);
+  expect(seen.card).toEqual(['rgb(255, 255, 255)', 'rgb(0, 0, 0)']);
+
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'dark'));
+  seen = await colours();
+  expect(seen.card).toEqual(seen.page);
+  expect(seen.card).not.toEqual(['rgb(255, 255, 255)', 'rgb(0, 0, 0)']);
+  // The lightbox itself stays black and white.
+  expect(
+    await page
+      .getByRole('button', { name: 'Close' })
+      .evaluate((close) => getComputedStyle(close).backgroundColor),
+  ).toBe('rgb(0, 0, 0)');
+});
+
+test('a variant fading in on the back uses the themed card too', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'dark'));
+  await waitForLightbox(page);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+  const midTurn = pausedCardMove(page, 200);
+  await page.getByRole('button', { name: 'Next image' }).click();
+  expect(await (await midTurn).jsonValue()).toBeTruthy();
+  const [incoming, surface] = await page.evaluate(() => [
+    getComputedStyle(
+      document.querySelector(
+        '.lightbox-back .lightbox-incoming .lightbox-card',
+      )!,
+    ).backgroundColor,
+    getComputedStyle(document.body).backgroundColor,
+  ]);
+  expect(incoming).toBe(surface);
+});
+
+for (const viewport of [
+  { width: 390, height: 844 },
+  { width: 1440, height: 900 },
+]) {
+  test(`a pressed control keeps a black ring on any surface (${viewport.width}×${viewport.height})`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await gotoProject(page, '#image-3');
+    await waitForLightbox(page);
+    const flip = page.getByRole('button', { name: 'Show description' });
+    await flip.click();
+    await expect(flip).toHaveAttribute('aria-pressed', 'true');
+    await settled(page);
+    const box = (await flip.boundingBox())!;
+    const middle = box.y + box.height / 2;
+    // The fill is white; just outside it the ring is black, over the light card
+    // on a phone and over the backdrop on a wide screen.
+    expect(
+      Math.min(...(await pixelAt(page, box.x + box.width / 2, box.y + 4))),
+    ).toBeGreaterThan(230);
+    // Whole pixels that lie fully inside the 2 px ring at a fractional edge.
+    for (const x of [
+      Math.floor(box.x - 1.5),
+      Math.floor(box.x + box.width + 0.5),
+    ]) {
+      expect(Math.max(...(await pixelAt(page, x, middle)))).toBeLessThanOrEqual(
+        5,
+      );
+    }
+  });
+}
+
+test('with reduced motion the zoom-aware flip is instant', async ({ page }) => {
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  await page.keyboard.press('+');
+  await page.keyboard.press('+');
+  await expect
+    .poll(async () => (await drawingView(page)).scale)
+    .toBeCloseTo(1.5625, 3);
+  const flip = page.getByRole('button', { name: 'Show description' });
+
+  await flip.click();
+  expect(await drawingView(page)).toEqual({ scale: 1, x: 0, y: 0 });
+  await settled(page);
+  await flip.click();
+  expect((await drawingView(page)).scale).toBeCloseTo(1.5625, 3);
+});
+
+test('reading a long description leaves the drawing view and its tiles alone', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await withDescription(
+    page,
+    projectPath,
+    '/uploads/03 SWOT - život v Kyjově.png',
+    LONG_TEXT,
+  );
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  await page.locator('.openseadragon-canvas canvas').waitFor();
+  await page.keyboard.press('+');
+  await expect
+    .poll(async () => (await drawingView(page)).scale)
+    .toBeCloseTo(1.25, 3);
+  const zoomedTransform = await page
+    .locator('.lightbox-front > img')
+    .evaluate((image) => getComputedStyle(image).transform);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+  await page.waitForTimeout(300);
+
+  const tiles: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/image_files/')) tiles.push(request.url());
+  });
+  const text = page.getByRole('region', { name: 'Life at the city' });
+  await text.evaluate((element) => element.scrollTo(0, 600));
+  expect((await boxes(page)).card.y).toBeLessThan(0);
+  await page.waitForTimeout(500);
+  expect(tiles).toEqual([]);
+
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+  expect(
+    await page
+      .locator('.lightbox-front > img')
+      .evaluate((image) => getComputedStyle(image).transform),
+  ).toBe(zoomedTransform);
+});
+
 test('with reduced motion a change to a variant is instant', async ({
   browser,
   browserName,
@@ -1457,6 +2296,7 @@ test('resizing while the description shows reflows the text and its arrows', asy
   await expect(next).toBeVisible();
   const text = (await page
     .getByRole('region', { name: 'Life at the city' })
+    .locator('article')
     .boundingBox())!;
   const nextBox = (await next.boundingBox())!;
   expect(text.x + text.width).toBeLessThanOrEqual(nextBox.x);

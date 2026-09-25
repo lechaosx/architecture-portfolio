@@ -10,6 +10,8 @@
   import { ui, type Lang } from '../i18n';
   import {
     CONTROL_SIZE,
+    PHONE_WIDTH,
+    cardView,
     clampPan,
     clampScale,
     comparisonSetIndexes,
@@ -31,6 +33,7 @@
     settleDuration,
     sharedMaximumScale,
     swipeDirection,
+    textColumnLimit,
     zoomFloor,
     type GalleryImage,
     type Point,
@@ -60,10 +63,16 @@
   let scale = $state(1);
   let pan = $state<Point>({ x: 0, y: 0 });
   let showDescription = $state(false);
+  // A drawing without responsive variants reveals its size once it loads.
+  let loadedSize = $state<{ src: string; width: number; height: number }>();
   // A move towards a variant of the current card: `progress` 1 shows `target`.
   let change = $state<{ target: number; progress: number }>();
   // How long the card's next turn or blend takes; 0 moves it at once.
   let cardDuration = $state(0);
+  // Measured and scrolled by the backs (LightboxVerso) and bound up here.
+  let cardScale = $state(1);
+  let descriptionScroll = $state(0);
+  let incomingCardScale = $state(1);
   let dragging = $state(false);
   let swipeOffset = $state(0);
   let swipeDeltaX = 0;
@@ -119,7 +128,17 @@
   let comparisonIndexes = $derived(comparisonSetIndexes(images, index));
   let title = $derived(imageText(images[index], 'title', lang));
   let description = $derived(imageText(images[index], 'description', lang));
-  let flipped = $derived(showDescription && Boolean(description));
+  let flipped = $derived(showDescription && Boolean(cardRest));
+  let phone = $derived(stageWidth <= PHONE_WIDTH);
+  let columnLimit = $derived(textColumnLimit(stageWidth, areas.band));
+  // The back takes the front's rest size, so it exists only once that is known.
+  let cardRest = $derived(description ? lightboxImageSize : undefined);
+  // Where the back shows its card; the flip moves the drawing to and from it.
+  let backView = $derived(
+    cardRest
+      ? cardView(cardRest, areas.rest, cardScale, descriptionScroll)
+      : { scale: 1, y: 0 },
+  );
   // 1 shows the text side, 0 the drawing; a move to a variant from the text
   // side turns the card back as it blends.
   let turn = $derived(flipped ? 1 - (change?.progress ?? 0) : 0);
@@ -313,9 +332,11 @@
   }
 
   function restImageSize(imageIndex: number) {
-    const responsiveImage = responsiveImages[imageIndex];
-    return responsiveImage && stageWidth > 0 && stageHeight > 0
-      ? containedImageSize(responsiveImage.source, areas.rest)
+    const source =
+      responsiveImages[imageIndex]?.source ??
+      (loadedSize?.src === images[imageIndex]?.image ? loadedSize : undefined);
+    return source && stageWidth > 0 && stageHeight > 0
+      ? containedImageSize(source, areas.rest)
       : undefined;
   }
 
@@ -580,13 +601,18 @@
 
   function toggleDescription() {
     cardDuration = reducedMotion ? reducedFlipDuration : flipDuration;
+    if (!flipped) descriptionScroll = 0;
     showDescription = !flipped;
   }
 
-  /** The card of a newly shown image starts drawing side up, without turning. */
+  /**
+   * The card of a newly shown image starts drawing side up, without turning,
+   * with its text at the top.
+   */
   function showDrawingSide() {
     cardDuration = 0;
     showDescription = false;
+    descriptionScroll = 0;
   }
 
   function next() {
@@ -1101,8 +1127,9 @@
   <dialog
     bind:this={dialog}
     data-gallery-lightbox
-    class="lightbox fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 bg-black p-0 text-white"
+    class="lightbox fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 bg-black/90 p-0 text-white"
     class:lightbox-flipped={flipped}
+    class:lightbox-phone={phone}
     style:--lightbox-gap={`${areas.gap}px`}
     style:--lightbox-band={`${areas.band}px`}
     style:--lightbox-control={`${CONTROL_SIZE}px`}
@@ -1165,6 +1192,12 @@
           data-lightbox-sheet
           class="lightbox-sheet absolute inset-0"
           style:--lightbox-turn={turn}
+          style:--lightbox-blend={change?.progress ?? 0}
+          style:--drawing-scale={scale}
+          style:--drawing-x={`${pan.x}px`}
+          style:--drawing-y={`${pan.y}px`}
+          style:--card-scale={backView.scale}
+          style:--card-y={`${backView.y}px`}
         >
           <div
             class="lightbox-front lightbox-face flex items-center justify-center"
@@ -1186,11 +1219,13 @@
                   ? `${lightboxImageSize.height}px`
                   : undefined}
                 class:lightbox-image={scale === 1}
-                class="absolute h-auto max-h-full w-auto max-w-full object-contain select-none"
-                style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
+                class="lightbox-at-view absolute h-auto max-h-full w-auto max-w-full object-contain select-none"
                 onload={() => (pan = constrainedPan(pan))}
               />
-              <div bind:this={deepZoomElement} class="absolute inset-0"></div>
+              <div
+                bind:this={deepZoomElement}
+                class="lightbox-from-drawing absolute inset-0"
+              ></div>
             {:else}
               <img
                 bind:this={image}
@@ -1206,9 +1241,15 @@
                   ? `${lightboxImageSize.height}px`
                   : undefined}
                 class:lightbox-image={scale === 1}
-                class="h-auto max-h-full w-auto max-w-full object-contain select-none"
-                style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
-                onload={() => (pan = constrainedPan(pan))}
+                class="lightbox-at-view h-auto max-h-full w-auto max-w-full object-contain select-none"
+                onload={() => {
+                  loadedSize = {
+                    src: images[index].image,
+                    width: image.naturalWidth,
+                    height: image.naturalHeight,
+                  };
+                  pan = constrainedPan(pan);
+                }}
               />
             {/if}
             {#if change}
@@ -1217,7 +1258,6 @@
                    shows through undimmed. -->
               <div
                 class="lightbox-incoming absolute inset-0 flex items-center justify-center"
-                style:--lightbox-blend={change.progress}
                 aria-hidden="true"
               >
                 <img
@@ -1228,40 +1268,59 @@
                   draggable="false"
                   style:width={size ? `${size.width}px` : undefined}
                   style:height={size ? `${size.height}px` : undefined}
-                  style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
-                  class="h-auto max-h-full w-auto max-w-full object-contain select-none"
+                  class="lightbox-at-view h-auto max-h-full w-auto max-w-full object-contain select-none"
                 />
               </div>
             {/if}
           </div>
-          {#if description}
+          {#if description && cardRest}
+            {@const incomingText = change
+              ? imageText(images[change.target], 'description', lang)
+              : undefined}
+            {@const incomingRest = change && restImageSize(change.target)}
             <div
-              class="lightbox-back lightbox-face bg-black"
+              class="lightbox-back lightbox-face"
               class:lightbox-away={turn === 0}
               inert={!flipped}
             >
-              {#key index}
-                <LightboxVerso {title} {description} {lang} />
-              {/key}
-              {#if change}
-                {@const incomingText = imageText(
-                  images[change.target],
-                  'description',
-                  lang,
+              <div
+                class="absolute inset-0"
+                class:lightbox-outgoing={change && !incomingText}
+              >
+                {#key index}
+                  <LightboxVerso
+                    {title}
+                    {description}
+                    {lang}
+                    restImage={cardRest}
+                    {columnLimit}
+                    bind:cardScale
+                    bind:scrollTop={descriptionScroll}
+                  />
+                {/key}
+              </div>
+              {#if change && incomingText && incomingRest}
+                {@const incomingView = cardView(
+                  incomingRest,
+                  areas.rest,
+                  incomingCardScale,
+                  0,
                 )}
                 <div
-                  class="lightbox-incoming absolute inset-0 bg-black"
-                  style:--lightbox-blend={change.progress}
+                  class="lightbox-incoming absolute inset-0"
+                  style:--card-scale={incomingView.scale}
+                  style:--card-y={`${incomingView.y}px`}
                   aria-hidden="true"
                   inert
                 >
-                  {#if incomingText}
-                    <LightboxVerso
-                      title={imageText(images[change.target], 'title', lang)}
-                      description={incomingText}
-                      {lang}
-                    />
-                  {/if}
+                  <LightboxVerso
+                    title={imageText(images[change.target], 'title', lang)}
+                    description={incomingText}
+                    {lang}
+                    restImage={incomingRest}
+                    {columnLimit}
+                    bind:cardScale={incomingCardScale}
+                  />
                 </div>
               {/if}
             </div>
@@ -1359,7 +1418,7 @@
         <path d="M8.5 5l7 7-7 7" />
       </svg>
     </button>
-    {#if description}
+    {#if cardRest}
       <button
         type="button"
         class="lightbox-control absolute bottom-(--lightbox-gap) left-(--lightbox-gap)"
@@ -1451,12 +1510,15 @@
     border-color: #fff;
   }
 
+  /* The black ring keeps an inverted control distinct over a light surface,
+     such as the card back or a white drawing. */
   .lightbox-control:active,
   .lightbox-control[aria-pressed='true'],
   .lightbox-control[aria-current='true'] {
     border-color: #fff;
     background: #fff;
     color: #000;
+    box-shadow: 0 0 0 2px #000;
   }
 
   .lightbox-control:disabled {
@@ -1469,7 +1531,7 @@
   }
 
   /* One joined strip: neighbouring options share a border, and the current
-     option's white border stays above the shared ones. */
+     option's white border and ring stay above the shared ones. */
   .lightbox-set-option + .lightbox-set-option {
     margin-left: -1px;
   }
@@ -1486,13 +1548,49 @@
 
   /* The current image is a card: its drawing on the front and its description
      on the back. --lightbox-turn is 1 with the text side up and 0 with the
-     drawing up; --lightbox-blend shows a variant over both faces. Turn and
-     blend share one duration and easing, so a flip that blends keeps them in
-     step. */
+     drawing up; the card turns by it, and every face is drawn at the shown
+     view between the drawing's view and the back's card view, so a flip also
+     zooms between them. --lightbox-blend shows a variant over both faces.
+     Turn and blend share one duration and easing, so they stay in step.
+     The front face and each back's card turn themselves, about the stage's
+     vertical centre line under one perspective, so a card's scroll container
+     stays in screen space and clips it only to the screen, less any scrollbar
+     gutters. The sheet keeps a 3D context because Chromium hides the
+     turned-away front's drawing only within one. */
+  @property --lightbox-turn {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+
   .lightbox-sheet {
+    --shown-scale: calc(
+      var(--drawing-scale) +
+        (var(--card-scale) - var(--drawing-scale)) * var(--lightbox-turn)
+    );
+    --shown-x: calc(var(--drawing-x) * (1 - var(--lightbox-turn)));
+    --shown-y: calc(
+      var(--drawing-y) + (var(--card-y) - var(--drawing-y)) * var(--lightbox-turn)
+    );
     transform-style: preserve-3d;
-    transition: transform var(--lightbox-card-duration)
-      var(--lightbox-card-easing);
+  }
+
+  .lightbox-front {
+    transform: rotateY(var(--lightbox-front-angle, 0deg));
+  }
+
+  .lightbox-at-view {
+    transform: translate3d(var(--shown-x), var(--shown-y), 0)
+      scale(var(--shown-scale));
+  }
+
+  /* The tiled canvas stays laid out at the drawing's view and is carried to
+     the shown view; each back's card is carried the same way inside
+     LightboxVerso. */
+  .lightbox-from-drawing {
+    transform: translate(var(--shown-x), var(--shown-y))
+      scale(calc(var(--shown-scale) / var(--drawing-scale)))
+      translate(calc(-1 * var(--drawing-x)), calc(-1 * var(--drawing-y)));
   }
 
   .lightbox-face {
@@ -1511,9 +1609,18 @@
     transition-delay: 0s, var(--lightbox-card-duration);
   }
 
+  .lightbox-incoming,
+  .lightbox-outgoing {
+    transition: opacity var(--lightbox-card-duration) var(--lightbox-card-easing);
+  }
+
   .lightbox-incoming {
     opacity: var(--lightbox-blend);
-    transition: opacity var(--lightbox-card-duration) var(--lightbox-card-easing);
+  }
+
+  /* A back whose variant has no description fades to nothing. */
+  .lightbox-outgoing {
+    opacity: calc(1 - var(--lightbox-blend));
   }
 
   /* A blend that starts animated fades in from nothing. */
@@ -1524,16 +1631,15 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .lightbox-slide-current {
-      perspective: 2400px;
-    }
-
     .lightbox-sheet {
-      transform: rotateY(calc(var(--lightbox-turn) * 180deg));
-    }
-
-    .lightbox-back {
-      transform: rotateY(180deg);
+      --lightbox-perspective: 2400px;
+      --lightbox-front-angle: calc(var(--lightbox-turn) * 180deg);
+      --lightbox-back-angle: calc((var(--lightbox-turn) - 1) * 180deg);
+      /* 1 once the back faces the viewer, else 0. */
+      --lightbox-back-facing: round(var(--lightbox-turn), 1);
+      perspective: var(--lightbox-perspective);
+      transition: --lightbox-turn var(--lightbox-card-duration)
+        var(--lightbox-card-easing);
     }
   }
 
@@ -1545,9 +1651,7 @@
 
   /* On phones the edge arrows step aside for the text; dragging the text
      sideways still changes image. */
-  @media (max-width: 480px) {
-    .lightbox-flipped .lightbox-arrow {
-      visibility: hidden;
-    }
+  .lightbox-phone.lightbox-flipped .lightbox-arrow {
+    visibility: hidden;
   }
 </style>

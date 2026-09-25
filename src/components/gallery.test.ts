@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  cardColumn,
+  cardPadding,
+  cardScale,
+  cardView,
   clampPan,
   clampScale,
   comparisonSetIndexes,
@@ -21,6 +25,7 @@ import {
   settleDuration,
   sharedMaximumScale,
   swipeDirection,
+  textColumnLimit,
   zoomFloor,
   type GalleryImage,
 } from './gallery';
@@ -237,6 +242,57 @@ describe('lightbox gestures', () => {
   test('reduced motion keeps a swipe stationary until navigation', () => {
     expect(displayedSwipeOffset(80, false)).toBe(80);
     expect(displayedSwipeOffset(80, true)).toBe(0);
+  });
+});
+
+describe('the card back', () => {
+  test('padding scales with the card within its bounds', () => {
+    expect(cardPadding(300)).toBe(24);
+    expect(cardPadding(1000)).toBeCloseTo(60);
+    expect(cardPadding(2000)).toBe(64);
+  });
+
+  test('the column keeps the page measure inside the card and the viewport', () => {
+    expect(cardColumn(1000, 2000)).toBe(672);
+    expect(cardColumn(400, 2000)).toBe(352);
+    expect(cardColumn(2000, 342)).toBe(342);
+  });
+
+  test('the column stays clear of the side controls, or of the page margins on phones', () => {
+    expect(textColumnLimit(1440, 61.6)).toBeCloseTo(1316.8);
+    expect(textColumnLimit(390, 56)).toBe(342);
+  });
+
+  // 6000 px² of text in 20 px lines: height shrinks as the column widens.
+  const textHeight = (width: number) => Math.ceil(6000 / width) * 20;
+
+  test('a card grows only as far as its text needs', () => {
+    const rest = { width: 400, height: 400 };
+    const scale = cardScale(rest, 2000, textHeight);
+    const fits = (candidate: number) => {
+      const width = rest.width * candidate;
+      return (
+        textHeight(cardColumn(width, 2000)) + 2 * cardPadding(width) <=
+        rest.height * candidate
+      );
+    };
+    expect(scale).toBeGreaterThan(1);
+    expect(fits(scale)).toBe(true);
+    expect(fits(scale - 0.01)).toBe(false);
+  });
+
+  test('short text keeps the card at its rest size', () => {
+    expect(cardScale({ width: 400, height: 400 }, 2000, () => 100)).toBe(1);
+  });
+
+  test('a card taller than the rest area opens at its top edge and scrolls to its bottom', () => {
+    const rest = { width: 390, height: 390 };
+    const area = { width: 390, height: 732 };
+    expect(cardView(rest, area, 1, 0)).toEqual({ scale: 1, y: 0 });
+    // 3× is 1170 tall: 438 beyond the rest area.
+    expect(cardView(rest, area, 3, 0)).toEqual({ scale: 3, y: 219 });
+    expect(cardView(rest, area, 3, 100).y).toBe(119);
+    expect(cardView(rest, area, 3, 1000).y).toBe(-219);
   });
 });
 

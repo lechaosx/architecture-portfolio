@@ -580,7 +580,7 @@ test('dark theme keeps the lightbox surface black and controls white', async ({
       };
     },
   );
-  expect(colors.background).toEqual([0, 0, 0, 255]);
+  expect(colors.background).toEqual([0, 0, 0, 230]);
   expect(colors.foreground).toEqual([255, 255, 255, 255]);
 });
 
@@ -922,6 +922,32 @@ for (const [route, change] of [
     }
   });
 }
+
+test('the page shows faintly through the backdrop around a card', async ({ page }) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 11); // a wide visualization
+  await thumbnail.scrollIntoViewIfNeeded();
+  // The sticky header, between the set strip and ×.
+  const point = { x: 640, y: 30 };
+  const shot = async () =>
+    [
+      ...(await sharp(
+        await page.screenshot({ clip: { ...point, width: 1, height: 1 } }),
+      )
+        .raw()
+        .toBuffer()),
+    ].slice(0, 3);
+  const pageColour = await shot();
+  await thumbnail.click();
+  await waitForLightbox(page);
+
+  const seen = await shot();
+  for (const [channel, value] of pageColour.entries()) {
+    expect(value).toBeGreaterThan(200);
+    // 90 % black over the page, under the dialog's own 10 % backdrop.
+    expect(seen[channel]).toBeCloseTo(value * 0.1 * 0.9, -1);
+  }
+});
 
 test.describe('reduced motion', () => {
   test('opens without a transition and keeps swipe movement stationary', async ({

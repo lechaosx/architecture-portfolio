@@ -317,17 +317,18 @@ moving to another image.
 
 ### Full-screen lightbox with controls in the corners — [Explicit]
 
-The drawing owns the whole screen: the lightbox is solid black, has no rows
-above or below the image, and every control is a separate box floating over it.
-The set strip sits top-left, × is always in the top-right corner, Previous/Next
-are centred on the left and right edges, the description toggle sits
-bottom-left, and the bottom-right corner holds a `[CZ]`/`[EN]` language switch
-and one `[3 / 17 ↗]` link that shows the position and opens the untouched
-original in a new tab. All controls are 40 px boxes with a solid black fill,
-the site's outline-on-hover and invert-on-press treatment, and the current or
-pressed option inverted to white. Every element that looks like a button is one.
-The language switch is the same toggle as the footer's, so the page underneath
-changes with it; the lightbox keeps its image, side, zoom, and pan.
+The drawing owns the whole screen: the lightbox is 90% black, so the page shows
+faintly around the card and behind the controls, it has no rows above or below
+the image, and every control is a separate box floating over it. The set strip
+sits top-left, × is always in the top-right corner, Previous/Next are centred on
+the left and right edges, the description toggle sits bottom-left, and the
+bottom-right corner holds a `[CZ]`/`[EN]` language switch and one `[3 / 17 ↗]`
+link that shows the position and opens the untouched original in a new tab. All
+controls are 40 px boxes with a solid black fill, the site's outline-on-hover
+and invert-on-press treatment, and the current or pressed option inverted to
+white. Every element that looks like a button is one. The language switch is the
+same toggle as the footer's, so the page underneath changes with it; the
+lightbox keeps its image, side, zoom, and pan.
 
 At 100% the image fits between a top and a bottom control band, so nothing
 covers it, and it may use the full width under the edge arrows (on a phone a
@@ -460,32 +461,60 @@ Each image in the lightbox is a card with its drawing on the front and, when it
 has a description, the description on the back — [Explicit]. An icon-only toggle
 button in the bottom-left corner, named "Show description" and pressed while the
 text shows (text lines on the drawing side, an inverted picture on the text
-side), turns the current card over with a short 3D flip. The back is black, with
-the title as a heading above one justified, hyphenated column at the project
-page's reading width, kept clear of every control; on phones it uses the page's
-side margins. The whole text area scrolls with the wheel, touch, or keyboard,
-with breathing room above and below; its top and bottom edges fade only where
-more text continues, and short text is centred vertically. On the text side the
-wheel scrolls the text and zoom keys do nothing.
+side), turns the current card over with a short 3D flip about the card's own
+vertical centre line. The back is a real card back — [Explicit]: in the
+drawing's shape and the page's own colours, following the site theme like paper
+(the light surface with dark text, or the dark surface with light text,
+switching live) — [Explicit], and exactly the drawing's size at 100% when the
+text fits there; a longer text grows the card, keeping its shape, just until the
+title and the justified, hyphenated column fit comfortably at the normal text
+size. The column keeps the project page's reading width, the card's padding
+(which grows with the card) and the screen's limits: it stays centred on the
+screen and clear of the side arrows, or of the page's side margins on phones,
+even when a wide card reaches past the screen edges. Throughout a turn, even
+from a zoomed or panned view and with a card larger than the screen, the two
+faces share one outline, which only the screen's edges cut, so nothing of the
+drawing shows while the back faces the viewer and nothing of the back while the
+drawing does. The see-through backdrop shows around the card, and the backdrop
+and controls stay black and white. On the text side the wheel scrolls the text
+and zoom keys do nothing.
+
+A card taller than the screen scrolls as a whole — [Explicit]: the text side is
+an ordinary scrolling page with the browser's own scrollbar, wheel, touch and
+keyboard scrolling, whose content is the card, so scrolling pans the card. It
+opens with its top edge visible below the controls and the backdrop above it,
+and ends with its bottom edge above the bottom controls; mid-way the card passes
+under the controls. The scrollbar belongs to the back — [Implicit]: it shows
+only while the back faces the viewer, never over the drawing.
+
+The flip is zoom-aware — [Explicit]. Turning to the text from a zoomed or panned
+drawing zooms and pans the card, in the same movement and timing as the turn, to
+the whole card at the top of its text; turning back returns to exactly the view
+the visitor left, zooming in as the card turns. The drawing's view is untouched
+while the text shows, so reading never moves it; a resize re-fits the card,
+keeps the reading position, and the drawing view returns within its new limits.
 
 Changing image by any route shows the new image drawing side up. From the text
 side, moving to a different card slides the card away still showing its text
 while the next drawing slides in, and nothing rotates. Moving to a variant of
 the same card (Previous/Next, the arrow keys, a swipe, or a set button) turns
-the card back to its drawing side while both faces blend over the whole turn:
-the front from the current drawing to the variant's, the back from the current
-text to the variant's text (or to nothing, if the variant has none). Edge-on,
-both faces are exactly halfway, and the card ends on the variant's drawing at
-the retained view, with the variant's text on its back. A sideways drag on the
-text towards a variant drives the turn and the blend together from one progress,
-so releasing short turns and blends back to the text. The language switch keeps
-the current side. Dragging sideways over the text towards a different card moves
-the strip with the finger exactly as over the drawing, while a mostly vertical
-drag scrolls the text without moving the strip, text selection stays native, and
-a drag never starts while text is selected. On phones the edge arrows step aside
-while the text shows. Images without a description have no toggle and no back.
-Closing while the text shows fades the lightbox without morphing it into the
-thumbnail, and reopening shows the drawing.
+the card back to its drawing side, zooming into the view the visitor left, while
+both faces blend over the whole turn: the front from the current drawing to the
+variant's, the back from the current text to the variant's text (or to nothing,
+if the variant has none; a variant without responsive variants has no back to
+blend in, so the current text stays until that variant is shown and its drawing
+has loaded). Edge-on, both faces are exactly halfway, and the card ends on the
+variant's drawing at that view, with the variant's text on its back. A sideways
+drag on the text towards a variant drives the turn and the blend together from
+one progress, so releasing short turns and blends back to the text. The language
+switch keeps the current side. Dragging sideways over the text towards a
+different card moves the strip with the finger exactly as over the drawing,
+while a mostly vertical drag scrolls the text without moving the strip, text
+selection stays native, and a drag never starts while text is selected. On
+phones the edge arrows step aside while the text shows. Images without a
+description have no toggle and no back. Closing while the text shows fades the
+lightbox without morphing it into the thumbnail, and reopening shows the
+drawing.
 
 ### Project page content is optional — [Explicit]
 
@@ -499,7 +528,7 @@ Users who set `prefers-reduced-motion` get no fade/transform animation. Changes
 to that preference apply immediately. Lightbox open/close transitions, live
 swipe movement, and blends between variants are also disabled (the change
 happens at once), and turning over to an image description becomes a short
-crossfade.
+crossfade with the zoom changing at once.
 
 ---
 
