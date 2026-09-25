@@ -34,10 +34,12 @@ there's only one of each.
 **Adding a project:** Projects → new → fill in title, year, location, upload a
 cover image, and assemble **Page content** from text, thumbnail-gallery, and
 full-width image-set blocks. Add both language versions to each text block;
-image titles and short descriptions are optional. To compare aligned drawings,
+image titles and descriptions are optional. In the lightbox a title labels the
+image in the top-left corner, and a description sits on the back of the drawing,
+behind a button in the bottom-left corner. To compare aligned drawings,
 give each one the same **Comparison set** value and use its Czech and English
-image titles as the shortcut names. The previews remain ordinary individual
-images; the comparison shortcuts appear only in the lightbox. Set the
+image titles as the button names. The previews remain ordinary individual
+images; the set's buttons appear only in the lightbox. Set the
 **Filename**, then save. Keep the `.md` ending; the part before it
 becomes the project's web address (for example, `family-house.md` becomes
 `/projects/family-house/`). Changing the filename later changes that address, so
@@ -76,10 +78,13 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
 - A **Work** page with your projects in a grid.
 - A page per project assembled from interleaved text, thumbnail galleries, and
   full-width images or carousels. Every image opens into one full-screen gallery,
-  in the order it appears on the page. Enlarged images can show
-  optional titles and descriptions. Related drawings can be switched with a
-  crossfade that keeps the inspected zoom and position. Each open image
-  has a shareable `#image-N` address, and the browser Back button closes it.
+  in the order it appears on the page, with the drawing filling the screen and
+  the controls in its corners. Visitors zoom with the wheel, a pinch, a double
+  click or tap, or the `+`/`-`/`0` keys. An image's title shows in the corner
+  and its description can be turned over to read on the back. Related drawings
+  can be switched with a crossfade that keeps the inspected zoom and position.
+  Each open image has a shareable `#image-N` address, and the browser Back
+  button closes it.
 - A **Contact** page with your email, phone, and when you're reachable.
 - Smooth transitions between pages and gentle fade-ins — all riding the normal
   scrollbar (no janky scroll effects). Fast to load, works on phones.

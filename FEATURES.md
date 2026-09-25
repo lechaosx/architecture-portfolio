@@ -83,10 +83,11 @@ is not used (see ARCHITECTURE.md → "Self-hosted webfonts").
 
 ### Justified, language-aware prose — [Explicit]
 
-Rich-text bodies are justified and use automatic hyphenation. Each Czech and
-English prose variant keeps its own `lang` attribute, allowing the browser to
-apply the corresponding language's word-breaking and hyphenation rules. Short
-interface labels, metadata, and image captions remain normally aligned.
+Rich-text bodies and lightbox image descriptions are justified and use
+automatic hyphenation. Each Czech and English variant keeps its own `lang`
+attribute, allowing the browser to apply the corresponding language's
+word-breaking and hyphenation rules. Short interface labels, metadata, and image
+titles remain normally aligned.
 
 ---
 
@@ -300,17 +301,41 @@ position on close, changing crop as its aspect ratio changes and waiting for the
 enlarged preview before it animates. The overlay fades over the page and its
 header; the header remains in place beneath it. Image hover remains independent,
 including when the lightbox opens partway through the hover effect.
-Every occurrence of an image is its own lightbox position with its own caption,
-including when the same upload is used more than once on a page — [Explicit].
+Every occurrence of an image is its own lightbox position with its own title and
+description, including when the same upload is used more than once on a page —
+[Explicit].
 The lightbox shows the current image and total count, and its navigation controls
 use the same visual language as the home carousel without adopting autoplay,
 cropping, or dot indicators.
+
 If the sticky header or viewport edge obscures a thumbnail, the lightbox uses
 only the overlay fade instead of lifting the hidden part into an image morph.
 Image gestures and page scrolling wait for opening and closing transitions to
 finish. Closing a zoomed image fades the overlay without morphing the manipulated
 image into its thumbnail. Zoomed content stays inside its outgoing slide when
 moving to another image.
+
+### Full-screen lightbox with controls in the corners — [Explicit]
+
+The drawing owns the whole screen: the lightbox is solid black, has no rows
+above or below the image, and every control is a separate box floating over it.
+The set strip sits top-left, × is always in the top-right corner, Previous/Next
+are centred on the left and right edges, the description toggle sits
+bottom-left, and the bottom-right corner holds a `[CZ]`/`[EN]` language switch
+and one `[3 / 17 ↗]` link that shows the position and opens the untouched
+original in a new tab. All controls are 40 px boxes with a solid black fill,
+the site's outline-on-hover and invert-on-press treatment, and the current or
+pressed option inverted to white. Every element that looks like a button is one.
+The language switch is the same toggle as the footer's, so the page underneath
+changes with it; the lightbox keeps its image, side, zoom, and pan.
+
+At 100% the image fits between a top and a bottom control band, so nothing
+covers it, and it may use the full width under the edge arrows (on a phone a
+square drawing fills the width). The 100% view depends only on the image's
+aspect ratio, never on its title or description, so swipes and comparison
+crossfades keep their geometry. Zoomed, the image runs under the controls to the
+screen edges, and any part of it can be panned out from under every control.
+Zooming out below 100% is allowed until the image clears the edge arrows too.
 
 ### Addressable lightbox images — [Explicit]
 
@@ -329,12 +354,10 @@ Clicking the dark area around the image keeps the lightbox open; users close it
 with the dedicated close control, Escape, or browser Back.
 The overlay contains wheel, touch, and keyboard scrolling, while deliberate
 scrollbar movement is left in place when the lightbox closes. Its dialog,
-image, close, and navigation labels follow the selected site language.
-Previous/Next overlay the left and right edges of the image viewport, and the
-zoom and position controls overlay its corners. None of them move with the
-image while it is panned, zoomed, or swiped, and the image uses the full width
-of the lightbox. All overlay controls share one 40 px size and the site's
-outline-on-hover, invert-on-press treatment — [Explicit].
+image, close, and navigation labels follow the selected site language. The
+controls never move with the image while it is panned, zoomed, or swiped. Tab
+cycles through every control and, while the description shows, its scrolling
+text. A visually hidden live status announces the position after every change.
 
 ### High-detail architectural images — [Explicit]
 
@@ -366,21 +389,22 @@ outside the visible tile boundaries.
 
 ### Lightbox inspection controls — [Explicit]
 
-Desktop visitors can zoom toward the pointer with the mouse wheel and drag a
-zoomed image to inspect it. The current zoom percentage is always visible and
-clicking it resets zoom and pan to 100%. On desktop the image stays between the
-navigation controls; on mobile those controls sit in their own row below it.
-Touch visitors can pinch around the point between their fingers and drag a
-zoomed image with one finger. At 100%, horizontal dragging with either a finger
-or mouse navigates between page images; completed navigation slides to the
-next image and an incomplete gesture snaps back.
+Desktop visitors zoom toward the pointer with the mouse wheel and drag a zoomed
+image to inspect it. Touch visitors pinch around the point between their fingers
+and drag a zoomed image with one finger.
+At 100% and below, horizontal dragging with either a finger or mouse navigates
+between page images; completed navigation slides to the next image and an
+incomplete gesture snaps back.
 Buttons and arrow keys use the same short slide. With reduced motion, swipes
 remain stationary and a completed gesture changes the image immediately.
 Previous, current, and next images form a continuous strip, so one
 image enters directly as the other leaves without exposing the dark background.
 Maximum zoom depends on the image and display density, ending when native image
-pixels reach display pixels. A bilingual control opens the untouched original
-in a separate browser tab.
+pixels reach display pixels.
+
+Double-click or double-tap zooms in to 2.5× at that point (or to the maximum, if
+lower) and returns to 100% when zoomed. On the drawing side `+`/`=` and `-` zoom
+around the centre and `0` returns to 100% — [Implicit].
 
 Tiled and full-image previews use the same immediate gesture response. Zoomed
 inspection has no momentum or settling animation; at 100%, both previews move
@@ -393,17 +417,14 @@ physical-pixel requirement so their base view is not an upscaled lower level.
 The architect can assign otherwise ordinary project images to a named comparison
 set and give each image a Czech and English title. Set membership does not change
 the project page: every preview remains an individual image in its existing
-gallery or image-set position. Opening any member adds named shortcuts for the
-whole set in the lightbox toolbar. A shortcut crossfades to
-the selected image while retaining zoom and pan, so aligned plans can be
-compared without losing the inspected location.
-The shortcuts remain in one left-aligned, horizontally scrollable row at every
-viewport width and bring the selected image into view. Touch dragging and a
-mouse wheel over the row both move the shortcuts horizontally without scrolling
-the page. The top bar otherwise contains only the close control. A fixed
-viewport overlay provides zoom-out, reset, and zoom-in controls at the top
-right; image position and a compact original-file link occupy another fixed
-overlay at the bottom right.
+gallery or image-set position. Opening any member shows the whole set as the
+top-left set strip: one joined row of named buttons, the current image inverted.
+A button crossfades to the selected image while retaining zoom and pan, so
+aligned plans can be compared without losing the inspected location.
+The strip stays one row at every viewport width, scrolls sideways when it does
+not fit beside ×, and brings the current image into view. Touch dragging and a
+mouse wheel over the strip both move it horizontally without scrolling the
+page.
 The selected image continues to use the same responsive or tiled deep-zoom
 renderer as every other lightbox image. A set's zoom limit is the lowest native
 detail limit among its members, so every target can display the retained view
@@ -413,25 +434,46 @@ navigation keeps its slide transition and resets the view.
 ### Optional image titles and descriptions — [Explicit]
 
 Each project-block image can have a short title and description in Czech and
-English. Both fields are optional and appear only beneath the enlarged image in
-the lightbox, keeping page imagery uncluttered. The caption occupies a
-fixed rail so switching between captioned and uncaptioned images does not resize
-the image viewport. It is left-aligned to the image and uses its available
-width; unusually long text scrolls within that rail. The caption slides with
-its image during navigation, but dragging or swiping the text never changes the
-image.
+English. Both fields are optional and appear only in the lightbox, keeping page
+imagery uncluttered. A titled image outside a comparison set shows its title as
+a set strip of one; an image with neither title nor set shows no strip.
+
+Each image in the lightbox is a card with its drawing on the front and, when it
+has a description, the description on the back — [Explicit]. An icon-only toggle
+button in the bottom-left corner, named "Show description" and pressed while the
+text shows (text lines on the drawing side, an inverted picture on the text
+side), turns the current card over with a short 3D flip. The back is black, with
+the title as a heading above one justified, hyphenated column at the project
+page's reading width, kept clear of every control; on phones it uses the page's
+side margins. The whole text area scrolls with the wheel, touch, or keyboard,
+with breathing room above and below; its top and bottom edges fade only where
+more text continues, and short text is centred vertically. On the text side the
+wheel scrolls the text and zoom keys do nothing.
+
+Changing image by any route shows the new image drawing side up. From the text
+side, Previous/Next, the arrow keys, and swipes use the ordinary slide: the card
+slides away still showing its text while the next drawing slides in, and nothing
+rotates. A set button crossfades from the text, as far as it was scrolled, to
+the new drawing. The language switch keeps the current side. Dragging sideways
+over the text moves the strip with the finger exactly as over the drawing, while
+a mostly vertical drag scrolls the text without moving the strip, text selection
+stays native, and a drag never starts while text is selected. On phones the edge
+arrows step aside while the text shows. Images without a description have no
+toggle and no back. Closing while the text shows fades the lightbox without
+morphing it into the thumbnail, and reopening shows the drawing.
 
 ### Project page content is optional — [Explicit]
 
 A project can contain only its required cover and no content blocks. Every image
-block contains at least one image; an image record with caption content still
-requires its image.
+block contains at least one image; an image record with a title or description
+still requires its image.
 
 ### Respects reduced-motion preferences — [Implicit]
 
 Users who set `prefers-reduced-motion` get no fade/transform animation. Changes
 to that preference apply immediately. Lightbox open/close transitions and live
-swipe movement are also disabled.
+swipe movement are also disabled, and turning over to an image description
+becomes a short crossfade.
 
 ---
 

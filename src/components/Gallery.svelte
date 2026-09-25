@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import {
     devicePixelRatio,
     innerHeight,
@@ -9,14 +9,18 @@
   import type { ResponsiveImage } from '../images';
   import { ui, type Lang } from '../i18n';
   import {
+    CONTROL_SIZE,
     clampPan,
+    clampScale,
     comparisonSetIndexes,
     containedImageSize,
     deepZoomViewport,
     displayedSwipeOffset,
+    doubleTapScale,
     galleryImageHash,
     galleryImageIndex,
-    hasCaption,
+    imageText,
+    lightboxAreas,
     lightboxImageUrl,
     nativeZoomScale,
     panForPinch,
@@ -25,11 +29,14 @@
     scaleFromWheel,
     sharedMaximumScale,
     swipeDirection,
+    zoomFloor,
     type GalleryImage,
     type Point,
+    type ZoomRange,
   } from './gallery';
+  import LightboxVerso from './LightboxVerso.svelte';
   // Interactive island: a keyboard-navigable image lightbox.
-  // This is the ONLY component that ships JS to the browser.
+  // This is the ONLY island that ships JS to the browser.
   let { images, responsiveImages }: {
     images: GalleryImage[];
     responsiveImages: (ResponsiveImage | undefined)[];
@@ -38,27 +45,39 @@
   const galleryHistoryKey = 'architecturePortfolioGallery';
   const comparisonDuration = 180;
   const slideDuration = 180;
+  const flipDuration = 560;
+  const reducedFlipDuration = 150;
+  const keyZoomStep = 1.25;
+  const tapSlop = 10;
+  const doubleTapDelay = 300;
+  const doubleTapDistance = 30;
 
   let open = $state(false);
   let lang = $state<Lang>('en');
   let index = $state(0);
   let scale = $state(1);
   let pan = $state<Point>({ x: 0, y: 0 });
+  let showDescription = $state(false);
+  let flipAnimated = $state(false);
+  let descriptionScroll = $state(0);
   let dragging = $state(false);
   let swipeOffset = $state(0);
   let swipeDeltaX = 0;
   let swipeAnimating = $state(false);
   let lightboxTransitioning = $state(false);
   let comparisonTransitioning = $state(false);
-  let comparisonPrevious = $state<{
-    src: string;
-    sourceWidth?: number;
-    sourceHeight?: number;
-    width?: number;
-    height?: number;
-    scale: number;
-    pan: Point;
-  }>();
+  let comparisonPrevious = $state<
+    | {
+        src: string;
+        sourceWidth?: number;
+        sourceHeight?: number;
+        width?: number;
+        height?: number;
+        scale: number;
+        pan: Point;
+      }
+    | { title: string | undefined; description: string; scrollTop: number }
+  >();
   let navigating = $state(false);
   let reducedMotion = $state(false);
   let closing = false;
@@ -70,7 +89,7 @@
   let image = $state<HTMLImageElement>()!;
   let dialog = $state<HTMLDialogElement>()!;
   let closeButton = $state<HTMLButtonElement>()!;
-  let comparisonNav = $state<HTMLElement>();
+  let setStrip = $state<HTMLElement>();
   let trigger: HTMLButtonElement | undefined;
   let thumbnailButtons: HTMLButtonElement[] = [];
   let deepZoomElement = $state<HTMLDivElement>();
@@ -82,31 +101,19 @@
   let navigationRun = 0;
   let touchStart: Point | null = null;
   let touchPanStart: Point | null = null;
+  let tapStart: Point | null = null;
+  let lastTap: { point: Point; time: number } | null = null;
   let pinchStart: {
     distance: number;
     scale: number;
     center: Point;
     pan: Point;
   } | null = null;
-  let lightboxSrc = $derived(
-    responsiveImages[index]
-      ? lightboxImageUrl(
-          responsiveImages[index],
-          { width: stageWidth, height: stageHeight },
-          scale,
-          pixelRatio,
-        )
-      : images[index]?.image,
+  let areas = $derived(
+    lightboxAreas({ width: stageWidth, height: stageHeight }),
   );
-  let lightboxImageSize = $derived.by(() => {
-    const responsiveImage = responsiveImages[index];
-    return responsiveImage && stageWidth > 0 && stageHeight > 0
-      ? containedImageSize(responsiveImage.source, {
-          width: stageWidth,
-          height: stageHeight,
-        })
-      : undefined;
-  });
+  let lightboxSrc = $derived(imageUrl(index));
+  let lightboxImageSize = $derived(restImageSize(index));
   let originalSrc = $derived(
     responsiveImages[index]?.originalUrl ?? images[index]?.image,
   );
@@ -119,18 +126,30 @@
   let nextPreviewSrc = $derived(previewUrl(nextIndex));
   let deepZoomPreviewSrc = $derived(previewUrl(index));
   let comparisonIndexes = $derived(comparisonSetIndexes(images, index));
-  let maxScale = $derived.by(maximumScale);
+  let title = $derived(imageText(images[index], 'title', lang));
+  let description = $derived(imageText(images[index], 'description', lang));
+  let flipped = $derived(showDescription && Boolean(description));
+  let flipTime = $derived(
+    flipAnimated ? (reducedMotion ? reducedFlipDuration : flipDuration) : 0,
+  );
+  let setStripIndexes = $derived(
+    comparisonIndexes.length ? comparisonIndexes : title ? [index] : [],
+  );
+  let zoomRange = $derived<ZoomRange>({
+    min: lightboxImageSize ? zoomFloor(lightboxImageSize, areas.safe) : 1,
+    max: maximumScale(),
+  });
   let slideTransition = $derived(
     swipeAnimating
       ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
       : 'none',
   );
   $effect(() => {
-    const nav = comparisonNav;
+    const nav = setStrip;
     const selectedIndex = index;
-    if (!open || !nav || !comparisonIndexes.includes(selectedIndex)) return;
+    if (!open || !nav || !setStripIndexes.includes(selectedIndex)) return;
     void tick().then(() => {
-      if (!open || nav !== comparisonNav || index !== selectedIndex) return;
+      if (!open || nav !== setStrip || index !== selectedIndex) return;
       const selected = nav.querySelector<HTMLElement>('[aria-current="true"]');
       if (!selected) return;
       nav.scrollTo({
@@ -145,6 +164,20 @@
     if (!reducedMotion) return;
     swipeAnimating = false;
     swipeOffset = 0;
+  });
+  // A resize, a rotation or another image keeps the current view within its
+  // new limits.
+  $effect(() => {
+    const range = zoomRange;
+    const restImage = lightboxImageSize;
+    const bounds = areas;
+    untrack(() => {
+      const nextScale = clampScale(scale, range);
+      setView(
+        nextScale,
+        restImage ? clampPan(pan, nextScale, restImage, bounds) : pan,
+      );
+    });
   });
   $effect(() => {
     if (!lightboxTransitioning) return;
@@ -182,9 +215,7 @@
         tabIndex: -1,
         showNavigationControl: false,
         showNavigator: false,
-        constrainDuringPan: true,
-        visibilityRatio: 1,
-        maxZoomPixelRatio: 1,
+        autoResize: false,
         minPixelRatio: 0.5,
         animationTime: 0,
         immediateRender: true,
@@ -259,55 +290,39 @@
   }
 
   function resetView() {
-    deepZoomViewer?.viewport.goHome(true);
-    scale = 1;
-    pan = { x: 0, y: 0 };
+    setView(1, { x: 0, y: 0 });
     dragging = false;
     dragStart = null;
     pointerSwipeStart = null;
     touchStart = null;
     touchPanStart = null;
+    tapStart = null;
     pinchStart = null;
-  }
-  function zoomBy(factor: number) {
-    if (lightboxTransitioning || comparisonTransitioning) return;
-    const nextScale = Math.min(maxScale, Math.max(1, scale * factor));
-    const nextPan = constrainedPan(
-      panForZoom(pan, scale, nextScale, { x: 0, y: 0 }),
-      nextScale,
-    );
-    setView(nextScale, nextPan);
   }
 
   function previewUrl(imageIndex: number) {
-    const responsiveImage = responsiveImages[imageIndex];
-    return responsiveImage
-      ? lightboxImageUrl(
-          responsiveImage,
-          { width: stageWidth, height: stageHeight },
-          1,
-          pixelRatio,
-        )
-      : images[imageIndex]?.image;
+    return imageUrl(imageIndex, 1);
   }
 
   function imageUrl(imageIndex: number, imageScale = scale) {
     const responsiveImage = responsiveImages[imageIndex];
     return responsiveImage
-      ? lightboxImageUrl(
-          responsiveImage,
-          { width: stageWidth, height: stageHeight },
-          imageScale,
-          pixelRatio,
-        )
+      ? lightboxImageUrl(responsiveImage, areas.rest, imageScale, pixelRatio)
       : images[imageIndex]?.image;
   }
 
-  function comparisonLabel(imageIndex: number) {
-    const comparisonImage = images[imageIndex];
-    const title =
-      lang === 'cs' ? comparisonImage?.title_cs : comparisonImage?.title_en;
-    return title?.trim() || `${ui[lang].image} ${imageIndex + 1}`;
+  function restImageSize(imageIndex: number) {
+    const responsiveImage = responsiveImages[imageIndex];
+    return responsiveImage && stageWidth > 0 && stageHeight > 0
+      ? containedImageSize(responsiveImage.source, areas.rest)
+      : undefined;
+  }
+
+  function setStripLabel(imageIndex: number) {
+    return (
+      imageText(images[imageIndex], 'title', lang) ??
+      `${ui[lang].image} ${imageIndex + 1}`
+    );
   }
 
   function transitionTargetIsUnobscured(target: HTMLElement) {
@@ -391,9 +406,10 @@
     cancelNavigation();
     closing = false;
     index = i;
+    showDrawingSide();
     resetView();
     stageWidth = innerWidth.current ?? 0;
-    stageHeight = (innerHeight.current ?? 0) * 0.85;
+    stageHeight = innerHeight.current ?? 0;
     open = true;
     await tick();
     dialog.showModal();
@@ -426,7 +442,8 @@
       return;
     }
 
-    const morphImage = scale === 1 && transitionTargetIsUnobscured(thumbnail);
+    const morphImage =
+      scale === 1 && !flipped && transitionTargetIsUnobscured(thumbnail);
     lightboxTransitioning = true;
     const transitionImage = image;
     if (!morphImage) transitionImage.style.viewTransitionName = 'none';
@@ -474,6 +491,7 @@
     }
 
     index = (index + offset + images.length) % images.length;
+    showDrawingSide();
     resetView();
     swipeAnimating = false;
     swipeOffset = 0;
@@ -506,26 +524,27 @@
         await preload.decode();
       } catch {}
       if (run !== comparisonRun || !open) return;
-      comparisonPrevious = {
-        src: image.currentSrc || image.src,
-        sourceWidth: responsiveImages[index]?.source.width,
-        sourceHeight: responsiveImages[index]?.source.height,
-        width: lightboxImageSize?.width,
-        height: lightboxImageSize?.height,
-        scale,
-        pan: { ...pan },
-      };
+      comparisonPrevious =
+        flipped && description
+          ? { title, description, scrollTop: descriptionScroll }
+          : {
+              src: image.currentSrc || image.src,
+              sourceWidth: responsiveImages[index]?.source.width,
+              sourceHeight: responsiveImages[index]?.source.height,
+              width: lightboxImageSize?.width,
+              height: lightboxImageSize?.height,
+              scale,
+              pan: { ...pan },
+            };
     }
 
     index = nextIndex;
+    showDrawingSide();
     history.replaceState(
       galleryHistoryState(history.state),
       '',
       galleryImageHash(index),
     );
-    await tick();
-    pan = constrainedPan(pan);
-    syncDeepZoomViewport(scale, pan);
 
     if (!reducedMotion) {
       await new Promise<void>((resolve) =>
@@ -536,6 +555,21 @@
     comparisonPrevious = undefined;
     comparisonTransitioning = false;
   }
+  function toggleDescription() {
+    flipAnimated = true;
+    showDescription = !flipped;
+  }
+
+  /**
+   * The card of a newly shown image starts drawing side up, without turning,
+   * and its text starts at the top.
+   */
+  function showDrawingSide() {
+    flipAnimated = false;
+    showDescription = false;
+    descriptionScroll = 0;
+  }
+
   function next() {
     void go(1);
   }
@@ -547,8 +581,10 @@
     if (e.key === 'Tab') {
       // A modal <dialog> lets Tab leave for the browser chrome at either end.
       const focusable = [
-        ...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), a[href]'),
-      ].filter((element) => !element.closest('[aria-hidden="true"]'));
+        ...dialog.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), a[href], [tabindex="0"]',
+        ),
+      ].filter((element) => !element.closest('[inert]'));
       const edge = e.shiftKey ? focusable[0] : focusable.at(-1);
       if (document.activeElement === edge) {
         e.preventDefault();
@@ -560,10 +596,28 @@
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       prev();
+    } else if (['+', '=', '-', '0'].includes(e.key)) {
+      if (
+        flipped ||
+        lightboxTransitioning ||
+        comparisonTransitioning ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey
+      ) {
+        return;
+      }
+      e.preventDefault();
+      const step = e.key === '-' ? 1 / keyZoomStep : keyZoomStep;
+      zoomTo(e.key === '0' ? 1 : clampScale(scale * step, zoomRange), {
+        x: 0,
+        y: 0,
+      });
     } else if (
       ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(
         e.key,
-      )
+      ) &&
+      !(e.target instanceof Element && e.target.matches('[data-lightbox-scroll]'))
     ) {
       e.preventDefault();
     }
@@ -623,15 +677,8 @@
   }
 
   function constrainedPan(nextPan: Point, nextScale = scale) {
-    if (!stage) return nextPan;
     const imageSize = renderedImageSize();
-    if (!imageSize) return nextPan;
-    return clampPan(
-      nextPan,
-      nextScale,
-      imageSize,
-      { width: stage.clientWidth, height: stage.clientHeight },
-    );
+    return imageSize ? clampPan(nextPan, nextScale, imageSize, areas) : nextPan;
   }
 
   function renderedImageSize() {
@@ -641,11 +688,8 @@
 
   function maximumScaleFor(imageIndex: number) {
     const responsiveImage = responsiveImages[imageIndex];
-    if (!responsiveImage || !stageWidth || !stageHeight) return 1;
-    const imageSize = containedImageSize(responsiveImage.source, {
-      width: stageWidth,
-      height: stageHeight,
-    });
+    const imageSize = restImageSize(imageIndex);
+    if (!responsiveImage || !imageSize) return 1;
     return nativeZoomScale(
       responsiveImage.source.width,
       imageSize.width,
@@ -658,16 +702,24 @@
     return sharedMaximumScale(indexes.map(maximumScaleFor));
   }
 
+  // OpenSeadragon only mirrors the shared scale and pan. Its own constraints and
+  // auto-resize are off because either would move the view away from the
+  // component's clamp, so the stage size is handed to it here.
   function syncDeepZoomViewport(nextScale: number, nextPan: Point) {
     const viewer = deepZoomViewer;
-    if (!viewer || !stage?.clientWidth) return;
+    const imageSize = lightboxImageSize;
+    if (!viewer || !imageSize) return;
     const viewport = viewer.viewport;
-    const homeCenter = viewport.getHomeBounds().getCenter();
+    const containerSize = viewport.getContainerSize();
+    if (containerSize.x !== stageWidth || containerSize.y !== stageHeight) {
+      containerSize.x = stageWidth;
+      containerSize.y = stageHeight;
+      viewport.resize(containerSize);
+    }
     const target = deepZoomViewport(
-      viewport.getHomeZoom(),
-      homeCenter,
-      stage.clientWidth,
-      nextScale,
+      viewport.getHomeBounds().getCenter(),
+      stageWidth,
+      imageSize.width * nextScale,
       nextPan,
     );
     const center = viewport.getCenter();
@@ -675,7 +727,6 @@
     center.y = target.center.y;
     viewport.zoomTo(target.zoom, undefined, true);
     viewport.panTo(center, true);
-    viewport.applyConstraints(true);
   }
 
   function setView(nextScale: number, nextPan: Point) {
@@ -684,7 +735,25 @@
     syncDeepZoomViewport(nextScale, nextPan);
   }
 
+  /** Scales to `nextScale` while keeping the image point under `point` in place. */
+  function zoomTo(nextScale: number, point: Point) {
+    setView(
+      nextScale,
+      constrainedPan(panForZoom(pan, scale, nextScale, point), nextScale),
+    );
+  }
+
+  function fromStageCenter(clientPoint: Point): Point {
+    const bounds = stage.getBoundingClientRect();
+    return {
+      x: clientPoint.x - (bounds.left + bounds.width / 2),
+      y: clientPoint.y - (bounds.top + bounds.height / 2),
+    };
+  }
+
   function onwheel(e: WheelEvent) {
+    // The text on the back scrolls natively.
+    if (flipped) return;
     e.preventDefault();
     if (lightboxTransitioning || comparisonTransitioning) return;
     const delta =
@@ -693,15 +762,19 @@
         : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
           ? e.deltaY * stage.clientHeight
           : e.deltaY;
-    const nextScale = scaleFromWheel(scale, delta, maxScale);
-    const bounds = stage.getBoundingClientRect();
-    const pointer = {
-      x: e.clientX - (bounds.left + bounds.width / 2),
-      y: e.clientY - (bounds.top + bounds.height / 2),
-    };
-    setView(
-      nextScale,
-      constrainedPan(panForZoom(pan, scale, nextScale, pointer), nextScale),
+    zoomTo(
+      scaleFromWheel(scale, delta, zoomRange),
+      fromStageCenter({ x: e.clientX, y: e.clientY }),
+    );
+  }
+
+  function ondblclick(e: MouseEvent) {
+    if (flipped || lightboxTransitioning || comparisonTransitioning || navigating) {
+      return;
+    }
+    zoomTo(
+      doubleTapScale(scale, zoomRange),
+      fromStageCenter({ x: e.clientX, y: e.clientY }),
     );
   }
 
@@ -709,16 +782,14 @@
     if (
       !(
         event.target instanceof Element &&
-        event.target.closest(
-          '.lightbox-caption-current, .lightbox-comparison-options',
-        )
+        event.target.closest('[data-lightbox-scroll]')
       )
     ) {
       event.preventDefault();
     }
   }
 
-  function onComparisonWheel(event: WheelEvent) {
+  function onSetStripWheel(event: WheelEvent) {
     const navigation = event.currentTarget as HTMLElement;
     const delta =
       Math.abs(event.deltaX) > Math.abs(event.deltaY)
@@ -733,18 +804,19 @@
     if (
       lightboxTransitioning ||
       comparisonTransitioning ||
-      (e.target instanceof Element &&
-        Boolean(e.target.closest('.lightbox-stage-controls'))) ||
       e.pointerType !== 'mouse' ||
       e.button !== 0 ||
-      navigating
+      navigating ||
+      // A mouse selects and scrolls the text instead of dragging the strip.
+      (e.target instanceof Element &&
+        Boolean(e.target.closest('[data-lightbox-scroll]')))
     ) {
       return;
     }
     e.preventDefault();
     stage.setPointerCapture(e.pointerId);
     dragging = true;
-    if (scale === 1) {
+    if (scale <= 1 || flipped) {
       swipeAnimating = false;
       pointerSwipeStart = { x: e.clientX, y: e.clientY };
       swipeDeltaX = 0;
@@ -802,16 +874,8 @@
   }
 
   function ontouchstart(e: TouchEvent) {
-    if (
-      lightboxTransitioning ||
-      comparisonTransitioning ||
-      navigating ||
-      (e.target instanceof Element &&
-        Boolean(e.target.closest('.lightbox-stage-controls')))
-    ) {
-      return;
-    }
-    if (e.touches.length === 2) {
+    if (lightboxTransitioning || comparisonTransitioning || navigating) return;
+    if (e.touches.length === 2 && !flipped) {
       swipeAnimating = false;
       swipeOffset = 0;
       swipeDeltaX = 0;
@@ -825,16 +889,18 @@
       };
       touchStart = null;
       touchPanStart = null;
+      tapStart = null;
       return;
     }
 
     if (e.touches.length === 1) {
       const point = touchPoint(e.touches[0]);
+      const swipes = scale <= 1 || flipped;
       swipeAnimating = false;
-      touchStart = scale === 1 ? point : null;
+      tapStart = flipped ? null : point;
+      touchStart = swipes && !selectingText() ? point : null;
       swipeDeltaX = 0;
-      touchPanStart =
-        scale > 1 ? { x: point.x - pan.x, y: point.y - pan.y } : null;
+      touchPanStart = swipes ? null : { x: point.x - pan.x, y: point.y - pan.y };
       return;
     }
 
@@ -849,7 +915,7 @@
         pinchStart.scale,
         pinchStart.distance,
         touchDistance(first, second),
-        maxScale,
+        zoomRange,
       );
       setView(
         nextScale,
@@ -880,13 +946,19 @@
     }
 
     if (e.touches.length === 1 && touchStart) {
+      if (selectingText()) {
+        resetTouchGesture();
+        return;
+      }
       const point = touchPoint(e.touches[0]);
       swipeDeltaX = point.x - touchStart.x;
+      swipeDeltaY = point.y - touchStart.y;
+      // On the text side a mostly vertical drag may still become a native scroll.
+      const follows = !flipped || Math.abs(swipeDeltaX) > Math.abs(swipeDeltaY);
       swipeOffset = displayedSwipeOffset(
-        swipeDeltaX,
+        follows ? swipeDeltaX : 0,
         reducedMotion,
       );
-      swipeDeltaY = point.y - touchStart.y;
       return;
     }
 
@@ -894,6 +966,15 @@
   }
 
   function ontouchend(e: TouchEvent) {
+    if (recordTap(e)) {
+      // Keeps the browser from also turning the taps into a dblclick.
+      e.preventDefault();
+      const point = touchPoint(e.changedTouches[0]);
+      resetTouchGesture();
+      zoomTo(doubleTapScale(scale, zoomRange), fromStageCenter(point));
+      return;
+    }
+
     if (pinchStart) {
       pinchStart = null;
       touchStart = null;
@@ -923,6 +1004,38 @@
     else void go(direction);
   }
 
+  // Scrolling the text vertically is not a swipe.
+  function ontextscroll() {
+    if (touchStart) resetTouchGesture();
+  }
+
+  function selectingText() {
+    const selection = getSelection();
+    return Boolean(
+      selection &&
+        !selection.isCollapsed &&
+        stage.contains(selection.anchorNode),
+    );
+  }
+
+  /** Returns whether this touch completes a double tap. */
+  function recordTap(e: TouchEvent) {
+    const start = tapStart;
+    if (!start || e.touches.length || e.changedTouches.length !== 1) {
+      return false;
+    }
+    tapStart = null;
+    const point = touchPoint(e.changedTouches[0]);
+    if (touchDistance(start, point) >= tapSlop) return false;
+    const previous = lastTap;
+    const double =
+      previous !== null &&
+      e.timeStamp - previous.time < doubleTapDelay &&
+      touchDistance(previous.point, point) < doubleTapDistance;
+    lastTap = double ? null : { point, time: e.timeStamp };
+    return double;
+  }
+
   function touchPoint(touch: Touch): Point {
     return { x: touch.clientX, y: touch.clientY };
   }
@@ -932,16 +1045,16 @@
   }
 
   function touchCenter(first: Point, second: Point): Point {
-    const bounds = stage.getBoundingClientRect();
-    return {
-      x: (first.x + second.x) / 2 - (bounds.left + bounds.width / 2),
-      y: (first.y + second.y) / 2 - (bounds.top + bounds.height / 2),
-    };
+    return fromStageCenter({
+      x: (first.x + second.x) / 2,
+      y: (first.y + second.y) / 2,
+    });
   }
 
   function resetTouchGesture() {
     touchStart = null;
     touchPanStart = null;
+    tapStart = null;
     pinchStart = null;
     swipeDeltaX = 0;
     swipeDeltaY = 0;
@@ -949,34 +1062,18 @@
   }
 </script>
 
-{#snippet captionContent(caption: GalleryImage)}
-  {#if hasCaption(caption)}
-    {#if caption.title_cs}
-      <p lang="cs" class="text-sm font-medium">{caption.title_cs}</p>
-    {/if}
-    {#if caption.title_en}
-      <p lang="en" class="text-sm font-medium">{caption.title_en}</p>
-    {/if}
-    {#if caption.description_cs}
-      <p lang="cs" class="mt-1 text-sm text-white/70">
-        {caption.description_cs}
-      </p>
-    {/if}
-    {#if caption.description_en}
-      <p lang="en" class="mt-1 text-sm text-white/70">
-        {caption.description_en}
-      </p>
-    {/if}
-  {/if}
-{/snippet}
-
 <svelte:window {onkeydown} {onpopstate} />
 
 {#if open}
   <dialog
     bind:this={dialog}
     data-gallery-lightbox
-    class="lightbox fixed inset-0 m-0 h-screen max-h-none w-screen max-w-none grid-rows-[auto_minmax(0,1fr)] gap-3 border-0 bg-black/90 p-4 open:grid"
+    class="lightbox fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 bg-black p-0 text-white"
+    class:lightbox-flipped={flipped}
+    style:--lightbox-gap={`${areas.gap}px`}
+    style:--lightbox-band={`${areas.band}px`}
+    style:--lightbox-control={`${CONTROL_SIZE}px`}
+    style:--lightbox-flip={`${flipTime}ms`}
     aria-label={ui[lang].imageViewer}
     oncancel={(event) => {
       event.preventDefault();
@@ -985,128 +1082,122 @@
     onwheel={preventPageScroll}
     ontouchmove={preventPageScroll}
   >
-    <div class="flex min-w-0 items-start gap-2">
-      {#if comparisonIndexes.length > 1}
-        <nav
-          bind:this={comparisonNav}
-          aria-label={ui[lang].compareDrawings}
-          class="lightbox-comparison-options no-scrollbar min-w-0 flex-1 touch-pan-x scroll-px-2 overflow-x-auto pr-2"
-          onwheel={onComparisonWheel}
-        >
-          <div class="flex w-max gap-2">
-            {#each comparisonIndexes as comparisonIndex}
-              <button
-                type="button"
-                class="h-10 shrink-0 cursor-pointer border border-white/40 px-3 text-sm text-white hover:border-white disabled:cursor-default disabled:border-white disabled:bg-white disabled:text-black"
-                aria-current={comparisonIndex === index ? 'true' : undefined}
-                disabled={comparisonIndex === index}
-                onclick={() => void compareTo(comparisonIndex)}
-              >
-                {comparisonLabel(comparisonIndex)}
-              </button>
-            {/each}
-          </div>
-        </nav>
-      {/if}
-      <button
-        bind:this={closeButton}
-        type="button"
-        class="ml-auto flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center border border-white/40 text-2xl leading-none text-white hover:border-white"
-        onclick={requestClose}
-        aria-label={ui[lang].close}>×</button
-      >
-    </div>
-    <figure class="lightbox-layout min-h-0 w-full">
-      <div
-        bind:this={stage}
-        bind:clientWidth={stageWidth}
-        bind:clientHeight={stageHeight}
-        role="presentation"
-        class="lightbox-stage relative flex min-h-0 w-full touch-none items-center justify-center overflow-hidden"
-        style:cursor={dragging ? 'grabbing' : 'grab'}
-        {onwheel}
-        {onpointerdown}
-        {onpointermove}
-        {onpointerup}
-        {onpointercancel}
-        {ontouchstart}
-        {ontouchmove}
-        {ontouchend}
-        ontouchcancel={resetTouchGesture}
-      >
-        {#if images.length > 1}
-          <div
-            class="lightbox-slide-previous pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-            style:transform={slideTransform(-1)}
-            style:transition={slideTransition}
-            aria-hidden="true"
-          >
-            <img
-              src={previousPreviewSrc}
-              width={responsiveImages[previousIndex]?.source.width}
-              height={responsiveImages[previousIndex]?.source.height}
-              alt=""
-              draggable="false"
-              decoding="async"
-              class="h-auto max-h-full w-auto max-w-full object-contain select-none"
-            />
-          </div>
-        {/if}
+    <div
+      bind:this={stage}
+      bind:clientWidth={stageWidth}
+      bind:clientHeight={stageHeight}
+      role="presentation"
+      class="lightbox-stage absolute inset-0 touch-none overflow-hidden"
+      style:cursor={dragging ? 'grabbing' : 'grab'}
+      onscrollcapture={ontextscroll}
+      {onwheel}
+      {ondblclick}
+      {onpointerdown}
+      {onpointermove}
+      {onpointerup}
+      {onpointercancel}
+      {ontouchstart}
+      {ontouchmove}
+      {ontouchend}
+      ontouchcancel={resetTouchGesture}
+    >
+      {#if images.length > 1}
+        {@const size = restImageSize(previousIndex)}
         <div
-          class="lightbox-slide-current absolute inset-0 flex items-center justify-center overflow-hidden"
-          class:lightbox-comparison-current={Boolean(comparisonPrevious)}
-          style:transform={slideTransform(0)}
+          class="lightbox-slide-previous pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+          style:transform={slideTransform(-1)}
           style:transition={slideTransition}
+          aria-hidden="true"
         >
-          {#if deepZoom}
-            <img
-              bind:this={image}
-              src={deepZoomPreviewSrc}
-              width={responsiveImages[index]?.source.width}
-              height={responsiveImages[index]?.source.height}
-              alt=""
-              draggable="false"
-              style:width={lightboxImageSize
-                ? `${lightboxImageSize.width}px`
-                : undefined}
-              style:height={lightboxImageSize
-                ? `${lightboxImageSize.height}px`
-                : undefined}
-              class:lightbox-image={scale === 1}
-              class="absolute h-auto max-h-full w-auto max-w-full object-contain select-none"
-              style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
-              onload={() => (pan = constrainedPan(pan))}
-            />
-            <div
-              bind:this={deepZoomElement}
-              class="absolute inset-0"
-            ></div>
-          {:else}
-            <img
-              bind:this={image}
-              src={lightboxSrc}
-              width={responsiveImages[index]?.source.width}
-              height={responsiveImages[index]?.source.height}
-              alt=""
-              draggable="false"
-              style:width={lightboxImageSize
-                ? `${lightboxImageSize.width}px`
-                : undefined}
-              style:height={lightboxImageSize
-                ? `${lightboxImageSize.height}px`
-                : undefined}
-              class:lightbox-image={scale === 1}
-              class="h-auto max-h-full w-auto max-w-full object-contain select-none"
-              style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
-              onload={() => (pan = constrainedPan(pan))}
-            />
+          <img
+            src={previousPreviewSrc}
+            width={responsiveImages[previousIndex]?.source.width}
+            height={responsiveImages[previousIndex]?.source.height}
+            alt=""
+            draggable="false"
+            decoding="async"
+            style:width={size ? `${size.width}px` : undefined}
+            style:height={size ? `${size.height}px` : undefined}
+            class="h-auto max-h-full w-auto max-w-full object-contain select-none"
+          />
+        </div>
+      {/if}
+      <div
+        class="lightbox-slide-current absolute inset-0 overflow-hidden"
+        class:lightbox-comparison-current={Boolean(comparisonPrevious)}
+        style:transform={slideTransform(0)}
+        style:transition={slideTransition}
+      >
+        <div data-lightbox-sheet class="lightbox-sheet absolute inset-0">
+          <div
+            class="lightbox-front lightbox-face flex items-center justify-center"
+            inert={flipped}
+          >
+            {#if deepZoom}
+              <img
+                bind:this={image}
+                src={deepZoomPreviewSrc}
+                width={responsiveImages[index]?.source.width}
+                height={responsiveImages[index]?.source.height}
+                alt=""
+                draggable="false"
+                style:width={lightboxImageSize
+                  ? `${lightboxImageSize.width}px`
+                  : undefined}
+                style:height={lightboxImageSize
+                  ? `${lightboxImageSize.height}px`
+                  : undefined}
+                class:lightbox-image={scale === 1}
+                class="absolute h-auto max-h-full w-auto max-w-full object-contain select-none"
+                style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
+                onload={() => (pan = constrainedPan(pan))}
+              />
+              <div bind:this={deepZoomElement} class="absolute inset-0"></div>
+            {:else}
+              <img
+                bind:this={image}
+                src={lightboxSrc}
+                width={responsiveImages[index]?.source.width}
+                height={responsiveImages[index]?.source.height}
+                alt=""
+                draggable="false"
+                style:width={lightboxImageSize
+                  ? `${lightboxImageSize.width}px`
+                  : undefined}
+                style:height={lightboxImageSize
+                  ? `${lightboxImageSize.height}px`
+                  : undefined}
+                class:lightbox-image={scale === 1}
+                class="h-auto max-h-full w-auto max-w-full object-contain select-none"
+                style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
+                onload={() => (pan = constrainedPan(pan))}
+              />
+            {/if}
+          </div>
+          {#if description}
+            <div class="lightbox-back lightbox-face bg-black" inert={!flipped}>
+              {#key index}
+                <LightboxVerso
+                  {title}
+                  {description}
+                  {lang}
+                  bind:scrollTop={descriptionScroll}
+                />
+              {/key}
+            </div>
           {/if}
         </div>
-        {#if comparisonPrevious}
-          <div
-            class="lightbox-comparison-previous pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-            aria-hidden="true"
-          >
+      </div>
+      {#if comparisonPrevious}
+        <div
+          class="lightbox-comparison-previous pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+          class:lightbox-comparison-text={'description' in comparisonPrevious}
+          aria-hidden="true"
+          inert
+        >
+          {#if 'description' in comparisonPrevious}
+            <LightboxVerso {...comparisonPrevious} {lang} />
+          {:else}
             <img
               src={comparisonPrevious.src}
               width={comparisonPrevious.sourceWidth}
@@ -1122,149 +1213,164 @@
               style:transform={`translate3d(${comparisonPrevious.pan.x}px, ${comparisonPrevious.pan.y}px, 0) scale(${comparisonPrevious.scale})`}
               class="h-auto max-h-full w-auto max-w-full object-contain select-none"
             />
-          </div>
-        {/if}
-        {#if images.length > 1}
-          <div
-            class="lightbox-slide-next pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-            style:transform={slideTransform(1)}
-            style:transition={slideTransition}
-            aria-hidden="true"
-          >
-            <img
-              src={nextPreviewSrc}
-              width={responsiveImages[nextIndex]?.source.width}
-              height={responsiveImages[nextIndex]?.source.height}
-              alt=""
-              draggable="false"
-              decoding="async"
-              class="h-auto max-h-full w-auto max-w-full object-contain select-none"
-            />
-          </div>
-        {/if}
-        <button
-          type="button"
-          class="media-navigation-button lightbox-stage-controls absolute top-1/2 left-2 z-20 -translate-y-1/2"
-          onclick={prev}
-          aria-label={ui[lang].previousImage}
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            class="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M15.5 5l-7 7 7 7" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          class="media-navigation-button lightbox-stage-controls absolute top-1/2 right-2 z-20 -translate-y-1/2"
-          onclick={next}
-          aria-label={ui[lang].nextImage}
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            class="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M8.5 5l7 7-7 7" />
-          </svg>
-        </button>
-        <div
-          class="lightbox-stage-controls absolute top-2 right-2 z-20 flex items-center text-white"
-        >
-          <button
-            type="button"
-            class="media-navigation-button"
-            aria-label={ui[lang].zoomOut}
-            disabled={scale <= 1}
-            onclick={() => zoomBy(0.8)}>−</button
-          >
-          <button
-            type="button"
-            class="media-navigation-button -ml-px w-auto min-w-16 px-2 text-sm tabular-nums"
-            onclick={resetView}
-            aria-label={ui[lang].resetZoom}
-          >
-            <span aria-hidden="true">{Math.round(scale * 100)}%</span>
-          </button>
-          <button
-            type="button"
-            class="media-navigation-button -ml-px"
-            aria-label={ui[lang].zoomIn}
-            disabled={scale >= maxScale}
-            onclick={() => zoomBy(1.25)}>+</button
-          >
+          {/if}
         </div>
+      {/if}
+      {#if images.length > 1}
+        {@const size = restImageSize(nextIndex)}
         <div
-          class="lightbox-stage-controls absolute right-2 bottom-2 z-20 flex items-center text-white"
-        >
-          <span
-            role="status"
-            aria-atomic="true"
-            class="flex h-10 items-center border border-white/40 bg-black/60 px-3 text-sm tabular-nums"
-          >
-            {index + 1} / {images.length}
-          </span>
-          <a
-            href={originalSrc}
-            target="_blank"
-            rel="noopener"
-            class="media-navigation-button -ml-px"
-            aria-label={ui[lang].openOriginal}
-          >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
-              <path d="M14 5h5v5M19 5l-9 9" />
-              <path d="M11 5H5v14h14v-6" />
-            </svg>
-          </a>
-        </div>
-      </div>
-      <figcaption
-        class="lightbox-caption relative w-full overflow-hidden text-white"
-      >
-        {#if images.length > 1}
-          <div
-            class="lightbox-caption-previous pointer-events-none absolute inset-0 overflow-y-auto"
-            style:transform={slideTransform(-1)}
-            style:transition={slideTransition}
-            aria-hidden="true"
-          >
-            {@render captionContent(images[previousIndex])}
-          </div>
-        {/if}
-        <div
-          class="lightbox-caption-current absolute inset-0 overflow-y-auto overscroll-contain"
-          style:transform={slideTransform(0)}
+          class="lightbox-slide-next pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+          style:transform={slideTransform(1)}
           style:transition={slideTransition}
+          aria-hidden="true"
         >
-          {@render captionContent(images[index])}
+          <img
+            src={nextPreviewSrc}
+            width={responsiveImages[nextIndex]?.source.width}
+            height={responsiveImages[nextIndex]?.source.height}
+            alt=""
+            draggable="false"
+            decoding="async"
+            style:width={size ? `${size.width}px` : undefined}
+            style:height={size ? `${size.height}px` : undefined}
+            class="h-auto max-h-full w-auto max-w-full object-contain select-none"
+          />
         </div>
-        {#if images.length > 1}
-          <div
-            class="lightbox-caption-next pointer-events-none absolute inset-0 overflow-y-auto"
-            style:transform={slideTransform(1)}
-            style:transition={slideTransition}
-            aria-hidden="true"
-          >
-            {@render captionContent(images[nextIndex])}
+      {/if}
+    </div>
+
+    <div
+      class="pointer-events-none absolute inset-x-(--lightbox-gap) top-(--lightbox-gap) flex items-start gap-2 *:pointer-events-auto"
+    >
+      {#if setStripIndexes.length}
+        <nav
+          bind:this={setStrip}
+          aria-label={ui[lang].imageSet}
+          class="no-scrollbar relative -m-1 min-w-0 touch-pan-x overflow-x-auto p-1"
+          data-lightbox-scroll
+          onwheel={onSetStripWheel}
+        >
+          <div class="flex w-max">
+            {#each setStripIndexes as setIndex}
+              <button
+                type="button"
+                class="lightbox-control lightbox-set-option px-3 text-sm"
+                aria-current={setIndex === index ? 'true' : undefined}
+                disabled={setIndex === index}
+                onclick={() => void compareTo(setIndex)}
+              >
+                {setStripLabel(setIndex)}
+              </button>
+            {/each}
           </div>
-        {/if}
-      </figcaption>
-    </figure>
+        </nav>
+      {/if}
+      <button
+        bind:this={closeButton}
+        type="button"
+        class="lightbox-control ml-auto text-2xl leading-none"
+        onclick={requestClose}
+        aria-label={ui[lang].close}>×</button
+      >
+    </div>
+    <button
+      type="button"
+      class="lightbox-control lightbox-arrow left-(--lightbox-gap)"
+      onclick={prev}
+      aria-label={ui[lang].previousImage}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        class="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path d="M15.5 5l-7 7 7 7" />
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="lightbox-control lightbox-arrow right-(--lightbox-gap)"
+      onclick={next}
+      aria-label={ui[lang].nextImage}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        class="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path d="M8.5 5l7 7-7 7" />
+      </svg>
+    </button>
+    {#if description}
+      <button
+        type="button"
+        class="lightbox-control absolute bottom-(--lightbox-gap) left-(--lightbox-gap)"
+        aria-pressed={flipped}
+        aria-label={ui[lang].showDescription}
+        onclick={toggleDescription}
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          class="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          {#if flipped}
+            <rect x="3.5" y="4.5" width="17" height="15" />
+            <path d="M3.5 16l5-5 4 4 3-3 5 5" />
+          {:else}
+            <path d="M4 6h16M4 10h16M4 14h16M4 18h10" />
+          {/if}
+        </svg>
+      </button>
+    {/if}
+    <div
+      class="absolute right-(--lightbox-gap) bottom-(--lightbox-gap) flex gap-2"
+    >
+      <button type="button" data-lang-toggle class="lightbox-control">
+        <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
+          <span class="language-option-cs absolute inset-0" aria-hidden="true"
+            >CZ</span
+          >
+          <span class="language-option-en absolute inset-0" aria-hidden="true"
+            >EN</span
+          >
+        </span>
+        <span lang="cs" class="sr-only">{ui.cs.switchLanguage}</span>
+        <span lang="en" class="sr-only">{ui.en.switchLanguage}</span>
+      </button>
+      <a
+        href={originalSrc}
+        target="_blank"
+        rel="noopener"
+        class="lightbox-control gap-2 px-3 text-sm tabular-nums"
+        aria-label={`${ui[lang].openOriginal} (${index + 1} ${ui[lang].positionOf} ${images.length})`}
+      >
+        {index + 1} / {images.length}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          class="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path d="M14 5h5v5M19 5l-9 9" />
+          <path d="M11 5H5v14h14v-6" />
+        </svg>
+      </a>
+    </div>
+    <p role="status" aria-atomic="true" class="sr-only">
+      {index + 1} / {images.length}
+    </p>
   </dialog>
 {/if}
 
@@ -1274,10 +1380,116 @@
     --color-white: #fff;
   }
 
-  .lightbox-layout {
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) 6rem;
-    gap: 0.75rem;
+  .lightbox-control {
+    display: flex;
+    min-width: var(--lightbox-control);
+    height: var(--lightbox-control);
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(255 255 255 / 40%);
+    background: #000;
+    color: #fff;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .lightbox-control:hover {
+    border-color: #fff;
+  }
+
+  .lightbox-control:active,
+  .lightbox-control[aria-pressed='true'],
+  .lightbox-control[aria-current='true'] {
+    border-color: #fff;
+    background: #fff;
+    color: #000;
+  }
+
+  .lightbox-control:disabled {
+    cursor: default;
+  }
+
+  .lightbox-control:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+
+  /* One joined strip: neighbouring options share a border, and the current
+     option's white border stays above the shared ones. */
+  .lightbox-set-option + .lightbox-set-option {
+    margin-left: -1px;
+  }
+
+  .lightbox-set-option[aria-current='true'] {
+    position: relative;
+  }
+
+  .lightbox-arrow {
+    position: absolute;
+    top: 50%;
+    translate: 0 -50%;
+  }
+
+  /* The current image is a card: its drawing on the front and its description
+     on the back. --lightbox-flip is non-zero once the flip button has turned
+     this card, so a card that shows another image starts drawing side up at
+     once. */
+  .lightbox-sheet {
+    transform-style: preserve-3d;
+    transition: transform var(--lightbox-flip) cubic-bezier(0.45, 0.05, 0.2, 1);
+  }
+
+  .lightbox-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    transition:
+      opacity var(--lightbox-flip),
+      visibility 0s;
+  }
+
+  /* The face turned away is hidden once the turn ends, so it is neither drawn
+     nor hit-tested. */
+  .lightbox-back,
+  .lightbox-flipped .lightbox-front {
+    visibility: hidden;
+    transition-delay: 0s, var(--lightbox-flip);
+  }
+
+  .lightbox-flipped .lightbox-back {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lightbox-slide-current {
+      perspective: 2400px;
+    }
+
+    .lightbox-back,
+    .lightbox-flipped .lightbox-sheet {
+      transform: rotateY(180deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lightbox-back,
+    .lightbox-flipped .lightbox-front {
+      opacity: 0;
+    }
+
+    .lightbox-flipped .lightbox-back {
+      opacity: 1;
+    }
+  }
+
+  /* On phones the edge arrows step aside for the text; dragging the text
+     sideways still changes image. */
+  @media (max-width: 480px) {
+    .lightbox-flipped .lightbox-arrow {
+      visibility: hidden;
+    }
   }
 
   .lightbox-comparison-current {
@@ -1291,4 +1503,15 @@
     }
   }
 
+  /* Outgoing text also fades, since the incoming drawing covers only its own
+     area. */
+  .lightbox-comparison-text {
+    animation: comparison-out 180ms ease-out forwards;
+  }
+
+  @keyframes comparison-out {
+    to {
+      opacity: 0;
+    }
+  }
 </style>
