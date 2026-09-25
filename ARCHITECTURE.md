@@ -99,7 +99,8 @@ hydrated. This keeps the JS payload tiny.
 ### Interactive components in Svelte — [Explicit]
 
 The user chose Svelte for the interactive parts. In practice that is a single
-component today (`src/components/Gallery.svelte`).
+island today (`src/components/Gallery.svelte`), with one child component for
+the back of each lightbox image's card (`LightboxVerso.svelte`).
 
 ### The lightbox is the only browser-side JS — [Implicit]
 
@@ -115,12 +116,11 @@ transition direction). Native
 cross-document View Transitions add no client router or framework runtime.
 Images up to 4096 px use local transforms constrained to the image stage;
 larger images lazy-load OpenSeadragon as a separate chunk and use its tiled
-canvas. A
-fixed-height, full-stage-width, independently scrollable caption row keeps the
-stage dimensions stable across gallery entries and prevents text length from
-changing image selection or apparent size. Both rendering paths support
-pointer-centred wheel zoom, touch pinch and pan, and constrain maximum zoom to
-native image detail. At the base scale, horizontal mouse and one-finger gestures
+canvas. The stage fills the viewport and holds no text, so image selection and
+apparent size depend only on the viewport and the image's aspect ratio. Both
+rendering paths support pointer-centred wheel zoom, double-click and double-tap
+zoom, key zoom, touch pinch and pan, and constrain maximum zoom to native image
+detail. At and below the base scale, horizontal mouse and one-finger gestures
 drive the same animated navigation. Svelte's window primitives update image
 selection when viewport size or display density changes; a live media query
 applies reduced-motion changes immediately. Gesture distance remains separate
@@ -128,65 +128,126 @@ from its rendered
 offset so reduced-motion swipes can retain their navigation threshold without
 moving the slide. Previous, current, and next processed previews are
 neighboring DOM slides rather than an explicit JavaScript cache;
-one translation moves them as a continuous strip. The caption uses the same
-three-slide geometry. Image gesture listeners remain confined to the stage;
-the caption retains native scrolling while the surrounding dialog contains
-page-scroll gestures. A live status element reports the current gallery position
-without participating in the translated image/caption strip.
+one translation moves them as a continuous strip, each slide sized to its own
+rest view. Image gesture listeners remain confined to the stage; elements marked
+`data-lightbox-scroll` (the set strip and the description) keep native
+scrolling while the surrounding dialog contains page-scroll gestures. A visually
+hidden live status element reports the current gallery position.
 
-Images with the same non-empty `comparison_set` expose toolbar controls. The
-single-row strip occupies the space left of the close button and scrolls
-horizontally when its intrinsic width exceeds that area. Its wheel handler maps
-the dominant wheel delta to `scrollLeft` and consumes the event, while native
-horizontal touch panning remains enabled. A reactive effect brings the active
-button into view after opening or switching images. Switching within a set
-updates the active page index without calling the normal slide
-navigation or resetting the shared scale/pan state. The incoming processed
-preview is decoded first; outgoing and incoming preview layers then crossfade at
-the retained transform. The active image still initializes its ordinary full-
-image or OpenSeadragon renderer, and the temporary outgoing layer is removed
-after the blend. While a set member is active, the wheel and pinch ceiling is the
-minimum `nativeZoomScale` across the set's responsive sources. Reduced-motion
-mode switches immediately.
+Images with the same non-empty `comparison_set` fill the set strip; otherwise a
+titled image fills it alone. The single-row strip occupies the space left of the
+close button and scrolls horizontally when its intrinsic width exceeds that
+area. Its wheel handler maps the dominant wheel delta to `scrollLeft` and
+consumes the event, while native horizontal touch panning remains enabled. A
+reactive effect brings the active button into view after opening or switching
+images. Switching within a set updates the active page index without calling the
+normal slide navigation or resetting the shared scale/pan state. The incoming
+processed preview is decoded first; outgoing and incoming preview layers then
+crossfade at the retained transform. The active image still initializes its
+ordinary full-image or OpenSeadragon renderer, and the temporary outgoing layer
+is removed after the blend. While a set member is active, the zoom ceiling is
+the minimum `nativeZoomScale` across the set's responsive sources.
+Reduced-motion mode switches immediately.
 
-### Lightbox stage overlays — [Explicit]
+### Lightbox soft inset and corner controls — [Explicit]
 
-Previous/Next sit at the stage's vertical centre edges, zoom controls in its
-top-right corner, and image position with the original-file link in its
-bottom-right corner, so the stage and caption span the full dialog width with no
-navigation gutters. The overlays are children of the stage but siblings of the
-transformed slide layers, so pan, zoom, swipe offset, and aspect-ratio changes
-never move them. The stage's pointer and touch handlers ignore targets inside
-`.lightbox-stage-controls`, so pressing a control never starts a pan or swipe.
-Every overlay button uses the global `.media-navigation-button` contract. It
-lives in `@layer components` so a control such as the zoom readout can widen
-itself with utilities. Arrow icons are centred SVG chevrons rather than text
-glyphs, whose font metrics sit them off-centre in the box.
+`lightboxAreas(viewport)` in `gallery.ts` is the single source of the lightbox
+geometry. The corner gap is `clamp(8px, 1.2vmin, 16px)` and a control band is
+gap + 40 px control + gap. The **rest area** (viewport minus the top and bottom
+bands) is where an image fits at 100%; the **safe area** (also minus the side
+bands) is what pan limits and the zoom floor respect. `clampPan` keeps an axis
+that fits the rest area centred and lets a larger one slide until its edge
+reaches the safe edge, so every part of a zoomed image can be pulled out from
+under a control while a full-width rest view stays centred. `zoomFloor` lets the
+scale drop below 1 until the rest image fits the safe area. The component hands
+the gap, band, and control size to CSS as `--lightbox-gap`, `--lightbox-band`,
+and `--lightbox-control` on the dialog, so the stylesheet never restates them.
+A single `$effect` re-clamps scale and pan whenever the areas or the current
+image change, covering resizes and phone rotation.
+
+The controls are children of the dialog, outside the stage and its card, so
+pan, zoom, swipe offset, the card's flip, and its `inert` face never move or
+disable them, and the stage's pointer and touch handlers never see their events.
+They share the component-scoped `.lightbox-control` box: solid black, 40%-white
+border, white border on hover, inverted when pressed, `aria-pressed`, or
+`aria-current`. The set strip joins its buttons by overlapping their borders.
+The language switch reuses the footer's `data-lang-toggle` markup, so
+Base.astro's delegated handler does the switching and the island follows
+`data-lang`. Arrow icons are centred SVG chevrons rather than text glyphs, whose
+font metrics sit them off-centre in the box.
+
+### Each lightbox image is a card with its description on the back — [Explicit]
+
+The current slide is the card: `[data-lightbox-sheet]` inside
+`.lightbox-slide-current`, whose front face holds the drawing (responsive or
+tiled) and whose back face, present only when the image has a description in the
+current language, is `LightboxVerso.svelte`. The previous and next slides are
+plain drawing fronts. The flip button turns the card 180° about the vertical
+axis inside its slide, which is the perspective root; with reduced motion the
+faces crossfade instead. The turn's duration reaches CSS as `--lightbox-flip`,
+which is non-zero once the button sets `flipAnimated`. When another image takes
+over the card (`go`, `compareTo` and `showFromHistory` call `showDrawingSide`),
+`flipAnimated` is cleared, so the card starts drawing side up without a visible
+turn and its text starts at the top. Navigating from the text side runs the
+ordinary slide: the outgoing card leaves still showing its text and the next
+drawing slides in. A set button crossfades from a snapshot of the text taken at
+its current scroll position (the bound `scrollTop` of `LightboxVerso`, which a
+new instance opens at); the snapshot fades out as well because the incoming
+drawing covers only its own area. The face turned away is `inert` immediately
+and `visibility: hidden` once the turn ends, so it is neither focusable,
+hit-tested, nor drawn.
+
+Because the text is inside the stage, the stage's gestures treat the text side
+like a drawing at rest: a one-finger drag moves the strip live and commits or
+snaps back with the same threshold and reduced-motion rules, whatever the
+drawing's zoom. `LightboxVerso` keeps `touch-action: pan-y`, so vertical
+scrolling and long-press selection stay native. Over the text the strip follows
+only while the drag is more horizontal than vertical, since a mostly vertical
+drag may still become a native scroll; a native scroll of the text then cancels
+the drag, and no drag starts or continues while text in the stage is selected.
+While the text shows, the stage ignores the wheel, double-click, pinch,
+double-tap, and mouse drags that begin on the text, so the text scrolls and
+selects natively. On phones the dialog's flipped state hides the edge arrows.
+
+`LightboxVerso` renders the title and description in the current language with a
+`lang` attribute (so hyphenation picks the right dictionary), as a focusable,
+labelled region that scrolls inside the safe area. Its edge fades derive from
+the scroll position and the measured content height.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 
-The component owns one scale/pan gesture state for both paths. OpenSeadragon's
-mouse, touch, and keyboard navigation is disabled; its viewport receives the
-shared state with immediate updates and remains responsible for tile selection,
-loading, caching, and drawing. A pyramid `minPixelRatio` of `0.5` selects the
-closest DZI level at or above the required physical-pixel density instead of
-upscaling the level below it. OpenSeadragon caches display density at module
-scope, so each new viewer refreshes that value before sizing its canvas; this
-covers browser-zoom changes made while no viewer exists. Tiled images retain
-that density-matched processed preview beneath the canvas, preventing unloaded
-tile regions from exposing the dark stage.
+The component owns one scale/pan gesture state for both paths. Wheel, keys, and
+double-click/double-tap all go through `zoomTo`, which keeps the point under the
+pointer (or the centre) in place and clamps pan to the safe area; pinch uses the
+same clamp with its own two-finger pan. Double-tap is detected inside the touch
+handlers (two short taps within 300 ms and 30 px), and the second tap's
+`touchend` is cancelled so the browser does not also synthesize a `dblclick`.
+OpenSeadragon's mouse, touch, and keyboard navigation is disabled; its viewport
+receives the shared state with immediate updates and remains responsible for
+tile selection, loading, caching, and drawing. Its home view fits the whole
+stage, so `deepZoomViewport` maps the rest-fitted width times the scale to a
+zoom directly. OpenSeadragon's own pan and zoom constraints and its auto-resize
+are off, because either would move the view away from the component's clamp; the
+component passes the stage size to the viewport before each update. A pyramid
+`minPixelRatio` of `0.5` selects the closest DZI level at or above the required
+physical-pixel density instead of upscaling the level below it. OpenSeadragon
+caches display density at module scope, so each new viewer refreshes that value
+before sizing its canvas; this covers browser-zoom changes made while no viewer
+exists. Tiled images retain that density-matched processed preview beneath the
+canvas, preventing unloaded tile regions from exposing the dark stage.
 
 ### Lightbox modal state — [Explicit]
 
 The lightbox is a native modal `<dialog>`, so the browser owns the top layer,
 inertness of the page behind it, and Escape handling. A modal dialog still lets
 Tab and Shift+Tab leave for the browser chrome at either end, so the keydown
-handler wraps focus between the first and last enabled control. Focus enters the close control and
-returns to the opening thumbnail without scrolling the page on close. The
+handler wraps focus between the first and last enabled control, including the
+focusable description and skipping `inert` faces. Focus enters the close control
+and returns to the opening thumbnail without scrolling the page on close. The
 viewport-filling dialog suppresses wheel, touch, and keyboard scrolling without
 changing document overflow or positioning, except for native scrolling inside
-an overflowing caption. The page and sticky header therefore retain their
-normal layout and position beneath it. The lightbox locally pins
+the set strip and the description. The page and sticky header therefore retain
+their normal layout and position beneath it. The lightbox locally pins
 black and white colour tokens so the global dark-mode swap cannot invert its
 overlay and controls. A `data-lang` observer keeps the dialog's accessible names
 aligned with the global language switch.
@@ -197,24 +258,25 @@ thumbnail frame, so its hover transform cannot change the shared transition
 geometry. The current hover scale is frozen at click and applied to the opening
 snapshot, including midway through the hover transition. Image width and height
 metadata reserve geometry before a first download. The active preview's
-dimensions come from the source aspect ratio and measured stage, so cached image
-and tiled-renderer state cannot change the endpoint. The image pair clips the
-destination snapshot on opening and the source snapshot on closing while its box
-changes aspect ratio. Using one image snapshot avoids doubled edges from blending
-different crop states; the document snapshot supplies the overlay fade.
-The image morph runs only when the thumbnail is inside the viewport and does not
-overlap the sticky header. A clipped or header-overlapped thumbnail uses the
-document fade, avoiding the stacking discontinuity created when a View
-Transition isolates it above the header.
+dimensions come from the source aspect ratio and the rest area of the measured
+stage, so cached image and tiled-renderer state cannot change the endpoint. The
+image pair clips the destination snapshot on opening and the source snapshot on
+closing while its box changes aspect ratio. Using one image snapshot avoids
+doubled edges from blending different crop states; the document snapshot
+supplies the overlay fade. The image morph runs only when the thumbnail is
+inside the viewport and does not overlap the sticky header. A clipped or
+header-overlapped thumbnail uses the document fade, avoiding the stacking
+discontinuity created when a View Transition isolates it above the header.
 Page-transition elements opt out while this lightbox-only transition is active,
 so their snapshots remain in the document's normal stacking order beneath the
 header and overlay. The tiled renderer starts after opening finishes so its
 canvas cannot appear beneath the moving image. Image gestures and window-level
 wheel or touch scrolling are captured during the shared transition, keeping both
-endpoints fixed without changing document layout. A zoomed preview is not a
-matching shared element, so closing it uses only the document fade. Reduced-motion
-visitors use the immediate state change. Each translated slide clips its own
-contents, so a transformed image cannot paint over the adjacent slide.
+endpoints fixed without changing document layout. A zoomed preview, or one
+turned over to its description, is not a matching shared element, so closing it
+uses only the document fade. Reduced-motion visitors use the immediate state
+change. Each translated slide clips its own contents, so a transformed image
+cannot paint over the adjacent slide.
 
 Each image maps to a one-based `#image-N` hash. Opening pushes one marked
 history entry; navigation replaces that entry, and the popstate handler closes
@@ -239,8 +301,11 @@ own container (not the page), it stays clear of the "don't reimplement scrolling
 boundary. Images come only from the Home singleton's required `gallery` list. A
 single entry renders as a normal responsive image at its natural aspect ratio;
 two or more entries render through the carousel. The carousel and lightbox share
-only the global `.media-navigation-button` visual contract; their native
-scroll-snap and Svelte gesture/navigation implementations remain independent.
+only their control interaction language (40 px boxes, outline on hover, invert
+on press); the carousel's translucent `.media-navigation-button` suits controls
+over a page image, the lightbox's solid `.lightbox-control` a full-screen
+drawing. Their native scroll-snap and Svelte gesture/navigation implementations
+remain independent.
 Dots retain the same interaction language but use literal media-surface colours,
 including a dark edge for contrast over pale images, rather than inheriting
 page-theme tokens.
@@ -313,7 +378,7 @@ these rules govern the arbitrary values and the custom CSS in `global.css`.
   that compounds through the cascade. Non-font-size `em` does not.
 - **`px`** — borders, shadows, and pixel-precise details only.
 - **`%` / `fr` / `vw` / `vh`** — responsive layout (grid tracks, viewport-sized
-  regions like the lightbox `max-h-[85vh]`).
+  regions).
 - **`clamp()`** — fluid text/sizing, with `rem` bounds and a `rem`+`vw` middle
   term (`clamp(1rem, 0.5rem + 1.5vw, 1.5rem)`) so it still responds to zoom.
 - **unitless** — `line-height` (a ratio, not a length). Tailwind's

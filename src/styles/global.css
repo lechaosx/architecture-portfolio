@@ -119,7 +119,7 @@ html:active-view-transition-type(lightbox-close)::view-transition-old(lightbox-i
   opacity: 1;
 }
 
-/* Layered so per-control utilities (e.g. a wider zoom readout) can override it. */
+/* Layered so per-control utilities can override it. */
 @layer components {
   .media-navigation-button {
     display: flex;

@@ -29,6 +29,35 @@ async function waitForLightbox(page: Page) {
     .toBe(false);
 }
 
+/** Rendered width of the current lightbox image relative to its rest (100%) width. */
+async function imageZoom(page: Page) {
+  return page
+    .locator('.lightbox-slide-current img')
+    .evaluate(
+      (image: HTMLImageElement) =>
+        image.getBoundingClientRect().width / image.offsetWidth,
+    );
+}
+
+/** Whether the deep-zoom canvas has drawn anything at a viewport point. */
+async function tilesDrawnAt(page: Page, point: { x: number; y: number }) {
+  return page
+    .locator('.openseadragon-canvas canvas')
+    .evaluate((canvas: HTMLCanvasElement, { x, y }) => {
+      const bounds = canvas.getBoundingClientRect();
+      const scale = canvas.width / bounds.width;
+      const pixel = canvas
+        .getContext('2d')!
+        .getImageData(
+          Math.floor((x - bounds.x) * scale),
+          Math.floor((y - bounds.y) * scale),
+          1,
+          1,
+        ).data;
+      return pixel[3] > 0;
+    }, point);
+}
+
 async function sampleBoxes(locator: Locator, frames = 8) {
   return locator.evaluate(
     async (element, frameCount) => {
@@ -231,9 +260,7 @@ test('shared transitions prevent wheel input from moving the page or image', asy
   });
 
   expect(windowWheelPrevented).toBe(true);
-  await expect(page.getByRole('button', { name: 'Reset zoom' })).toHaveText(
-    '100%',
-  );
+  expect(await imageZoom(page)).toBeCloseTo(1, 2);
   expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
   await waitForLightbox(page);
 
@@ -269,9 +296,7 @@ test('closing a zoomed image uses the overlay transition without an image morph'
 
   await page.locator('.lightbox-stage').hover();
   await page.mouse.wheel(0, -1200);
-  await expect(page.getByRole('button', { name: 'Reset zoom' })).not.toHaveText(
-    '100%',
-  );
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
 
   await page.getByRole('button', { name: 'Close' }).click();
   await expectLightboxTransition(page, 'lightbox-close');
@@ -290,6 +315,40 @@ test('closing a zoomed image uses the overlay transition without an image morph'
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
 });
 
+test('closing while the description shows uses the overlay transition and reopens on the drawing', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 3);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await thumbnail.click();
+  await waitForLightbox(page);
+  await page.getByRole('button', { name: 'Show description' }).click();
+
+  await page.keyboard.press('Escape');
+  await expectLightboxTransition(page, 'lightbox-close');
+  await page.waitForTimeout(50);
+  expect(
+    await page.evaluate(() =>
+      document
+        .getAnimations()
+        .some(({ effect }) =>
+          (effect as KeyframeEffect | null)?.pseudoElement?.includes(
+            'lightbox-image',
+          ),
+        ),
+    ),
+  ).toBe(false);
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await expect(thumbnail).toBeFocused();
+
+  await thumbnail.click();
+  await waitForLightbox(page);
+  await expect(
+    page.getByRole('button', { name: 'Show description' }),
+  ).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('a zoomed image stays clipped to its slide during navigation', async ({
   page,
 }) => {
@@ -299,9 +358,7 @@ test('a zoomed image stays clipped to its slide during navigation', async ({
 
   await page.locator('.lightbox-stage').hover();
   await page.mouse.wheel(0, -1200);
-  await expect(page.getByRole('button', { name: 'Reset zoom' })).not.toHaveText(
-    '100%',
-  );
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
   await page
     .getByRole('button', { name: 'Next image' })
     .evaluate((button: HTMLButtonElement) => button.click());
@@ -495,30 +552,6 @@ test('an obscured thumbnail uses the overlay transition without an image morph',
   });
 });
 
-test('the mouse wheel scrolls an overflowing caption without zooming the image', async ({
-  page,
-}) => {
-  await gotoProject(page);
-  await galleryImage(page, 2).click();
-  await waitForLightbox(page);
-
-  const caption = page.locator('.lightbox-caption-current');
-  expect(
-    await caption.evaluate(
-      (element) => element.scrollHeight > element.clientHeight,
-    ),
-  ).toBe(true);
-  await caption.hover();
-  await page.mouse.wheel(0, 200);
-
-  await expect
-    .poll(() => caption.evaluate((element) => element.scrollTop))
-    .toBeGreaterThan(0);
-  await expect(page.getByRole('button', { name: 'Reset zoom' })).toHaveText(
-    '100%',
-  );
-});
-
 test('dark theme keeps the lightbox surface black and controls white', async ({
   page,
 }) => {
@@ -546,7 +579,7 @@ test('dark theme keeps the lightbox surface black and controls white', async ({
       };
     },
   );
-  expect(colors.background).toEqual([0, 0, 0, 230]);
+  expect(colors.background).toEqual([0, 0, 0, 255]);
   expect(colors.foreground).toEqual([255, 255, 255, 255]);
 });
 
@@ -622,6 +655,217 @@ test('a reopened pyramid matches its canvas to a changed display density', async
     )
     .toBe(2);
   await context.close();
+});
+
+test('the lightbox is full screen with controls in the corners', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  await galleryImage(page, 3).click(); // "Life at the city", one of a set of five
+  await waitForLightbox(page);
+  const viewport = page.viewportSize()!;
+  const box = async (locator: Locator) => (await locator.boundingBox())!;
+  const dialog = page.getByRole('dialog', { name: 'Image viewer' });
+  expect(await box(dialog)).toMatchObject({
+    x: 0,
+    y: 0,
+    width: viewport.width,
+    height: viewport.height,
+  });
+
+  const close = await box(dialog.getByRole('button', { name: 'Close' }));
+  expect(close.x + close.width).toBeGreaterThan(viewport.width - 20);
+  expect(close.y).toBeLessThan(20);
+
+  const set = dialog.getByRole('navigation', { name: 'Images in this set' });
+  await expect(set.getByRole('button')).toHaveCount(5);
+  await expect(
+    set.getByRole('button', { name: 'Life at the city' }),
+  ).toHaveAttribute('aria-current', 'true');
+  const setBox = await box(set);
+  expect(setBox.x).toBeLessThan(20);
+  expect(setBox.y).toBeLessThan(20);
+
+  const original = await box(
+    dialog.getByRole('link', { name: 'Open original (3 of 17)' }),
+  );
+  expect(original.x + original.width).toBeGreaterThan(viewport.width - 20);
+  expect(original.y + original.height).toBeGreaterThan(viewport.height - 20);
+  await expect(
+    dialog.getByRole('button', { name: 'Switch to Czech' }),
+  ).toBeVisible();
+
+  const previous = await box(
+    dialog.getByRole('button', { name: 'Previous image' }),
+  );
+  const next = await box(dialog.getByRole('button', { name: 'Next image' }));
+  expect(previous.x).toBeLessThan(20);
+  expect(next.x + next.width).toBeGreaterThan(viewport.width - 20);
+  expect(previous.y + previous.height / 2).toBeCloseTo(viewport.height / 2, 0);
+  expect(next.y).toBeCloseTo(previous.y, 0);
+});
+
+test('an image outside a set shows its title as a set of one', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  await galleryImage(page, 11).click(); // a titled visualization outside any set
+  await waitForLightbox(page);
+  const set = page.getByRole('navigation', { name: 'Images in this set' });
+  await expect(set.getByRole('button')).toHaveCount(1);
+  await expect(set.getByRole('button')).toHaveText('Visualization');
+  await expect(set.getByRole('button')).toHaveAttribute('aria-current', 'true');
+});
+
+test('an image without a title or set shows no set strip', async ({ page }) => {
+  await page.goto('/projects/exotarium-brno-zoo/');
+  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+  await galleryImage(page, 2).click();
+  await waitForLightbox(page);
+  await expect(
+    page.getByRole('navigation', { name: 'Images in this set' }),
+  ).toHaveCount(0);
+});
+
+test('the rest view leaves the control bands clear and zoomed edges can leave the controls', async ({
+  page,
+}) => {
+  await page.goto('/projects/galerie-hang%C3%A1r/#image-5'); // a set member below the tiling size
+  await waitForLightbox(page);
+  const image = page.locator('.lightbox-slide-current img');
+  const set = (await page
+    .getByRole('navigation', { name: 'Images in this set' })
+    .boundingBox())!;
+  const original = (await page
+    .getByRole('link', { name: /^Open original/ })
+    .boundingBox())!;
+  const rest = (await image.boundingBox())!;
+  expect(rest.y).toBeGreaterThanOrEqual(set.y + set.height);
+  expect(rest.y + rest.height).toBeLessThanOrEqual(original.y);
+
+  await page.mouse.move(rest.x + 5, rest.y + 5);
+  await page.mouse.wheel(0, -3000);
+  await page.mouse.move(200, 200);
+  await page.mouse.down();
+  await page.mouse.move(1200, 700, { steps: 10 });
+  await page.mouse.up();
+  const zoomed = (await image.boundingBox())!;
+  const previous = (await page
+    .getByRole('button', { name: 'Previous image' })
+    .boundingBox())!;
+  expect(zoomed.x).toBeGreaterThanOrEqual(previous.x + previous.width - 1);
+  expect(zoomed.y).toBeGreaterThanOrEqual(set.y + set.height - 1);
+  expect(zoomed.width).toBeGreaterThan(page.viewportSize()!.width);
+});
+
+test('a tiled image corner can be pulled clear of the controls and draws there', async ({
+  page,
+}) => {
+  await page.goto(`${projectPath}#image-3`);
+  await waitForLightbox(page);
+  await page.locator('.openseadragon-canvas canvas').waitFor();
+  const rest = (await page
+    .locator('.lightbox-slide-current img')
+    .boundingBox())!;
+  await page.mouse.move(rest.x + 5, rest.y + 5);
+  await page.mouse.wheel(0, -3000);
+  await page.mouse.move(200, 200);
+  await page.mouse.down();
+  await page.mouse.move(1200, 700, { steps: 10 });
+  await page.mouse.up();
+
+  const previous = (await page
+    .getByRole('button', { name: 'Previous image' })
+    .boundingBox())!;
+  const set = (await page
+    .getByRole('navigation', { name: 'Images in this set' })
+    .boundingBox())!;
+  const corner = (await page
+    .locator('.lightbox-slide-current img')
+    .boundingBox())!;
+  expect(corner.x).toBeGreaterThanOrEqual(previous.x + previous.width - 1);
+  expect(corner.y).toBeGreaterThanOrEqual(set.y + set.height - 1);
+
+  await expect
+    .poll(() => tilesDrawnAt(page, { x: corner.x + 4, y: corner.y + 4 }))
+    .toBe(true);
+  expect(await tilesDrawnAt(page, { x: corner.x - 4, y: corner.y + 4 })).toBe(false);
+  expect(await tilesDrawnAt(page, { x: corner.x + 4, y: corner.y - 4 })).toBe(false);
+});
+
+test('on a phone the rest view uses the full width and zooming out clears the arrows', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  const image = page.locator('.lightbox-slide-current img');
+  expect(Math.round((await image.boundingBox())!.width)).toBe(390);
+
+  const session = await context.newCDPSession(page);
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [
+      { x: 95, y: 420 },
+      { x: 295, y: 420 },
+    ],
+  });
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [
+      { x: 175, y: 420 },
+      { x: 215, y: 420 },
+    ],
+  });
+  await session.send('Input.dispatchTouchEvent', {
+    type: 'touchEnd',
+    touchPoints: [],
+  });
+  const zoomedOut = (await image.boundingBox())!;
+  const previous = (await page
+    .getByRole('button', { name: 'Previous image' })
+    .boundingBox())!;
+  const next = (await page
+    .getByRole('button', { name: 'Next image' })
+    .boundingBox())!;
+  expect(zoomedOut.x).toBeGreaterThanOrEqual(previous.x + previous.width - 1);
+  expect(zoomedOut.x + zoomedOut.width).toBeLessThanOrEqual(next.x + 1);
+  await context.close();
+});
+
+test('resizing while zoomed keeps the image within its pan limits', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  await galleryImage(page, 3).click(); // a tiled drawing
+  await waitForLightbox(page);
+  await page.locator('.openseadragon-canvas canvas').waitFor();
+  const image = page.locator('.lightbox-slide-current img');
+  const rest = (await image.boundingBox())!;
+  await page.mouse.move(rest.x + rest.width - 2, rest.y + rest.height - 2);
+  await page.mouse.wheel(0, -3000);
+
+  // 800×600: gap 8 px, so the safe area ends 56 px from each edge.
+  await page.setViewportSize({ width: 800, height: 600 });
+  await expect
+    .poll(async () => {
+      const box = (await image.boundingBox())!;
+      return [Math.round(box.x + box.width), Math.round(box.y + box.height)];
+    })
+    .toEqual([800 - 56, 600 - 56]);
+  await expect
+    .poll(() => tilesDrawnAt(page, { x: 800 - 60, y: 600 - 60 }))
+    .toBe(true);
+  expect(await tilesDrawnAt(page, { x: 800 - 52, y: 600 - 60 })).toBe(false);
 });
 
 test.describe('reduced motion', () => {

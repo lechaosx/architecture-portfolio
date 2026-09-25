@@ -70,6 +70,7 @@ src/
     ProjectCard.astro          grid card
     ProjectBlocks.astro        ordered project text/gallery/image-set renderer
     Gallery.svelte             the ONLY hydrated island (page-level lightbox)
+    LightboxVerso.svelte       back of a lightbox image's card (its description)
   styles/global.css            tailwind import, fonts, .reveal, .no-scrollbar, lang rule
 
 public/
@@ -127,10 +128,13 @@ blocks:
       - image: /uploads/render-2.jpg
 ```
 
-The four caption fields are optional; omit them to show only the enlarged image.
+The title and description fields (Czech and English) are optional; omit them to
+show only the enlarged image.
+A title labels the image in the lightbox's set strip; a description adds a
+button that turns the image over to show it.
 An optional language-neutral `comparison_set` groups records with the same exact
 value across any image blocks on that project. The existing bilingual titles
-name the lightbox shortcuts. Grouping is lightbox-only and does not change how
+name the set strip's buttons. Grouping is lightbox-only and does not change how
 each preview is rendered on the project page.
 The cover and every image block feed one lightbox in page order. Lightbox links
 use that position (`#image-1`, `#image-2`, …), so reordering blocks or images

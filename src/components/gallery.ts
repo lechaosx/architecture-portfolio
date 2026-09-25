@@ -1,4 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
+import type { Lang } from '../i18n';
 import type { ResponsiveImage } from '../images';
 
 type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
@@ -18,17 +19,63 @@ export interface Size {
   height: number;
 }
 
-function clampScale(scale: number, maxScale: number) {
-  return Math.min(maxScale, Math.max(1, scale));
+export const CONTROL_SIZE = 40;
+
+export interface ZoomRange {
+  min: number;
+  max: number;
 }
 
-export function hasCaption(image: GalleryImage) {
-  return [
-    image.title_cs,
-    image.title_en,
-    image.description_cs,
-    image.description_en,
-  ].some((value) => Boolean(value?.trim()));
+export interface LightboxAreas {
+  /** Distance of the corner controls from the screen edges. */
+  gap: number;
+  /** Depth of a control band: gap, control, gap. */
+  band: number;
+  /** Where the image fits at 100%: the viewport minus the top and bottom bands. */
+  rest: Size;
+  /** What pan limits and the zoom floor respect: the rest area minus the side bands too. */
+  safe: Size;
+}
+
+export function lightboxAreas(viewport: Size): LightboxAreas {
+  const gap = Math.min(
+    16,
+    Math.max(8, 0.012 * Math.min(viewport.width, viewport.height)),
+  );
+  const band = 2 * gap + CONTROL_SIZE;
+  return {
+    gap,
+    band,
+    rest: { width: viewport.width, height: viewport.height - 2 * band },
+    safe: {
+      width: viewport.width - 2 * band,
+      height: viewport.height - 2 * band,
+    },
+  };
+}
+
+export function zoomFloor(restImage: Size, safe: Size) {
+  return Math.min(
+    1,
+    safe.width / restImage.width,
+    safe.height / restImage.height,
+  );
+}
+
+export function doubleTapScale(scale: number, range: ZoomRange) {
+  return scale === 1 ? Math.min(2.5, range.max) : 1;
+}
+
+export function clampScale(scale: number, range: ZoomRange) {
+  return Math.min(range.max, Math.max(range.min, scale));
+}
+
+export function imageText(
+  image: GalleryImage | undefined,
+  field: 'title' | 'description',
+  lang: Lang,
+) {
+  return image?.[`${field}_${lang}`]?.trim() || undefined;
 }
 
 export function comparisonSetIndexes(
@@ -50,9 +97,9 @@ export function sharedMaximumScale(maxScales: number[]) {
 export function scaleFromWheel(
   scale: number,
   deltaY: number,
-  maxScale: number,
+  range: ZoomRange,
 ) {
-  return clampScale(scale * Math.exp(-deltaY * 0.002), maxScale);
+  return clampScale(scale * Math.exp(-deltaY * 0.002), range);
 }
 
 export function panForZoom(
@@ -72,10 +119,10 @@ export function scaleFromPinch(
   scale: number,
   startDistance: number,
   distance: number,
-  maxScale: number,
+  range: ZoomRange,
 ) {
   return startDistance > 0
-    ? clampScale(scale * (distance / startDistance), maxScale)
+    ? clampScale(scale * (distance / startDistance), range)
     : scale;
 }
 
@@ -93,14 +140,21 @@ export function panForPinch(
   };
 }
 
+/**
+ * An axis that fits the rest area stays centred; a larger one may slide until
+ * its edge reaches the safe area's edge, so every part of it can be brought out
+ * from under the controls.
+ */
 export function clampPan(
   pan: Point,
   scale: number,
   image: Size,
-  viewport: Size,
+  areas: Pick<LightboxAreas, 'rest' | 'safe'>,
 ): Point {
-  const maxX = Math.max(0, (image.width * scale - viewport.width) / 2);
-  const maxY = Math.max(0, (image.height * scale - viewport.height) / 2);
+  const limit = (extent: number, rest: number, safe: number) =>
+    extent <= rest ? 0 : (extent - safe) / 2;
+  const maxX = limit(image.width * scale, areas.rest.width, areas.safe.width);
+  const maxY = limit(image.height * scale, areas.rest.height, areas.safe.height);
   return {
     x: maxX === 0 ? 0 : Math.min(maxX, Math.max(-maxX, pan.x)),
     y: maxY === 0 ? 0 : Math.min(maxY, Math.max(-maxY, pan.y)),
@@ -115,19 +169,22 @@ export function containedImageSize(image: Size, viewport: Size): Size {
   return { width: image.width * fit, height: image.height * fit };
 }
 
+/**
+ * OpenSeadragon viewport for an image drawn `imageWidth` px wide and offset by
+ * `pan` from the container centre. Its world is one image width wide, so zoom 1
+ * spans the container width.
+ */
 export function deepZoomViewport(
-  homeZoom: number,
-  homeCenter: Point,
-  viewportWidth: number,
-  scale: number,
+  imageCenter: Point,
+  containerWidth: number,
+  imageWidth: number,
   pan: Point,
 ) {
-  const zoom = homeZoom * scale;
   return {
-    zoom,
+    zoom: imageWidth / containerWidth,
     center: {
-      x: homeCenter.x - pan.x / (viewportWidth * zoom),
-      y: homeCenter.y - pan.y / (viewportWidth * zoom),
+      x: imageCenter.x - pan.x / imageWidth,
+      y: imageCenter.y - pan.y / imageWidth,
     },
   };
 }
@@ -136,6 +193,7 @@ export function swipeDirection(deltaX: number, deltaY: number) {
   if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY)) return 0;
   return deltaX < 0 ? 1 : -1;
 }
+
 
 export function displayedSwipeOffset(deltaX: number, reducedMotion: boolean) {
   return reducedMotion ? 0 : deltaX;
