@@ -1135,6 +1135,7 @@
     style:--lightbox-control={`${CONTROL_SIZE}px`}
     style:--lightbox-card-duration={`${cardDuration}ms`}
     aria-label={ui[lang].imageViewer}
+    aria-busy={lightboxTransitioning}
     oncancel={(event) => {
       event.preventDefault();
       requestClose();

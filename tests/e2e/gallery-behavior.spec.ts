@@ -22,14 +22,10 @@ async function gotoProject(page: Page, suffix = '') {
 }
 
 async function waitForLightbox(page: Page, name = 'Image viewer') {
-  await expect(page.getByRole('dialog', { name })).toBeVisible();
-  await expect
-    .poll(() =>
-      page.evaluate(() =>
-        document.documentElement.matches(':active-view-transition'),
-      ),
-    )
-    .toBe(false);
+  const dialog = page.getByRole('dialog', { name });
+  await expect(dialog).toBeVisible();
+  // The lightbox ignores input until it has finished opening.
+  await expect(dialog).not.toHaveAttribute('aria-busy', 'true');
 }
 
 /** Rendered width of the current lightbox image relative to its rest (100%) width. */

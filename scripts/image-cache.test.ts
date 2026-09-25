@@ -7,6 +7,7 @@ import {
   imageCacheKey,
   shouldPublishDerivative,
   shouldGenerateDeepZoom,
+  staleOutputs,
   webpPolicy,
 } from './image-cache';
 
@@ -90,5 +91,45 @@ describe('deep zoom eligibility', () => {
   test('keeps lossy tile boundaries one codec macroblock outside the visible core', () => {
     expect(deepZoomOverlap(true)).toBe(1);
     expect(deepZoomOverlap(false)).toBe(16);
+  });
+});
+
+describe('output sync', () => {
+  const published = new Set(['manifest.json', 'a/480.webp', 'a/960.webp']);
+
+  test('keeps every published file and the directories that hold them', () => {
+    expect(
+      staleOutputs(['a', 'a/480.webp', 'a/960.webp', 'manifest.json'], published),
+    ).toEqual([]);
+  });
+
+  test('removes a file that is no longer published from a kept directory', () => {
+    expect(
+      staleOutputs(['a', 'a/320.webp', 'a/480.webp', 'a/960.webp'], published),
+    ).toEqual(['a/320.webp']);
+  });
+
+  test('removes a stale directory inside a kept directory', () => {
+    expect(
+      staleOutputs(
+        ['a', 'a/480.webp', 'a/image_files', 'a/image_files/0'],
+        published,
+      ),
+    ).toEqual(['a/image_files']);
+  });
+
+  test('removes a temporary file left by an interrupted run', () => {
+    expect(
+      staleOutputs(['a', 'a/480.webp', 'a/480.webp.tmp'], published),
+    ).toEqual(['a/480.webp.tmp']);
+  });
+
+  test('removes an unreferenced directory as one entry', () => {
+    expect(
+      staleOutputs(
+        ['a', 'a/480.webp', 'b', 'b/image.dzi', 'b/image_files', 'b/image_files/0'],
+        published,
+      ),
+    ).toEqual(['b']);
   });
 });

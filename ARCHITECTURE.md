@@ -35,8 +35,9 @@ the root as the only mount point is what makes the code simple:
   the build. No `withBase()` helper, no per-target config, no dev override.
 - **The custom domain is committed as `public/CNAME`** (a static file Astro
   copies to `dist/`). No build hook generates it.
-- `astro.config.mjs` sets a single hardcoded `site` (the canonical origin) and
-  registers the Svelte, sitemap, and Tailwind integrations — nothing else.
+- `astro.config.mjs` sets a single hardcoded `site` (the canonical origin),
+  registers the Svelte, sitemap, and Tailwind integrations, and keeps `.direnv`
+  out of the dev file watcher (see "Dev environment") — nothing else.
 - `site` feeds only the sitemap's absolute URLs (SEO — see below).
 
 Trade-off given up: the bare `*.github.io/<repo>/` URL doesn't serve correctly on
@@ -66,6 +67,12 @@ Proposed as the best fit for an image-heavy, mostly-static portfolio: ships zero
 JS by default, supports partial hydration ("islands"), first-class Markdown
 content. The user accepted the recommended stack without pushback.
 
+`astro` is held to 7.0 patch releases from 7.0.9 (`~7.0.9`) — [Explicit].
+Before 7.0.7 the dev server added a socket `close` listener for every page or
+404 it rendered and never removed it, which surfaces as
+`MaxListenersExceededWarning` after ten requests on one connection. The range
+takes the latest 7.0 patch; moving to a newer minor is a separate upgrade.
+
 ### Language: TypeScript — [Explicit]
 
 Chosen from the offered options (over plain JavaScript). Uses Astro's `strict`
@@ -83,9 +90,15 @@ specific ships to production.
 
 ### Dev environment: minimal Nix flake — [Explicit]
 
-`flake.nix` provides bun and the pinned Playwright browser package for
-`x86_64-linux`. It sets only the browser path needed by the test runner and has
-no description. `.gitignore` was likewise trimmed on request.
+`flake.nix` provides bun, the pinned Playwright browser package, and util-linux
+(for `flock`) for `x86_64-linux`. It sets only the browser path needed by the
+test runner and has no description. `.gitignore` was likewise trimmed on
+request.
+
+The dev server's file watcher ignores `.direnv` — [Explicit]. direnv links the
+flake's inputs, including the whole nixpkgs source tree, into
+`.direnv/flake-inputs`; watching through those links would hold about 127,000
+files open and add several seconds to dev-server startup.
 
 ---
 
@@ -347,9 +360,12 @@ canvas cannot appear beneath the moving image. Image gestures and window-level
 wheel or touch scrolling are captured during the shared transition, keeping both
 endpoints fixed without changing document layout. A zoomed preview, or one
 turned over to its description, is not a matching shared element, so closing it
-uses only the document fade. Reduced-motion visitors use the immediate state
-change. Each translated slide clips its own contents, so a transformed image
-cannot paint over the adjacent slide.
+uses only the document fade. The dialog carries `aria-busy="true"` from the
+start of opening until that transition has settled, the span in which it ignores
+input, so assistive technology and browser tests know when it responds; closing
+removes it from the page before its transition runs — [Implicit]. Reduced-motion
+visitors use the immediate state change. Each translated slide clips its own
+contents, so a transformed image cannot paint over the adjacent slide.
 
 Each image maps to a one-based `#image-N` hash. Opening pushes one marked
 history entry; navigation replaces that entry, and the popstate handler closes
@@ -610,10 +626,33 @@ viewed, not a smaller aggregate deployment.
 Encoding results are cached under `node_modules/.astro/images` by SHA-256 keys
 derived from the original bytes and the complete transformation recipe,
 including the Sharp and libvips versions. A changed upload or recipe gets a new
-cache entry; unrelated site changes reuse existing entries. Each build clears
-and rematerializes `public/_responsive` from the cache so removed content is not
-deployed. Public derivative URLs contain the cache key, so a changed source or
-recipe cannot reuse a stale browser response. The test job and official Astro
+cache entry; unrelated site changes reuse existing entries. A derivative is
+encoded to a temporary file and a pyramid built in a temporary directory, each
+renamed into place once complete: an existing entry is reused after reading
+only its header or the presence of its `image.dzi`, so an interrupted run must
+not leave a partial one — [Implicit].
+
+Each run syncs `public/_responsive` with the cache in place — [Explicit]. It
+writes only files that are missing or differ, replacing each through a
+temporary file and a rename, then writes the manifest the same way, and only
+afterwards removes entries the new manifest no longer references, so removed
+content is not deployed. `src/server-images.ts` re-reads the manifest whenever
+its modification time changes, so a dev server running while builds and tests
+regenerate images renders only URLs of files that exist and never serves one
+half-written — [Implicit]. A page already open in the browser can still point
+at a removed derivative until it is reloaded.
+
+Runs are serialized — [Implicit]. `bun dev`, builds and browser tests all
+start the script, and overlapping runs would remove each other's new output and
+cache entries. The `images` package script runs it under `flock` on
+`node_modules/.images.lock`, a kernel advisory lock: a later run blocks silently
+until the earlier one exits, and the kernel releases the lock when its holder
+dies, so a killed run never leaves the next one waiting. `flock` comes from
+util-linux, which the flake provides and GitHub's Ubuntu runners include; Linux
+is the only development and build platform.
+
+Public derivative URLs contain the cache key, so a changed source or recipe
+cannot reuse a stale browser response. The test job and official Astro
 GitHub Action persist `node_modules/.astro` under matching keys, sharing the
 browser-test prebuild's results with the deployment build and later runs. A
 missing or evicted cache remains safe because the same build recreates it from

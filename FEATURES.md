@@ -350,7 +350,8 @@ the page.
 
 Opening the lightbox moves keyboard focus to its controls and keeps focus inside
 until it closes. Closing it restores focus to the image trigger that opened it
-without moving the page.
+without moving the page. While it animates open or closed it ignores input;
+while opening it also reports itself busy to assistive technology — [Implicit].
 Clicking the dark area around the image keeps the lightbox open; users close it
 with the dedicated close control, Escape, or browser Back.
 The overlay contains wheel, touch, and keyboard scrolling, while deliberate

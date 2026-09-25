@@ -1,14 +1,23 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { ImageManifest } from './images';
 
-let manifest: Promise<ImageManifest> | undefined;
+// Keyed on the file's modification time: a long-running dev server picks up a
+// regenerated manifest instead of emitting URLs whose files have been removed.
+let cached: { modified: number; manifest: Promise<ImageManifest> } | undefined;
 
-function imageManifest() {
-  manifest ??= readFile(resolve('public/_responsive/manifest.json'), 'utf8').then(
-    (content) => JSON.parse(content) as ImageManifest,
-  );
-  return manifest;
+async function imageManifest() {
+  const path = resolve('public/_responsive/manifest.json');
+  const modified = (await stat(path)).mtimeMs;
+  if (cached?.modified !== modified) {
+    cached = {
+      modified,
+      manifest: readFile(path, 'utf8').then(
+        (content) => JSON.parse(content) as ImageManifest,
+      ),
+    };
+  }
+  return cached.manifest;
 }
 
 export async function getResponsiveImage(src: string) {

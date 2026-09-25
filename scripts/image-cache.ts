@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { dirname } from 'node:path';
 
 export function imageCacheKey(
   source: Uint8Array,
@@ -68,4 +69,20 @@ export function deepZoomLevels(width: number, height: number) {
 
 export function deepZoomOverlap(lossless: boolean) {
   return lossless ? 1 : 16;
+}
+
+/**
+ * Output entries (relative paths) that hold no published file, reduced to the
+ * top-most ones so each stale tree is removed in one step.
+ */
+export function staleOutputs(
+  entries: readonly string[],
+  published: ReadonlySet<string>,
+) {
+  const kept = new Set<string>();
+  for (const file of published) {
+    for (let path = file; path !== '.'; path = dirname(path)) kept.add(path);
+  }
+  const stale = new Set(entries.filter((entry) => !kept.has(entry)));
+  return [...stale].filter((entry) => !stale.has(dirname(entry)));
 }

@@ -4,6 +4,7 @@ import {
   mkdir,
   readFile,
   readdir,
+  rename,
   rm,
   stat,
   writeFile,
@@ -24,6 +25,7 @@ import {
   imageCacheKey,
   shouldGenerateDeepZoom,
   shouldPublishDerivative,
+  staleOutputs,
   webpPolicy,
 } from './image-cache';
 
@@ -75,7 +77,21 @@ async function referencedImages() {
   return [...paths].sort();
 }
 
-await rm(outputDirectory, { recursive: true, force: true });
+const publishedFiles = new Set<string>();
+let written = 0;
+
+async function publish(outputPath: string, contents: Buffer) {
+  publishedFiles.add(relative(outputDirectory, outputPath));
+  const current = await readFile(outputPath).catch(() => undefined);
+  if (current?.equals(contents)) return;
+  await mkdir(dirname(outputPath), { recursive: true });
+  // The rename swaps the file in one step, so a running dev server serves the
+  // previous or the complete new file, never a missing or partial one.
+  const temporaryPath = `${outputPath}.tmp`;
+  await writeFile(temporaryPath, contents);
+  await rename(temporaryPath, outputPath);
+  written += 1;
+}
 
 let generated = 0;
 let reused = 0;
@@ -115,8 +131,7 @@ for (const sourcePath of await referencedImages()) {
       cacheKey,
       `source.${sourceExtension}`,
     );
-    await mkdir(dirname(sourceOutputPath), { recursive: true });
-    await copyFile(sourcePath, sourceOutputPath);
+    await publish(sourceOutputPath, source);
   }
   const variants: ImageVariant[] = [];
 
@@ -146,12 +161,15 @@ for (const sourcePath of await referencedImages()) {
       reused += 1;
     } catch {
       await mkdir(dirname(cachePath), { recursive: true });
+      // Renamed into place once complete, because reuse reads only its header.
+      const temporaryCachePath = `${cachePath}.tmp`;
       const result = await sharp(sourcePath, { limitInputPixels: false })
         .autoOrient()
         .gamma(recipe.gamma)
         .resize({ width, kernel: recipe.kernel })
         .webp(output)
-        .toFile(cachePath);
+        .toFile(temporaryCachePath);
+      await rename(temporaryCachePath, cachePath);
       variant = {
         url: `/_responsive/${cacheKey}/${width}.webp`,
         width: result.width,
@@ -167,8 +185,7 @@ for (const sourcePath of await referencedImages()) {
       continue;
     }
 
-    await mkdir(dirname(outputPath), { recursive: true });
-    await copyFile(cachePath, outputPath);
+    await publish(outputPath, await readFile(cachePath));
     variants.push(variant);
   }
 
@@ -190,10 +207,12 @@ for (const sourcePath of await referencedImages()) {
       await stat(deepZoomCachePath);
       pyramidsReused += 1;
     } catch {
-      await rm(deepZoomCacheDirectory, { recursive: true, force: true });
-      await mkdir(deepZoomCacheDirectory, { recursive: true });
+      // Built beside its cache entry and renamed into place once complete, so
+      // an interrupted run never leaves a pyramid that looks finished.
+      const temporaryCacheDirectory = `${deepZoomCacheDirectory}.tmp`;
+      await rm(temporaryCacheDirectory, { recursive: true, force: true });
       const temporaryLevelsDirectory = join(
-        deepZoomCacheDirectory,
+        temporaryCacheDirectory,
         '.levels',
       );
       const levels = deepZoomLevels(
@@ -227,21 +246,37 @@ for (const sourcePath of await referencedImages()) {
           .toFile(levelTargetPath);
         await cp(
           join(levelDirectory, 'image_files', '0'),
-          join(deepZoomCacheDirectory, 'image_files', String(level.level)),
+          join(temporaryCacheDirectory, 'image_files', String(level.level)),
           { recursive: true },
         );
         if (level.level === levels.length - 1) {
-          await copyFile(join(levelDirectory, 'image.dzi'), deepZoomCachePath);
+          await copyFile(
+            join(levelDirectory, 'image.dzi'),
+            join(temporaryCacheDirectory, 'image.dzi'),
+          );
         }
         await rm(levelDirectory, { recursive: true, force: true });
       }
       await rm(temporaryLevelsDirectory, { recursive: true, force: true });
+      await rm(deepZoomCacheDirectory, { recursive: true, force: true });
+      await rename(temporaryCacheDirectory, deepZoomCacheDirectory);
       pyramidsGenerated += 1;
     }
 
-    await cp(deepZoomCacheDirectory, deepZoomOutputDirectory, {
+    for (const entry of await readdir(deepZoomCacheDirectory, {
       recursive: true,
-    });
+      withFileTypes: true,
+    })) {
+      if (!entry.isFile()) continue;
+      const tileCachePath = join(entry.parentPath, entry.name);
+      await publish(
+        join(
+          deepZoomOutputDirectory,
+          relative(deepZoomCacheDirectory, tileCachePath),
+        ),
+        await readFile(tileCachePath),
+      );
+    }
     deepZoom = {
       url: `/_responsive/${deepZoomCacheKey}/image.dzi`,
       width: sourceDimensions.width,
@@ -266,15 +301,28 @@ for (const sourcePath of await referencedImages()) {
   };
 }
 
-await mkdir(outputDirectory, { recursive: true });
-await writeFile(
+await publish(
   join(outputDirectory, 'manifest.json'),
-  `${JSON.stringify(manifest, null, 2)}\n`,
+  Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`),
 );
+
+// Runs after the new manifest is in place. A running dev server re-reads it on
+// its next render, so pages rendered from then on reference only kept files.
+let removed = 0;
+for (const entry of staleOutputs(
+  await readdir(outputDirectory, { recursive: true }),
+  publishedFiles,
+)) {
+  await rm(join(outputDirectory, entry), { recursive: true, force: true });
+  removed += 1;
+}
 
 console.log(
   `Responsive images: ${generated} generated, ${reused} reused, ${omitted} omitted because they were not smaller than their sources.`,
 );
 console.log(
   `Deep zoom pyramids: ${pyramidsGenerated} generated, ${pyramidsReused} reused.`,
+);
+console.log(
+  `Published files: ${written} written, ${removed} stale entries removed.`,
 );
