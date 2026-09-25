@@ -1,4 +1,11 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type Browser,
+  type BrowserContext,
+  type Page,
+} from '@playwright/test';
+import sharp from 'sharp';
 
 const projectPath = '/projects/urban-study-kyjov/';
 
@@ -28,11 +35,43 @@ async function waitForLightbox(page: Page, name = 'Image viewer') {
 /** Rendered width of the current lightbox image relative to its rest (100%) width. */
 async function imageZoom(page: Page) {
   return page
-    .locator('.lightbox-slide-current img')
+    .locator('.lightbox-front > img')
     .evaluate(
       (image: HTMLImageElement) =>
         image.getBoundingClientRect().width / image.offsetWidth,
     );
+}
+
+/**
+ * Pauses every running card move (turn and blend) at `time` ms and reports
+ * the turn (1 text side up, 0 drawing side up) and each face's blend.
+ */
+function pausedCardMove(page: Page, time: number) {
+  return page.waitForFunction((at) => {
+    const sheet = document.querySelector<HTMLElement>('[data-lightbox-sheet]')!;
+    const layers = [...sheet.querySelectorAll<HTMLElement>('.lightbox-incoming')];
+    const animations = [sheet, ...layers].flatMap((element) => element.getAnimations());
+    if (!layers.length || !animations.length) return false;
+    for (const animation of animations) {
+      animation.pause();
+      animation.currentTime = at;
+    }
+    const blend = (face: string) =>
+      Number(
+        getComputedStyle(sheet.querySelector(`${face} .lightbox-incoming`) ?? sheet)
+          .opacity,
+      );
+    const m11 = new DOMMatrix(getComputedStyle(sheet).transform).m11;
+    return {
+      hash: location.hash,
+      turn: Math.acos(Math.max(-1, Math.min(1, m11))) / Math.PI,
+      front: blend('.lightbox-front'),
+      back: blend('.lightbox-back'),
+      stripX: document
+        .querySelector('.lightbox-slide-current')!
+        .getBoundingClientRect().x,
+    };
+  }, time);
 }
 
 /** Horizontal scale of the current card's turn: 1 drawing side up, −1 text side up. */
@@ -40,6 +79,21 @@ async function sheetTurn(page: Page) {
   return page
     .locator('[data-lightbox-sheet]')
     .evaluate((sheet) => new DOMMatrix(getComputedStyle(sheet).transform).m11);
+}
+
+/** Sends one-finger touch events at height 420; no `x` lifts the finger. */
+async function oneFinger(context: BrowserContext, page: Page) {
+  const session = await context.newCDPSession(page);
+  return (type: 'touchStart' | 'touchMove' | 'touchEnd', x?: number) =>
+    session.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: x === undefined ? [] : [{ x, y: 420 }],
+    });
+}
+
+async function pixelAt(page: Page, x: number, y: number) {
+  const png = await page.screenshot({ clip: { x, y, width: 1, height: 1 } });
+  return [...(await sharp(png).raw().toBuffer()).subarray(0, 3)];
 }
 
 test.beforeEach(async ({ page }) => {
@@ -222,13 +276,13 @@ test('pyramid previews form a loaded strip with no navigation gutter', async ({
   );
   await page.mouse.down();
   await page.mouse.move(
-    stageBox.x + stageBox.width / 2 - 100,
+    stageBox.x + stageBox.width / 2 + 100,
     stageBox.y + stageBox.height / 2,
   );
   const draggedSlide = (await slides[1].boundingBox())!;
-  expect(draggedSlide.x - current!.x).toBeCloseTo(-100, 0);
+  expect(draggedSlide.x - current!.x).toBeCloseTo(100, 0);
   await page.mouse.move(
-    stageBox.x + stageBox.width / 2 - 20,
+    stageBox.x + stageBox.width / 2 + 20,
     stageBox.y + stageBox.height / 2,
   );
   await page.mouse.up();
@@ -396,52 +450,42 @@ test('comparison shortcuts preserve the inspected area without changing page pre
   const zoom = await imageZoom(page);
   expect(zoom).toBeGreaterThan(1);
   const transform = await page
-    .locator('.lightbox-slide-current img')
+    .locator('.lightbox-front > img')
     .evaluate((image: HTMLImageElement) => image.style.transform);
 
-  const blendPromise = page.waitForFunction(() => {
-    const current = document.querySelector<HTMLElement>(
-      '.lightbox-comparison-current',
-    );
-    const previous = document.querySelector<HTMLElement>(
-      '.lightbox-comparison-previous',
-    );
-    const animation = current?.getAnimations()[0];
-    if (!current || !previous || !animation) return false;
-    animation.pause();
-    animation.currentTime = 90;
-    return {
-      currentOpacity: Number(getComputedStyle(current).opacity),
-      previousOpacity: Number(getComputedStyle(previous).opacity),
-      selectedButtons: document.querySelectorAll(
-        '[aria-label="Images in this set"] button:disabled',
-      ).length,
-    };
-  });
+  const blend = pausedCardMove(page, 90);
   await comparison.getByRole('button', { name: 'Basement floor plan' }).click();
-  const blend = await blendPromise;
+  const blendState = await (await blend).jsonValue();
+  if (!blendState) throw new Error('Expected an active blend');
+  expect(blendState.front).toBeGreaterThan(0);
+  expect(blendState.front).toBeLessThan(1);
+  expect(blendState.stripX).toBe(0);
+  expect(
+    await page.locator('[aria-label="Images in this set"] button:disabled').count(),
+  ).toBe(1);
+  await page.evaluate(() =>
+    document.getAnimations().forEach((animation) => animation.play()),
+  );
   await expect(page).toHaveURL(/#image-6$/);
-  const blendState = await blend.jsonValue();
-  if (!blendState) throw new Error('Expected an active comparison blend');
-  expect(blendState.currentOpacity).toBeGreaterThan(0);
-  expect(blendState.currentOpacity).toBeLessThan(1);
-  expect(blendState.previousOpacity).toBe(1);
-  expect(blendState.selectedButtons).toBe(1);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
   await expect
     .poll(() =>
       page
-        .locator('.lightbox-slide-current img')
+        .locator('.lightbox-front > img')
         .evaluate((image: HTMLImageElement) => image.style.transform),
     )
     .toBe(transform);
   expect(failedSetImages).toEqual([]);
-  await expect(page.locator('.lightbox-comparison-previous')).toHaveCount(0);
 
+  // The next image is the set's last variant: it blends and keeps the view.
   await page.getByRole('button', { name: 'Next image' }).click();
   await expect(page).toHaveURL(/#image-7$/);
-  expect(await imageZoom(page)).toBeCloseTo(1, 2);
+  expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
+  // After the set comes a different card: it slides in at rest.
   await page.getByRole('button', { name: 'Next image' }).click();
+  await expect(page).toHaveURL(/#image-8$/);
+  expect(await imageZoom(page)).toBeCloseTo(1, 2);
   await expect(
     page.getByRole('navigation', { name: 'Images in this set' }),
   ).toHaveCount(0);
@@ -672,13 +716,13 @@ test('on a phone the text uses the width and dragging it moves the strip like th
   const page = await context.newPage();
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await gotoProject(page);
-  await galleryImage(page, 3).click();
+  await galleryImage(page, 6).click(); // the set's last member; next is another card
   await waitForLightbox(page);
   const flip = page.getByRole('button', { name: 'Show description' });
   await flip.click();
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
   await expect(page.getByRole('button', { name: 'Next image' })).toBeHidden();
-  const text = page.getByRole('region', { name: 'Life at the city' });
+  const text = page.getByRole('region', { name: 'Limitations of the Area' });
   const paragraph = (await text.locator('p').boundingBox())!;
   expect(Math.round(paragraph.width)).toBe(390 - 48);
 
@@ -705,7 +749,7 @@ test('on a phone the text uses the width and dragging it moves the strip like th
     type: 'touchEnd',
     touchPoints: [],
   });
-  await expect(page).toHaveURL(/#image-4$/);
+  await expect(page).toHaveURL(/#image-7$/);
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByRole('button', { name: 'Next image' })).toBeVisible();
   await context.close();
@@ -725,9 +769,12 @@ async function phoneOnText(browser: Browser) {
   await page.getByRole('button', { name: 'Show description' }).click();
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
   const session = await context.newCDPSession(page);
-  /** Drags one finger through `points`, returning the strip offset after each move. */
+  /**
+   * Drags one finger through `points`, returning after each move the strip's
+   * offset and the blend towards another image.
+   */
   const drag = async (points: { x: number; y: number }[]) => {
-    const offsets: number[] = [];
+    const moves: { strip: number; blend: number }[] = [];
     await session.send('Input.dispatchTouchEvent', {
       type: 'touchStart',
       touchPoints: [points[0]],
@@ -737,15 +784,24 @@ async function phoneOnText(browser: Browser) {
         type: 'touchMove',
         touchPoints: [point],
       });
-      offsets.push(
-        (await page.locator('.lightbox-slide-current').boundingBox())!.x,
+      moves.push(
+        await page.evaluate(async () => {
+          await new Promise(requestAnimationFrame);
+          const blend = document.querySelector('.lightbox-incoming');
+          return {
+            strip: document
+              .querySelector('.lightbox-slide-current')!
+              .getBoundingClientRect().x,
+            blend: blend ? Number(getComputedStyle(blend).opacity) : 0,
+          };
+        }),
       );
     }
     await session.send('Input.dispatchTouchEvent', {
       type: 'touchEnd',
       touchPoints: [],
     });
-    return offsets;
+    return moves;
   };
   return { context, page, drag };
 }
@@ -764,7 +820,7 @@ test('scrolling the text on a phone leaves the strip in place', async ({
     Array.from({ length: 16 }, (_, step) => ({ x: 300 - step * 4, y: 700 - step * 20 })),
   );
   await expect.poll(scrollTop).toBeGreaterThan(0);
-  expect(diagonal.every((offset) => Math.abs(offset) < 1)).toBe(true);
+  expect(diagonal).toEqual(diagonal.map(() => ({ strip: 0, blend: 0 })));
   await page.waitForTimeout(500);
   const afterDiagonal = await scrollTop();
 
@@ -773,9 +829,9 @@ test('scrolling the text on a phone leaves the strip in place', async ({
     ...Array.from({ length: 16 }, (_, step) => ({ x: 360, y: 300 + step * 20 })),
     ...Array.from({ length: 9 }, (_, step) => ({ x: 320 - step * 40, y: 600 })),
   ];
-  const offsets = await drag(turning);
+  const moves = await drag(turning);
   await expect.poll(scrollTop).toBeLessThan(afterDiagonal);
-  expect(offsets.every((offset) => Math.abs(offset) < 1)).toBe(true);
+  expect(moves).toEqual(moves.map(() => ({ strip: 0, blend: 0 })));
   await page.waitForTimeout(400);
   await expect(page).toHaveURL(/#image-3$/);
   await context.close();
@@ -791,13 +847,13 @@ test('a text selection keeps a sideways drag from moving the strip', async ({
     .getByRole('region', { name: 'Life at the city' })
     .locator('p')
     .evaluate((paragraph) => getSelection()!.selectAllChildren(paragraph));
-  const offsets = await drag([
+  const moves = await drag([
     { x: 300, y: 420 },
     { x: 200, y: 422 },
     { x: 90, y: 430 },
   ]);
 
-  expect(offsets.every((offset) => Math.abs(offset) < 1)).toBe(true);
+  expect(moves).toEqual(moves.map(() => ({ strip: 0, blend: 0 })));
   await page.waitForTimeout(400);
   await expect(page).toHaveURL(/#image-3$/);
   await context.close();
@@ -866,7 +922,7 @@ test('Next from the description slides the card away without turning it', async 
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await gotoProject(page);
-  await galleryImage(page, 3).click();
+  await galleryImage(page, 6).click(); // the set's last member; next is another card
   await waitForLightbox(page);
   const flip = page.getByRole('button', { name: 'Show description' });
   await flip.click();
@@ -892,14 +948,14 @@ test('Next from the description slides the card away without turning it', async 
   await page.getByRole('button', { name: 'Next image' }).click();
   const state = await (await midSlide).jsonValue();
   if (!state) throw new Error('Expected a running slide');
-  expect(state.hash).toBe('#image-3');
+  expect(state.hash).toBe('#image-6');
   expect(state.slideX).toBeLessThan(0);
-  expect(state.text).toBe('Life at the city');
+  expect(state.text).toBe('Limitations of the Area');
   expect(state.textVisible).toBe(true);
   expect(state.sheetTurn).toBeCloseTo(-1, 3);
   expect(state.sheetAnimations).toBe(0);
 
-  await expect(page).toHaveURL(/#image-4$/);
+  await expect(page).toHaveURL(/#image-7$/);
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
   expect(await sheetTurn(page)).toBeCloseTo(1, 3);
   expect(
@@ -907,15 +963,279 @@ test('Next from the description slides the card away without turning it', async 
       .locator('[data-lightbox-sheet]')
       .evaluate((sheet) => sheet.getAnimations().length),
   ).toBe(0);
-  await expect(
-    page.getByRole('region', { name: 'Sports facilities' }),
-  ).toBeHidden();
+  await expect(page.getByRole('region', { name: 'Site Plan' })).toBeHidden();
 });
 
-test('a set button from the description crossfades from the text to the new drawing', async ({
+test('Next from the description to a variant turns back while blending both faces', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  await page.locator('.lightbox-stage').hover();
+  await page.mouse.wheel(0, -600);
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
+  const zoom = await imageZoom(page);
+  const flip = page.getByRole('button', { name: 'Show description' });
+  await flip.click();
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
+
+  const midTurn = pausedCardMove(page, 200);
+  await page.getByRole('button', { name: 'Next image' }).click();
+  const state = await (await midTurn).jsonValue();
+  if (!state) throw new Error('Expected a turn and blend');
+  expect(state.hash).toBe('#image-3');
+  expect(state.stripX).toBe(0);
+  expect(state.turn).toBeGreaterThan(0.2);
+  expect(state.turn).toBeLessThan(0.8);
+  expect(state.front).toBeCloseTo(1 - state.turn, 1);
+  expect(state.back).toBeCloseTo(1 - state.turn, 1);
+  await page.evaluate(() =>
+    document.getAnimations().forEach((animation) => animation.play()),
+  );
+
+  await expect(page).toHaveURL(/#image-4$/);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  await expect(flip).toHaveAttribute('aria-pressed', 'false');
+  expect(await sheetTurn(page)).toBeCloseTo(1, 3);
+  expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
+  await flip.click();
+  await expect(page.getByRole('region', { name: 'Sports facilities' })).toBeVisible();
+});
+
+test('a set button from the description turns back while blending both faces', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  await page.locator('.lightbox-stage').hover();
+  await page.mouse.wheel(0, -600);
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
+  const zoom = await imageZoom(page);
+  const flip = page.getByRole('button', { name: 'Show description' });
+  await flip.click();
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
+
+  const midTurn = pausedCardMove(page, 200);
+  await page
+    .getByRole('navigation', { name: 'Images in this set' })
+    .getByRole('button', { name: 'Values of the Area' })
+    .click();
+  const state = await (await midTurn).jsonValue();
+  if (!state) throw new Error('Expected a turn and blend');
+  expect(state.hash).toBe('#image-3');
+  expect(state.stripX).toBe(0);
+  expect(state.turn).toBeGreaterThan(0.2);
+  expect(state.turn).toBeLessThan(0.8);
+  expect(state.front).toBeCloseTo(1 - state.turn, 1);
+  expect(state.back).toBeCloseTo(1 - state.turn, 1);
+  await page.evaluate(() =>
+    document.getAnimations().forEach((animation) => animation.play()),
+  );
+
+  await expect(page).toHaveURL(/#image-5$/);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  await expect(flip).toHaveAttribute('aria-pressed', 'false');
+  expect(await sheetTurn(page)).toBeCloseTo(1, 3);
+  expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
+  await flip.click();
+  await expect(page.getByRole('region', { name: 'Values of the Area' })).toBeVisible();
+});
+
+test('Next inside a set blends and keeps the view; leaving the set slides', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 844, height: 390 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  await page.locator('.lightbox-stage').hover();
+  await page.mouse.wheel(0, -600);
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
+  const zoom = await imageZoom(page);
+  const transform = await page
+    .locator('.lightbox-front > img')
+    .evaluate((image: HTMLImageElement) => image.style.transform);
+
+  const midBlend = pausedCardMove(page, 90);
+  await page.getByRole('button', { name: 'Next image' }).click();
+  const state = await (await midBlend).jsonValue();
+  if (!state) throw new Error('Expected a blend');
+  expect(state.front).toBeGreaterThan(0);
+  expect(state.front).toBeLessThan(1);
+  expect(state.stripX).toBe(0);
+  expect(state.turn).toBeCloseTo(0, 3);
+  await page.evaluate(() =>
+    document.getAnimations().forEach((animation) => animation.play()),
+  );
+  await expect(page).toHaveURL(/#image-4$/);
+  expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
+  expect(
+    await page
+      .locator('.lightbox-front > img')
+      .evaluate((image: HTMLImageElement) => image.style.transform),
+  ).toBe(transform);
+
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/#image-5$/);
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/#image-6$/);
+  expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
+
+  const slide = page.waitForFunction(
+    () => document.querySelector('.lightbox-slide-current')!.getAnimations().length > 0,
+  );
+  await page.getByRole('button', { name: 'Next image' }).click();
+  await slide;
+  await expect(page).toHaveURL(/#image-7$/);
+  expect(await imageZoom(page)).toBeCloseTo(1, 2);
+});
+
+test('a drag towards a variant scrubs the blend instead of moving the strip', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  const touch = await oneFinger(context, page);
+  const blend = () =>
+    page.evaluate(() => {
+      const layer = document.querySelector('.lightbox-incoming');
+      return layer ? Number(getComputedStyle(layer).opacity) : 0;
+    });
+  const stripX = async () =>
+    (await page.locator('.lightbox-slide-current').boundingBox())!.x;
+
+  // On the 390 px stage the blend follows |dx| / 390, as a slide would move.
+  await touch('touchStart', 300);
+  await touch('touchMove', 144);
+  await expect.poll(blend).toBeCloseTo(0.4, 2);
+  expect(await stripX()).toBe(0);
+  await touch('touchMove', 222);
+  await expect.poll(blend).toBeCloseTo(0.2, 2);
+  await touch('touchMove', 270);
+  await expect.poll(blend).toBeCloseTo(30 / 390, 2);
+  await touch('touchEnd');
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  await expect(page).toHaveURL(/#image-3$/);
+
+  await touch('touchStart', 300);
+  await touch('touchMove', 183);
+  await expect.poll(blend).toBeCloseTo(0.3, 2);
+  expect(await stripX()).toBe(0);
+  await touch('touchEnd');
+  await expect(page).toHaveURL(/#image-4$/);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+
+  // At the set's first member the previous image is a different card.
+  await page.getByRole('button', { name: 'Previous image' }).click();
+  await expect(page).toHaveURL(/#image-3$/);
+  await page.getByRole('button', { name: 'Previous image' }).click();
+  await expect(page).toHaveURL(/#image-2$/);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  await touch('touchStart', 100);
+  await touch('touchMove', 200);
+  await expect.poll(stripX).toBeCloseTo(100, 0);
+  expect(await blend()).toBe(0);
+  await touch('touchEnd');
+  await context.close();
+});
+
+test('a mouse drag towards a variant scrubs the blend too', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  const blend = () =>
+    page.evaluate(() => {
+      const layer = document.querySelector('.lightbox-incoming');
+      return layer ? Number(getComputedStyle(layer).opacity) : 0;
+    });
+  const width = page.viewportSize()!.width;
+  await page.mouse.move(700, 400);
+  await page.mouse.down();
+  await page.mouse.move(700 - width / 4, 400);
+  expect(await blend()).toBeCloseTo(0.25, 2);
+  expect((await page.locator('.lightbox-slide-current').boundingBox())!.x).toBe(0);
+  await page.mouse.up();
+  await expect(page).toHaveURL(/#image-4$/);
+});
+
+test('a drag on the text towards a variant turns and blends together', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
+  const touch = await oneFinger(context, page);
+  const card = () =>
+    page.evaluate(() => {
+      const sheet = document.querySelector('[data-lightbox-sheet]')!;
+      const opacity = (face: string) =>
+        Number(getComputedStyle(sheet.querySelector(`${face} .lightbox-incoming`)!).opacity);
+      return {
+        turn: new DOMMatrix(getComputedStyle(sheet).transform).m11,
+        front: opacity('.lightbox-front'),
+        back: opacity('.lightbox-back'),
+      };
+    });
+
+  // On the 390 px stage: dx −117 is 0.3 (126°), dx −273 is 0.7 (54°), and
+  // half the width (dx −195) is edge-on.
+  await touch('touchStart', 300);
+  await touch('touchMove', 183);
+  await expect.poll(async () => (await card()).front).toBeCloseTo(0.3, 2);
+  let state = await card();
+  expect(state.turn).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
+  expect(state.back).toBeCloseTo(0.3, 2);
+  await touch('touchMove', 105);
+  await expect.poll(async () => (await card()).front).toBeCloseTo(0.5, 2);
+  expect((await card()).turn).toBeCloseTo(0, 2);
+  await touch('touchMove', 27);
+  await expect.poll(async () => (await card()).front).toBeCloseTo(0.7, 2);
+  state = await card();
+  expect(state.turn).toBeCloseTo(Math.cos(Math.PI * 0.3), 2);
+  expect(state.back).toBeCloseTo(0.7, 2);
+  await touch('touchMove', 270);
+  await expect.poll(async () => (await card()).front).toBeCloseTo(30 / 390, 2);
+  await touch('touchEnd');
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  await expect(page).toHaveURL(/#image-3$/);
+  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
+  await context.close();
+});
+
+test('a drag on the text past the threshold completes on the variant drawing', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await gotoProject(page);
   await galleryImage(page, 3).click();
@@ -923,46 +1243,194 @@ test('a set button from the description crossfades from the text to the new draw
   const flip = page.getByRole('button', { name: 'Show description' });
   await flip.click();
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
-  const text = page.getByRole('region', { name: 'Life at the city' });
-  await text.hover();
-  await page.mouse.wheel(0, 150);
-  await expect.poll(() => text.evaluate((element) => element.scrollTop)).toBeGreaterThan(50);
-  const scrolled = await text.evaluate((element) => element.scrollTop);
+  const touch = await oneFinger(context, page);
 
-  const blend = page.waitForFunction(() => {
-    const current = document.querySelector<HTMLElement>(
-      '.lightbox-comparison-current',
-    );
-    const previous = document.querySelector<HTMLElement>(
-      '.lightbox-comparison-previous',
-    );
-    const animation = current?.getAnimations()[0];
-    if (!current || !previous || !animation) return false;
-    animation.pause();
-    animation.currentTime = 90;
-    const sheet = current.querySelector('[data-lightbox-sheet]')!;
-    return {
-      currentOpacity: Number(getComputedStyle(current).opacity),
-      previousText: previous.querySelector('p')?.textContent ?? '',
-      previousScroll: previous.querySelector('[role="region"]')?.scrollTop ?? 0,
-      currentTurn: new DOMMatrix(getComputedStyle(sheet).transform).m11,
-    };
-  });
-  await page
-    .getByRole('navigation', { name: 'Images in this set' })
-    .getByRole('button', { name: 'Values of the Area' })
-    .click();
-  const state = await (await blend).jsonValue();
-  if (!state) throw new Error('Expected an active comparison blend');
-  expect(state.currentOpacity).toBeGreaterThan(0);
-  expect(state.currentOpacity).toBeLessThan(1);
-  expect(state.previousText).toContain('The analysis of life in Kyjov');
-  expect(state.previousScroll).toBeCloseTo(scrolled, 0);
-  expect(state.currentTurn).toBeCloseTo(1, 3);
-
-  await expect(page).toHaveURL(/#image-5$/);
-  await expect(page.locator('.lightbox-comparison-previous')).toHaveCount(0);
+  await touch('touchStart', 300);
+  await touch('touchMove', 183);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const layer = document.querySelector('.lightbox-incoming');
+        return layer ? Number(getComputedStyle(layer).opacity) : 0;
+      }),
+    )
+    .toBeCloseTo(0.3, 2);
+  await touch('touchEnd');
+  await expect(page).toHaveURL(/#image-4$/);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
+  expect(await sheetTurn(page)).toBeCloseTo(1, 3);
+  await flip.click();
+  await expect(page.getByRole('region', { name: 'Sports facilities' })).toBeVisible();
+  await context.close();
+});
+
+test('a scrub towards a loading variant neither darkens the drawing nor completes early', async ({
+  page,
+}) => {
+  // Below 100% the variant needs a smaller file than its neighbour preview.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/projects/galerie-hang%C3%A1r/#image-5');
+  await waitForLightbox(page);
+  await page.keyboard.press('-');
+  await expect.poll(() => imageZoom(page)).toBeLessThan(1);
+  await page.route('**/_responsive/**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  const blackFrames = page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        let black = 0;
+        const end = performance.now() + 2500;
+        const frame = () => {
+          const layer = document.querySelector('.lightbox-incoming');
+          const image = layer?.querySelector('img');
+          if (
+            layer &&
+            image &&
+            Number(getComputedStyle(layer).opacity) > 0.95 &&
+            !(image.complete && image.naturalWidth > 0)
+          ) {
+            black += 1;
+          }
+          if (performance.now() < end) requestAnimationFrame(frame);
+          else resolve(black);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
+
+  const paper = { x: 60, y: 300 };
+  const before = await pixelAt(page, paper.x, paper.y);
+  await page.mouse.move(300, 420);
+  await page.mouse.down();
+  await page.mouse.move(150, 420, { steps: 5 });
+  await page.waitForTimeout(300);
+  const during = await pixelAt(page, paper.x, paper.y);
+  for (const [channel, value] of during.entries()) {
+    expect(Math.abs(value - before[channel])).toBeLessThanOrEqual(4);
+  }
+  await page.mouse.up();
+  expect(await blackFrames).toBe(0);
+  await expect(page).toHaveURL(/#image-6$/);
+});
+
+test('a drag cannot redirect a blend that is already running', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  const incoming = () =>
+    page.evaluate(
+      () => document.querySelector('.lightbox-incoming img')?.getAttribute('src') ?? '',
+    );
+
+  await page.mouse.move(700, 400);
+  await page.mouse.down();
+  await page.mouse.move(680, 400);
+  await expect.poll(incoming).not.toBe('');
+  const towardsNext = await incoming();
+  await page.keyboard.press('ArrowRight');
+  await page.mouse.move(900, 400);
+  expect(await incoming()).toBe(towardsNext);
+  await page.mouse.up();
+  await expect(page).toHaveURL(/#image-4$/);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+});
+
+for (const input of ['mouse', 'touch'] as const) {
+  test(`a change of image ends the ${input} drag in progress`, async ({
+    browser,
+    browserName,
+  }) => {
+    test.skip(
+      input === 'touch' && browserName !== 'chromium',
+      'One touch-capable browser covers this',
+    );
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      ...(input === 'touch' ? { hasTouch: true, isMobile: true } : {}),
+    });
+    const page = await context.newPage();
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page);
+    await galleryImage(page, 2).click(); // the previous image is a different card
+    await waitForLightbox(page);
+    const touch = input === 'touch' ? await oneFinger(context, page) : undefined;
+    const press = (x: number) =>
+      touch ? touch('touchStart', x) : page.mouse.move(x, 420).then(() => page.mouse.down());
+    const move = (x: number) => (touch ? touch('touchMove', x) : page.mouse.move(x, 420));
+    const lift = () => (touch ? touch('touchEnd') : page.mouse.up());
+    const stripX = async () =>
+      (await page.locator('.lightbox-slide-current').boundingBox())!.x;
+
+    await press(100);
+    await move(200);
+    await expect.poll(stripX).toBeCloseTo(100, 0);
+    await page.keyboard.press('ArrowRight'); // the next image is a variant
+    await move(250);
+    await page.waitForTimeout(500);
+    await move(360);
+    await lift();
+    await page.waitForTimeout(500);
+
+    await expect(page).toHaveURL(/#image-3$/);
+    expect(await stripX()).toBe(0);
+    await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+    // The strip's ease-back has ended: a new drag follows the finger directly.
+    await expect(page.locator('.lightbox-slide-current')).toHaveCSS(
+      'transition-duration',
+      '0s',
+    );
+    await context.close();
+  });
+}
+
+test('with reduced motion a change to a variant is instant', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  const changed = () =>
+    page.evaluate(() => ({
+      hash: location.hash,
+      blending: Boolean(document.querySelector('.lightbox-incoming')),
+      animating: document.getAnimations().length > 0,
+    }));
+
+  const touch = await oneFinger(context, page);
+  await touch('touchStart', 300);
+  await touch('touchMove', 200);
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  expect(await changed()).toEqual({ hash: '#image-3', blending: false, animating: false });
+  expect((await page.locator('.lightbox-slide-current').boundingBox())!.x).toBe(0);
+  await touch('touchEnd');
+  await expect(page).toHaveURL(/#image-4$/);
+  expect(await changed()).toEqual({ hash: '#image-4', blending: false, animating: false });
+
+  // A variant keeps the inspected view.
+  await page.keyboard.press('+');
+  await expect.poll(() => imageZoom(page)).toBeCloseTo(1.25, 2);
+  await page
+    .getByRole('button', { name: 'Next image' })
+    .evaluate((button: HTMLButtonElement) => button.click());
+  expect(await changed()).toEqual({ hash: '#image-5', blending: false, animating: false });
+  expect(await imageZoom(page)).toBeCloseTo(1.25, 2);
+  await context.close();
 });
 
 test('resizing while the description shows reflows the text and its arrows', async ({

@@ -17,6 +17,8 @@ import {
   panForZoom,
   scaleFromPinch,
   scaleFromWheel,
+  scrubProgress,
+  settleDuration,
   sharedMaximumScale,
   swipeDirection,
   zoomFloor,
@@ -215,6 +217,21 @@ describe('lightbox gestures', () => {
     expect(swipeDirection(80, 10)).toBe(-1);
     expect(swipeDirection(40, 5)).toBe(0);
     expect(swipeDirection(80, 100)).toBe(0);
+  });
+
+  test('a drag towards a variant blends as far as a slide would move', () => {
+    expect(scrubProgress(0, 390)).toBe(0);
+    expect(scrubProgress(-78, 390)).toBeCloseTo(0.2);
+    expect(scrubProgress(195, 390)).toBeCloseTo(0.5);
+    expect(scrubProgress(-390, 390)).toBe(1);
+    expect(scrubProgress(600, 390)).toBe(1);
+  });
+
+  test('a released move takes the share of its duration still to go', () => {
+    expect(settleDuration(560, 0, 1)).toBe(560);
+    expect(settleDuration(560, 0.25, 1)).toBe(420);
+    expect(settleDuration(180, 0.25, 0)).toBe(45);
+    expect(settleDuration(180, 1, 1)).toBe(0);
   });
 
   test('reduced motion keeps a swipe stationary until navigation', () => {

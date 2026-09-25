@@ -332,8 +332,8 @@ changes with it; the lightbox keeps its image, side, zoom, and pan.
 At 100% the image fits between a top and a bottom control band, so nothing
 covers it, and it may use the full width under the edge arrows (on a phone a
 square drawing fills the width). The 100% view depends only on the image's
-aspect ratio, never on its title or description, so swipes and comparison
-crossfades keep their geometry. Zoomed, the image runs under the controls to the
+aspect ratio, never on its title or description, so swipes and blends between
+variants keep their geometry. Zoomed, the image runs under the controls to the
 screen edges, and any part of it can be panned out from under every control.
 Zooming out below 100% is allowed until the image clears the edge arrows too.
 
@@ -391,16 +391,17 @@ outside the visible tile boundaries.
 
 Desktop visitors zoom toward the pointer with the mouse wheel and drag a zoomed
 image to inspect it. Touch visitors pinch around the point between their fingers
-and drag a zoomed image with one finger.
-At 100% and below, horizontal dragging with either a finger or mouse navigates
-between page images; completed navigation slides to the next image and an
-incomplete gesture snaps back.
-Buttons and arrow keys use the same short slide. With reduced motion, swipes
-remain stationary and a completed gesture changes the image immediately.
-Previous, current, and next images form a continuous strip, so one
-image enters directly as the other leaves without exposing the dark background.
-Maximum zoom depends on the image and display density, ending when native image
-pixels reach display pixels.
+and drag a zoomed image with one finger. At 100% and below, horizontal dragging
+with either a finger or mouse navigates between page images; moving to another
+card slides the strip with the finger, completed navigation slides on to the
+next image, and an incomplete gesture snaps back. Moving to a variant of the
+same card blends instead (see "Cards and their variants"). Buttons and arrow
+keys use the same short slide or blend. With reduced motion, swipes remain
+stationary and a completed gesture changes the image immediately. Previous,
+current, and next images form a continuous strip, so one image enters directly
+as the other leaves without exposing the dark background. Maximum zoom depends
+on the image and display density, ending when native image pixels reach display
+pixels.
 
 Double-click or double-tap zooms in to 2.5× at that point (or to the maximum, if
 lower) and returns to 100% when zoomed. On the drawing side `+`/`=` and `-` zoom
@@ -412,24 +413,41 @@ only with a live navigation gesture and then slide onward or snap back. Pyramid
 previews request the first resolution level at or above the display's
 physical-pixel requirement so their base view is not an upscaled lower level.
 
-### Aligned-drawing comparison sets — [Explicit]
+### Cards and their variants: aligned-drawing comparison sets — [Explicit]
 
 The architect can assign otherwise ordinary project images to a named comparison
-set and give each image a Czech and English title. Set membership does not change
-the project page: every preview remains an individual image in its existing
-gallery or image-set position. Opening any member shows the whole set as the
-top-left set strip: one joined row of named buttons, the current image inverted.
-A button crossfades to the selected image while retaining zoom and pan, so
-aligned plans can be compared without losing the inspected location.
+set and give each image a Czech and English title. Set membership does not
+change the project page: every preview remains an individual image in its
+existing gallery or image-set position.
+
+In the lightbox, changing image changes cards, and the images of one comparison
+set are variants of one card. Previous/Next, the arrow keys, and swipes walk the
+page order; when the neighbouring image belongs to the same set, the card blends
+into it and keeps the zoom and pan, so aligned plans can be compared without
+losing the inspected location. A neighbour outside the set is a different card:
+it slides in and the view resets, even if another member of the set lies further
+on.
+
+Opening any member shows the whole set as the top-left set strip: one joined row
+of named buttons, the current image inverted. A button changes to that variant
+exactly as Previous/Next would, and may reach a member that is not a neighbour.
 The strip stays one row at every viewport width, scrolls sideways when it does
 not fit beside ×, and brings the current image into view. Touch dragging and a
-mouse wheel over the strip both move it horizontally without scrolling the
-page.
+mouse wheel over the strip both move it horizontally without scrolling the page.
+
+At 100% and below, a horizontal drag towards a variant does not move the strip:
+it scrubs the blend by exactly the share of the screen width a slide would have
+moved, so dragging across the whole width shows the variant fully. Releasing
+past the swipe threshold completes the blend; releasing short blends back.
+Towards a different card the same drag moves the strip with the finger, and when
+zoomed a drag pans. A drag still held when the image changes another way (a key
+or a button) ends with that change. With reduced motion there is no scrub, and
+the change happens at once on release or click.
+
 The selected image continues to use the same responsive or tiled deep-zoom
 renderer as every other lightbox image. A set's zoom limit is the lowest native
-detail limit among its members, so every target can display the retained view
-without being enlarged past its available pixels. Normal Previous/Next
-navigation keeps its slide transition and resets the view.
+detail limit among its members, so every variant can display the retained view
+without being enlarged past its available pixels.
 
 ### Optional image titles and descriptions — [Explicit]
 
@@ -451,16 +469,23 @@ more text continues, and short text is centred vertically. On the text side the
 wheel scrolls the text and zoom keys do nothing.
 
 Changing image by any route shows the new image drawing side up. From the text
-side, Previous/Next, the arrow keys, and swipes use the ordinary slide: the card
-slides away still showing its text while the next drawing slides in, and nothing
-rotates. A set button crossfades from the text, as far as it was scrolled, to
-the new drawing. The language switch keeps the current side. Dragging sideways
-over the text moves the strip with the finger exactly as over the drawing, while
-a mostly vertical drag scrolls the text without moving the strip, text selection
-stays native, and a drag never starts while text is selected. On phones the edge
-arrows step aside while the text shows. Images without a description have no
-toggle and no back. Closing while the text shows fades the lightbox without
-morphing it into the thumbnail, and reopening shows the drawing.
+side, moving to a different card slides the card away still showing its text
+while the next drawing slides in, and nothing rotates. Moving to a variant of
+the same card (Previous/Next, the arrow keys, a swipe, or a set button) turns
+the card back to its drawing side while both faces blend over the whole turn:
+the front from the current drawing to the variant's, the back from the current
+text to the variant's text (or to nothing, if the variant has none). Edge-on,
+both faces are exactly halfway, and the card ends on the variant's drawing at
+the retained view, with the variant's text on its back. A sideways drag on the
+text towards a variant drives the turn and the blend together from one progress,
+so releasing short turns and blends back to the text. The language switch keeps
+the current side. Dragging sideways over the text towards a different card moves
+the strip with the finger exactly as over the drawing, while a mostly vertical
+drag scrolls the text without moving the strip, text selection stays native, and
+a drag never starts while text is selected. On phones the edge arrows step aside
+while the text shows. Images without a description have no toggle and no back.
+Closing while the text shows fades the lightbox without morphing it into the
+thumbnail, and reopening shows the drawing.
 
 ### Project page content is optional — [Explicit]
 
@@ -471,9 +496,10 @@ still requires its image.
 ### Respects reduced-motion preferences — [Implicit]
 
 Users who set `prefers-reduced-motion` get no fade/transform animation. Changes
-to that preference apply immediately. Lightbox open/close transitions and live
-swipe movement are also disabled, and turning over to an image description
-becomes a short crossfade.
+to that preference apply immediately. Lightbox open/close transitions, live
+swipe movement, and blends between variants are also disabled (the change
+happens at once), and turning over to an image description becomes a short
+crossfade.
 
 ---
 

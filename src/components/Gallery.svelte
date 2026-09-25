@@ -27,6 +27,8 @@
     panForZoom,
     scaleFromPinch,
     scaleFromWheel,
+    scrubProgress,
+    settleDuration,
     sharedMaximumScale,
     swipeDirection,
     zoomFloor,
@@ -43,7 +45,7 @@
   } = $props();
 
   const galleryHistoryKey = 'architecturePortfolioGallery';
-  const comparisonDuration = 180;
+  const blendDuration = 180;
   const slideDuration = 180;
   const flipDuration = 560;
   const reducedFlipDuration = 150;
@@ -58,26 +60,15 @@
   let scale = $state(1);
   let pan = $state<Point>({ x: 0, y: 0 });
   let showDescription = $state(false);
-  let flipAnimated = $state(false);
-  let descriptionScroll = $state(0);
+  // A move towards a variant of the current card: `progress` 1 shows `target`.
+  let change = $state<{ target: number; progress: number }>();
+  // How long the card's next turn or blend takes; 0 moves it at once.
+  let cardDuration = $state(0);
   let dragging = $state(false);
   let swipeOffset = $state(0);
   let swipeDeltaX = 0;
   let swipeAnimating = $state(false);
   let lightboxTransitioning = $state(false);
-  let comparisonTransitioning = $state(false);
-  let comparisonPrevious = $state<
-    | {
-        src: string;
-        sourceWidth?: number;
-        sourceHeight?: number;
-        width?: number;
-        height?: number;
-        scale: number;
-        pan: Point;
-      }
-    | { title: string | undefined; description: string; scrollTop: number }
-  >();
   let navigating = $state(false);
   let reducedMotion = $state(false);
   let closing = false;
@@ -97,8 +88,8 @@
   let dragStart: Point | null = null;
   let pointerSwipeStart: Point | null = null;
   let swipeDeltaY = 0;
-  let comparisonRun = 0;
   let navigationRun = 0;
+  let stripRun = 0;
   let touchStart: Point | null = null;
   let touchPanStart: Point | null = null;
   let tapStart: Point | null = null;
@@ -129,9 +120,9 @@
   let title = $derived(imageText(images[index], 'title', lang));
   let description = $derived(imageText(images[index], 'description', lang));
   let flipped = $derived(showDescription && Boolean(description));
-  let flipTime = $derived(
-    flipAnimated ? (reducedMotion ? reducedFlipDuration : flipDuration) : 0,
-  );
+  // 1 shows the text side, 0 the drawing; a move to a variant from the text
+  // side turns the card back as it blends.
+  let turn = $derived(flipped ? 1 - (change?.progress ?? 0) : 0);
   let setStripIndexes = $derived(
     comparisonIndexes.length ? comparisonIndexes : title ? [index] : [],
   );
@@ -291,6 +282,14 @@
 
   function resetView() {
     setView(1, { x: 0, y: 0 });
+    endDrag();
+  }
+
+  /**
+   * Ends any live drag, since a change of image takes over from it, and
+   * returns a strip the drag had moved.
+   */
+  function endDrag() {
     dragging = false;
     dragStart = null;
     pointerSwipeStart = null;
@@ -298,6 +297,8 @@
     touchPanStart = null;
     tapStart = null;
     pinchStart = null;
+    swipeDeltaY = 0;
+    void snapBack();
   }
 
   function previewUrl(imageIndex: number) {
@@ -474,107 +475,125 @@
     trigger?.focus({ preventScroll: true });
     trigger = undefined;
   }
-  async function go(offset: number) {
-    if (closing || navigating || comparisonTransitioning || images.length < 2) {
-      if (!navigating) void snapBack();
-      return;
-    }
-    const run = ++navigationRun;
-    navigating = true;
-    const direction = Math.sign(offset);
-
-    if (!reducedMotion) {
-      swipeAnimating = true;
-      swipeOffset = -direction * (stage?.clientWidth || window.innerWidth);
-      await waitForSlide();
-      if (run !== navigationRun || !open) return;
-    }
-
-    index = (index + offset + images.length) % images.length;
-    showDrawingSide();
-    resetView();
-    swipeAnimating = false;
-    swipeOffset = 0;
-    history.replaceState(
-      galleryHistoryState(history.state),
-      '',
-      galleryImageHash(index),
-    );
-    navigating = false;
-  }
-  async function compareTo(nextIndex: number) {
-    if (
-      nextIndex === index ||
-      closing ||
-      navigating ||
-      comparisonTransitioning ||
-      !comparisonIndexes.includes(nextIndex)
-    ) {
-      return;
-    }
-
-    const run = ++comparisonRun;
-    comparisonTransitioning = true;
-    if (!reducedMotion) {
-      const preload = new Image();
-      preload.src = responsiveImages[nextIndex]?.deepZoom
-        ? previewUrl(nextIndex)
-        : imageUrl(nextIndex);
-      try {
-        await preload.decode();
-      } catch {}
-      if (run !== comparisonRun || !open) return;
-      comparisonPrevious =
-        flipped && description
-          ? { title, description, scrollTop: descriptionScroll }
-          : {
-              src: image.currentSrc || image.src,
-              sourceWidth: responsiveImages[index]?.source.width,
-              sourceHeight: responsiveImages[index]?.source.height,
-              width: lightboxImageSize?.width,
-              height: lightboxImageSize?.height,
-              scale,
-              pan: { ...pan },
-            };
-    }
-
-    index = nextIndex;
-    showDrawingSide();
-    history.replaceState(
-      galleryHistoryState(history.state),
-      '',
-      galleryImageHash(index),
-    );
-
-    if (!reducedMotion) {
-      await new Promise<void>((resolve) =>
-        setTimeout(resolve, comparisonDuration),
-      );
-    }
-    if (run !== comparisonRun) return;
-    comparisonPrevious = undefined;
-    comparisonTransitioning = false;
-  }
-  function toggleDescription() {
-    flipAnimated = true;
-    showDescription = !flipped;
+  function isVariant(target: number) {
+    return target !== index && comparisonIndexes.includes(target);
   }
 
   /**
-   * The card of a newly shown image starts drawing side up, without turning,
-   * and its text starts at the top.
+   * Changes to image `target`: a variant of this card blends in, another card
+   * slides in from `direction`.
    */
+  async function changeTo(target: number, direction: number) {
+    if (closing || navigating || images.length < 2 || target === index) {
+      if (!navigating) void settleDrag();
+      return;
+    }
+    endDrag();
+    if (isVariant(target)) await blendTo(target);
+    else await slideTo(target, direction);
+  }
+
+  async function slideTo(target: number, direction: number) {
+    const run = ++navigationRun;
+    navigating = true;
+    change = undefined;
+    if (!reducedMotion) {
+      stripRun += 1;
+      swipeAnimating = true;
+      swipeOffset = -direction * (stage?.clientWidth || window.innerWidth);
+      await waitFor(slideDuration);
+      if (run !== navigationRun || !open) return;
+    }
+    swipeAnimating = false;
+    swipeOffset = 0;
+    showImage(target);
+    resetView();
+    navigating = false;
+  }
+
+  /** Blends into `target` at the current view, continuing a scrub towards it. */
+  async function blendTo(target: number) {
+    const run = ++navigationRun;
+    navigating = true;
+    if (!reducedMotion) {
+      // A blend, scrubbed or not, completes only onto a decoded variant.
+      await preloadBlend(target);
+      if (run !== navigationRun || !open) return;
+      const scrubbed = change?.target === target ? change.progress : 0;
+      cardDuration = settleDuration(cardMoveDuration(), scrubbed, 1);
+      change = { target, progress: 1 };
+      await waitFor(cardDuration);
+      if (run !== navigationRun || !open) return;
+    }
+    showImage(target);
+    if (change) {
+      // The blended layer stays until the card's own image can replace it.
+      await tick();
+      await image.decode().catch(() => {});
+      if (run !== navigationRun) return;
+      change = undefined;
+    }
+    navigating = false;
+  }
+
+  /** Returns a scrubbed blend to the current image. */
+  async function cancelBlend() {
+    const current = change;
+    if (!current || navigating) return;
+    const run = ++navigationRun;
+    navigating = true;
+    cardDuration = settleDuration(cardMoveDuration(), current.progress, 0);
+    change = { ...current, progress: 0 };
+    await waitFor(cardDuration);
+    if (run !== navigationRun) return;
+    change = undefined;
+    navigating = false;
+  }
+
+  function cardMoveDuration() {
+    return flipped ? flipDuration : blendDuration;
+  }
+
+  async function preloadBlend(target: number) {
+    const preload = new Image();
+    preload.src = blendUrl(target);
+    try {
+      await preload.decode();
+    } catch {}
+  }
+
+  function blendUrl(target: number) {
+    return responsiveImages[target]?.deepZoom
+      ? previewUrl(target)
+      : imageUrl(target);
+  }
+
+  function showImage(target: number) {
+    index = target;
+    showDrawingSide();
+    history.replaceState(
+      galleryHistoryState(history.state),
+      '',
+      galleryImageHash(index),
+    );
+  }
+
+  function toggleDescription() {
+    cardDuration = reducedMotion ? reducedFlipDuration : flipDuration;
+    showDescription = !flipped;
+  }
+
+  /** The card of a newly shown image starts drawing side up, without turning. */
   function showDrawingSide() {
-    flipAnimated = false;
+    cardDuration = 0;
     showDescription = false;
-    descriptionScroll = 0;
   }
 
   function next() {
-    void go(1);
+    void changeTo(nextIndex, 1);
   }
   function prev() {
-    void go(-1);
+    void changeTo(previousIndex, -1);
   }
   function onkeydown(e: KeyboardEvent) {
     if (!open) return;
@@ -600,7 +619,7 @@
       if (
         flipped ||
         lightboxTransitioning ||
-        comparisonTransitioning ||
+        change ||
         e.ctrlKey ||
         e.metaKey ||
         e.altKey
@@ -651,29 +670,53 @@
   }
 
   function cancelNavigation() {
-    comparisonRun += 1;
     navigationRun += 1;
-    comparisonTransitioning = false;
-    comparisonPrevious = undefined;
+    change = undefined;
     navigating = false;
     swipeAnimating = false;
     swipeOffset = 0;
     swipeDeltaX = 0;
   }
 
+  /** Eases the strip back to rest, unless a slide takes the strip over meanwhile. */
   async function snapBack() {
     swipeDeltaX = 0;
     if (swipeOffset === 0) return;
-    const run = ++navigationRun;
-    const animate = !reducedMotion;
-    swipeAnimating = animate;
+    const run = ++stripRun;
+    swipeAnimating = !reducedMotion;
     swipeOffset = 0;
-    if (animate) await waitForSlide();
-    if (run === navigationRun) swipeAnimating = false;
+    if (swipeAnimating) await waitFor(slideDuration);
+    if (run === stripRun) swipeAnimating = false;
   }
 
-  function waitForSlide() {
-    return new Promise<void>((resolve) => setTimeout(resolve, slideDuration));
+  function waitFor(duration: number) {
+    return new Promise<void>((resolve) => setTimeout(resolve, duration));
+  }
+
+  /**
+   * A drag at rest scrubs the blend towards a variant, or moves the strip
+   * towards another card.
+   */
+  function dragAtRest(deltaX: number) {
+    const target = deltaX < 0 ? nextIndex : previousIndex;
+    if (deltaX !== 0 && !reducedMotion && isVariant(target)) {
+      swipeOffset = 0;
+      cardDuration = 0;
+      change = { target, progress: scrubProgress(deltaX, stageWidth) };
+    } else {
+      change = undefined;
+      swipeOffset = displayedSwipeOffset(deltaX, reducedMotion);
+    }
+  }
+
+  function releaseDrag(deltaX: number, deltaY: number) {
+    const direction = swipeDirection(deltaX, deltaY);
+    if (direction === 0) void settleDrag();
+    else void changeTo(direction > 0 ? nextIndex : previousIndex, direction);
+  }
+
+  function settleDrag() {
+    return change ? cancelBlend() : snapBack();
   }
 
   function constrainedPan(nextPan: Point, nextScale = scale) {
@@ -755,7 +798,7 @@
     // The text on the back scrolls natively.
     if (flipped) return;
     e.preventDefault();
-    if (lightboxTransitioning || comparisonTransitioning) return;
+    if (lightboxTransitioning || change) return;
     const delta =
       e.deltaMode === WheelEvent.DOM_DELTA_LINE
         ? e.deltaY * 16
@@ -769,9 +812,7 @@
   }
 
   function ondblclick(e: MouseEvent) {
-    if (flipped || lightboxTransitioning || comparisonTransitioning || navigating) {
-      return;
-    }
+    if (flipped || lightboxTransitioning || change || navigating) return;
     zoomTo(
       doubleTapScale(scale, zoomRange),
       fromStageCenter({ x: e.clientX, y: e.clientY }),
@@ -803,7 +844,6 @@
   function onpointerdown(e: PointerEvent) {
     if (
       lightboxTransitioning ||
-      comparisonTransitioning ||
       e.pointerType !== 'mouse' ||
       e.button !== 0 ||
       navigating ||
@@ -829,11 +869,8 @@
   function onpointermove(e: PointerEvent) {
     if (pointerSwipeStart) {
       swipeDeltaX = e.clientX - pointerSwipeStart.x;
-      swipeOffset = displayedSwipeOffset(
-        swipeDeltaX,
-        reducedMotion,
-      );
       swipeDeltaY = e.clientY - pointerSwipeStart.y;
+      dragAtRest(swipeDeltaX);
       return;
     }
     if (!dragging || !dragStart) return;
@@ -850,13 +887,12 @@
     if (!dragging) return;
     if (stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId);
     if (pointerSwipeStart) {
-      const direction = swipeDirection(swipeDeltaX, swipeDeltaY);
+      const [deltaX, deltaY] = [swipeDeltaX, swipeDeltaY];
       pointerSwipeStart = null;
       swipeDeltaX = 0;
       swipeDeltaY = 0;
       dragging = false;
-      if (direction === 0) void snapBack();
-      else void go(direction);
+      releaseDrag(deltaX, deltaY);
       return;
     }
     dragging = false;
@@ -870,15 +906,16 @@
     pointerSwipeStart = null;
     swipeDeltaX = 0;
     swipeDeltaY = 0;
-    void snapBack();
+    void settleDrag();
   }
 
   function ontouchstart(e: TouchEvent) {
-    if (lightboxTransitioning || comparisonTransitioning || navigating) return;
+    if (lightboxTransitioning || navigating) return;
     if (e.touches.length === 2 && !flipped) {
       swipeAnimating = false;
       swipeOffset = 0;
       swipeDeltaX = 0;
+      change = undefined;
       const first = touchPoint(e.touches[0]);
       const second = touchPoint(e.touches[1]);
       pinchStart = {
@@ -955,10 +992,7 @@
       swipeDeltaY = point.y - touchStart.y;
       // On the text side a mostly vertical drag may still become a native scroll.
       const follows = !flipped || Math.abs(swipeDeltaX) > Math.abs(swipeDeltaY);
-      swipeOffset = displayedSwipeOffset(
-        follows ? swipeDeltaX : 0,
-        reducedMotion,
-      );
+      dragAtRest(follows ? swipeDeltaX : 0);
       return;
     }
 
@@ -996,12 +1030,11 @@
       touchStart = null;
       return;
     }
-    const direction = swipeDirection(swipeDeltaX, swipeDeltaY);
+    const [deltaX, deltaY] = [swipeDeltaX, swipeDeltaY];
     touchStart = null;
     swipeDeltaX = 0;
     swipeDeltaY = 0;
-    if (direction === 0) void snapBack();
-    else void go(direction);
+    releaseDrag(deltaX, deltaY);
   }
 
   // Scrolling the text vertically is not a swipe.
@@ -1058,7 +1091,7 @@
     pinchStart = null;
     swipeDeltaX = 0;
     swipeDeltaY = 0;
-    void snapBack();
+    void settleDrag();
   }
 </script>
 
@@ -1073,7 +1106,7 @@
     style:--lightbox-gap={`${areas.gap}px`}
     style:--lightbox-band={`${areas.band}px`}
     style:--lightbox-control={`${CONTROL_SIZE}px`}
-    style:--lightbox-flip={`${flipTime}ms`}
+    style:--lightbox-card-duration={`${cardDuration}ms`}
     aria-label={ui[lang].imageViewer}
     oncancel={(event) => {
       event.preventDefault();
@@ -1082,12 +1115,13 @@
     onwheel={preventPageScroll}
     ontouchmove={preventPageScroll}
   >
+    <!-- Isolated, so no layer inside can paint over the controls that follow. -->
     <div
       bind:this={stage}
       bind:clientWidth={stageWidth}
       bind:clientHeight={stageHeight}
       role="presentation"
-      class="lightbox-stage absolute inset-0 touch-none overflow-hidden"
+      class="lightbox-stage absolute inset-0 isolate touch-none overflow-hidden"
       style:cursor={dragging ? 'grabbing' : 'grab'}
       onscrollcapture={ontextscroll}
       {onwheel}
@@ -1124,13 +1158,17 @@
       {/if}
       <div
         class="lightbox-slide-current absolute inset-0 overflow-hidden"
-        class:lightbox-comparison-current={Boolean(comparisonPrevious)}
         style:transform={slideTransform(0)}
         style:transition={slideTransition}
       >
-        <div data-lightbox-sheet class="lightbox-sheet absolute inset-0">
+        <div
+          data-lightbox-sheet
+          class="lightbox-sheet absolute inset-0"
+          style:--lightbox-turn={turn}
+        >
           <div
             class="lightbox-front lightbox-face flex items-center justify-center"
+            class:lightbox-away={turn === 1}
             inert={flipped}
           >
             {#if deepZoom}
@@ -1173,49 +1211,63 @@
                 onload={() => (pan = constrainedPan(pan))}
               />
             {/if}
+            {#if change}
+              {@const size = restImageSize(change.target)}
+              <!-- Unbacked: until the variant has loaded, the current drawing
+                   shows through undimmed. -->
+              <div
+                class="lightbox-incoming absolute inset-0 flex items-center justify-center"
+                style:--lightbox-blend={change.progress}
+                aria-hidden="true"
+              >
+                <img
+                  src={blendUrl(change.target)}
+                  width={responsiveImages[change.target]?.source.width}
+                  height={responsiveImages[change.target]?.source.height}
+                  alt=""
+                  draggable="false"
+                  style:width={size ? `${size.width}px` : undefined}
+                  style:height={size ? `${size.height}px` : undefined}
+                  style:transform={`translate3d(${pan.x}px, ${pan.y}px, 0) scale(${scale})`}
+                  class="h-auto max-h-full w-auto max-w-full object-contain select-none"
+                />
+              </div>
+            {/if}
           </div>
           {#if description}
-            <div class="lightbox-back lightbox-face bg-black" inert={!flipped}>
+            <div
+              class="lightbox-back lightbox-face bg-black"
+              class:lightbox-away={turn === 0}
+              inert={!flipped}
+            >
               {#key index}
-                <LightboxVerso
-                  {title}
-                  {description}
-                  {lang}
-                  bind:scrollTop={descriptionScroll}
-                />
+                <LightboxVerso {title} {description} {lang} />
               {/key}
+              {#if change}
+                {@const incomingText = imageText(
+                  images[change.target],
+                  'description',
+                  lang,
+                )}
+                <div
+                  class="lightbox-incoming absolute inset-0 bg-black"
+                  style:--lightbox-blend={change.progress}
+                  aria-hidden="true"
+                  inert
+                >
+                  {#if incomingText}
+                    <LightboxVerso
+                      title={imageText(images[change.target], 'title', lang)}
+                      description={incomingText}
+                      {lang}
+                    />
+                  {/if}
+                </div>
+              {/if}
             </div>
           {/if}
         </div>
       </div>
-      {#if comparisonPrevious}
-        <div
-          class="lightbox-comparison-previous pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-          class:lightbox-comparison-text={'description' in comparisonPrevious}
-          aria-hidden="true"
-          inert
-        >
-          {#if 'description' in comparisonPrevious}
-            <LightboxVerso {...comparisonPrevious} {lang} />
-          {:else}
-            <img
-              src={comparisonPrevious.src}
-              width={comparisonPrevious.sourceWidth}
-              height={comparisonPrevious.sourceHeight}
-              alt=""
-              draggable="false"
-              style:width={comparisonPrevious.width
-                ? `${comparisonPrevious.width}px`
-                : undefined}
-              style:height={comparisonPrevious.height
-                ? `${comparisonPrevious.height}px`
-                : undefined}
-              style:transform={`translate3d(${comparisonPrevious.pan.x}px, ${comparisonPrevious.pan.y}px, 0) scale(${comparisonPrevious.scale})`}
-              class="h-auto max-h-full w-auto max-w-full object-contain select-none"
-            />
-          {/if}
-        </div>
-      {/if}
       {#if images.length > 1}
         {@const size = restImageSize(nextIndex)}
         <div
@@ -1257,7 +1309,7 @@
                 class="lightbox-control lightbox-set-option px-3 text-sm"
                 aria-current={setIndex === index ? 'true' : undefined}
                 disabled={setIndex === index}
-                onclick={() => void compareTo(setIndex)}
+                onclick={() => void changeTo(setIndex, Math.sign(setIndex - index))}
               >
                 {setStripLabel(setIndex)}
               </button>
@@ -1378,6 +1430,7 @@
   .lightbox {
     --color-black: #000;
     --color-white: #fff;
+    --lightbox-card-easing: cubic-bezier(0.45, 0.05, 0.2, 1);
   }
 
   .lightbox-control {
@@ -1432,12 +1485,14 @@
   }
 
   /* The current image is a card: its drawing on the front and its description
-     on the back. --lightbox-flip is non-zero once the flip button has turned
-     this card, so a card that shows another image starts drawing side up at
-     once. */
+     on the back. --lightbox-turn is 1 with the text side up and 0 with the
+     drawing up; --lightbox-blend shows a variant over both faces. Turn and
+     blend share one duration and easing, so a flip that blends keeps them in
+     step. */
   .lightbox-sheet {
     transform-style: preserve-3d;
-    transition: transform var(--lightbox-flip) cubic-bezier(0.45, 0.05, 0.2, 1);
+    transition: transform var(--lightbox-card-duration)
+      var(--lightbox-card-easing);
   }
 
   .lightbox-face {
@@ -1445,21 +1500,27 @@
     inset: 0;
     backface-visibility: hidden;
     transition:
-      opacity var(--lightbox-flip),
+      opacity var(--lightbox-card-duration),
       visibility 0s;
   }
 
   /* The face turned away is hidden once the turn ends, so it is neither drawn
      nor hit-tested. */
-  .lightbox-back,
-  .lightbox-flipped .lightbox-front {
+  .lightbox-away {
     visibility: hidden;
-    transition-delay: 0s, var(--lightbox-flip);
+    transition-delay: 0s, var(--lightbox-card-duration);
   }
 
-  .lightbox-flipped .lightbox-back {
-    visibility: visible;
-    transition-delay: 0s;
+  .lightbox-incoming {
+    opacity: var(--lightbox-blend);
+    transition: opacity var(--lightbox-card-duration) var(--lightbox-card-easing);
+  }
+
+  /* A blend that starts animated fades in from nothing. */
+  @starting-style {
+    .lightbox-incoming {
+      opacity: 0;
+    }
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -1467,20 +1528,18 @@
       perspective: 2400px;
     }
 
-    .lightbox-back,
-    .lightbox-flipped .lightbox-sheet {
+    .lightbox-sheet {
+      transform: rotateY(calc(var(--lightbox-turn) * 180deg));
+    }
+
+    .lightbox-back {
       transform: rotateY(180deg);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .lightbox-back,
-    .lightbox-flipped .lightbox-front {
+    .lightbox-away {
       opacity: 0;
-    }
-
-    .lightbox-flipped .lightbox-back {
-      opacity: 1;
     }
   }
 
@@ -1489,29 +1548,6 @@
   @media (max-width: 480px) {
     .lightbox-flipped .lightbox-arrow {
       visibility: hidden;
-    }
-  }
-
-  .lightbox-comparison-current {
-    z-index: 10;
-    animation: comparison-in 180ms ease-out;
-  }
-
-  @keyframes comparison-in {
-    from {
-      opacity: 0;
-    }
-  }
-
-  /* Outgoing text also fades, since the incoming drawing covers only its own
-     area. */
-  .lightbox-comparison-text {
-    animation: comparison-out 180ms ease-out forwards;
-  }
-
-  @keyframes comparison-out {
-    to {
-      opacity: 0;
     }
   }
 </style>

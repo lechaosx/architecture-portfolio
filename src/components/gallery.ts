@@ -194,6 +194,23 @@ export function swipeDirection(deltaX: number, deltaY: number) {
   return deltaX < 0 ? 1 : -1;
 }
 
+/**
+ * Blend progress of a drag towards a variant: the share of the stage width a
+ * slide would have moved.
+ */
+export function scrubProgress(deltaX: number, stageWidth: number) {
+  return Math.min(1, Math.abs(deltaX) / stageWidth);
+}
+
+/** Time a released move from `progress` to `target` takes of its full `duration`. */
+export function settleDuration(
+  duration: number,
+  progress: number,
+  target: number,
+) {
+  return duration * Math.abs(target - progress);
+}
+
 
 export function displayedSwipeOffset(deltaX: number, reducedMotion: boolean) {
   return reducedMotion ? 0 : deltaX;

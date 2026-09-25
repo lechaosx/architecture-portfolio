@@ -38,7 +38,10 @@ image titles and descriptions are optional. In the lightbox a title labels the
 image in the top-left corner, and a description sits on the back of the drawing,
 behind a button in the bottom-left corner. To compare aligned drawings,
 give each one the same **Comparison set** value and use its Czech and English
-image titles as the button names. The previews remain ordinary individual
+image titles as the button names. Keep a set's images next to each other on the
+page: Previous/Next and swipes blend in place only when the neighbouring image
+belongs to the same set, and slide to it otherwise; the set's buttons always
+blend. The previews remain ordinary individual
 images; the set's buttons appear only in the lightbox. Set the
 **Filename**, then save. Keep the `.md` ending; the part before it
 becomes the project's web address (for example, `family-house.md` becomes
@@ -82,7 +85,8 @@ ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
   the controls in its corners. Visitors zoom with the wheel, a pinch, a double
   click or tap, or the `+`/`-`/`0` keys. An image's title shows in the corner
   and its description can be turned over to read on the back. Related drawings
-  can be switched with a crossfade that keeps the inspected zoom and position.
+  blend into each other in place, keeping the inspected zoom and position,
+  whether visitors use the arrows, a swipe, or the set's buttons.
   Each open image has a shareable `#image-N` address, and the browser Back
   button closes it.
 - A **Contact** page with your email, phone, and when you're reachable.
