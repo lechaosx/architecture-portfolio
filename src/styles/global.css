@@ -189,6 +189,13 @@ html[data-theme="dark"] {
   --color-neutral-900: oklch(90% 0 0);
 }
 
+/* The page's surface and text, resolved here so lightbox parts can follow the
+   theme while the lightbox itself pins black and white. */
+html {
+  --page-surface: var(--color-white);
+  --page-text: var(--color-black);
+}
+
 /* Dual language: both variants render into the page; hide the one that is not
    the active language (set on <html data-lang> by the script in Base.astro).
    <html> ships with data-lang="en", so with no JS the page falls back to

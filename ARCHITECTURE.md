@@ -165,12 +165,13 @@ them, and the stage's pointer and touch handlers never see their events. The
 stage isolates its image and card layers in their own stacking context beneath
 the controls, so no z-index or blend inside it can paint over them. The controls
 share the component-scoped `.lightbox-control` box: solid black, 40%-white
-border, white border on hover, inverted when pressed, `aria-pressed`, or
-`aria-current`. The set strip joins its buttons by overlapping their borders.
-The language switch reuses the footer's `data-lang-toggle` markup, so
-Base.astro's delegated handler does the switching and the island follows
-`data-lang`. Arrow icons are centred SVG chevrons rather than text glyphs, whose
-font metrics sit them off-centre in the box.
+border, white border on hover, and inverted (white fill, black text, a 2 px
+black ring so it stays distinct over a light card or drawing) when pressed,
+`aria-pressed`, or `aria-current`. The set strip joins its buttons by
+overlapping their borders. The language switch reuses the footer's
+`data-lang-toggle` markup, so Base.astro's delegated handler does the switching
+and the island follows `data-lang`. Arrow icons are centred SVG chevrons rather
+than text glyphs, whose font metrics sit them off-centre in the box.
 
 ### Each lightbox image is a card; a comparison set is one card's variants — [Explicit]
 
@@ -178,21 +179,50 @@ The current slide is the card: `[data-lightbox-sheet]` inside
 `.lightbox-slide-current`, whose front face holds the drawing (responsive or
 tiled) and whose back face, present only when the image has a description in the
 current language, is `LightboxVerso.svelte`. The previous and next slides are
-plain drawing fronts. The card's state is two numbers handed to CSS:
-`--lightbox-turn` (1 text side up, 0 drawing up; the sheet rotates by it about
-the vertical axis inside its slide, which is the perspective root) and, during a
-move to a variant, `--lightbox-blend` on a `.lightbox-incoming` layer in each
-face: the variant's drawing on the front, unbacked so that until it has loaded
-the current drawing shows through undimmed, and on the back its text or plain
-black. Both transition over `--lightbox-card-duration` with one easing, so a
-turn that blends keeps the angle and the blend in step: edge-on is halfway on
+plain drawing fronts. The card's state is handed to CSS as numbers on the sheet:
+`--lightbox-turn`, registered with `@property` so it can transition as a number
+(1 text side up, 0 drawing up); the drawing's view (`--drawing-*`, the gesture
+state `scale`/`pan`); the back's card view (`--card-*`, `cardView` of the card's
+scale and scroll); and, during a move to a variant, `--lightbox-blend`. From
+these the sheet derives the shown view, the drawing view blended into the card
+view by the turn, and every face is drawn at it: the images with
+`.lightbox-at-view`, the tiled canvas (which stays at the drawing view) with
+`.lightbox-from-drawing`, and each back's card (laid out at its own card view)
+with `.lightbox-card` in `LightboxVerso`, whose x terms are mirrored because the
+card is seen from behind the front. The sheet itself does not turn: it sets one
+perspective (`--lightbox-perspective`) and derives the front's and the back's
+angles from the turn; the front face turns by its angle about the stage's
+vertical centre line, and each back's card turns by the back's angle inside its
+scroll container, whose content applies the same perspective seen from the
+middle of the screen (`perspective-origin` follows the scroll). The scroll
+container therefore stays in screen space and clips the card only to the screen
+(less any scrollbar gutters); a scroller inside a turning face would clip in the
+turned plane, to a shrunken copy of the screen. So both faces keep one outline
+at every instant of the turn, a card larger than the screen included. The
+scroller is transparent until the turn passes edge-on (`--lightbox-back-facing`,
+the turn rounded), so neither its card nor its scrollbar ever shows over the
+drawing. The front hides its turned-away side by backface culling, which Firefox
+applies only to a transformed element and Chromium only within the sheet's
+`transform-style: preserve-3d`. One animated number therefore turns the card and
+zooms all four faces (both fronts, both backs) together, with no JavaScript
+animation. The flip never changes the drawing view: it is the saved view,
+restored by turning back and re-clamped on resize by the same effect as any
+other view. Scrolling the back changes only the card view, so the hidden tiled
+canvas is not re-synced while reading. A `.lightbox-incoming` layer in each face
+shows the variant during a blend: its drawing on the front, unbacked so that
+until it has loaded the current drawing shows through undimmed, and its card on
+the back (a back whose variant has no description fades out instead; one whose
+variant has no responsive entry has no rest size yet, so the current back stays
+until the variant is current and its drawing has loaded). Turn and blend
+transition over `--lightbox-card-duration` with one easing, so a turn that
+blends keeps the angle, the zoom and the blend in step: edge-on is halfway on
 both faces. `cardDuration` is set by whoever moves the card (the flip button, a
 blend, a released scrub); `dragAtRest` zeroes it so a scrub follows the finger
 directly, and `showDrawingSide` clears it so a card that shows another image
-starts drawing side up at once. With reduced motion the sheet does not rotate
-and the faces crossfade instead. The face turned away is `inert` immediately and
-`visibility: hidden` once the turn ends, so it is neither focusable, hit-tested,
-nor drawn.
+starts drawing side up at once. With reduced motion nothing turns, the turn does
+not transition, and the faces crossfade instead. The face turned away is `inert`
+immediately and `visibility: hidden` once the turn ends, so it is neither
+focusable, hit-tested, nor drawn.
 
 Every route to another image (Previous/Next, the arrow keys, a released swipe, a
 set button) goes through `changeTo(target, direction)`, which blends when the
@@ -230,12 +260,31 @@ drag may still become a native scroll; a native scroll of the text then cancels
 the drag, and no drag starts or continues while text in the stage is selected.
 While the text shows, the stage ignores the wheel, double-click, pinch,
 double-tap, and mouse drags that begin on the text, so the text scrolls and
-selects natively. On phones the dialog's flipped state hides the edge arrows.
+selects natively. On phones (`lightbox-phone`, from `PHONE_WIDTH`) the dialog's
+flipped state hides the edge arrows.
 
-`LightboxVerso` renders the title and description in the current language with a
-`lang` attribute (so hyphenation picks the right dictionary), as a focusable,
-labelled region that scrolls inside the safe area. Its edge fades derive from
-the scroll position and the measured content height.
+`LightboxVerso` is the back's viewport: a native scroll container (the browser's
+own scrollbar and scrolling) spanning the stage, with the control bands as its
+padding, whose content is the card. The card is the page's surface and text
+(`--page-surface`/`--page-text`, which `global.css` resolves on `<html>` from
+the theme's `--color-white`/`--color-black`, so they follow a live theme switch
+inside the pinned lightbox), `cardScale` × the front's rest size
+(`restImageSize`, the one rule for every front: the image contained in the rest
+area, its size read from the responsive manifest or, for a drawing without
+responsive variants, from the image once loaded, so every description has a
+back), centred, and may overflow the screen sideways (clipped; both scrollbar
+gutters keep it centred). `cardScale` in `gallery.ts` finds the smallest scale,
+at least 1, at which the text's height at `cardColumn` plus the card's padding
+(`cardPadding`: 6% of its width within 24–64 px) fits the card's height; the
+column is the page measure within the card's padding and `textColumnLimit` (the
+stage minus the side bands, or the page margins at `PHONE_WIDTH` and below,
+where the arrows step aside). The text is measured in a hidden copy outside the
+scroll, once per text, language, image and viewport and again whenever web fonts
+finish loading (`document.fonts` `loadingdone`, as a face first needed later can
+change the text's size); a re-measure keeps the scroll position in proportion.
+It renders the title and description in the current language with a `lang`
+attribute (so hyphenation picks the right dictionary), as a focusable, labelled
+region.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 
@@ -270,10 +319,11 @@ and returns to the opening thumbnail without scrolling the page on close. The
 viewport-filling dialog suppresses wheel, touch, and keyboard scrolling without
 changing document overflow or positioning, except for native scrolling inside
 the set strip and the description. The page and sticky header therefore retain
-their normal layout and position beneath it. The lightbox locally pins
-black and white colour tokens so the global dark-mode swap cannot invert its
-overlay and controls. A `data-lang` observer keeps the dialog's accessible names
-aligned with the global language switch.
+their normal layout and position beneath it. The lightbox locally pins black and
+white colour tokens so the global dark-mode swap cannot invert its overlay and
+controls; only the card back takes the page's own surface and text. A
+`data-lang` observer keeps the dialog's accessible names aligned with the global
+language switch.
 
 Opening and closing use a same-document View Transition between the stable
 thumbnail frame and active preview. The image remains nested inside the named
