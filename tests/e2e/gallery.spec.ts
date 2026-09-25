@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import sharp from 'sharp';
 
 const projectPath = '/projects/urban-study-kyjov/';
 
@@ -32,7 +33,7 @@ async function waitForLightbox(page: Page) {
 /** Rendered width of the current lightbox image relative to its rest (100%) width. */
 async function imageZoom(page: Page) {
   return page
-    .locator('.lightbox-slide-current img')
+    .locator('.lightbox-front > img')
     .evaluate(
       (image: HTMLImageElement) =>
         image.getBoundingClientRect().width / image.offsetWidth,
@@ -867,6 +868,60 @@ test('resizing while zoomed keeps the image within its pan limits', async ({
     .toBe(true);
   expect(await tilesDrawnAt(page, { x: 800 - 52, y: 600 - 60 })).toBe(false);
 });
+
+for (const [route, change] of [
+  ['a set button', (page: Page) => page.getByRole('button', { name: 'Values of the Area' }).click()],
+  ['Next inside the set', (page: Page) => page.getByRole('button', { name: 'Next image' }).click()],
+] as const) {
+  test(`controls stay above a zoomed drawing while ${route} blends it`, async ({ page }) => {
+    await gotoProject(page);
+    await galleryImage(page, 3).click();
+    await waitForLightbox(page);
+    await page.locator('.lightbox-stage').hover();
+    await page.mouse.wheel(0, -1200);
+    await expect.poll(() => imageZoom(page)).toBeGreaterThan(2);
+
+    const midBlend = page.waitForFunction(() => {
+      const animations = document.getAnimations();
+      if (!animations.length) return false;
+      for (const animation of animations) {
+        animation.pause();
+        animation.currentTime = 90;
+      }
+      return true;
+    });
+    await change(page);
+    await midBlend;
+
+    const dialog = page.getByRole('dialog', { name: 'Image viewer' });
+    for (const control of [
+      dialog.getByRole('button', { name: 'Cycling Transport Analysis' }),
+      dialog.getByRole('button', { name: 'Close' }),
+      dialog.getByRole('link', { name: /^Open original/ }),
+    ]) {
+      expect(
+        await control.evaluate((element) => {
+          const box = element.getBoundingClientRect();
+          const hit = document.elementFromPoint(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+          );
+          return element.contains(hit);
+        }),
+      ).toBe(true);
+      // Inside the border and clear of the label, the control's fill is black.
+      const box = (await control.boundingBox())!;
+      const pixel = await sharp(
+        await page.screenshot({
+          clip: { x: box.x + 4, y: box.y + box.height / 2, width: 1, height: 1 },
+        }),
+      )
+        .raw()
+        .toBuffer();
+      expect([...pixel.subarray(0, 3)]).toEqual([0, 0, 0]);
+    }
+  });
+}
 
 test.describe('reduced motion', () => {
   test('opens without a transition and keeps swipe movement stationary', async ({

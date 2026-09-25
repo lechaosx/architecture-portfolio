@@ -140,14 +140,8 @@ close button and scrolls horizontally when its intrinsic width exceeds that
 area. Its wheel handler maps the dominant wheel delta to `scrollLeft` and
 consumes the event, while native horizontal touch panning remains enabled. A
 reactive effect brings the active button into view after opening or switching
-images. Switching within a set updates the active page index without calling the
-normal slide navigation or resetting the shared scale/pan state. The incoming
-processed preview is decoded first; outgoing and incoming preview layers then
-crossfade at the retained transform. The active image still initializes its
-ordinary full-image or OpenSeadragon renderer, and the temporary outgoing layer
-is removed after the blend. While a set member is active, the zoom ceiling is
-the minimum `nativeZoomScale` across the set's responsive sources.
-Reduced-motion mode switches immediately.
+images. While a set member is active, the zoom ceiling is the minimum
+`nativeZoomScale` across the set's responsive sources.
 
 ### Lightbox soft inset and corner controls — [Explicit]
 
@@ -165,10 +159,12 @@ and `--lightbox-control` on the dialog, so the stylesheet never restates them.
 A single `$effect` re-clamps scale and pan whenever the areas or the current
 image change, covering resizes and phone rotation.
 
-The controls are children of the dialog, outside the stage and its card, so
-pan, zoom, swipe offset, the card's flip, and its `inert` face never move or
-disable them, and the stage's pointer and touch handlers never see their events.
-They share the component-scoped `.lightbox-control` box: solid black, 40%-white
+The controls are children of the dialog, outside the stage and its card, so pan,
+zoom, swipe offset, the card's flip, and its `inert` face never move or disable
+them, and the stage's pointer and touch handlers never see their events. The
+stage isolates its image and card layers in their own stacking context beneath
+the controls, so no z-index or blend inside it can paint over them. The controls
+share the component-scoped `.lightbox-control` box: solid black, 40%-white
 border, white border on hover, inverted when pressed, `aria-pressed`, or
 `aria-current`. The set strip joins its buttons by overlapping their borders.
 The language switch reuses the footer's `data-lang-toggle` markup, so
@@ -176,33 +172,60 @@ Base.astro's delegated handler does the switching and the island follows
 `data-lang`. Arrow icons are centred SVG chevrons rather than text glyphs, whose
 font metrics sit them off-centre in the box.
 
-### Each lightbox image is a card with its description on the back — [Explicit]
+### Each lightbox image is a card; a comparison set is one card's variants — [Explicit]
 
 The current slide is the card: `[data-lightbox-sheet]` inside
 `.lightbox-slide-current`, whose front face holds the drawing (responsive or
 tiled) and whose back face, present only when the image has a description in the
 current language, is `LightboxVerso.svelte`. The previous and next slides are
-plain drawing fronts. The flip button turns the card 180° about the vertical
-axis inside its slide, which is the perspective root; with reduced motion the
-faces crossfade instead. The turn's duration reaches CSS as `--lightbox-flip`,
-which is non-zero once the button sets `flipAnimated`. When another image takes
-over the card (`go`, `compareTo` and `showFromHistory` call `showDrawingSide`),
-`flipAnimated` is cleared, so the card starts drawing side up without a visible
-turn and its text starts at the top. Navigating from the text side runs the
-ordinary slide: the outgoing card leaves still showing its text and the next
-drawing slides in. A set button crossfades from a snapshot of the text taken at
-its current scroll position (the bound `scrollTop` of `LightboxVerso`, which a
-new instance opens at); the snapshot fades out as well because the incoming
-drawing covers only its own area. The face turned away is `inert` immediately
-and `visibility: hidden` once the turn ends, so it is neither focusable,
-hit-tested, nor drawn.
+plain drawing fronts. The card's state is two numbers handed to CSS:
+`--lightbox-turn` (1 text side up, 0 drawing up; the sheet rotates by it about
+the vertical axis inside its slide, which is the perspective root) and, during a
+move to a variant, `--lightbox-blend` on a `.lightbox-incoming` layer in each
+face: the variant's drawing on the front, unbacked so that until it has loaded
+the current drawing shows through undimmed, and on the back its text or plain
+black. Both transition over `--lightbox-card-duration` with one easing, so a
+turn that blends keeps the angle and the blend in step: edge-on is halfway on
+both faces. `cardDuration` is set by whoever moves the card (the flip button, a
+blend, a released scrub); `dragAtRest` zeroes it so a scrub follows the finger
+directly, and `showDrawingSide` clears it so a card that shows another image
+starts drawing side up at once. With reduced motion the sheet does not rotate
+and the faces crossfade instead. The face turned away is `inert` immediately and
+`visibility: hidden` once the turn ends, so it is neither focusable, hit-tested,
+nor drawn.
+
+Every route to another image (Previous/Next, the arrow keys, a released swipe, a
+set button) goes through `changeTo(target, direction)`, which blends when the
+target is a variant of the current card (`isVariant`: another member of the same
+comparison set) and slides otherwise. It first calls `endDrag` (shared with
+`resetView`), which ends any live pointer or touch drag and returns a strip the
+drag had moved, so a gesture held through a change cannot act again. `slideTo`
+translates the strip and resets the view. `blendTo` keeps scale and pan: it
+waits for the variant's image to decode (at once when cached, so a released
+scrub never completes onto an unloaded layer), sets `change = { target,
+progress: 1 }` (an animated blend fades its layers in from `@starting-style`),
+and on completion makes the variant the current image while the blended layer
+stays until the card's own image has decoded, so nothing flashes. From the text
+side `turn` is `1 - progress`, so the same move turns the card back. The
+variant's own text replaces the back only when it becomes current, and the
+back's text keeps its scroll position throughout.
+
+A drag at rest calls `dragAtRest`: towards a variant it scrubs `change.progress`
+by `scrubProgress` (the drag as a share of the stage width, as far as a slide
+would have moved the strip) with no transition and leaves the strip in place;
+towards another card it moves the strip by the drag. Release uses the same
+`swipeDirection` threshold: past it, `changeTo` continues the scrub from its
+progress for the remaining share of the duration (`settleDuration`); short of
+it, `cancelBlend` returns the blend (and, from the text side, the turn) to the
+current image. From the text side half the stage width is edge-on. With reduced
+motion there is no scrub and the change is instant.
 
 Because the text is inside the stage, the stage's gestures treat the text side
-like a drawing at rest: a one-finger drag moves the strip live and commits or
-snaps back with the same threshold and reduced-motion rules, whatever the
+like a drawing at rest: a one-finger drag scrubs or moves the strip and commits
+or settles with the same threshold and reduced-motion rules, whatever the
 drawing's zoom. `LightboxVerso` keeps `touch-action: pan-y`, so vertical
-scrolling and long-press selection stay native. Over the text the strip follows
-only while the drag is more horizontal than vertical, since a mostly vertical
+scrolling and long-press selection stay native. On the text side the drag
+follows only while it is more horizontal than vertical, since a mostly vertical
 drag may still become a native scroll; a native scroll of the text then cancels
 the drag, and no drag starts or continues while text in the stage is selected.
 While the text shows, the stage ignores the wheel, double-click, pinch,
