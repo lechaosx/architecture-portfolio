@@ -38,7 +38,7 @@ deployment build and later workflow runs reuse its content-addressed image cache
 ## Project layout
 
 ```
-flake.nix                     bun + packaged Playwright browsers (x86_64-linux)
+flake.nix                     bun, Playwright browsers, flock (x86_64-linux)
 .envrc                        automatic flake shell activation with direnv
 astro.config.mjs              site (for sitemap) + integrations; no base
 svelte.config.js              Svelte preprocess
@@ -48,7 +48,7 @@ tsconfig.json                 extends astro/tsconfigs/strict
 
 src/
   images.ts                    responsive derivative URL/srcset contract
-  server-images.ts             reads the generated image manifest during builds
+  server-images.ts             reads the image manifest, again when it changes
   site-title.ts                credential + owner name used in browser tab titles
   content.config.ts           projects collection schema (Zod); bilingual fields
   i18n.ts                      baked-in UI labels ({cs, en} dictionary)
@@ -150,14 +150,18 @@ otherwise the original is retained as the efficient fallback. Images whose
 longest side exceeds 4096 px also receive 512 px DZI tiles and use a lazily
 loaded OpenSeadragon canvas in the lightbox. Encoded files and pyramids are
 reused from `node_modules/.astro/images`; `bun run images` reports their generated
-and reused counts. Widths above the source resolution are never generated. The
-pipeline auto-orients derivatives and normalizes them to sRGB. PNG and
-alpha-bearing inputs use lossless WebP; other raster inputs use high-quality
-lossy WebP. Pyramid levels are Lanczos-resized directly from the original rather
-than recursively reduced. Lossless tiles overlap by 1 px; lossy tiles overlap by
-16 px so WebP boundary filtering does not reach their visible cores. The deploy
-workflow's Astro action persists the cache between CI runs. Cache loss only
-makes the next build slower—it does not change its output.
+and reused counts. It updates `public/_responsive` in place — writing only new
+or changed files and removing what the content no longer references — so it is
+safe to build or run tests while `bun dev` is serving. Only one run works at a
+time: `bun run images` holds `flock` on `node_modules/.images.lock`, and another
+run waits silently until it finishes. Widths above the source resolution are
+never generated. The pipeline auto-orients derivatives and normalizes them to
+sRGB. PNG and alpha-bearing inputs use lossless WebP; other raster inputs use
+high-quality lossy WebP. Pyramid levels are Lanczos-resized directly from the
+original rather than recursively reduced. Lossless tiles overlap by 1 px; lossy
+tiles overlap by 16 px so WebP boundary filtering does not reach their visible
+cores. The deploy workflow's Astro action persists the cache between CI runs.
+Cache loss only makes the next build slower—it does not change its output.
 
 Uploads may keep spaces, accents, and `+` characters in their filenames. The
 manifest stores the original upload URL separately from its display fallback.
@@ -244,6 +248,10 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
 
 ## Known gaps / things to verify
 
+- **The flake's bun (1.3.13) never reports server sockets as closed**, so
+  `bun dev` holds every connection it has served until it restarts. Bun 1.4.0
+  fixes this; updating the flake input also changes the packaged Playwright
+  browsers, which must stay in step with the `@playwright/test` pin.
 - **Pages CMS behavior is untested end-to-end** (it's hosted; needs the live
   repo). After connecting, create one test project through the UI and confirm the
   committed file matches the shape of

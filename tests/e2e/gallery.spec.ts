@@ -20,14 +20,10 @@ async function gotoProject(page: Page) {
 }
 
 async function waitForLightbox(page: Page) {
-  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toBeVisible();
-  await expect
-    .poll(() =>
-      page.evaluate(() =>
-        document.documentElement.matches(':active-view-transition'),
-      ),
-    )
-    .toBe(false);
+  const dialog = page.getByRole('dialog', { name: 'Image viewer' });
+  await expect(dialog).toBeVisible();
+  // The lightbox ignores input until it has finished opening.
+  await expect(dialog).not.toHaveAttribute('aria-busy', 'true');
 }
 
 /** Rendered width of the current lightbox image relative to its rest (100%) width. */
@@ -89,6 +85,42 @@ async function expectLightboxTransition(page: Page, type: string) {
       type),
     )
     .toBe(true);
+}
+
+/**
+ * Pauses the next view transition as soon as it starts animating, so the test
+ * can act while it runs however slowly the test drives the page. Returns the
+ * function that lets it finish.
+ */
+async function holdNextViewTransition(page: Page) {
+  const held = await page.evaluateHandle(() => {
+    const animations = () =>
+      document
+        .getAnimations()
+        .filter(({ effect }) =>
+          (effect as KeyframeEffect | null)?.pseudoElement?.startsWith(
+            '::view-transition',
+          ),
+        );
+    const paused = new Promise<ViewTransition>((resolve, reject) => {
+      document.startViewTransition = (options) => {
+        delete (document as Partial<Document>).startViewTransition;
+        const transition = document.startViewTransition(options);
+        transition.ready.then(() => {
+          for (const animation of animations()) animation.pause();
+          resolve(transition);
+        }, reject);
+        return transition;
+      };
+    });
+    return { paused, animations };
+  });
+  return () =>
+    held.evaluate(async ({ paused, animations }) => {
+      const transition = await paused;
+      for (const animation of animations()) animation.play();
+      await transition.finished;
+    });
 }
 
 async function lightboxTransitionState(page: Page) {
@@ -244,7 +276,9 @@ test('shared transitions prevent wheel input from moving the page or image', asy
   const thumbnail = galleryImage(page, 10);
   await thumbnail.scrollIntoViewIfNeeded();
   const scrollY = await page.evaluate(() => window.scrollY);
+  const lightbox = page.locator('dialog[data-gallery-lightbox]');
 
+  const finishOpening = await holdNextViewTransition(page);
   await thumbnail.evaluate((button: HTMLButtonElement) => button.click());
   await page.locator('.lightbox-stage').waitFor({ state: 'visible' });
   await page.mouse.move(640, 450);
@@ -263,10 +297,14 @@ test('shared transitions prevent wheel input from moving the page or image', asy
   expect(windowWheelPrevented).toBe(true);
   expect(await imageZoom(page)).toBeCloseTo(1, 2);
   expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+  await expect(lightbox).toHaveAttribute('aria-busy', 'true');
+  await finishOpening();
+  await expect(lightbox).toHaveAttribute('aria-busy', 'false');
   await waitForLightbox(page);
 
   const closingScrollY = await page.evaluate(() => window.scrollY);
   const closingTarget = await thumbnail.boundingBox();
+  const finishClosing = await holdNextViewTransition(page);
   await page.getByRole('button', { name: 'Close' }).click();
   await expectLightboxTransition(page, 'lightbox-close');
   await page.mouse.wheel(0, 1200);
@@ -283,6 +321,7 @@ test('shared transitions prevent wheel input from moving the page or image', asy
   expect(closingWheelPrevented).toBe(true);
   expect(await page.evaluate(() => window.scrollY)).toBe(closingScrollY);
   expect(await thumbnail.boundingBox()).toEqual(closingTarget);
+  await finishClosing();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
 });
 
