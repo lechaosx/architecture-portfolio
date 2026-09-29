@@ -54,6 +54,11 @@ Only then reconcile them.
 - **Islands stay minimal:** hydrated Svelte components should be the exception.
   Adding broad client-side JS contradicts the explicit "fast and clean" goal —
   if it's needed, record it as a decision in ARCHITECTURE.md.
+- **State changes instantly; the visuals chase it.** Animations are visual
+  sugar: input is never ignored, queued or delayed because something is still
+  animating, and the UI behaves exactly as it would with no animations at all.
+  When a target changes mid-animation, the animation continues from where it is
+  on screen towards the new target instead of jumping or restarting.
 - **All user-facing text is bilingual (cs + en).** Translatable fields come in
   `_cs`/`_en` pairs (add both, in both schema places); baked-in UI labels live in
   `src/i18n.ts`. Render bilingual text through `T.astro`/`Prose.astro` so the
