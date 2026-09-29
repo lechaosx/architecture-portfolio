@@ -28,6 +28,12 @@ const commit = (direction: 1 | -1): GestureIntent => ({
   type: 'commit',
   direction,
 });
+const turn = (offset: number): GestureIntent => ({ type: 'turn', offset });
+const turnBack = (direction: 1 | -1): GestureIntent => ({
+  type: 'turnBack',
+  direction,
+});
+const keepText: GestureIntent = { type: 'keepText' };
 
 /** One finger down at `from` and up at `to`, `time` ms into the test. */
 function tap(
@@ -44,7 +50,7 @@ function tap(
 describe('a mouse drag', () => {
   test('at rest follows the pointer and past 50 px changes image the way it moved', () => {
     const gestures = new LightboxGestures();
-    expect(gestures.mouseDown(at(0), false, rest)).toEqual([
+    expect(gestures.mouseDown(at(0), rest)).toEqual([
       claim,
       grab,
       drag(0),
@@ -53,29 +59,29 @@ describe('a mouse drag', () => {
     expect(gestures.mouseMove(at(-60, 5), rest)).toEqual([drag(-60)]);
     expect(gestures.mouseUp()).toEqual([letGo, commit(1)]);
 
-    gestures.mouseDown(at(0), false, rest);
+    gestures.mouseDown(at(0), rest);
     gestures.mouseMove(at(80, 10), rest);
     expect(gestures.mouseUp()).toEqual([letGo, commit(-1)]);
   });
 
   test('changes image from exactly 50 px and settles short of it or mostly vertically', () => {
     const gestures = new LightboxGestures();
-    gestures.mouseDown(at(0), false, rest);
+    gestures.mouseDown(at(0), rest);
     gestures.mouseMove(at(-50), rest);
     expect(gestures.mouseUp()).toEqual([letGo, commit(1)]);
 
-    gestures.mouseDown(at(0), false, rest);
+    gestures.mouseDown(at(0), rest);
     gestures.mouseMove(at(49), rest);
     expect(gestures.mouseUp()).toEqual([letGo, settle]);
 
-    gestures.mouseDown(at(0), false, rest);
+    gestures.mouseDown(at(0), rest);
     gestures.mouseMove(at(-80, 100), rest);
     expect(gestures.mouseUp()).toEqual([letGo, settle]);
   });
 
   test('on a zoomed drawing pans from where it was gripped and ends without a change', () => {
     const gestures = new LightboxGestures();
-    expect(gestures.mouseDown(at(100, 100), false, zoomed)).toEqual([
+    expect(gestures.mouseDown(at(100, 100), zoomed)).toEqual([
       claim,
       grab,
     ]);
@@ -85,27 +91,17 @@ describe('a mouse drag', () => {
     expect(gestures.mouseUp()).toEqual([letGo]);
   });
 
-  test('beside the text swipes, whatever the drawing zoom', () => {
+  test('on the text side is left to text selection, whatever the drawing zoom', () => {
     const gestures = new LightboxGestures();
-    const zoomedText = { ...zoomed, flipped: true };
-    expect(gestures.mouseDown(at(0), false, zoomedText)).toEqual([
-      claim,
-      grab,
-      drag(0),
-    ]);
-    expect(gestures.mouseMove(at(-60, -80), zoomedText)).toEqual([drag(-60)]);
-  });
-
-  test('that starts on the text is left to text selection', () => {
-    const gestures = new LightboxGestures();
-    expect(gestures.mouseDown(at(0), true, onText)).toEqual([]);
+    expect(gestures.mouseDown(at(0), onText)).toEqual([]);
+    expect(gestures.mouseDown(at(0), { ...zoomed, flipped: true })).toEqual([]);
     expect(gestures.mouseMove(at(-80), onText)).toEqual([]);
     expect(gestures.mouseUp()).toEqual([]);
   });
 
   test('does not start while the lightbox is busy', () => {
     const gestures = new LightboxGestures();
-    expect(gestures.mouseDown(at(0), false, { ...rest, busy: true })).toEqual(
+    expect(gestures.mouseDown(at(0), { ...rest, busy: true })).toEqual(
       [],
     );
     expect(gestures.mouseMove(at(-80), rest)).toEqual([]);
@@ -114,7 +110,7 @@ describe('a mouse drag', () => {
 
   test('cancelled by the browser settles', () => {
     const gestures = new LightboxGestures();
-    gestures.mouseDown(at(0), false, rest);
+    gestures.mouseDown(at(0), rest);
     gestures.mouseMove(at(-80), rest);
     expect(gestures.mouseCancel()).toEqual([letGo, settle]);
     expect(gestures.mouseCancel()).toEqual([]);
@@ -122,10 +118,11 @@ describe('a mouse drag', () => {
 });
 
 describe('a one-finger touch', () => {
-  test('at rest swipes and past the threshold changes image', () => {
+  test('at rest swipes, claiming its moves, and past the threshold changes image', () => {
     const gestures = new LightboxGestures();
     expect(gestures.touchStart([at(0)], false, rest)).toEqual([drag(0)]);
     expect(gestures.touchMove([at(-100, 2)], false, rest)).toEqual([
+      claim,
       drag(-100),
     ]);
     expect(gestures.touchEnd([], [at(-100, 2)], 0, rest)).toEqual([commit(1)]);
@@ -146,28 +143,53 @@ describe('a one-finger touch', () => {
     const gestures = new LightboxGestures();
     expect(gestures.touchStart([at(0)], false, zoomed)).toEqual([]);
     expect(gestures.touchMove([at(-20, 30)], false, zoomed)).toEqual([
+      claim,
       { type: 'view', scale: 2, pan: { x: -10, y: 30 } },
     ]);
     expect(gestures.touchEnd([], [at(-20, 30)], 0, zoomed)).toEqual([]);
   });
 
-  test('on the text follows only while more horizontal than vertical', () => {
+  test('on the text turns the card back, and claims a move, only while more horizontal than vertical', () => {
     const gestures = new LightboxGestures();
-    expect(gestures.touchStart([at(0)], false, onText)).toEqual([drag(0)]);
+    expect(gestures.touchStart([at(0)], false, onText)).toEqual([turn(0)]);
     expect(gestures.touchMove([at(-40, 10)], false, onText)).toEqual([
-      drag(-40),
+      claim,
+      turn(-40),
     ]);
     expect(gestures.touchMove([at(-40, -60)], false, onText)).toEqual([
-      drag(0),
+      turn(0),
     ]);
-    expect(gestures.touchEnd([], [at(-40, -60)], 0, onText)).toEqual([settle]);
+    expect(gestures.touchEnd([], [at(-40, -60)], 0, onText)).toEqual([
+      keepText,
+    ]);
   });
 
-  test('on the text swipes at any drawing zoom', () => {
+  test('on the text past 50 px completes the turn the way it moved, and short of it keeps the text', () => {
+    const gestures = new LightboxGestures();
+    gestures.touchStart([at(0)], false, onText);
+    gestures.touchMove([at(-50, 5)], false, onText);
+    expect(gestures.touchEnd([], [at(-50, 5)], 0, onText)).toEqual([
+      turnBack(1),
+    ]);
+
+    gestures.touchStart([at(0)], false, onText);
+    gestures.touchMove([at(120, -20)], false, onText);
+    expect(gestures.touchEnd([], [at(120, -20)], 1000, onText)).toEqual([
+      turnBack(-1),
+    ]);
+
+    gestures.touchStart([at(0)], false, onText);
+    gestures.touchMove([at(-49)], false, onText);
+    expect(gestures.touchEnd([], [at(-49)], 2000, onText)).toEqual([
+      keepText,
+    ]);
+  });
+
+  test('on the text turns the card at any drawing zoom', () => {
     const gestures = new LightboxGestures();
     expect(
       gestures.touchStart([at(0)], false, { ...zoomed, flipped: true }),
-    ).toEqual([drag(0)]);
+    ).toEqual([turn(0)]);
   });
 
   test('does not drag while text is selected', () => {
@@ -177,7 +199,7 @@ describe('a one-finger touch', () => {
 
     gestures.touchStart([at(0)], false, onText);
     gestures.touchMove([at(-40)], false, onText);
-    expect(gestures.touchMove([at(-80)], true, onText)).toEqual([settle]);
+    expect(gestures.touchMove([at(-80)], true, onText)).toEqual([keepText]);
     expect(gestures.touchMove([at(-120)], false, onText)).toEqual([]);
   });
 
@@ -185,7 +207,7 @@ describe('a one-finger touch', () => {
     const gestures = new LightboxGestures();
     gestures.touchStart([at(0)], false, onText);
     gestures.touchMove([at(-10, 40)], false, onText);
-    expect(gestures.textScrolled()).toEqual([settle]);
+    expect(gestures.textScrolled()).toEqual([keepText]);
     expect(gestures.touchMove([at(-200, 40)], false, onText)).toEqual([]);
     expect(gestures.touchEnd([], [at(-200, 40)], 0, onText)).toEqual([]);
     expect(gestures.textScrolled()).toEqual([]);
@@ -235,7 +257,7 @@ describe('a pinch', () => {
           [at(-distance / 2), at(distance / 2)],
           false,
           context,
-        )[0] as {
+        )[1] as {
           scale: number;
         }
       ).scale;
@@ -248,6 +270,7 @@ describe('a pinch', () => {
     const gestures = new LightboxGestures();
     gestures.touchStart([at(0), at(0)], false, rest);
     expect(gestures.touchMove([at(-50), at(50)], false, rest)).toEqual([
+      claim,
       { type: 'view', scale: 1, pan: { x: 0, y: 0 } },
     ]);
   });
@@ -257,7 +280,7 @@ describe('a pinch', () => {
     gestures.touchStart([at(50, -50), at(150, -50)], false, rest);
     expect(
       gestures.touchMove([at(20, -40), at(220, -40)], false, rest),
-    ).toEqual([{ type: 'view', scale: 2, pan: { x: -80, y: 60 } }]);
+    ).toEqual([claim, { type: 'view', scale: 2, pan: { x: -80, y: 60 } }]);
   });
 
   test('then leaves a zoomed drawing panning under the remaining finger', () => {
@@ -266,6 +289,7 @@ describe('a pinch', () => {
     gestures.touchMove([at(-100), at(100)], false, rest);
     expect(gestures.touchEnd([at(100)], [at(-100)], 0, zoomed)).toEqual([]);
     expect(gestures.touchMove([at(130, 20)], false, zoomed)).toEqual([
+      claim,
       { type: 'view', scale: 2, pan: { x: 40, y: 20 } },
     ]);
   });
@@ -299,7 +323,7 @@ describe('a pinch', () => {
     gestures.touchStart([at(0)], false, onText);
     gestures.touchMove([at(-60)], false, onText);
     expect(gestures.touchStart([at(-60), at(40)], false, onText)).toEqual([
-      settle,
+      keepText,
     ]);
     expect(gestures.touchMove([at(-100), at(80)], false, onText)).toEqual([]);
   });
@@ -354,7 +378,7 @@ describe('a double tap', () => {
   test('does not zoom on the text', () => {
     const gestures = new LightboxGestures();
     tap(gestures, at(0), at(0), 1000, onText);
-    expect(tap(gestures, at(0), at(0), 1100, onText)).toEqual([settle]);
+    expect(tap(gestures, at(0), at(0), 1100, onText)).toEqual([keepText]);
   });
 });
 
@@ -387,7 +411,7 @@ describe('the wheel and double-click', () => {
       new LightboxGestures().wheel(-100, at(0), { ...rest, busy: true }),
     ).toEqual([claim]);
     const dragging = new LightboxGestures();
-    dragging.mouseDown(at(0), false, rest);
+    dragging.mouseDown(at(0), rest);
     expect(dragging.wheel(-100, at(0), rest)).toEqual([claim]);
   });
 
@@ -451,7 +475,7 @@ describe('zoom keys', () => {
       [],
     );
     const mouse = new LightboxGestures();
-    mouse.mouseDown(at(0), false, rest);
+    mouse.mouseDown(at(0), rest);
     mouse.mouseMove(at(-30), rest);
     expect(mouse.key('in', rest)).toEqual([]);
     const touch = new LightboxGestures();
@@ -461,7 +485,7 @@ describe('zoom keys', () => {
 
   test('still zoom while a zoomed drawing is panned', () => {
     const gestures = new LightboxGestures();
-    gestures.mouseDown(at(0), false, zoomed);
+    gestures.mouseDown(at(0), zoomed);
     expect(gestures.key('reset', zoomed)).toEqual([
       claim,
       { type: 'zoom', scale: 1, point: at(0) },
@@ -472,7 +496,7 @@ describe('zoom keys', () => {
 describe('a change of image', () => {
   test('ends the mouse drag in progress, which then does nothing', () => {
     const gestures = new LightboxGestures();
-    gestures.mouseDown(at(0), false, rest);
+    gestures.mouseDown(at(0), rest);
     gestures.mouseMove(at(-30), rest);
     expect(gestures.end()).toEqual([letGo]);
     expect(gestures.mouseMove(at(-120), rest)).toEqual([]);

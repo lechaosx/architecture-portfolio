@@ -31,8 +31,12 @@
     originalSrc: string | undefined;
     hasBack: boolean;
     flipped: boolean;
-    /** The edge arrows step aside, as on a phone while the text shows. */
-    arrowsAside: boolean;
+    /**
+     * How far the edge arrows have stepped aside, 1 fully: on a phone they
+     * make way for the text as the card turns to it. They move over the
+     * lightbox's --lightbox-card-duration and --lightbox-card-easing.
+     */
+    arrowsAside: number;
     reducedMotion: boolean;
     closeButton?: HTMLButtonElement;
     onselect: (index: number) => void;
@@ -110,8 +114,10 @@
 </div>
 <button
   type="button"
-  class="lightbox-control lightbox-arrow left-(--lightbox-gap)"
-  class:invisible={arrowsAside}
+  class="lightbox-control lightbox-arrow lightbox-arrow-previous left-(--lightbox-gap)"
+  class:lightbox-arrow-away={arrowsAside === 1}
+  style:--lightbox-arrows-aside={arrowsAside}
+  inert={arrowsAside > 0}
   onclick={onprevious}
   aria-label={ui[lang].previousImage}
 >
@@ -129,7 +135,9 @@
 <button
   type="button"
   class="lightbox-control lightbox-arrow right-(--lightbox-gap)"
-  class:invisible={arrowsAside}
+  class:lightbox-arrow-away={arrowsAside === 1}
+  style:--lightbox-arrows-aside={arrowsAside}
+  inert={arrowsAside > 0}
   onclick={onnext}
   aria-label={ui[lang].nextImage}
 >
@@ -253,9 +261,37 @@
     position: relative;
   }
 
+  /* Aside, an arrow has moved out past its screen edge, and is hidden once
+     it gets there. */
   .lightbox-arrow {
+    --lightbox-arrow-edge: 1;
     position: absolute;
     top: 50%;
-    translate: 0 -50%;
+    translate: calc(
+        var(--lightbox-arrow-edge) * var(--lightbox-arrows-aside) *
+          (100% + var(--lightbox-gap))
+      )
+      -50%;
+    transition:
+      translate var(--lightbox-card-duration) var(--lightbox-card-easing),
+      opacity var(--lightbox-card-duration),
+      visibility 0s;
+  }
+
+  .lightbox-arrow-previous {
+    --lightbox-arrow-edge: -1;
+  }
+
+  .lightbox-arrow-away {
+    visibility: hidden;
+    transition-delay: 0s, 0s, var(--lightbox-card-duration);
+  }
+
+  /* With reduced motion an arrow fades aside instead, as the card's faces do. */
+  @media (prefers-reduced-motion: reduce) {
+    .lightbox-arrow {
+      translate: 0 -50%;
+      opacity: calc(1 - var(--lightbox-arrows-aside));
+    }
   }
 </style>
