@@ -682,6 +682,39 @@ test('the set strip scrolls beside the close control on a narrow screen', async 
   await context.close();
 });
 
+test('the set strip centres the current image again when the language changes its labels', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  const dialog = page.getByRole('dialog');
+  // Named in the current language, so found by its role alone.
+  const strip = dialog.getByRole('navigation');
+  /** How far the current button's centre lies from the strip's centre. */
+  const offCentre = () =>
+    strip.evaluate((navigation) => {
+      const selected = navigation
+        .querySelector('[aria-current="true"]')!
+        .getBoundingClientRect();
+      const box = navigation.getBoundingClientRect();
+      return Math.abs(
+        selected.left + selected.width / 2 - (box.left + box.width / 2),
+      );
+    });
+  await expect.poll(offCentre).toBeLessThanOrEqual(1.5);
+
+  await dialog.locator('[data-lang-toggle]').click();
+  await expect(strip).toHaveAccessibleName('Obrázky v sadě');
+  await expect.poll(offCentre).toBeLessThanOrEqual(1.5);
+  await context.close();
+});
+
 test('mobile touch stays inside the modal and navigation overlays the image edges', async ({
   browserName,
   browser,
@@ -2350,6 +2383,28 @@ test('keys zoom the drawing and 0 returns to rest', async ({ page }) => {
   await page.keyboard.press('+');
   await page.getByRole('button', { name: 'Show description' }).click();
   expect(await imageZoom(page)).toBeCloseTo(1, 2);
+});
+
+test('zoom keys, like the wheel, wait for a drag at rest to end', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  await galleryImage(page, 10).click();
+  await waitForLightbox(page);
+  const bounds = (await page.locator('.lightbox-stage').boundingBox())!;
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + bounds.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x - 30, y);
+  await page.keyboard.press('+');
+  await page.mouse.wheel(0, -400);
+  expect(await imageZoom(page)).toBeCloseTo(1, 2);
+
+  await page.mouse.up();
+  await expect(page).toHaveURL(/#image-10$/);
+  await page.keyboard.press('+');
+  await expect.poll(() => imageZoom(page)).toBeCloseTo(1.25, 2);
 });
 
 test('double-tap zooms on touch screens', async ({ browser, browserName }) => {

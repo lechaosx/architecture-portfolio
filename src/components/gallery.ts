@@ -19,6 +19,12 @@ export interface Size {
   height: number;
 }
 
+/** The drawing's view: its scale and its offset from the stage centre. */
+export interface View {
+  scale: number;
+  pan: Point;
+}
+
 export const CONTROL_SIZE = 40;
 
 export interface ZoomRange {
@@ -62,10 +68,6 @@ export function zoomFloor(restImage: Size, safe: Size) {
   );
 }
 
-export function doubleTapScale(scale: number, range: ZoomRange) {
-  return scale === 1 ? Math.min(2.5, range.max) : 1;
-}
-
 export function clampScale(scale: number, range: ZoomRange) {
   return Math.min(range.max, Math.max(range.min, scale));
 }
@@ -94,14 +96,6 @@ export function sharedMaximumScale(maxScales: number[]) {
   return maxScales.length ? Math.min(...maxScales) : 1;
 }
 
-export function scaleFromWheel(
-  scale: number,
-  deltaY: number,
-  range: ZoomRange,
-) {
-  return clampScale(scale * Math.exp(-deltaY * 0.002), range);
-}
-
 export function panForZoom(
   pan: Point,
   scale: number,
@@ -112,31 +106,6 @@ export function panForZoom(
   return {
     x: pointerFromCenter.x - ratio * (pointerFromCenter.x - pan.x),
     y: pointerFromCenter.y - ratio * (pointerFromCenter.y - pan.y),
-  };
-}
-
-export function scaleFromPinch(
-  scale: number,
-  startDistance: number,
-  distance: number,
-  range: ZoomRange,
-) {
-  return startDistance > 0
-    ? clampScale(scale * (distance / startDistance), range)
-    : scale;
-}
-
-export function panForPinch(
-  pan: Point,
-  scale: number,
-  nextScale: number,
-  startCenter: Point,
-  center: Point,
-): Point {
-  const ratio = nextScale / scale;
-  return {
-    x: center.x - ratio * (startCenter.x - pan.x),
-    y: center.y - ratio * (startCenter.y - pan.y),
   };
 }
 
@@ -264,11 +233,6 @@ export function deepZoomViewport(
   };
 }
 
-export function swipeDirection(deltaX: number, deltaY: number) {
-  if (Math.abs(deltaX) < 50 || Math.abs(deltaX) <= Math.abs(deltaY)) return 0;
-  return deltaX < 0 ? 1 : -1;
-}
-
 /**
  * Blend progress of a drag towards a variant: the share of the stage width a
  * slide would have moved.
@@ -286,20 +250,8 @@ export function settleDuration(
   return duration * Math.abs(target - progress);
 }
 
-
 export function displayedSwipeOffset(deltaX: number, reducedMotion: boolean) {
   return reducedMotion ? 0 : deltaX;
-}
-
-export function galleryImageHash(index: number) {
-  return `#image-${index + 1}`;
-}
-
-export function galleryImageIndex(hash: string, imageCount: number) {
-  const match = /^#image-([1-9]\d*)$/.exec(hash);
-  if (!match) return undefined;
-  const index = Number(match[1]) - 1;
-  return index < imageCount ? index : undefined;
 }
 
 export function nativeZoomScale(

@@ -70,7 +70,14 @@ src/
     ProjectCard.astro          grid card
     ProjectBlocks.astro        ordered project text/gallery/image-set renderer
     Gallery.svelte             the ONLY hydrated island (page-level lightbox)
+    LightboxCard.svelte        the current lightbox image as a card (front, back, blends)
     LightboxVerso.svelte       back of a lightbox image's card (its description)
+    LightboxTiles.svelte       OpenSeadragon tiled canvas for deep-zoom drawings
+    LightboxControls.svelte    lightbox corner controls and set strip
+    lightbox-gestures.ts       input → intents state machine (unit-tested)
+    lightbox-history.ts        #image-N history entry (unit-tested)
+    lightbox-morph.ts          open/close View Transitions
+    gallery.ts                 lightbox geometry and image-selection maths
   styles/global.css            tailwind import, fonts, .reveal, .no-scrollbar, lang rule
 
 public/

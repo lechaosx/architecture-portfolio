@@ -311,9 +311,11 @@ cropping, or dot indicators.
 If the sticky header or viewport edge obscures a thumbnail, the lightbox uses
 only the overlay fade instead of lifting the hidden part into an image morph.
 Image gestures and page scrolling wait for opening and closing transitions to
-finish. Closing a zoomed image fades the overlay without morphing the manipulated
-image into its thumbnail. Zoomed content stays inside its outgoing slide when
-moving to another image.
+finish, and zooming (wheel, keys, or double-click) also waits while one image
+changes to another or a drag is moving between them — [Implicit]. Closing a
+zoomed image fades the overlay without morphing the manipulated image into its
+thumbnail. Zoomed content stays inside its outgoing slide when moving to another
+image.
 
 ### Full-screen lightbox with controls in the corners — [Explicit]
 
@@ -434,7 +436,8 @@ Opening any member shows the whole set as the top-left set strip: one joined row
 of named buttons, the current image inverted. A button changes to that variant
 exactly as Previous/Next would, and may reach a member that is not a neighbour.
 The strip stays one row at every viewport width, scrolls sideways when it does
-not fit beside ×, and brings the current image into view. Touch dragging and a
+not fit beside ×, and brings the current image into view, again after a
+language switch changes the labels — [Implicit]. Touch dragging and a
 mouse wheel over the strip both move it horizontally without scrolling the page.
 
 At 100% and below, a horizontal drag towards a variant does not move the strip:
