@@ -28,13 +28,20 @@ export type GestureIntent =
   | { type: 'commit'; direction: 1 | -1 }
   /** A drag at rest ends without changing image. */
   | { type: 'settle' }
+  /** A live drag on the text, `offset` px sideways: it turns the card towards its drawing. */
+  | { type: 'turn'; offset: number }
+  /** A released drag on the text turns the card to its drawing, the way it moved: 1 leftwards, −1 rightwards. */
+  | { type: 'turnBack'; direction: 1 | -1 }
+  /** A drag on the text ends with the text still up. */
+  | { type: 'keepText' }
   /** A pinch takes over: the strip and any scrub return to rest at once. */
   | { type: 'abandon' };
 
 type Input = 'mouse' | 'touch';
 
 type Gesture =
-  | { kind: 'swipe'; input: Input; start: Point; delta: Point }
+  /** `turns`: a touch that started on the text side, so it turns the card instead of changing image. */
+  | { kind: 'swipe'; input: Input; start: Point; delta: Point; turns: boolean }
   | { kind: 'pan'; input: Input; grip: Point }
   | {
       kind: 'pinch';
@@ -53,8 +60,9 @@ const KEY_ZOOM_STEP = 1.25;
 
 /**
  * Turns mouse, touch, wheel, double-click and zoom-key input on the lightbox
- * into intents. It holds at most one live gesture: a drag at rest (or on the text
- * side) swipes, a drag on a zoomed drawing pans, two fingers pinch.
+ * into intents. It holds at most one live gesture: a drag at rest swipes, one on
+ * the text side turns the card, a drag on a zoomed drawing pans, two fingers
+ * pinch.
  */
 export class LightboxGestures {
   #gesture: Gesture | undefined;
@@ -62,13 +70,9 @@ export class LightboxGestures {
   #tap: Point | undefined;
   #lastTap: { point: Point; time: number } | undefined;
 
-  /** `onText`: the drag starts on the text, which a mouse selects instead. */
-  mouseDown(
-    point: Point,
-    onText: boolean,
-    context: GestureContext,
-  ): GestureIntent[] {
-    if (context.busy || onText) return [];
+  /** On the text side a mouse selects the text, which spans the stage. */
+  mouseDown(point: Point, context: GestureContext): GestureIntent[] {
+    if (context.busy || context.flipped) return [];
     return [{ type: 'claim' }, ...this.#grab('mouse', point, context)];
   }
 
@@ -80,9 +84,7 @@ export class LightboxGestures {
     const gesture = this.#gesture;
     if (gesture?.input !== 'mouse') return [];
     const ended = this.#become(undefined);
-    return gesture.kind === 'swipe'
-      ? [...ended, release(gesture.delta)]
-      : ended;
+    return gesture.kind === 'swipe' ? [...ended, release(gesture)] : ended;
   }
 
   mouseCancel(): GestureIntent[] {
@@ -134,6 +136,7 @@ export class LightboxGestures {
       const ratio = scale / from.scale;
       const center = midpoint(touches[0], touches[1]);
       return [
+        { type: 'claim' },
         {
           type: 'view',
           scale,
@@ -171,9 +174,7 @@ export class LightboxGestures {
     }
     if (gesture?.input !== 'touch' || touches.length) return [];
     const ended = this.#become(undefined);
-    return gesture.kind === 'swipe'
-      ? [...ended, release(gesture.delta)]
-      : ended;
+    return gesture.kind === 'swipe' ? [...ended, release(gesture)] : ended;
   }
 
   touchCancel(): GestureIntent[] {
@@ -238,14 +239,16 @@ export class LightboxGestures {
 
   #grab(input: Input, point: Point, context: GestureContext): GestureIntent[] {
     if (swipes(context)) {
+      const turns = context.flipped;
       return [
         ...this.#become({
           kind: 'swipe',
           input,
           start: point,
           delta: { x: 0, y: 0 },
+          turns,
         }),
-        { type: 'drag', offset: 0 },
+        { type: turns ? 'turn' : 'drag', offset: 0 },
       ];
     }
     const { pan } = context.view;
@@ -264,10 +267,19 @@ export class LightboxGestures {
     return grabbing === wasGrabbing ? [] : [{ type: 'grab', grabbing }];
   }
 
+  /**
+   * Follows the live mouse or one-finger gesture to `point`. A touch the
+   * lightbox follows is claimed: left to the browser, a quick one would also
+   * start a fling that `touch-action` then forbids, and Chromium would swallow
+   * the next tap as the one that stops that fling.
+   */
   #follow(point: Point, context: GestureContext): GestureIntent[] {
     const gesture = this.#gesture;
+    const claim: GestureIntent[] =
+      gesture?.input === 'touch' ? [{ type: 'claim' }] : [];
     if (gesture?.kind === 'pan') {
       return [
+        ...claim,
         {
           type: 'view',
           scale: context.view.scale,
@@ -281,20 +293,21 @@ export class LightboxGestures {
       y: point.y - gesture.start.y,
     };
     gesture.delta = delta;
+    const type = gesture.turns ? 'turn' : 'drag';
     // On the text a mostly vertical touch may still become a native scroll.
-    const follows =
-      gesture.input === 'mouse' ||
-      !context.flipped ||
-      Math.abs(delta.x) > Math.abs(delta.y);
-    return [{ type: 'drag', offset: follows ? delta.x : 0 }];
+    if (gesture.turns && Math.abs(delta.x) <= Math.abs(delta.y)) {
+      return [{ type, offset: 0 }];
+    }
+    return [...claim, { type, offset: delta.x }];
   }
 
-  /** Ends the live gesture and any pending tap; a drag at rest settles. */
+  /** Ends the live gesture and any pending tap; a drag at rest settles, one on the text keeps it up. */
   #stop(): GestureIntent[] {
-    const swiping = this.#gesture?.kind === 'swipe';
+    const gesture = this.#gesture;
     this.#tap = undefined;
     const ended = this.#become(undefined);
-    return swiping ? [...ended, { type: 'settle' }] : ended;
+    if (gesture?.kind !== 'swipe') return ended;
+    return [...ended, { type: gesture.turns ? 'keepText' : 'settle' }];
   }
 
   #zoomable(context: GestureContext) {
@@ -317,19 +330,20 @@ export class LightboxGestures {
   }
 }
 
-/** At rest, and on the text side at any zoom, a drag changes image instead of panning. */
+/** At rest a drag changes image, and on the text side at any zoom it turns the card, instead of panning. */
 function swipes(context: GestureContext) {
   return context.view.scale <= 1 || context.flipped;
 }
 
-function release(delta: Point): GestureIntent {
+function release({ delta, turns }: { delta: Point; turns: boolean }): GestureIntent {
   if (
     Math.abs(delta.x) < SWIPE_DISTANCE ||
     Math.abs(delta.x) <= Math.abs(delta.y)
   ) {
-    return { type: 'settle' };
+    return { type: turns ? 'keepText' : 'settle' };
   }
-  return { type: 'commit', direction: delta.x < 0 ? 1 : -1 };
+  const direction = delta.x < 0 ? 1 : -1;
+  return { type: turns ? 'turnBack' : 'commit', direction };
 }
 
 function doubleTapScale({ view, range }: GestureContext) {

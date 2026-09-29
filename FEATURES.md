@@ -396,11 +396,19 @@ outside the visible tile boundaries.
 Desktop visitors zoom toward the pointer with the mouse wheel and drag a zoomed
 image to inspect it. Touch visitors pinch around the point between their fingers
 and drag a zoomed image with one finger. At 100% and below, horizontal dragging
-with either a finger or mouse navigates between page images; moving to another
+over the drawing with either a finger or mouse navigates between page images
+(over the text it turns the card back instead; see "Optional image titles and
+descriptions"); moving to another
 card slides the strip with the finger, completed navigation slides on to the
 next image, and an incomplete gesture snaps back. Moving to a variant of the
 same card blends instead (see "Cards and their variants"). Buttons and arrow
-keys use the same short slide or blend. With reduced motion, swipes remain
+keys use the same short slide or blend. The controls follow a change of image
+at once — [Explicit]: from the moment it is made (a button, an arrow key, a set
+button, or a swipe released past the threshold) the position, the set strip's
+current image and the description toggle describe the image being changed to,
+while the old one is still sliding or blending away; a drag that is still held,
+or is released short, changes none of them. A control also takes a tap
+straight after a swipe. With reduced motion, swipes remain
 stationary and a completed gesture changes the image immediately. Previous,
 current, and next images form a continuous strip, so one image enters directly
 as the other leaves without exposing the dark background. Maximum zoom depends
@@ -425,8 +433,8 @@ change the project page: every preview remains an individual image in its
 existing gallery or image-set position.
 
 In the lightbox, changing image changes cards, and the images of one comparison
-set are variants of one card. Previous/Next, the arrow keys, and swipes walk the
-page order; when the neighbouring image belongs to the same set, the card blends
+set are variants of one card. Previous/Next, the arrow keys, and swipes over the
+drawing walk the page order; when the neighbouring image belongs to the same set, the card blends
 into it and keeps the zoom and pan, so aligned plans can be compared without
 losing the inspected location. A neighbour outside the set is a different card:
 it slides in and the view resets, even if another member of the set lies further
@@ -440,7 +448,8 @@ not fit beside ×, and brings the current image into view, again after a
 language switch changes the labels — [Implicit]. Touch dragging and a
 mouse wheel over the strip both move it horizontally without scrolling the page.
 
-At 100% and below, a horizontal drag towards a variant does not move the strip:
+At 100% and below, a horizontal drag over the drawing towards a variant does not
+move the strip:
 it scrubs the blend by exactly the share of the screen width a slide would have
 moved, so dragging across the whole width shows the variant fully. Releasing
 past the swipe threshold completes the blend; releasing short blends back.
@@ -501,21 +510,39 @@ keeps the reading position, and the drawing view returns within its new limits.
 Changing image by any route shows the new image drawing side up. From the text
 side, moving to a different card slides the card away still showing its text
 while the next drawing slides in, and nothing rotates. Moving to a variant of
-the same card (Previous/Next, the arrow keys, a swipe, or a set button) turns
-the card back to its drawing side, zooming into the view the visitor left, while
-both faces blend over the whole turn: the front from the current drawing to the
+the same card (Previous/Next, the arrow keys, or a set button) turns the card
+back to its drawing side, zooming into the view the visitor left, while both
+faces blend over the whole turn: the front from the current drawing to the
 variant's, the back from the current text to the variant's text (or to nothing,
 if the variant has none; a variant without responsive variants has no back to
 blend in, so the current text stays until that variant is shown and its drawing
 has loaded). Edge-on, both faces are exactly halfway, and the card ends on the
-variant's drawing at that view, with the variant's text on its back. A sideways
-drag on the text towards a variant drives the turn and the blend together from
-one progress, so releasing short turns and blends back to the text. The language
-switch keeps the current side. Dragging sideways over the text towards a
-different card moves the strip with the finger exactly as over the drawing,
-while a mostly vertical drag scrolls the text without moving the strip, text
-selection stays native, and a drag never starts while text is selected. On
-phones the edge arrows step aside while the text shows. Images without a
+variant's drawing at that view, with the variant's text on its back. The card
+turns back the way the change travels: Next turns it as a leftward swipe
+would, Previous (and a set button towards an earlier image) as a rightward one —
+[Implicit]. The language switch keeps the current side.
+
+On the text side a sideways swipe only turns the card back to its drawing —
+[Explicit], whatever lies beside it (a variant, a different card, or nothing):
+it never moves the strip or changes image, and it works at any drawing zoom.
+The card turns with the finger by the share of the screen width it has moved
+(half the width is edge-on), and rotates the way the finger moves — [Explicit]:
+swiping left turns it leftwards, swiping right rightwards. Released past the
+swipe threshold the turn completes onto exactly the drawing view the visitor
+left, as the toggle's does; released short the card turns back to its text. The
+toggle's own turn keeps its direction. A mostly vertical drag scrolls the text,
+text selection stays native, and a drag never starts while text is selected. A
+mouse drag on the text selects it, so with a mouse the toggle turns the card —
+[Explicit].
+On phones the edge arrows step aside while the text shows, moving with the
+card's turn — [Explicit]: they slide out past the screen edges as the card turns
+to its text and back in as it turns to its drawing, in the same timing, and
+follow a swipe's live turn too (a change to a variant that is still loading
+brings them back first, while the card waits to turn); while aside they cannot
+be focused or pressed.
+A reversed turn carries on the way it was turning, so the card never jumps to
+its mirror image. Moving from the text to a different card brings them back in
+the same timing as the next drawing slides in — [Implicit]. Images without a
 description have no toggle and no back. Closing while the text shows fades the
 lightbox without morphing it into the thumbnail, and reopening shows the
 drawing.
@@ -532,7 +559,10 @@ Users who set `prefers-reduced-motion` get no fade/transform animation. Changes
 to that preference apply immediately. Lightbox open/close transitions, live
 swipe movement, and blends between variants are also disabled (the change
 happens at once), and turning over to an image description becomes a short
-crossfade with the zoom changing at once.
+crossfade with the zoom changing at once. A swipe on the text does not turn the
+card with the finger; released past the threshold it crossfades to the drawing,
+and on phones the edge arrows fade aside and back with that crossfade instead
+of sliding — [Implicit].
 
 ---
 

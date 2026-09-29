@@ -498,6 +498,8 @@ test('lightbox reports its position and wraps at either end', async ({ page }) =
 
   await page.getByRole('button', { name: 'Previous image' }).click();
   await expect(position).toHaveText(`${imageCount} / ${imageCount}`);
+  // The position follows at once; the next change waits for this one to end.
+  await expect(page).toHaveURL(new RegExp(`#image-${imageCount}$`));
 
   await page.getByRole('button', { name: 'Next image' }).click();
   await expect(position).toHaveText(`1 / ${imageCount}`);

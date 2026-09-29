@@ -30,38 +30,43 @@
   import { cardView, type View } from './gallery';
   import LightboxVerso from './LightboxVerso.svelte';
 
-  // The current image as a card: its drawing on the front and, when it has a
+  // An image as a card: its drawing on the front and, when it has a
   // description, its text on the back. During a move to a variant, `incoming`
-  // shows over both faces by `blend`.
+  // shows over both faces by `blend`. It turns and blends over the
+  // lightbox's --lightbox-card-duration and --lightbox-card-easing.
   let {
-    current,
-    currentSrc,
+    image,
+    imageSrc,
     incoming,
     incomingSrc,
     blend,
     flipped,
+    turn,
+    turnDirection,
     view,
-    duration,
     restArea,
     columnLimit,
     lang,
     tiledCanvas,
     scrollTop = $bindable(0),
-    image = $bindable(),
+    drawing = $bindable(),
+    turning = $bindable(false),
     onload,
   }: {
-    current: CardImage;
+    image: CardImage;
     /** The drawing's source, which depends on the view. */
-    currentSrc: string | undefined;
+    imageSrc: string | undefined;
     incoming: CardImage | undefined;
     incomingSrc: string | undefined;
     blend: number;
-    /** The text side faces the viewer. */
+    /** The text side takes input, and faces the viewer at the end of the turn. */
     flipped: boolean;
+    /** 1 text side up, 0 drawing side up. */
+    turn: number;
+    /** 1 turns the card back to its drawing leftwards and over to its text rightwards; −1 the other way round. */
+    turnDirection: 1 | -1;
     /** The drawing's view. */
     view: View;
-    /** How long the next turn or blend takes; 0 moves the card at once. */
-    duration: number;
     restArea: Size;
     columnLimit: number;
     lang: Lang;
@@ -69,20 +74,29 @@
     tiledCanvas: Snippet<[string]>;
     /** The back's reading position. */
     scrollTop?: number;
-    image?: HTMLImageElement;
+    /** The front's drawing. */
+    drawing?: HTMLImageElement;
+    /** A turn is under way. */
+    turning?: boolean;
     onload: () => void;
   } = $props();
 
   // Measured by the backs.
   let cardScale = $state(1);
   let incomingCardScale = $state(1);
-  // 1 shows the text side, 0 the drawing; a move to a variant from the text
-  // side turns the card back as it blends.
-  let turn = $derived(flipped ? 1 - blend : 0);
+  // A turn that replaces a running one ends it as it starts, in either order.
+  let turns = 0;
+  function countTurn(event: TransitionEvent, by: number) {
+    if (event.target !== event.currentTarget || event.propertyName !== '--lightbox-turn') {
+      return;
+    }
+    turns += by;
+    turning = turns > 0;
+  }
   // Where the back shows its card; the flip moves the drawing to and from it.
   let backView = $derived(
-    hasBack(current)
-      ? cardView(current.size, restArea, cardScale, scrollTop)
+    hasBack(image)
+      ? cardView(image.size, restArea, cardScale, scrollTop)
       : { scale: 1, y: 0 },
   );
 </script>
@@ -90,8 +104,11 @@
 <div
   data-lightbox-sheet
   class="lightbox-sheet absolute inset-0"
-  style:--lightbox-card-duration={`${duration}ms`}
   style:--lightbox-turn={turn}
+  style:--lightbox-turn-direction={turnDirection}
+  ontransitionrun={(event) => countTurn(event, 1)}
+  ontransitionend={(event) => countTurn(event, -1)}
+  ontransitioncancel={(event) => countTurn(event, -1)}
   style:--lightbox-blend={blend}
   style:--drawing-scale={view.scale}
   style:--drawing-x={`${view.pan.x}px`}
@@ -105,26 +122,26 @@
     inert={flipped}
   >
     <img
-      bind:this={image}
-      src={currentSrc}
-      width={current.width}
-      height={current.height}
+      bind:this={drawing}
+      src={imageSrc}
+      width={image.width}
+      height={image.height}
       alt=""
       draggable="false"
-      style:width={current.size ? `${current.size.width}px` : undefined}
-      style:height={current.size ? `${current.size.height}px` : undefined}
-      class:absolute={Boolean(current.tiles)}
+      style:width={image.size ? `${image.size.width}px` : undefined}
+      style:height={image.size ? `${image.size.height}px` : undefined}
+      class:absolute={Boolean(image.tiles)}
       class:lightbox-image={view.scale === 1}
       class="lightbox-at-view h-auto max-h-full w-auto max-w-full object-contain select-none"
       {onload}
     />
-    {#if current.tiles}
+    {#if image.tiles}
       <div class="lightbox-from-drawing absolute inset-0">
-        {@render tiledCanvas(current.tiles)}
+        {@render tiledCanvas(image.tiles)}
       </div>
     {/if}
     {#if incoming}
-      <!-- Unbacked: until the variant has loaded, the current drawing shows
+      <!-- Unbacked: until the variant has loaded, the card's drawing shows
            through undimmed. -->
       <div
         class="lightbox-incoming absolute inset-0 flex items-center justify-center"
@@ -143,7 +160,7 @@
       </div>
     {/if}
   </div>
-  {#if hasBack(current)}
+  {#if hasBack(image)}
     <div
       class="lightbox-back lightbox-face"
       class:lightbox-away={turn === 0}
@@ -153,12 +170,12 @@
         class="absolute inset-0"
         class:lightbox-outgoing={incoming && !incoming.description}
       >
-        {#key current.index}
+        {#key image.index}
           <LightboxVerso
-            title={current.title}
-            description={current.description}
+            title={image.title}
+            description={image.description}
             {lang}
-            restImage={current.size}
+            restImage={image.size}
             {columnLimit}
             bind:cardScale
             bind:scrollTop
@@ -192,8 +209,9 @@
   /* --lightbox-turn is 1 with the text side up and 0 with the drawing up; the
      card turns by it, and every face is drawn at the shown view between the
      drawing's view and the back's card view, so a flip also zooms between
-     them. --lightbox-blend shows a variant over both faces. Turn and blend
-     share one duration and easing, so they stay in step.
+     them; --lightbox-turn-direction sets which way it rotates.
+     --lightbox-blend shows a variant over both faces. Turn and blend share
+     one duration and easing, so they stay in step.
      The front face and each back's card turn themselves, about the stage's
      vertical centre line under one perspective, so a card's scroll container
      stays in screen space and clips it only to the screen, less any scrollbar
@@ -206,7 +224,6 @@
   }
 
   .lightbox-sheet {
-    --lightbox-card-easing: cubic-bezier(0.45, 0.05, 0.2, 1);
     --shown-scale: calc(
       var(--drawing-scale) +
         (var(--card-scale) - var(--drawing-scale)) * var(--lightbox-turn)
@@ -276,8 +293,12 @@
   @media (prefers-reduced-motion: no-preference) {
     .lightbox-sheet {
       --lightbox-perspective: 2400px;
-      --lightbox-front-angle: calc(var(--lightbox-turn) * 180deg);
-      --lightbox-back-angle: calc((var(--lightbox-turn) - 1) * 180deg);
+      --lightbox-front-angle: calc(
+        var(--lightbox-turn) * var(--lightbox-turn-direction) * 180deg
+      );
+      --lightbox-back-angle: calc(
+        (var(--lightbox-turn) - 1) * var(--lightbox-turn-direction) * 180deg
+      );
       /* 1 once the back faces the viewer, else 0. */
       --lightbox-back-facing: round(var(--lightbox-turn), 1);
       perspective: var(--lightbox-perspective);

@@ -175,18 +175,22 @@ function drawingView(page: Page) {
 }
 
 /**
- * Clicks the flip button with every animation paused together, so each face's
- * own timing stays in step; the returned function seeks to a turn and reports
- * the card's and the front drawing's projected boxes there.
+ * Starts a turn (by default with the flip button) with every animation paused
+ * together, so each face's own timing stays in step; the returned function
+ * seeks to a turn and reports the card's and the front drawing's projected
+ * boxes there.
  */
-async function pausedFlip(page: Page) {
+async function pausedFlip(
+  page: Page,
+  start = () => page.getByRole('button', { name: 'Show description' }).click(),
+) {
   const paused = page.waitForFunction(() => {
     const sheet = document.querySelector('[data-lightbox-sheet]')!;
     if (!sheet.getAnimations().length) return false;
     for (const animation of document.getAnimations()) animation.pause();
     return true;
   });
-  await page.getByRole('button', { name: 'Show description' }).click();
+  await start();
   await paused;
   return (turn: number) =>
     page.evaluate((target) => {
@@ -867,7 +871,7 @@ test('long text scrolls inside the back and the wheel never zooms the hidden dra
   expect(await imageZoom(page)).toBeCloseTo(1, 2);
 });
 
-test('on a phone the text uses the width and dragging it moves the strip like the drawing', async ({
+test('on a phone the text uses the width and a sideways drag turns it back to the drawing', async ({
   browser,
   browserName,
 }) => {
@@ -885,37 +889,169 @@ test('on a phone the text uses the width and dragging it moves the strip like th
   const flip = page.getByRole('button', { name: 'Show description' });
   await flip.click();
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
-  await expect(page.getByRole('button', { name: 'Next image' })).toBeHidden();
+  await settled(page);
+  const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
+  await expect(next).toBeHidden();
   const text = page.getByRole('region', { name: 'Limitations of the Area' });
   const paragraph = (await text.locator('p').boundingBox())!;
   expect(Math.round(paragraph.width)).toBe(390 - 48);
 
   const slide = page.locator('.lightbox-slide-current');
-  const session = await context.newCDPSession(page);
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchStart',
-    touchPoints: [{ x: 300, y: 420 }],
-  });
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchMove',
-    touchPoints: [{ x: 200, y: 422 }],
-  });
-  expect((await slide.boundingBox())!.x).toBeCloseTo(-100, 0);
-  expect((await text.locator('p').boundingBox())!.x).toBeCloseTo(
-    paragraph.x - 100,
-    0,
-  );
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchMove',
-    touchPoints: [{ x: 90, y: 430 }],
-  });
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchEnd',
-    touchPoints: [],
-  });
-  await expect(page).toHaveURL(/#image-7$/);
+  const touch = await oneFinger(context, page);
+  // On the 390 px stage the turn follows |dx| / 390: dx −100 has turned
+  // 100 / 390 of the way back.
+  await touch('touchStart', 300);
+  await touch('touchMove', 200);
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * (1 - 100 / 390)), 2);
+  expect((await slide.boundingBox())!.x).toBe(0);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  // The arrows come back with the turn, part of the way.
+  await expect(next).toBeVisible();
+  const partway = (await next.boundingBox())!;
+  expect(partway.x).toBeGreaterThan(390 - partway.width);
+  expect(partway.x).toBeLessThan(390);
+  await touch('touchMove', 90);
+  await touch('touchEnd');
+
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
+  await expect(page).toHaveURL(/#image-6$/);
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByRole('button', { name: 'Next image' })).toBeVisible();
+  await expect(text).toBeHidden();
+  await expect(next).toBeVisible();
+  await context.close();
+});
+
+test('the description toggle takes a tap right after a quick swipe on either side', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  await galleryImage(page, 6).click(); // the next image is another card, with a description
+  await waitForLightbox(page);
+  const touch = await oneFinger(context, page);
+  // One long move is as quick as a swipe gets: the browser sees a fling.
+  await touch('touchStart', 300);
+  await touch('touchMove', 150);
+  await touch('touchEnd');
+  await expect(page).toHaveURL(/#image-7$/);
+
+  const flip = page.getByRole('button', { name: 'Show description' });
+  const box = (await flip.boundingBox())!;
+  const tap = () => page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await tap();
+  await expect(flip).toHaveAttribute('aria-pressed', 'true');
+  await settled(page);
+
+  // On the text the swipe turns the card back, and the tap turns it over again.
+  await touch('touchStart', 300);
+  await touch('touchMove', 150);
+  await touch('touchEnd');
+  await expect(flip).toHaveAttribute('aria-pressed', 'false');
+  await tap();
+  await expect(flip).toHaveAttribute('aria-pressed', 'true');
+  await context.close();
+});
+
+test('on a phone the edge arrows step aside with the turn and come back with it', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const flip = page.getByRole('button', { name: 'Show description' });
+  const arrows = ['Previous image', 'Next image'].map((name) =>
+    page.getByRole('button', { name, includeHidden: true }),
+  );
+  const rest = await Promise.all(arrows.map(async (arrow) => (await arrow.boundingBox())!));
+  /** Clicks the toggle and holds the turn halfway, where the arrows are halfway aside. */
+  const halfway = async () => {
+    const paused = page.waitForFunction(() => {
+      const animations = document.getAnimations();
+      if (!animations.length) return false;
+      for (const animation of animations) {
+        animation.pause();
+        animation.currentTime = 280;
+      }
+      return true;
+    });
+    await flip.click();
+    await paused;
+    const [previous, next] = await Promise.all(
+      arrows.map(async (arrow) => (await arrow.boundingBox())!),
+    );
+    for (const arrow of arrows) await expect(arrow).toBeVisible();
+    expect(previous.x).toBeLessThan(rest[0].x - 4);
+    expect(previous.x + previous.width).toBeGreaterThan(0);
+    expect(next.x).toBeGreaterThan(rest[1].x + 4);
+    expect(next.x).toBeLessThan(390);
+    await page.evaluate(() => {
+      for (const animation of document.getAnimations()) animation.play();
+    });
+    await settled(page);
+  };
+
+  await halfway();
+  for (const arrow of arrows) await expect(arrow).toBeHidden();
+  await halfway();
+  for (const [at, arrow] of arrows.entries()) {
+    await expect(arrow).toBeVisible();
+    expect((await arrow.boundingBox())!.x).toBeCloseTo(rest[at].x, 0);
+  }
+  await context.close();
+});
+
+test('on a phone the edge arrows ease back in as a slide from the text brings the next drawing', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-6'); // the next image is another card
+  await waitForLightbox(page);
+  const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
+  const rest = (await next.boundingBox())!;
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await settled(page);
+  await expect(next).toBeHidden();
+
+  const partway = page.evaluate(
+    (restX) =>
+      new Promise<boolean>((resolve) => {
+        const arrow = document.querySelector('[aria-label="Next image"]')!;
+        const end = performance.now() + 900;
+        let seen = false;
+        const frame = () => {
+          const { x } = arrow.getBoundingClientRect();
+          if (
+            arrow.checkVisibility({ visibilityProperty: true }) &&
+            x > restX + 4 &&
+            x < innerWidth - 4
+          ) {
+            seen = true;
+          }
+          if (performance.now() < end) requestAnimationFrame(frame);
+          else resolve(seen);
+        };
+        requestAnimationFrame(frame);
+      }),
+    rest.x,
+  );
+  await page.keyboard.press('ArrowRight');
+  expect(await partway).toBe(true);
+  await expect(page).toHaveURL(/#image-7$/);
+  await settled(page);
+  await expect(next).toBeVisible();
+  expect((await next.boundingBox())!.x).toBeCloseTo(rest.x, 0);
   await context.close();
 });
 
@@ -934,11 +1070,12 @@ async function phoneOnText(browser: Browser) {
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
   const session = await context.newCDPSession(page);
   /**
-   * Drags one finger through `points`, returning after each move the strip's
-   * offset and the blend towards another image.
+   * Drags one finger through `points`, returning after each move the card's
+   * turn (−1 text side up), the strip's offset and the blend towards another
+   * image.
    */
   const drag = async (points: { x: number; y: number }[]) => {
-    const moves: { strip: number; blend: number }[] = [];
+    const moves: { turn: number; strip: number; blend: number }[] = [];
     await session.send('Input.dispatchTouchEvent', {
       type: 'touchStart',
       touchPoints: [points[0]],
@@ -953,6 +1090,11 @@ async function phoneOnText(browser: Browser) {
           await new Promise(requestAnimationFrame);
           const blend = document.querySelector('.lightbox-incoming');
           return {
+            turn: Math.round(
+              new DOMMatrix(
+                getComputedStyle(document.querySelector('.lightbox-front')!).transform,
+              ).m11 * 1000,
+            ) / 1000,
             strip: document
               .querySelector('.lightbox-slide-current')!
               .getBoundingClientRect().x,
@@ -970,7 +1112,9 @@ async function phoneOnText(browser: Browser) {
   return { context, page, drag };
 }
 
-test('scrolling the text on a phone leaves the strip in place', async ({
+const untouched = { turn: -1, strip: 0, blend: 0 };
+
+test('scrolling the text on a phone leaves the card as it is', async ({
   browser,
   browserName,
 }) => {
@@ -984,7 +1128,7 @@ test('scrolling the text on a phone leaves the strip in place', async ({
     Array.from({ length: 16 }, (_, step) => ({ x: 300 - step * 4, y: 700 - step * 20 })),
   );
   await expect.poll(scrollTop).toBeGreaterThan(0);
-  expect(diagonal).toEqual(diagonal.map(() => ({ strip: 0, blend: 0 })));
+  expect(diagonal).toEqual(diagonal.map(() => untouched));
   await page.waitForTimeout(500);
   const afterDiagonal = await scrollTop();
 
@@ -995,13 +1139,14 @@ test('scrolling the text on a phone leaves the strip in place', async ({
   ];
   const moves = await drag(turning);
   await expect.poll(scrollTop).toBeLessThan(afterDiagonal);
-  expect(moves).toEqual(moves.map(() => ({ strip: 0, blend: 0 })));
+  expect(moves).toEqual(moves.map(() => untouched));
   await page.waitForTimeout(400);
   await expect(page).toHaveURL(/#image-3$/);
+  expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
   await context.close();
 });
 
-test('a text selection keeps a sideways drag from moving the strip', async ({
+test('a text selection keeps a sideways drag from turning the card', async ({
   browser,
   browserName,
 }) => {
@@ -1017,9 +1162,10 @@ test('a text selection keeps a sideways drag from moving the strip', async ({
     { x: 90, y: 430 },
   ]);
 
-  expect(moves).toEqual(moves.map(() => ({ strip: 0, blend: 0 })));
+  expect(moves).toEqual(moves.map(() => untouched));
   await page.waitForTimeout(400);
   await expect(page).toHaveURL(/#image-3$/);
+  expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
   await context.close();
 });
 
@@ -1257,6 +1403,105 @@ test('Next inside a set blends and keeps the view; leaving the set slides', asyn
   expect(await imageZoom(page)).toBeCloseTo(1, 2);
 });
 
+/**
+ * Pauses the change of image as soon as it moves and reports what the
+ * controls say then: the position, the set strip's current image and whether
+ * the description toggle is there.
+ */
+function controlsMidChange(page: Page) {
+  return page.waitForFunction(() => {
+    const animations = document.getAnimations();
+    if (!animations.length) return false;
+    for (const animation of animations) animation.pause();
+    const dialog = document.querySelector('[data-gallery-lightbox]')!;
+    return {
+      position: dialog
+        .querySelector('a[target="_blank"]')!
+        .textContent!.replace(/\s+/g, ' ')
+        .trim(),
+      current: dialog.querySelector('[aria-current="true"]')?.textContent?.trim(),
+      toggle: Boolean(dialog.querySelector('[aria-pressed]')),
+    };
+  });
+}
+
+for (const [route, start, change, expected] of [
+  [
+    'Next to another card',
+    6,
+    (page: Page) => page.getByRole('button', { name: 'Next image' }).click(),
+    { position: '7 / 17', current: 'Site Plan', toggle: true },
+  ],
+  [
+    'the arrow key to a variant',
+    3,
+    (page: Page) => page.keyboard.press('ArrowRight'),
+    { position: '4 / 17', current: 'Sports facilities', toggle: true },
+  ],
+  [
+    'a set button',
+    3,
+    (page: Page) => page.getByRole('button', { name: 'Values of the Area' }).click(),
+    { position: '5 / 17', current: 'Values of the Area', toggle: true },
+  ],
+  [
+    'a released swipe',
+    9,
+    async (page: Page) => {
+      await page.mouse.move(900, 400);
+      await page.mouse.down();
+      await page.mouse.move(700, 400);
+      await page.mouse.up();
+    },
+    { position: '10 / 17', current: 'Site axonometry', toggle: false },
+  ],
+] as const) {
+  test(`the controls follow ${route} as soon as it is made`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, `#image-${start}`);
+    await waitForLightbox(page);
+    const midChange = controlsMidChange(page);
+    await change(page);
+    expect(await (await midChange).jsonValue()).toEqual(expected);
+  });
+}
+
+test('a drag that has not changed image leaves the controls as they were', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const position = page.getByRole('link', { name: /^Open original/ });
+  const current = page.locator('[aria-current="true"]');
+
+  // A scrub towards the next variant, released short.
+  await page.mouse.move(900, 400);
+  await page.mouse.down();
+  await page.mouse.move(700, 400);
+  await expect(page.locator('.lightbox-front .lightbox-incoming')).toHaveCount(1);
+  expect(await position.textContent()).toMatch(/^\s*3 \/ 17/);
+  expect(await current.textContent()).toBe('Life at the city');
+  await page.mouse.move(880, 400);
+  await page.mouse.up();
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  expect(await position.textContent()).toMatch(/^\s*3 \/ 17/);
+  expect(await current.textContent()).toBe('Life at the city');
+
+  // The strip moved towards another card.
+  await page.goto(`${projectPath}#image-9`);
+  await waitForLightbox(page);
+  await page.mouse.move(900, 400);
+  await page.mouse.down();
+  await page.mouse.move(700, 400);
+  await expect
+    .poll(async () => (await page.locator('.lightbox-slide-current').boundingBox())!.x)
+    .toBeCloseTo(-200, 0);
+  expect(await position.textContent()).toMatch(/^\s*9 \/ 17/);
+  expect(await current.textContent()).toBe('Urban Detail');
+  await page.mouse.up();
+});
+
 test('a drag towards a variant scrubs the blend instead of moving the strip', async ({
   browser,
   browserName,
@@ -1336,103 +1581,292 @@ test('a mouse drag towards a variant scrubs the blend too', async ({ page }) => 
   await expect(page).toHaveURL(/#image-4$/);
 });
 
-test('a drag on the text towards a variant turns and blends together', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+/** A phone showing image 3's text side, and one finger on it. */
+async function phoneReading(browser: Browser, reducedMotion: 'reduce' | 'no-preference') {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     hasTouch: true,
     isMobile: true,
   });
   const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page);
-  await galleryImage(page, 3).click();
-  await waitForLightbox(page);
-  await page.getByRole('button', { name: 'Show description' }).click();
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
-  const touch = await oneFinger(context, page);
-  const card = () =>
-    page.evaluate(() => {
-      const sheet = document.querySelector('[data-lightbox-sheet]')!;
-      const opacity = (face: string) =>
-        Number(getComputedStyle(sheet.querySelector(`${face} .lightbox-incoming`)!).opacity);
-      return {
-        turn: new DOMMatrix(
-          getComputedStyle(sheet.querySelector('.lightbox-front')!).transform,
-        ).m11,
-        front: opacity('.lightbox-front'),
-        back: opacity('.lightbox-back'),
-      };
-    });
-
-  // On the 390 px stage: dx −117 is 0.3 (126°), dx −273 is 0.7 (54°), and
-  // half the width (dx −195) is edge-on.
-  await touch('touchStart', 300);
-  await touch('touchMove', 183);
-  await expect.poll(async () => (await card()).front).toBeCloseTo(0.3, 2);
-  let state = await card();
-  expect(state.turn).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
-  expect(state.back).toBeCloseTo(0.3, 2);
-  await touch('touchMove', 105);
-  await expect.poll(async () => (await card()).front).toBeCloseTo(0.5, 2);
-  expect((await card()).turn).toBeCloseTo(0, 2);
-  await touch('touchMove', 27);
-  await expect.poll(async () => (await card()).front).toBeCloseTo(0.7, 2);
-  state = await card();
-  expect(state.turn).toBeCloseTo(Math.cos(Math.PI * 0.3), 2);
-  expect(state.back).toBeCloseTo(0.7, 2);
-  await touch('touchMove', 270);
-  await expect.poll(async () => (await card()).front).toBeCloseTo(30 / 390, 2);
-  await touch('touchEnd');
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  await expect(page).toHaveURL(/#image-3$/);
-  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
-  await context.close();
-});
-
-test('a drag on the text past the threshold completes on the variant drawing', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.emulateMedia({ reducedMotion });
   await gotoProject(page);
   await galleryImage(page, 3).click();
   await waitForLightbox(page);
   const flip = page.getByRole('button', { name: 'Show description' });
   await flip.click();
+  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
+  await settled(page);
+  return { context, page, flip, touch: await oneFinger(context, page) };
+}
+
+/**
+ * The way the text side is turning while it still faces the viewer: the edge
+ * swinging towards the viewer is drawn larger and further out, so the card's
+ * box leans to that edge, which the turn carries across to the other side.
+ */
+function backTurningTowards(page: Page) {
+  return page.locator('.lightbox-card').first().evaluate((card) => {
+    const box = card.getBoundingClientRect();
+    const lean = box.x + box.width / 2 - innerWidth / 2;
+    return Math.abs(lean) < 1 ? 'nowhere' : lean > 0 ? 'left' : 'right';
+  });
+}
+
+/**
+ * Which way the face towards the viewer leans (see `backTurningTowards`): the
+ * front drawing while it faces the viewer, else the back's card.
+ */
+function faceLean(page: Page) {
+  return page.evaluate(() => {
+    const front = document.querySelector('.lightbox-front')!;
+    const facing = new DOMMatrix(getComputedStyle(front).transform).m11 >= 0;
+    const box = document
+      .querySelector(facing ? '.lightbox-front > img' : '.lightbox-card')!
+      .getBoundingClientRect();
+    const lean = box.x + box.width / 2 - innerWidth / 2;
+    return Math.abs(lean) < 1 ? 'nowhere' : lean > 0 ? 'right' : 'left';
+  });
+}
+
+async function nextFrame(page: Page) {
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+}
+
+test('a change made while the card turns over carries on the turn without jumping to its mirror image', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-4');
+  await waitForLightbox(page);
+  const turning = page.waitForFunction(
+    () => document.querySelector('[data-lightbox-sheet]')!.getAnimations().length > 0,
+  );
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await turning;
+  // The card hears that its turn has started a frame after the turn is made.
+  await nextFrame(page);
+  await page.evaluate(() => {
+    for (const animation of document.getAnimations()) {
+      animation.pause();
+      animation.currentTime = 200;
+    }
+  });
+  const lean = await faceLean(page);
+  expect(lean).not.toBe('nowhere');
+
+  await page.keyboard.press('ArrowLeft');
+  await nextFrame(page);
+  expect(await faceLean(page)).toBe(lean);
+  await expect(page).toHaveURL(/#image-3$/);
+});
+
+test('the toggle tapped while a swipe turns the card back reverses the turn without jumping', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const { context, page, flip, touch } = await phoneReading(browser, 'no-preference');
+  await touch('touchStart', 100);
+  await touch('touchMove', 220);
+  await touch('touchEnd');
+  await nextFrame(page);
+  await page.evaluate(() => {
+    for (const animation of document.getAnimations()) animation.pause();
+  });
+  const lean = await faceLean(page);
+  expect(lean).not.toBe('nowhere');
+
+  const box = (await flip.boundingBox())!;
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(flip).toHaveAttribute('aria-pressed', 'true');
+  await nextFrame(page);
+  expect(await faceLean(page)).toBe(lean);
+  await context.close();
+});
+
+test('a drag on the text that takes over a turn keeps one direction', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const touch = await oneFinger(context, page);
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await page.waitForTimeout(250);
+
+  // Rightwards all the way, over a turn still under way.
+  const leans = [];
+  await touch('touchStart', 100);
+  for (const x of [135, 170, 205]) {
+    await touch('touchMove', x);
+    await nextFrame(page);
+    leans.push(await backTurningTowards(page));
+  }
+  await touch('touchEnd');
+  expect(leans).toEqual(['right', 'right', 'right']);
+  await context.close();
+});
+
+test('a drag on the text towards a variant only turns the card, and released short turns it back', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const { context, page, flip, touch } = await phoneReading(browser, 'no-preference');
+  const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
+
+  // On the 390 px stage: dx −117 turns 0.3 of the way back (126°), and half
+  // the width (dx −195) is edge-on.
+  await touch('touchStart', 300);
+  await touch('touchMove', 183);
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
+  await touch('touchMove', 105);
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(0, 2);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  expect((await page.locator('.lightbox-slide-current').boundingBox())!.x).toBe(0);
+  await touch('touchMove', 270);
+  await expect
+    .poll(() => sheetTurn(page))
+    .toBeCloseTo(Math.cos(Math.PI * (1 - 30 / 390)), 2);
+  await touch('touchEnd');
+
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
+  await expect(page).toHaveURL(/#image-3$/);
+  await expect(flip).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
+  await expect(next).toBeHidden();
+  await context.close();
+});
+
+test('a drag on the text past the threshold turns back to the drawing view the visitor left', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  await page.keyboard.press('+');
+  await page.keyboard.press('+');
+  await expect
+    .poll(async () => (await drawingView(page)).scale)
+    .toBeCloseTo(1.5625, 3);
+  await settled(page);
+  const zoomedTransform = await page
+    .locator('.lightbox-front > img')
+    .evaluate((image) => getComputedStyle(image).transform);
+  const flip = page.getByRole('button', { name: 'Show description' });
+  await flip.click();
+  await settled(page);
   const touch = await oneFinger(context, page);
 
   await touch('touchStart', 300);
   await touch('touchMove', 183);
-  await expect
-    .poll(() =>
-      page.evaluate(() => {
-        const layer = document.querySelector('.lightbox-incoming');
-        return layer ? Number(getComputedStyle(layer).opacity) : 0;
-      }),
-    )
-    .toBeCloseTo(0.3, 2);
   await touch('touchEnd');
-  await expect(page).toHaveURL(/#image-4$/);
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
+  await settled(page);
+  await expect(page).toHaveURL(/#image-3$/);
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
   expect(await sheetTurn(page)).toBeCloseTo(1, 3);
-  await flip.click();
-  await expect(page.getByRole('region', { name: 'Sports facilities' })).toBeVisible();
+  expect(
+    await page
+      .locator('.lightbox-front > img')
+      .evaluate((image) => getComputedStyle(image).transform),
+  ).toBe(zoomedTransform);
   await context.close();
 });
+
+test('with reduced motion a drag on the text turns nothing until released past the threshold', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const { context, page, flip, touch } = await phoneReading(browser, 'reduce');
+  const turn = () =>
+    page
+      .locator('[data-lightbox-sheet]')
+      .evaluate((sheet) => Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn')));
+
+  await touch('touchStart', 300);
+  await touch('touchMove', 200);
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  expect(await turn()).toBe(1);
+  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  await touch('touchEnd');
+  // The reduced turn: the faces crossfade.
+  expect(
+    await page
+      .locator('.lightbox-back')
+      .evaluate((face) => face.getAnimations().length),
+  ).toBeGreaterThan(0);
+  await expect(flip).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeHidden();
+  await expect(page).toHaveURL(/#image-3$/);
+  await context.close();
+});
+
+test('a drag on the text turns the card the way the finger moves', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const { context, page, touch } = await phoneReading(browser, 'no-preference');
+
+  await touch('touchStart', 300);
+  await touch('touchMove', 183);
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
+  expect(await backTurningTowards(page)).toBe('left');
+  await touch('touchMove', 417);
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
+  expect(await backTurningTowards(page)).toBe('right');
+  // Released, the turn carries on the same way.
+  await touch('touchEnd');
+  await page.evaluate(() => {
+    for (const animation of document.getAnimations()) animation.pause();
+  });
+  expect(await sheetTurn(page)).toBeLessThan(Math.cos(Math.PI * 0.6));
+  expect(await backTurningTowards(page)).toBe('right');
+  await context.close();
+});
+
+for (const [key, towards] of [
+  ['ArrowRight', 'left'],
+  ['ArrowLeft', 'right'],
+] as const) {
+  test(`${key} from the text turns the card back towards the ${towards} as it blends`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, '#image-4');
+    await waitForLightbox(page);
+    await page.getByRole('button', { name: 'Show description' }).click();
+    await settled(page);
+
+    const midTurn = pausedCardMove(page, 150);
+    await page.keyboard.press(key);
+    const state = await (await midTurn).jsonValue();
+    if (!state) throw new Error('Expected a turn and blend');
+    expect(state.turn).toBeGreaterThan(0.5);
+    expect(await backTurningTowards(page)).toBe(towards);
+  });
+}
 
 test('a scrub towards a loading variant neither darkens the drawing nor completes early', async ({
   page,
@@ -1799,67 +2233,80 @@ test('a resize while reading resizes the card and keeps the reading position', a
   await expect.poll(position).toBeCloseTo(0.5, 1);
 });
 
-test('both faces keep one outline throughout a turn from a zoomed corner', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-3');
-  await waitForLightbox(page);
-  const rest = (await page.locator('.lightbox-front > img').boundingBox())!;
-  await page.mouse.move(rest.x + 30, rest.y + 30);
-  await page.mouse.wheel(0, -1200);
-  await expect
-    .poll(async () => (await drawingView(page)).scale)
-    .toBeGreaterThan(2);
+// The rightward turn is the leftward one mirrored, from the mirrored corner.
+for (const [turn, hash, rightwards] of [
+  ['the toggle turning it over', '#image-3', false],
+  ['Previous turning it back rightwards', '#image-4', true],
+] as const) {
+  test(`both faces keep one outline throughout ${turn} from a zoomed corner`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, hash);
+    await waitForLightbox(page);
+    const rest = (await page.locator('.lightbox-front > img').boundingBox())!;
+    await page.mouse.move(rightwards ? rest.x + rest.width - 30 : rest.x + 30, rest.y + 30);
+    await page.mouse.wheel(0, -1200);
+    await expect
+      .poll(async () => (await drawingView(page)).scale)
+      .toBeGreaterThan(2);
+    if (rightwards) {
+      await page.getByRole('button', { name: 'Show description' }).click();
+      await settled(page);
+    }
 
-  const frameAt = await pausedFlip(page);
-  const dark = async (x: number, y: number) => {
-    if (x < 60 || x > 1380) return true; // under the edge arrows or off the screen
-    return Math.max(...(await pixelAt(page, x, y))) < 80;
-  };
+    const frameAt = await pausedFlip(
+      page,
+      rightwards ? () => page.keyboard.press('ArrowLeft') : undefined,
+    );
+    const dark = async (x: number, y: number) => {
+      if (x < 60 || x > 1380) return true; // under the edge arrows or off the screen
+      return Math.max(...(await pixelAt(page, x, y))) < 80;
+    };
 
-  for (const turn of [0.1, 0.25, 0.4, 0.6, 0.75, 0.9]) {
-    const { card, front } = await frameAt(turn);
-    expect(card.x).toBeCloseTo(front.x, 0);
-    expect(card.width).toBeCloseTo(front.width, 0);
-    expect(card.y).toBeCloseTo(front.y, 0);
-    expect(card.height).toBeCloseTo(front.height, 0);
+    for (const turn of [0.1, 0.25, 0.4, 0.6, 0.75, 0.9]) {
+      const { card, front } = await frameAt(turn);
+      expect(card.x).toBeCloseTo(front.x, 0);
+      expect(card.width).toBeCloseTo(front.width, 0);
+      expect(card.y).toBeCloseTo(front.y, 0);
+      expect(card.height).toBeCloseTo(front.height, 0);
+      await page.waitForTimeout(100);
+      const middle = Math.min(Math.max(card.y + card.height / 2, 100), 800);
+      // Beside the card only the backdrop shows: no drawing, and no light back.
+      expect(await dark(card.x - 6, middle)).toBe(true);
+      expect(await dark(card.x + card.width + 6, middle)).toBe(true);
+    }
+
+    // While the drawing faces the viewer, the card is not drawn at all.
+    await frameAt(0.25);
+    const front = page.locator('.lightbox-front');
+    await front.evaluate((face: HTMLElement) => (face.style.display = 'none'));
     await page.waitForTimeout(100);
-    const middle = Math.min(Math.max(card.y + card.height / 2, 100), 800);
-    // Beside the card only the backdrop shows: no drawing, and no light back.
-    expect(await dark(card.x - 6, middle)).toBe(true);
-    expect(await dark(card.x + card.width + 6, middle)).toBe(true);
-  }
+    for (const [x, y] of [
+      [400, 300],
+      [720, 450],
+      [1000, 600],
+    ]) {
+      expect(await dark(x, y)).toBe(true);
+    }
+    await front.evaluate((face: HTMLElement) => (face.style.display = ''));
 
-  // While the drawing faces the viewer, the card is not drawn at all.
-  await frameAt(0.25);
-  const front = page.locator('.lightbox-front');
-  await front.evaluate((face: HTMLElement) => (face.style.display = 'none'));
-  await page.waitForTimeout(100);
-  for (const [x, y] of [
-    [400, 300],
-    [720, 450],
-    [1000, 600],
-  ]) {
-    expect(await dark(x, y)).toBe(true);
-  }
-  await front.evaluate((face: HTMLElement) => (face.style.display = ''));
-
-  // While the back faces the viewer, the drawing is not drawn at all.
-  await frameAt(0.75);
-  await page
-    .locator('.lightbox-back')
-    .evaluate((back: HTMLElement) => (back.style.display = 'none'));
-  await page.waitForTimeout(100);
-  for (const [x, y] of [
-    [400, 300],
-    [720, 450],
-    [1000, 600],
-  ]) {
-    expect(await dark(x, y)).toBe(true);
-  }
-});
+    // While the back faces the viewer, the drawing is not drawn at all.
+    await frameAt(0.75);
+    await page
+      .locator('.lightbox-back')
+      .evaluate((back: HTMLElement) => (back.style.display = 'none'));
+    await page.waitForTimeout(100);
+    for (const [x, y] of [
+      [400, 300],
+      [720, 450],
+      [1000, 600],
+    ]) {
+      expect(await dark(x, y)).toBe(true);
+    }
+  });
+}
 
 for (const [name, file, hash] of [
   ['a wide drawing', '/uploads/Image25_000.webp', '#image-11'],
@@ -1915,7 +2362,8 @@ for (const [name, file, hash] of [
       const right = Math.min(card.x + card.width - 6, view.right - 4);
       const top = Math.max(flat.top + 6, 70);
       const bottom = Math.min(flat.bottom - 6, 774);
-      const middle = (top + bottom) / 2;
+      // Clear of the edge arrows, which step aside during the turn.
+      const middle = top + (bottom - top) / 4;
       expect(await surface(left, middle)).toBe(true);
       expect(await surface(right, middle)).toBe(true);
       expect(await surface(195, top)).toBe(true);
