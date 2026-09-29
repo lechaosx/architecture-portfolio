@@ -112,8 +112,8 @@ hydrated. This keeps the JS payload tiny.
 ### Interactive components in Svelte — [Explicit]
 
 The user chose Svelte for the interactive parts. In practice that is a single
-island today (`src/components/Gallery.svelte`), with one child component for
-the back of each lightbox image's card (`LightboxVerso.svelte`).
+island today (`src/components/Gallery.svelte`, the lightbox), composed of child
+components and plain TypeScript modules (see "Lightbox structure").
 
 ### The lightbox is the only browser-side JS — [Implicit]
 
@@ -152,9 +152,46 @@ titled image fills it alone. The single-row strip occupies the space left of the
 close button and scrolls horizontally when its intrinsic width exceeds that
 area. Its wheel handler maps the dominant wheel delta to `scrollLeft` and
 consumes the event, while native horizontal touch panning remains enabled. A
-reactive effect brings the active button into view after opening or switching
-images. While a set member is active, the zoom ceiling is the minimum
+reactive effect in `LightboxControls` centres the active button after opening,
+switching images, or switching language, since the labels change width with
+it. While a set member is active, the zoom ceiling is the minimum
 `nativeZoomScale` across the set's responsive sources.
+
+### Lightbox structure — [Explicit] (seams [Implicit])
+
+The lightbox is split along the concepts the product has, each unit with one
+purpose and a small interface, so each can be read without the others:
+
+| Unit | Owns |
+|------|------|
+| `Gallery.svelte` | The lightbox as a whole: open/closing, the current index, the drawing's view (scale and pan), the side shown, the change of image in progress (slide, blend, scrub, their durations and the strip offset), the stage size, language and motion preference; the derived sources, sizes and zoom range; keys and the focus trap; composing the parts below. |
+| `lightbox-gestures.ts` | The gesture interpreter: a DOM-free state machine that turns mouse, touch, wheel, double-click and zoom-key input into intents (claim the event, a mouse gesture starting or ending, set the view, zoom about a point, a live drag at rest, commit, settle or abandon a drag). It holds the one live gesture and the tap record, every threshold, and the one rule for when zoom input is ignored. |
+| `LightboxCard.svelte` | The current slide as a card: its front (the drawing, or the tiled canvas over its preview), its back (`LightboxVerso`), the incoming blend layers, and all the CSS that turns and zooms them. |
+| `LightboxVerso.svelte` | The back's scrolling viewport and the card's fit to its text. |
+| `LightboxTiles.svelte` | The OpenSeadragon viewer's lifecycle and syncing its viewport to the lightbox's view. |
+| `LightboxControls.svelte` | The corner controls and set strip, as markup with props and callbacks, and their shared control styles. |
+| `lightbox-history.ts` | The `#image-N` history entry: push, replace, Back/Forward, a linked hash on load, and scroll-restoration suspension. |
+| `lightbox-morph.ts` | The open and close View Transitions between a thumbnail and the lightbox image. |
+| `gallery.ts` | The pure lightbox geometry and image-selection maths shared by the units. |
+
+The seams sit where state and responsibility actually divide. Input
+interpretation needs only the view, the zoom range, the side shown and whether
+the lightbox is busy, so it is a plain class with unit tests
+(`lightbox-gestures.test.ts`) and no knowledge of the DOM; the component feeds
+it stage-centred points and applies the intents, since applying them (clamping
+the pan, scrubbing a blend or moving the strip) depends on lightbox state. The
+cursor's grabbing state is set only by the interpreter's `grab` intents, so it
+cannot drift from the live gesture. The change of image stays in
+`Gallery.svelte` because it moves the index, view, side and history together.
+The card, the tiled viewer and the controls receive data and report back
+through props, bindings and callbacks, so none of them reads another's state.
+What an image shows on its card (its size, title, description and pyramid)
+does not depend on the view and is derived apart from its source URL, which
+does; so panning and zooming update only the image sources and the view, never
+the backs, the set strip or its scroll position. History and the open/close
+morph are browser-API glue with their own invariants, called from a few points
+in the component; history is unit-tested against a fake session history
+(`lightbox-history.test.ts`).
 
 ### Lightbox soft inset and corner controls — [Explicit]
 
@@ -172,30 +209,35 @@ and `--lightbox-control` on the dialog, so the stylesheet never restates them.
 A single `$effect` re-clamps scale and pan whenever the areas or the current
 image change, covering resizes and phone rotation.
 
-The controls are children of the dialog, outside the stage and its card, so pan,
-zoom, swipe offset, the card's flip, and its `inert` face never move or disable
-them, and the stage's pointer and touch handlers never see their events. The
-stage isolates its image and card layers in their own stacking context beneath
-the controls, so no z-index or blend inside it can paint over them. The controls
-share the component-scoped `.lightbox-control` box: solid black, 40%-white
-border, white border on hover, and inverted (white fill, black text, a 2 px
-black ring so it stays distinct over a light card or drawing) when pressed,
-`aria-pressed`, or `aria-current`. The set strip joins its buttons by
-overlapping their borders. The language switch reuses the footer's
-`data-lang-toggle` markup, so Base.astro's delegated handler does the switching
-and the island follows `data-lang`. Arrow icons are centred SVG chevrons rather
-than text glyphs, whose font metrics sit them off-centre in the box.
+The controls (`LightboxControls.svelte`) are children of the dialog, outside the
+stage and its card, so pan, zoom, swipe offset, the card's flip, and its `inert`
+face never move or disable them, and the stage's pointer and touch handlers
+never see their events. The stage isolates its image and card layers in their
+own stacking context beneath the controls, so no z-index or blend inside it can
+paint over them. The controls share the `.lightbox-control` box scoped to
+`LightboxControls`: solid black, 40%-white border, white border on hover, and
+inverted (white fill, black text, a 2 px black ring so it stays distinct over a
+light card or drawing) when pressed, `aria-pressed`, or `aria-current`. The set
+strip joins its buttons by overlapping their borders. The language switch reuses
+the footer's `data-lang-toggle` markup, so Base.astro's delegated handler does
+the switching and the island follows `data-lang`. Arrow icons are centred SVG
+chevrons rather than text glyphs, whose font metrics sit them off-centre in the
+box.
 
 ### Each lightbox image is a card; a comparison set is one card's variants — [Explicit]
 
-The current slide is the card: `[data-lightbox-sheet]` inside
-`.lightbox-slide-current`, whose front face holds the drawing (responsive or
-tiled) and whose back face, present only when the image has a description in the
-current language, is `LightboxVerso.svelte`. The previous and next slides are
-plain drawing fronts. The card's state is handed to CSS as numbers on the sheet:
-`--lightbox-turn`, registered with `@property` so it can transition as a number
-(1 text side up, 0 drawing up); the drawing's view (`--drawing-*`, the gesture
-state `scale`/`pan`); the back's card view (`--card-*`, `cardView` of the card's
+The current slide is the card, `LightboxCard.svelte`: `[data-lightbox-sheet]`
+inside `.lightbox-slide-current`, whose front face holds the drawing (responsive
+or tiled: for an image with a pyramid the card renders the tiled canvas snippet
+it is given with that pyramid's URL, so the card does not depend on
+OpenSeadragon) and whose back face, present only when the image has a
+description in the current language, is `LightboxVerso.svelte`. The previous
+and next slides are plain drawing fronts. The card takes the current and
+incoming image and their sources, the blend, the side shown, the drawing's view
+and the move's duration as props, and hands them to CSS as numbers on the
+sheet: `--lightbox-turn`, registered with `@property` so it can transition as a
+number (1 text side up, 0 drawing up); the drawing's view (`--drawing-*`, the
+lightbox's `view`); the back's card view (`--card-*`, `cardView` of the card's
 scale and scroll); and, during a move to a variant, `--lightbox-blend`. From
 these the sheet derives the shown view, the drawing view blended into the card
 view by the turn, and every face is drawn at it: the images with
@@ -229,23 +271,23 @@ variant has no responsive entry has no rest size yet, so the current back stays
 until the variant is current and its drawing has loaded). Turn and blend
 transition over `--lightbox-card-duration` with one easing, so a turn that
 blends keeps the angle, the zoom and the blend in step: edge-on is halfway on
-both faces. `cardDuration` is set by whoever moves the card (the flip button, a
-blend, a released scrub); `dragAtRest` zeroes it so a scrub follows the finger
-directly, and `showDrawingSide` clears it so a card that shows another image
-starts drawing side up at once. With reduced motion nothing turns, the turn does
-not transition, and the faces crossfade instead. The face turned away is `inert`
-immediately and `visibility: hidden` once the turn ends, so it is neither
-focusable, hit-tested, nor drawn.
+both faces. The duration (`cardDuration` in the lightbox) is set by whoever
+moves the card (the flip button, a blend, a released scrub); `dragAtRest` zeroes
+it so a scrub follows the finger directly, and `showDrawingSide` clears it so a
+card that shows another image starts drawing side up at once. With reduced
+motion nothing turns, the turn does not transition, and the faces crossfade
+instead. The face turned away is `inert` immediately and `visibility: hidden`
+once the turn ends, so it is neither focusable, hit-tested, nor drawn.
 
 Every route to another image (Previous/Next, the arrow keys, a released swipe, a
 set button) goes through `changeTo(target, direction)`, which blends when the
 target is a variant of the current card (`isVariant`: another member of the same
 comparison set) and slides otherwise. It first calls `endDrag` (shared with
-`resetView`), which ends any live pointer or touch drag and returns a strip the
-drag had moved, so a gesture held through a change cannot act again. `slideTo`
-translates the strip and resets the view. `blendTo` keeps scale and pan: it
-waits for the variant's image to decode (at once when cached, so a released
-scrub never completes onto an unloaded layer), sets `change = { target,
+`resetView`), which ends the gesture interpreter's live gesture and returns a
+strip the drag had moved, so a gesture held through a change cannot act again.
+`slideTo` translates the strip and resets the view. `blendTo` keeps scale and
+pan: it waits for the variant's image to decode (at once when cached, so a
+released scrub never completes onto an unloaded layer), sets `change = { target,
 progress: 1 }` (an animated blend fades its layers in from `@starting-style`),
 and on completion makes the variant the current image while the blended layer
 stays until the card's own image has decoded, so nothing flashes. From the text
@@ -253,14 +295,18 @@ side `turn` is `1 - progress`, so the same move turns the card back. The
 variant's own text replaces the back only when it becomes current, and the
 back's text keeps its scroll position throughout.
 
-A drag at rest calls `dragAtRest`: towards a variant it scrubs `change.progress`
-by `scrubProgress` (the drag as a share of the stage width, as far as a slide
-would have moved the strip) with no transition and leaves the strip in place;
-towards another card it moves the strip by the drag. Release uses the same
-`swipeDirection` threshold: past it, `changeTo` continues the scrub from its
-progress for the remaining share of the duration (`settleDuration`); short of
-it, `cancelBlend` returns the blend (and, from the text side, the turn) to the
-current image. From the text side half the stage width is edge-on. With reduced
+The interpreter reports a drag at rest as a live offset, which the lightbox
+applies with `dragAtRest`: towards a variant it scrubs `change.progress` by
+`scrubProgress` (the drag as a share of the stage width, as far as a slide would
+have moved the strip) with no transition and leaves the strip in place; towards
+another card it moves the strip by the drag. On release the interpreter commits
+a drag of at least its 50 px swipe threshold (and more horizontal than
+vertical) and settles a shorter one: a commit makes `changeTo` continue the
+scrub from its progress for the remaining share of the duration
+(`settleDuration`); a settle makes `cancelBlend` return the blend (and, from the
+text side, the turn) to the current image. A second finger turns a drag into a
+pinch, and the interpreter abandons the drag: the strip and any scrub return to
+rest at once. From the text side half the stage width is edge-on. With reduced
 motion there is no scrub and the change is instant.
 
 Because the text is inside the stage, the stage's gestures treat the text side
@@ -273,8 +319,9 @@ drag may still become a native scroll; a native scroll of the text then cancels
 the drag, and no drag starts or continues while text in the stage is selected.
 While the text shows, the stage ignores the wheel, double-click, pinch,
 double-tap, and mouse drags that begin on the text, so the text scrolls and
-selects natively. On phones (`lightbox-phone`, from `PHONE_WIDTH`) the dialog's
-flipped state hides the edge arrows.
+selects natively. On phones (at `PHONE_WIDTH` and below) the lightbox tells
+`LightboxControls` to set the edge arrows aside while the text shows, and they
+are hidden.
 
 `LightboxVerso` is the back's viewport: a native scroll container (the browser's
 own scrollbar and scrolling) spanning the stage, with the control bands as its
@@ -285,41 +332,50 @@ inside the pinned lightbox), `cardScale` × the front's rest size
 (`restImageSize`, the one rule for every front: the image contained in the rest
 area, its size read from the responsive manifest or, for a drawing without
 responsive variants, from the image once loaded, so every description has a
-back), centred, and may overflow the screen sideways (clipped; both scrollbar
-gutters keep it centred). `cardScale` in `gallery.ts` finds the smallest scale,
-at least 1, at which the text's height at `cardColumn` plus the card's padding
-(`cardPadding`: 6% of its width within 24–64 px) fits the card's height; the
-column is the page measure within the card's padding and `textColumnLimit` (the
-stage minus the side bands, or the page margins at `PHONE_WIDTH` and below,
-where the arrows step aside). The text is measured in a hidden copy outside the
-scroll, once per text, language, image and viewport and again whenever web fonts
-finish loading (`document.fonts` `loadingdone`, as a face first needed later can
-change the text's size); a re-measure keeps the scroll position in proportion.
-It renders the title and description in the current language with a `lang`
-attribute (so hyphenation picks the right dictionary), as a focusable, labelled
-region.
+back; only such a drawing records its loaded size, so loading an image with
+responsive variants never replaces it — [Implicit]), centred, and may overflow
+the screen sideways (clipped; both scrollbar gutters keep it centred).
+`cardScale` in `gallery.ts` finds the smallest scale, at least 1, at which the
+text's height at `cardColumn` plus the card's padding (`cardPadding`: 6% of its
+width within 24–64 px) fits the card's height; the column is the page measure
+within the card's padding and `textColumnLimit` (the stage minus the side bands,
+or the page margins at `PHONE_WIDTH` and below, where the arrows step aside).
+The text is measured in a hidden copy outside the scroll, once per text,
+language, image and viewport and again whenever web fonts finish loading
+(`document.fonts` `loadingdone`, as a face first needed later can change the
+text's size); a re-measure keeps the scroll position in proportion. It renders
+the title and description in the current language with a `lang` attribute (so
+hyphenation picks the right dictionary), as a focusable, labelled region.
 
 ### Shared lightbox input and tiled rendering — [Explicit]
 
-The component owns one scale/pan gesture state for both paths. Wheel, keys, and
+The lightbox owns one view (scale and pan) for both paths. Wheel, keys, and
 double-click/double-tap all go through `zoomTo`, which keeps the point under the
 pointer (or the centre) in place and clamps pan to the safe area; pinch uses the
-same clamp with its own two-finger pan. Double-tap is detected inside the touch
-handlers (two short taps within 300 ms and 30 px), and the second tap's
-`touchend` is cancelled so the browser does not also synthesize a `dblclick`.
-OpenSeadragon's mouse, touch, and keyboard navigation is disabled; its viewport
-receives the shared state with immediate updates and remains responsible for
-tile selection, loading, caching, and drawing. Its home view fits the whole
-stage, so `deepZoomViewport` maps the rest-fitted width times the scale to a
-zoom directly. OpenSeadragon's own pan and zoom constraints and its auto-resize
-are off, because either would move the view away from the component's clamp; the
-component passes the stage size to the viewport before each update. A pyramid
-`minPixelRatio` of `0.5` selects the closest DZI level at or above the required
-physical-pixel density instead of upscaling the level below it. OpenSeadragon
-caches display density at module scope, so each new viewer refreshes that value
-before sizing its canvas; this covers browser-zoom changes made while no viewer
-exists. Tiled images retain that density-matched processed preview beneath the
-canvas, preventing unloaded tile regions from exposing the dark stage.
+same clamp with its own two-finger pan. The gesture interpreter detects the
+double tap (two short taps within 300 ms and 30 px) and claims the second tap's
+`touchend`, which is cancelled so the browser does not also synthesize a
+`dblclick`. The zoom keys go through the interpreter too (the component only
+leaves modified keys to the browser's own zoom), so one rule decides for every
+zoom input: it waits while the lightbox is busy (opening, closing, or changing
+image) and during a drag at rest, and does nothing on the text side —
+[Implicit]. Only the mouse drives pointer gestures; touch input arrives through
+touch events.
+
+`LightboxTiles.svelte` wraps OpenSeadragon. Its mouse, touch, and keyboard
+navigation is disabled; its viewport receives the lightbox's view reactively,
+with immediate updates, and remains responsible for tile selection, loading,
+caching, and drawing. Its home view fits the whole stage, so `deepZoomViewport`
+maps the rest-fitted width times the scale to a zoom directly. OpenSeadragon's
+own pan and zoom constraints and its auto-resize are off, because either would
+move the view away from the lightbox's clamp; the adapter passes the stage size
+to the viewport before each update. A pyramid `minPixelRatio` of `0.5` selects
+the closest DZI level at or above the required physical-pixel density instead of
+upscaling the level below it. OpenSeadragon caches display density at module
+scope, so each new viewer refreshes that value before sizing its canvas; this
+covers browser-zoom changes made while no viewer exists. Tiled images retain
+that density-matched processed preview beneath the canvas, preventing unloaded
+tile regions from exposing the dark stage.
 
 ### Lightbox modal state — [Explicit]
 
@@ -339,18 +395,18 @@ controls; only the card back takes the page's own surface and text. A
 language switch.
 
 Opening and closing use a same-document View Transition between the stable
-thumbnail frame and active preview. The image remains nested inside the named
-thumbnail frame, so its hover transform cannot change the shared transition
-geometry. The current hover scale is frozen at click and applied to the opening
-snapshot, including midway through the hover transition. Image width and height
-metadata reserve geometry before a first download. The active preview's
-dimensions come from the source aspect ratio and the rest area of the measured
-stage, so cached image and tiled-renderer state cannot change the endpoint. The
-image pair clips the destination snapshot on opening and the source snapshot on
-closing while its box changes aspect ratio. Using one image snapshot avoids
-doubled edges from blending different crop states; the document snapshot
-supplies the overlay fade. The image morph runs only when the thumbnail is
-inside the viewport and does not overlap the sticky header. A clipped or
+thumbnail frame and active preview (`lightbox-morph.ts`). The image remains
+nested inside the named thumbnail frame, so its hover transform cannot change
+the shared transition geometry. The current hover scale is frozen at click and
+applied to the opening snapshot, including midway through the hover transition.
+Image width and height metadata reserve geometry before a first download. The
+active preview's dimensions come from the source aspect ratio and the rest area
+of the measured stage, so cached image and tiled-renderer state cannot change
+the endpoint. The image pair clips the destination snapshot on opening and the
+source snapshot on closing while its box changes aspect ratio. Using one image
+snapshot avoids doubled edges from blending different crop states; the document
+snapshot supplies the overlay fade. The image morph runs only when the thumbnail
+is inside the viewport and does not overlap the sticky header. A clipped or
 header-overlapped thumbnail uses the document fade, avoiding the stacking
 discontinuity created when a View Transition isolates it above the header.
 Page-transition elements opt out while this lightbox-only transition is active,
@@ -367,15 +423,16 @@ removes it from the page before its transition runs — [Implicit]. Reduced-moti
 visitors use the immediate state change. Each translated slide clips its own
 contents, so a transformed image cannot paint over the adjacent slide.
 
-Each image maps to a one-based `#image-N` hash. Opening pushes one marked
-history entry; navigation replaces that entry, and the popstate handler closes
-or restores the lightbox for Back and Forward. The island selects manual browser
-scroll restoration while its history entry is active, preventing hash traversal
-from moving the page behind the overlay, and restores the previous setting when
-the lightbox closes. On initial hydration, a valid image hash is placed after a
-base-page entry so Back first closes a directly linked lightbox. Image numbers
-intentionally follow page order, starting with the cover, and therefore change
-if the content owner reorders blocks or their images.
+Each image maps to a one-based `#image-N` hash (`lightbox-history.ts`). Opening
+pushes one marked history entry; navigation replaces that entry, and the
+popstate handler closes or restores the lightbox for Back and Forward. The
+history module selects manual browser scroll restoration while its history entry
+is active, preventing hash traversal from moving the page behind the overlay,
+and restores the previous setting when the lightbox closes. On initial
+hydration, a valid image hash is placed after a base-page entry so Back first
+closes a directly linked lightbox. Image numbers intentionally follow page
+order, starting with the cover, and therefore change if the content owner
+reorders blocks or their images.
 
 ### Home-page carousel: scroll-snap + a small vanilla script — [Implicit]
 

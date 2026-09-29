@@ -10,21 +10,14 @@ import {
   containedImageSize,
   deepZoomViewport,
   displayedSwipeOffset,
-  doubleTapScale,
-  galleryImageHash,
-  galleryImageIndex,
   imageText,
   lightboxAreas,
   lightboxImageUrl,
   nativeZoomScale,
-  panForPinch,
   panForZoom,
-  scaleFromPinch,
-  scaleFromWheel,
   scrubProgress,
   settleDuration,
   sharedMaximumScale,
-  swipeDirection,
   textColumnLimit,
   zoomFloor,
   type GalleryImage,
@@ -83,21 +76,7 @@ describe('zoomFloor', () => {
   });
 });
 
-describe('doubleTapScale', () => {
-  test('zooms in to 2.5 or the ceiling, and returns to rest from any other scale', () => {
-    expect(doubleTapScale(1, { min: 1, max: 4 })).toBe(2.5);
-    expect(doubleTapScale(1, { min: 1, max: 1.6 })).toBe(1.6);
-    expect(doubleTapScale(3, { min: 1, max: 4 })).toBe(1);
-    expect(doubleTapScale(0.8, { min: 0.7, max: 4 })).toBe(1);
-  });
-});
-
 describe('zoom range', () => {
-  test('wheel and pinch respect a floor below 1', () => {
-    expect(scaleFromWheel(1, 1000, { min: 0.7, max: 4 })).toBe(0.7);
-    expect(scaleFromPinch(1, 200, 20, { min: 0.7, max: 4 })).toBe(0.7);
-  });
-
   test('a stepped scale stays within the range', () => {
     expect(clampScale(1.25, { min: 0.7, max: 4 })).toBe(1.25);
     expect(clampScale(5, { min: 0.7, max: 4 })).toBe(4);
@@ -135,40 +114,16 @@ describe('clampPan against the soft inset', () => {
   });
 });
 
-describe('lightbox gestures', () => {
-  test('wheel zoom stays between 1x and the native-detail limit', () => {
-    expect(scaleFromWheel(1, -100, { min: 1, max: 4 })).toBeGreaterThan(1);
-    expect(scaleFromWheel(4, -100, { min: 1, max: 4 })).toBe(4);
-    expect(scaleFromWheel(1, 100, { min: 1, max: 4 })).toBe(1);
-  });
-
+describe('lightbox geometry and zoom limits', () => {
   test('wheel zoom keeps the image point beneath the pointer', () => {
     expect(
       panForZoom({ x: 0, y: 0 }, 1, 2, { x: 100, y: -50 }),
     ).toEqual({ x: -100, y: 50 });
   });
 
-  test('pinch zoom follows finger distance and stays within the zoom limits', () => {
-    expect(scaleFromPinch(1, 100, 250, { min: 1, max: 4 })).toBe(2.5);
-    expect(scaleFromPinch(3, 100, 200, { min: 1, max: 4 })).toBe(4);
-    expect(scaleFromPinch(2, 100, 25, { min: 1, max: 4 })).toBe(1);
-  });
-
   test('native zoom matches source pixels to physical display pixels', () => {
     expect(nativeZoomScale(3000, 750, 2)).toBe(2);
     expect(nativeZoomScale(640, 750, 2)).toBe(1);
-  });
-
-  test('pinch zoom keeps its starting image point beneath the moving midpoint', () => {
-    expect(
-      panForPinch(
-        { x: 0, y: 0 },
-        1,
-        2,
-        { x: 100, y: -50 },
-        { x: 120, y: -40 },
-      ),
-    ).toEqual({ x: -80, y: 60 });
   });
 
   test('panning cannot move the scaled image beyond the viewport', () => {
@@ -215,13 +170,6 @@ describe('lightbox gestures', () => {
     expect(
       deepZoomViewport({ x: 0.5, y: 0.25 }, 1000, 1000, { x: 100, y: -50 }),
     ).toEqual({ zoom: 1, center: { x: 0.4, y: 0.3 } });
-  });
-
-  test('horizontal swipes navigate only after the threshold', () => {
-    expect(swipeDirection(-80, 10)).toBe(1);
-    expect(swipeDirection(80, 10)).toBe(-1);
-    expect(swipeDirection(40, 5)).toBe(0);
-    expect(swipeDirection(80, 100)).toBe(0);
   });
 
   test('a drag towards a variant blends as far as a slide would move', () => {
@@ -294,25 +242,6 @@ describe('the card back', () => {
     expect(cardView(rest, area, 3, 100).y).toBe(119);
     expect(cardView(rest, area, 3, 1000).y).toBe(-219);
   });
-});
-
-describe('lightbox URLs', () => {
-  test('uses one-based image hashes', () => {
-    expect(galleryImageHash(0)).toBe('#image-1');
-    expect(galleryImageHash(11)).toBe('#image-12');
-  });
-
-  test('resolves valid image hashes to zero-based indexes', () => {
-    expect(galleryImageIndex('#image-1', 12)).toBe(0);
-    expect(galleryImageIndex('#image-12', 12)).toBe(11);
-  });
-
-  test.each(['', '#image-0', '#image-13', '#image-1-more', '#other-1'])(
-    'ignores invalid or out-of-range hash %s',
-    (hash) => {
-      expect(galleryImageIndex(hash, 12)).toBeUndefined();
-    },
-  );
 });
 
 describe('comparison sets', () => {
