@@ -310,12 +310,61 @@ cropping, or dot indicators.
 
 If the sticky header or viewport edge obscures a thumbnail, the lightbox uses
 only the overlay fade instead of lifting the hidden part into an image morph.
-Image gestures and page scrolling wait for opening and closing transitions to
-finish, and zooming (wheel, keys, or double-click) also waits while one image
-changes to another or a drag is moving between them — [Implicit]. Closing a
-zoomed image fades the overlay without morphing the manipulated image into its
-thumbnail. Zoomed content stays inside its outgoing slide when moving to another
-image.
+Closing a zoomed image fades the overlay without morphing the manipulated image
+into its thumbnail. Zoomed content stays inside its outgoing slide when moving
+to another image.
+
+### The lightbox never waits for its own animations — [Explicit]
+
+State changes the moment input arrives; the animations only chase it. Every
+change is taken at once — Previous/Next, the arrow keys, set buttons, swipes,
+Back and Forward, the description toggle and zooming — and the position, the
+set strip, the toggle and the address describe the image changed to straight
+away, however many changes come in a row: pressing Next five times quickly
+lands five images on. Nothing is ignored, queued or delayed because something
+is still moving, and with reduced motion the same input reaches the same
+states at the same moments. When a change arrives mid-animation, the motion
+carries on from where it is on screen towards the new target, without a jump
+or a restart: a slide, a blend between variants, a turn of the card, the zoom
+that goes with the turn and the phone's edge arrows all retarget this way. A
+drag that starts while something moves takes it over from where it is on
+screen: the strip, the blend or the turn stops under the finger instead of
+jumping to the finger's own position.
+
+How that looks where the rule leaves room — [Implicit]:
+
+- A card changed away from before it came into view is never shown: the strip
+  moves at most one card past what is on screen, so a fast run of presses
+  travels to the last image rather than racing through every one, and never
+  loads the skipped ones. The strip always travels the way the change goes,
+  across the end of the sequence too.
+- A variant blends in over whatever is on screen, even a blend still under
+  way, so a second change shows each image at most once and never passes
+  through one it skipped; changing back to an image still on screen blends
+  back to it.
+- Each move takes its share of a whole move's time, and never longer than a
+  whole one, a move sent back where it came from included.
+- Images load while state moves on: a blend waits for its drawing, so it never
+  blends to black, and on a phone the edge arrows wait with the card's turn;
+  an image changed away from before it loaded is not waited for. A tiled
+  drawing sharpens into its tiles once the card has come to rest on it on
+  screen.
+- Opening and closing take input too, in every browser. The lightbox opens at
+  once; only the card's move from its thumbnail waits for its drawing to load,
+  the thumbnail showing where it is meanwhile. While opening, every key, the
+  wheel, touch and clicks on the controls act at once, and the page behind
+  never scrolls; Escape (or ×, or Back) turns the opening back from where it is.
+  Closing hands the page back at once: while the lightbox fades out, the page
+  scrolls and takes clicks, and the thumbnail has focus. The card goes into the
+  current image's own thumbnail, following it as the page scrolls or resizes,
+  or fades where it is when it cannot. Opening the same image again meanwhile
+  (Enter on the thumbnail) turns the closing back from where it is; opening
+  another image meanwhile changes to it as the lightbox comes back in, the card
+  moving once its drawing has loaded.
+- The address follows every change at once; only a long run, such as a held
+  arrow key, writes it about ten times a second, since browsers stop taking
+  address changes that come faster. Closing writes any change still to come
+  first, so Forward reopens the last image.
 
 ### Full-screen lightbox with controls in the corners — [Explicit]
 
@@ -343,8 +392,9 @@ Zooming out below 100% is allowed until the image clears the edge arrows too.
 ### Addressable lightbox images — [Explicit]
 
 Each open image has a position-based `#image-N` URL that can be copied or opened
-directly. Moving between images updates that address without adding more history
-steps: Back closes the lightbox in one step, and Forward reopens its last image.
+directly. Moving between images updates that address at once, without adding
+more history steps: Back closes the lightbox in one step, and Forward reopens
+its last image.
 A directly loaded image link also closes to its project page before Back leaves
 the page.
 
@@ -352,8 +402,8 @@ the page.
 
 Opening the lightbox moves keyboard focus to its controls and keeps focus inside
 until it closes. Closing it restores focus to the image trigger that opened it
-without moving the page. While it animates open or closed it ignores input;
-while opening it also reports itself busy to assistive technology — [Implicit].
+without moving the page. It takes input while it animates open, as at any other
+time.
 Clicking the dark area around the image keeps the lightbox open; users close it
 with the dedicated close control, Escape, or browser Back.
 The overlay contains wheel, touch, and keyboard scrolling, while deliberate
@@ -417,7 +467,10 @@ pixels.
 
 Double-click or double-tap zooms in to 2.5× at that point (or to the maximum, if
 lower) and returns to 100% when zoomed. On the drawing side `+`/`=` and `-` zoom
-around the centre and `0` returns to 100% — [Implicit].
+around the centre and `0` returns to 100% — [Implicit]. Zooming (wheel, keys,
+double-click) waits only while a drag at rest is moving between images, and a
+second finger on such a drag turns it into a pinch, the strip or blend easing
+back to rest as the pinch begins — [Implicit].
 
 Tiled and full-image previews use the same immediate gesture response. Zoomed
 inspection has no momentum or settling animation; at 100%, both previews move
@@ -538,8 +591,8 @@ On phones the edge arrows step aside while the text shows, moving with the
 card's turn — [Explicit]: they slide out past the screen edges as the card turns
 to its text and back in as it turns to its drawing, in the same timing, and
 follow a swipe's live turn too (a change to a variant that is still loading
-brings them back first, while the card waits to turn); while aside they cannot
-be focused or pressed.
+keeps them aside with the card until the card can turn); while aside they
+cannot be focused or pressed.
 A reversed turn carries on the way it was turning, so the card never jumps to
 its mirror image. Moving from the text to a different card brings them back in
 the same timing as the next drawing slides in — [Implicit]. Images without a
@@ -562,7 +615,8 @@ happens at once), and turning over to an image description becomes a short
 crossfade with the zoom changing at once. A swipe on the text does not turn the
 card with the finger; released past the threshold it crossfades to the drawing,
 and on phones the edge arrows fade aside and back with that crossfade instead
-of sliding — [Implicit].
+of sliding — [Implicit]. The same input still reaches the same states at the
+same moments; only the motion between them is left out.
 
 ---
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
   import { on } from 'svelte/events';
+  import { Tween } from 'svelte/motion';
   import {
     devicePixelRatio,
     innerHeight,
@@ -11,6 +12,7 @@
   import {
     CONTROL_SIZE,
     PHONE_WIDTH,
+    STRIP_EASING,
     clampPan,
     clampScale,
     comparisonSetIndexes,
@@ -19,15 +21,19 @@
     imageText,
     lightboxAreas,
     lightboxImageUrl,
+    morphFrame,
+    moveOn,
+    stop,
     nativeZoomScale,
     panForZoom,
-    scrubProgress,
     settleDuration,
     sharedMaximumScale,
+    slidePosition,
     textColumnLimit,
     zoomFloor,
     type GalleryImage,
     type Point,
+    type Rect,
     type Size,
     type View,
     type ZoomRange,
@@ -38,7 +44,6 @@
     type GestureIntent,
   } from './lightbox-gestures';
   import { LightboxHistory } from './lightbox-history';
-  import { morphClose, morphOpen } from './lightbox-morph';
   import LightboxCard, { hasBack, type CardImage } from './LightboxCard.svelte';
   import LightboxControls from './LightboxControls.svelte';
   import LightboxTiles from './LightboxTiles.svelte';
@@ -49,10 +54,10 @@
     responsiveImages: (ResponsiveImage | undefined)[];
   } = $props();
 
-  const blendDuration = 180;
   const slideDuration = 180;
-  const flipDuration = 560;
-  const reducedFlipDuration = 150;
+  const openDuration = 400;
+  const rest: View = { scale: 1, pan: { x: 0, y: 0 } };
+  const noVariants = {};
   const zoomKeys = new Map<string, 'in' | 'out' | 'reset'>([
     ['+', 'in'],
     ['=', 'in'],
@@ -60,101 +65,136 @@
     ['0', 'reset'],
   ]);
 
+  /** A thumbnail's frame on screen, and the hover scale of its image. */
+  interface Frame extends Rect {
+    hover: number;
+  }
+
+  /** One image in the strip, `position` stage widths along it. */
+  interface Slide {
+    id: number;
+    position: number;
+    image: number;
+    /**
+     * What a card the lightbox changed away from last showed, which it goes
+     * on showing; a slide that is neither current nor left is a neighbour.
+     */
+    left?: { textUp: boolean; view: View; towards: 1 | -1 };
+    /** Reported by its card: its turn on screen, its drawing, and whether that has loaded. */
+    turn?: number;
+    drawing?: HTMLImageElement;
+    ready?: boolean;
+  }
+
+  // The lightbox is open, from the moment it is asked to open until it is
+  // asked to close; its dialog stays in the page while it fades out after.
   let open = $state(false);
+  let mounted = $state(false);
+  // How far open the lightbox shows: its backdrop and controls, 1 at rest;
+  // and the card, between its thumbnail (0) and rest, and how far it has
+  // faded in.
+  const shownOpen = new Tween(0, { easing: STRIP_EASING });
+  const cardAt = new Tween(1, { easing: STRIP_EASING });
+  const cardShown = new Tween(1, { easing: STRIP_EASING });
+  // Where the card moves from or to: a thumbnail's frame as it was when the
+  // move began (`from`, at `cardAt` = `at`), and, closing, the frame it lands
+  // on as it is now; `thumbnail` is the thumbnail it travels from or to.
+  let morph = $state<{ from: Frame; at: number; landing?: Frame; thumbnail?: HTMLElement }>();
   let lang = $state<Lang>('en');
-  // The current image, which the controls and the status describe: from the
-  // moment a change of image is made, the image it changes to.
+  // The current image, which the controls, the status and the address
+  // describe.
   let index = $state(0);
-  // The drawing's view on the card.
-  let view = $state.raw<View>({ scale: 1, pan: { x: 0, y: 0 } });
+  // The current image's view.
+  let view = $state.raw<View>(rest);
+  // How long the shown view takes to follow a change of it: a card the
+  // lightbox comes back to eases from the view it was left at.
+  let viewDuration = $state(0);
   // The current image's text side is up.
   let showDescription = $state(false);
+  // The way the latest change goes, 1 the next way; the flip turns 1.
+  let towards = $state<1 | -1>(1);
   // A drawing without responsive variants reveals its size once it loads.
   let loadedSize = $state<{ src: string; width: number; height: number }>();
-  // A change of image in progress: until it ends, the card still shows `from`
-  // (text side up if `text`), sliding away or blending into the current image.
-  let change = $state<{ from: number; text: boolean }>();
-  // A variant blending in over the card: `progress` 1 shows `target`. A drag
-  // scrubs it before any change is made; the change then carries it on.
-  let blend = $state<{ target: number; progress: number }>();
-  // A drag on the text turning the card back: the share of the way to the
-  // drawing it has turned.
-  let turnScrub = $state<number>();
-  // The way the card turns: 1 turns it back to its drawing leftwards (and over
-  // to its text rightwards), −1 the other way round.
-  let turnDirection = $state<1 | -1>(1);
-  // Reported by the card while its turn is under way.
-  let cardTurning = $state(false);
-  // How long the card's next turn or blend takes, and the edge arrows' move
-  // with it; 0 moves them at once.
-  let cardDuration = $state(0);
-  // The back's reading position, which starts at the top whenever it turns up.
-  let descriptionScroll = $state(0);
+  let slides = $state<Slide[]>([]);
+  // The current image's slide, where the strip comes to rest.
+  let at = $state(0);
+  // Where the strip is on screen, in slides along it.
+  const strip = new Tween(0, { easing: STRIP_EASING });
+  // A live drag at rest: the strip's offset on screen when it began, and
+  // whether the strip was moving then, when the drag carries it either way.
+  let dragging = $state<{ from: number; strip: boolean }>();
+  let cardDrag = $state<{ offset: number; turns: boolean }>();
   // Set only by the interpreter's `grab` intents, for the cursor.
   let grabbing = $state(false);
-  let swipeOffset = $state(0);
-  let swipeAnimating = $state(false);
-  let lightboxTransitioning = $state(false);
-  let navigating = $state(false);
   let reducedMotion = $state(false);
-  let closing = false;
   let stageWidth = $state(0);
   let stageHeight = $state(0);
   let pixelRatio = $derived(devicePixelRatio.current ?? 1);
   let stage = $state<HTMLDivElement>()!;
-  let drawing = $state<HTMLImageElement>()!;
   let dialog = $state<HTMLDialogElement>()!;
   let closeButton = $state<HTMLButtonElement>();
   let trigger: HTMLButtonElement | undefined;
   let thumbnailButtons: HTMLButtonElement[] = [];
+  let nextSlideId = 0;
   const gestures = new LightboxGestures();
   const imageHistory = new LightboxHistory(images.length, {
     isOpen: () => open,
-    show: (imageIndex) => void showFromHistory(imageIndex),
+    show: showFromHistory,
     close: closeFromHistory,
   });
-  let navigationRun = 0;
-  let stripRun = 0;
   let areas = $derived(
     lightboxAreas({ width: stageWidth, height: stageHeight }),
   );
-  // The image on the card, which the view, the zoom range and the strip
-  // around it belong to.
-  let cardIndex = $derived(change?.from ?? index);
-  let lightboxImageSize = $derived(restImageSize(cardIndex));
+  let lightboxImageSize = $derived(restImageSize(index));
   let originalSrc = $derived(
     responsiveImages[index]?.originalUrl ?? images[index]?.image,
   );
-  // The card's neighbours in the strip. A change of image starts only after
-  // the last has ended, so they are then the current image's neighbours too.
-  let previousIndex = $derived(
-    images.length ? (cardIndex - 1 + images.length) % images.length : 0,
-  );
-  let nextIndex = $derived(
-    images.length ? (cardIndex + 1) % images.length : 0,
-  );
+  let previousIndex = $derived(neighbourOf(index, -1));
+  let nextIndex = $derived(neighbourOf(index, 1));
   let comparisonIndexes = $derived(comparisonSetIndexes(images, index));
-  // The cards and their text do not depend on the view; only the sources do,
-  // as zooming asks for more detail.
-  let current = $derived(cardImage(index, restImageSize(index)));
-  let card = $derived(cardImage(cardIndex, lightboxImageSize));
-  let cardSrc = $derived(drawingUrl(cardIndex));
-  let incoming = $derived(
-    blend && cardImage(blend.target, restImageSize(blend.target)),
-  );
-  let incomingSrc = $derived(blend && drawingUrl(blend.target));
+  // What an image shows on its card does not depend on the view; only its
+  // source does, as zooming asks for more detail.
+  let current = $derived(cardImage(index));
   let flipped = $derived(showDescription && hasBack(current));
-  // The card's text side takes input, and is up at the end of its turn.
-  let cardFlipped = $derived(change ? change.text : flipped);
-  // The current image's side, 1 text up and 0 drawing up, as far as a drag on
-  // the text has turned it back.
-  let sideTurn = $derived(flipped ? 1 - (turnScrub ?? 0) : 0);
-  // The card's turn: during a change of image it keeps the side it left, and
-  // a blend from the text turns it back as it goes.
-  let turn = $derived(
-    change ? (change.text ? 1 - (blend?.progress ?? 0) : 0) : sideTurn,
-  );
+  let live = $derived(slides.find((slide) => slide.position === at));
+  let variants = $derived({
+    previous: isVariant(previousIndex) ? previousIndex : undefined,
+    next: isVariant(nextIndex) ? nextIndex : undefined,
+  });
   let phone = $derived(stageWidth <= PHONE_WIDTH);
+  // On a phone the edge arrows make way for the text as it shows on screen:
+  // each card's turn, as much as the card is on screen.
+  let arrowsAside = $derived(
+    phone
+      ? slides.reduce(
+          (aside, slide) =>
+            aside + (slide.turn ?? 0) * Math.max(0, 1 - Math.abs(slide.position - strip.current)),
+          0,
+        )
+      : 0,
+  );
+  // The card is carried by the strip or by the lightbox opening.
+  let carried = $derived(strip.current !== strip.target || cardAt.current !== 1);
+  // Closing, the frame the card is in goes on from the one it left towards
+  // the one it lands on, so neither a change of thumbnail nor the page
+  // scrolling under it makes it jump.
+  let frame = $derived(
+    morph &&
+      (morph.landing && morph.at > 0
+        ? betweenFrames(morph.landing, morph.from, Math.min(1, cardAt.current / morph.at))
+        : morph.from),
+  );
+  let opened = $derived(
+    frame && cardAt.current < 1 && lightboxImageSize
+      ? morphFrame(
+          frame,
+          lightboxImageSize,
+          { width: stageWidth, height: stageHeight },
+          cardAt.current,
+          frame.hover,
+        )
+      : undefined,
+  );
   let columnLimit = $derived(textColumnLimit(stageWidth, areas.band));
   let setOptions = $derived(
     (comparisonIndexes.length
@@ -168,15 +208,52 @@
     min: lightboxImageSize ? zoomFloor(lightboxImageSize, areas.safe) : 1,
     max: maximumScale(),
   });
-  let slideTransition = $derived(
-    swipeAnimating
-      ? `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`
-      : 'none',
-  );
   $effect(() => {
-    if (!reducedMotion) return;
-    swipeAnimating = false;
-    swipeOffset = 0;
+    if (reducedMotion) untrack(() => strip.set(at, { duration: 0 }));
+  });
+  // At rest the strip holds only the current image and its neighbours.
+  $effect(() => {
+    if (strip.current !== strip.target || dragging) return;
+    untrack(() => {
+      if (live) slides = withNeighbours([live], at, live.image);
+    });
+  });
+  // Shown closed, the lightbox leaves the page.
+  $effect(() => {
+    const settled =
+      shownOpen.current === 0 &&
+      cardAt.current === cardAt.target &&
+      cardShown.current === cardShown.target;
+    if (settled && !open) untrack(leave);
+  });
+  // Opening, the card moves to rest once its drawing has loaded.
+  $effect(() => {
+    if (open && live?.ready && cardAt.target !== 1) untrack(() => moveCard(cardAt, 1));
+  });
+  // The thumbnail is the card while the card travels from or to it; it stays
+  // focusable, as closing gives it focus at once.
+  $effect(() => {
+    const thumbnail = morph?.thumbnail;
+    if (!thumbnail || cardAt.current === cardAt.target) return;
+    thumbnail.style.opacity = '0';
+    return () => {
+      thumbnail.style.opacity = '';
+    };
+  });
+  // Closing into a thumbnail, the card lands where the thumbnail is as the
+  // page scrolls or resizes, or fades where it is once the thumbnail is out
+  // of view.
+  let landingOn = $derived(!open && morph?.landing ? morph.thumbnail : undefined);
+  $effect(() => {
+    const thumbnail = landingOn;
+    if (!thumbnail) return;
+    const follow = () => untrack(() => closeInto(thumbnail));
+    const stops = ['scroll', 'resize'].map((type) =>
+      on(window, type, follow, { passive: true }),
+    );
+    return () => {
+      for (const stop of stops) stop();
+    };
   });
   // A resize, a rotation or another image keeps the current view within its
   // new limits.
@@ -186,10 +263,10 @@
     const bounds = areas;
     untrack(() => {
       const scale = clampScale(view.scale, range);
-      view = {
-        scale,
-        pan: restImage ? clampPan(view.pan, scale, restImage, bounds) : view.pan,
-      };
+      const pan = restImage ? clampPan(view.pan, scale, restImage, bounds) : view.pan;
+      if (scale !== view.scale || pan.x !== view.pan.x || pan.y !== view.pan.y) {
+        setView({ scale, pan });
+      }
     });
   });
   onMount(() => {
@@ -230,30 +307,39 @@
     };
   });
 
-  function resetView() {
-    view = { scale: 1, pan: { x: 0, y: 0 } };
-    endDrag();
+  function setView(next: View, duration = 0) {
+    view = next;
+    viewDuration = duration;
   }
 
-  /**
-   * Ends any live drag, since a change of image takes over from it, and
-   * returns a strip or a turn the drag had moved.
-   */
+  /** Lets go of a drag: the strip and the card go on from where it left them. */
+  function dropDrag() {
+    dragging = undefined;
+    cardDrag = undefined;
+  }
+
+  /** Ends the live gesture too, since a change made another way takes over from it. */
   function endDrag() {
     apply(gestures.end());
-    turnScrub = undefined;
-    void snapBack();
+    dropDrag();
   }
 
   function previewUrl(imageIndex: number) {
     return imageUrl(imageIndex, 1);
   }
 
-  function imageUrl(imageIndex: number, imageScale = view.scale) {
+  function imageUrl(imageIndex: number, imageScale: number) {
     const responsiveImage = responsiveImages[imageIndex];
     return responsiveImage
       ? lightboxImageUrl(responsiveImage, areas.rest, imageScale, pixelRatio)
       : images[imageIndex]?.image;
+  }
+
+  /** A tiled drawing shows its preview beneath the tiles. */
+  function drawingUrl(imageIndex: number, at: View) {
+    return responsiveImages[imageIndex]?.deepZoom
+      ? previewUrl(imageIndex)
+      : imageUrl(imageIndex, at.scale);
   }
 
   function restImageSize(imageIndex: number) {
@@ -265,13 +351,13 @@
       : undefined;
   }
 
-  function cardImage(imageIndex: number, size: Size | undefined): CardImage {
+  function cardImage(imageIndex: number): CardImage {
     return {
       index: imageIndex,
       tiles: responsiveImages[imageIndex]?.deepZoom?.url,
       width: responsiveImages[imageIndex]?.source.width,
       height: responsiveImages[imageIndex]?.source.height,
-      size,
+      size: restImageSize(imageIndex),
       title: imageText(images[imageIndex], 'title', lang),
       description: imageText(images[imageIndex], 'description', lang),
     };
@@ -284,255 +370,285 @@
     );
   }
 
-  function slideTransform(position: number) {
-    return `translate3d(${swipeOffset + position * stageWidth}px, 0, 0)`;
+  function neighbourOf(imageIndex: number, direction: 1 | -1) {
+    return images.length
+      ? (imageIndex + direction + images.length) % images.length
+      : 0;
   }
 
-  async function show(i: number, source: HTMLButtonElement) {
+  /**
+   * Opens on image `i` at once; the card moves from its thumbnail `source`
+   * once its drawing has loaded.
+   */
+  function show(i: number, source: HTMLButtonElement) {
     trigger = source;
     source.blur();
     imageHistory.open(i);
-    if (reducedMotion || !document.startViewTransition) {
-      await showFromHistory(i);
-      return;
-    }
-    lightboxTransitioning = true;
-    try {
-      await morphOpen(source, async () => {
-        await showFromHistory(i);
-        return drawing;
-      });
-    } catch {
-      if (!open) await showFromHistory(i);
-    } finally {
-      lightboxTransitioning = false;
-    }
+    enter(i, source);
+    void showDialog();
   }
-  async function showFromHistory(i: number) {
-    cancelNavigation();
-    closing = false;
-    index = i;
-    showDescription = false;
-    cardDuration = 0;
-    descriptionScroll = 0;
-    resetView();
-    stageWidth = innerWidth.current ?? 0;
-    stageHeight = innerHeight.current ?? 0;
+
+  function showFromHistory(i: number) {
+    enter(i);
+    void showDialog();
+  }
+
+  /**
+   * Makes image `i` the open lightbox's current image, as it is at rest, and
+   * brings the lightbox in: from `source` the card moves from it, where it
+   * can, and otherwise fades in; opened from history it shows at once.
+   * Opened again while it closes, it goes on from where it is: on the same
+   * image it keeps its strip, and on another it changes to it.
+   */
+  function enter(i: number, source?: HTMLElement) {
+    endDrag();
+    const again = mounted;
     open = true;
+    towards = 1;
+    showDescription = false;
+    if (again && live?.image === i) {
+      setView(rest, reducedMotion ? 0 : slideDuration);
+      moveStrip();
+    } else {
+      setView(rest);
+      stageWidth = innerWidth.current ?? 0;
+      stageHeight = innerHeight.current ?? 0;
+      at = 0;
+      strip.set(0, { duration: 0 });
+      slides = withNeighbours([newSlide(0, i)], 0, i);
+    }
+    index = i;
+    if (again) {
+      // The card goes back to rest from where it is once its drawing has
+      // loaded, still leaving the thumbnail it was going into.
+      morph = frame && { from: frame, at: cardAt.current, thumbnail: morph?.thumbnail };
+      stop(cardAt);
+    } else {
+      const from = source && !reducedMotion ? thumbnailFrame(source) : undefined;
+      morph = from && { from, at: 0, thumbnail: source };
+      cardAt.set(from ? 0 : 1, { duration: 0 });
+      cardShown.set(from ? 1 : 0, { duration: 0 });
+    }
+    const duration = again || source ? undefined : 0;
+    moveCard(cardShown, 1, duration);
+    moveCard(shownOpen, 1, duration);
+  }
+
+  /** Makes the dialog modal at once, then focuses its close control. */
+  async function showDialog() {
+    mounted = true;
+    if (!dialog.open) dialog.showModal();
     await tick();
-    dialog.showModal();
     stageWidth = stage.clientWidth;
     stageHeight = stage.clientHeight;
-    await tick();
     closeButton?.focus();
   }
-  function requestClose() {
-    if (!open || closing) return;
-    closing = true;
-    imageHistory.close();
+
+  /** Moves one of the opening's numbers on from where it is to `to`. */
+  function moveCard(number: Tween<number>, to: number, duration?: number) {
+    moveOn(number, to, {
+      duration:
+        duration ??
+        (reducedMotion ? 0 : (from, next) => settleDuration(openDuration, from, next)),
+    });
   }
-  async function closeFromHistory() {
+
+  /**
+   * A thumbnail's frame and its image's hover scale, for the card to move
+   * from or to: only while the thumbnail is fully in view and clear of the
+   * sticky header, as the card would otherwise pass over or under the header.
+   */
+  function thumbnailFrame(thumbnail: HTMLElement): Frame | undefined {
+    const { x, y, width, height } = thumbnail.getBoundingClientRect();
+    const image = thumbnail.querySelector('img');
+    const header = document.querySelector('body > header')?.getBoundingClientRect();
+    const underHeader =
+      header &&
+      x < header.right &&
+      x + width > header.left &&
+      y < header.bottom &&
+      y + height > header.top;
+    // Within a pixel, as a thumbnail scrolled flush with an edge may lie a
+    // fraction past it.
+    const inView =
+      width > 0 &&
+      height > 0 &&
+      x > -1 &&
+      y > -1 &&
+      x + width < innerWidth.current! + 1 &&
+      y + height < innerHeight.current! + 1;
+    if (!inView || underHeader) return undefined;
+    return {
+      x,
+      y,
+      width,
+      height,
+      hover: image ? image.getBoundingClientRect().width / thumbnail.clientWidth : 1,
+    };
+  }
+
+  function betweenFrames(from: Frame, to: Frame, share: number): Frame {
+    const at = (key: keyof Frame) => from[key] + (to[key] - from[key]) * share;
+    return { x: at('x'), y: at('y'), width: at('width'), height: at('height'), hover: at('hover') };
+  }
+
+  function requestClose() {
+    if (open) imageHistory.close();
+  }
+
+  /**
+   * Closes at once: the page behind takes input and focus from now, while
+   * the lightbox, no longer modal, fades out and its card goes into the
+   * current image's thumbnail, or fades where it is.
+   */
+  function closeFromHistory() {
     if (!open) return;
-    const thumbnail = thumbnailButtons[cardIndex];
-    if (reducedMotion || !thumbnail || !drawing || !document.startViewTransition) {
-      await hideLightbox();
+    endDrag();
+    open = false;
+    if (mounted) dialog.close();
+    trigger?.focus({ preventScroll: true });
+    moveCard(shownOpen, 0);
+    const thumbnail = thumbnailButtons[index];
+    if (thumbnail && view.scale === 1 && !flipped && cardShown.current === 1 && !reducedMotion) {
+      closeInto(thumbnail);
+    } else {
+      fadeCard();
+    }
+  }
+
+  /**
+   * The card goes into `thumbnail` as it is on screen, from where it is; a
+   * thumbnail out of view fades it where it is instead. The frame it goes
+   * from is the one it is in now, so the move goes on without a jump.
+   */
+  function closeInto(thumbnail: HTMLElement) {
+    const landing = thumbnailFrame(thumbnail);
+    if (!landing) {
+      fadeCard();
       return;
     }
-    lightboxTransitioning = true;
-    try {
-      await morphClose(thumbnail, drawing, view.scale === 1 && !cardFlipped, hideLightbox);
-    } catch {
-      await hideLightbox();
-    } finally {
-      lightboxTransitioning = false;
-    }
+    const moving = morph?.landing && morph.thumbnail === thumbnail;
+    morph = moving
+      ? { ...morph!, landing }
+      : { from: frame ?? landing, at: cardAt.current, landing, thumbnail };
+    if (!moving) moveCard(cardAt, 0);
   }
-  async function hideLightbox() {
-    cancelNavigation();
-    closing = false;
-    dialog.close();
-    open = false;
-    resetView();
-    await tick();
-    trigger?.focus({ preventScroll: true });
+
+  /** The card fades where it is. */
+  function fadeCard() {
+    if (morph) morph = { from: frame!, at: cardAt.current };
+    stop(cardAt);
+    moveCard(cardShown, 0);
+  }
+
+  function leave() {
+    mounted = false;
+    morph = undefined;
     trigger = undefined;
   }
+
   function isVariant(target: number) {
     return target !== index && comparisonIndexes.includes(target);
   }
 
   /**
-   * Changes to image `target`: a variant of this card blends in, another card
-   * slides in from `direction`, 1 the next way and −1 the previous.
+   * Changes to image `target` at once: a variant of this card blends in, and
+   * another card slides in travelling `direction`, 1 the next way.
    */
-  async function changeTo(target: number, direction: 1 | -1) {
-    if (closing || navigating || images.length < 2 || target === index) {
-      if (!navigating) void settleDrag();
+  function changeTo(target: number, direction: 1 | -1) {
+    if (images.length < 2 || target === index) {
+      endDrag();
+      moveStrip();
       return;
     }
-    endDrag();
-    if (isVariant(target)) await blendTo(target, direction);
-    else await slideTo(target, direction);
-  }
-
-  async function slideTo(target: number, direction: 1 | -1) {
-    const run = ++navigationRun;
-    navigating = true;
-    blend = undefined;
-    showImage(target);
-    if (!reducedMotion) {
-      stripRun += 1;
-      swipeAnimating = true;
-      swipeOffset = -direction * (stage?.clientWidth || window.innerWidth);
-      await waitFor(slideDuration);
-      if (run !== navigationRun || !open) return;
-    }
-    swipeAnimating = false;
-    swipeOffset = 0;
-    // The card cuts to the image that has slid in, as it is.
-    cardDuration = 0;
-    endChange();
-    resetView();
-    navigating = false;
-  }
-
-  /**
-   * Blends into `target` at the current view, continuing a scrub towards it;
-   * from the text side the card turns back the way `direction` goes.
-   */
-  async function blendTo(target: number, direction: 1 | -1) {
-    const run = ++navigationRun;
-    navigating = true;
-    const fromText = flipped;
-    turnTowards(direction);
-    showImage(target);
-    if (!reducedMotion) {
-      // A blend, scrubbed or not, completes only onto a decoded variant.
-      await preloadBlend(target);
-      if (run !== navigationRun || !open) return;
-      const scrubbed = blend?.target === target ? blend.progress : 0;
-      cardDuration = settleDuration(
-        fromText ? flipDuration : blendDuration,
-        scrubbed,
-        1,
-      );
-      blend = { target, progress: 1 };
-      await waitFor(cardDuration);
-      if (run !== navigationRun || !open) return;
-    }
-    endChange();
-    if (blend) {
-      // The blended layer stays until the card's own image can replace it.
-      await tick();
-      await drawing.decode().catch(() => {});
-      if (run !== navigationRun) return;
-      blend = undefined;
-    }
-    navigating = false;
-  }
-
-  /** Returns a scrubbed blend to the card's image. */
-  async function cancelBlend() {
-    const scrubbed = blend;
-    if (!scrubbed || navigating) return;
-    const run = ++navigationRun;
-    navigating = true;
-    cardDuration = settleDuration(blendDuration, scrubbed.progress, 0);
-    blend = { ...scrubbed, progress: 0 };
-    await waitFor(cardDuration);
-    if (run !== navigationRun) return;
-    blend = undefined;
-    navigating = false;
-  }
-
-  async function preloadBlend(target: number) {
-    const preload = new Image();
-    preload.src = drawingUrl(target);
-    try {
-      await preload.decode();
-    } catch {}
-  }
-
-  /** A tiled drawing shows its preview beneath the tiles. */
-  function drawingUrl(imageIndex: number) {
-    return responsiveImages[imageIndex]?.deepZoom
-      ? previewUrl(imageIndex)
-      : imageUrl(imageIndex);
-  }
-
-  /**
-   * Makes `target` the current image at once, drawing side up, while the card
-   * goes on showing the image it is leaving until the change ends.
-   */
-  function showImage(target: number) {
-    change = { from: index, text: flipped };
+    const variant = isVariant(target);
+    if (variant) endDrag();
+    else slideTo(target, direction);
+    towards = direction;
     index = target;
-    // Leaving the text, the edge arrows come back in the turn's timing; the
-    // card itself changes when the change ends.
-    cardDuration = flipped ? turnDuration() : 0;
     showDescription = false;
+    if (variant) {
+      live!.image = target;
+      moveStrip();
+    } else {
+      setView(rest, reducedMotion ? 0 : slideDuration);
+    }
+    imageHistory.change(target);
   }
 
-  /** The card shows the current image, with its text at the top, and the address follows. */
-  function endChange() {
-    change = undefined;
-    descriptionScroll = 0;
-    imageHistory.change(index);
+  /**
+   * Moves the strip on from where it is to `target`'s slide. The card it
+   * leaves keeps what it showed while it is on screen; one it comes back to
+   * turns and zooms from there to how the current image is shown.
+   */
+  function slideTo(target: number, direction: 1 | -1) {
+    const onScreen = strip.current;
+    endDrag();
+    const position = slidePosition(at, onScreen, direction, target, imageAt);
+    if (live) live.left = { textUp: flipped, view, towards };
+    const arriving =
+      slides.find((slide) => slide.position === position && slide.image === target) ??
+      newSlide(position, target);
+    arriving.left = undefined;
+    const shown = slides.filter(
+      (slide) =>
+        slide !== arriving &&
+        slide.position !== position &&
+        Math.abs(slide.position - onScreen) < 1,
+    );
+    slides = withNeighbours([...shown, arriving], position, target);
+    at = position;
+    moveStrip();
+  }
+
+  /** Eases the strip on from where it is to rest at the current image's slide. */
+  function moveStrip() {
+    moveOn(strip, at, {
+      duration: reducedMotion ? 0 : (from, to) => settleDuration(slideDuration, from, to),
+    });
+  }
+
+  function newSlide(position: number, image: number): Slide {
+    return { id: nextSlideId++, position, image };
+  }
+
+  /**
+   * `kept` with the neighbours of `image`'s slide at `position` wherever none
+   * is kept, in the order the slides were made, so no slide is moved in the
+   * page, which would lose a card's reading position.
+   */
+  function withNeighbours(kept: Slide[], position: number, image: number) {
+    if (images.length < 2) return kept;
+    const neighbours = ([-1, 1] as const).flatMap((side) => {
+      const place = position + side;
+      if (kept.some((slide) => slide.position === place)) return [];
+      const neighbour = neighbourOf(image, side);
+      return [
+        slides.find(
+          (slide) =>
+            slide.position === place && slide.image === neighbour && !slide.left,
+        ) ?? newSlide(place, neighbour),
+      ];
+    });
+    return [...kept, ...neighbours].sort((first, second) => first.id - second.id);
+  }
+
+  function imageAt(position: number) {
+    return slides.find((slide) => slide.position === position)?.image;
   }
 
   function toggleDescription() {
-    cardDuration = turnDuration();
-    turnTowards(1);
-    if (!flipped) descriptionScroll = 0;
+    endDrag();
+    moveStrip();
+    towards = 1;
     showDescription = !flipped;
   }
 
-  function turnDuration() {
-    return reducedMotion ? reducedFlipDuration : flipDuration;
-  }
-
-  /**
-   * Sets the way the card turns, unless a turn is under way: reversed or sent
-   * elsewhere, it goes on the way it was turning, so the card never jumps to
-   * its mirror image.
-   */
-  function turnTowards(direction: 1 | -1) {
-    if (!cardTurning) turnDirection = direction;
-  }
-
-  /** A drag on the text turns the card back by the share of the stage width it has moved. */
-  function turnDrag(deltaX: number) {
-    if (reducedMotion) return;
-    cardDuration = 0;
-    // The drag takes the turn over at once, so it turns the way the finger is
-    // from where it went down, changing only as the finger passes that point,
-    // where the card is text side up.
-    if (deltaX !== 0) turnDirection = deltaX > 0 ? -1 : 1;
-    turnScrub = scrubProgress(deltaX, stageWidth);
-  }
-
-  /** Completes a turn to the drawing the way `direction` goes, continuing a drag that turned it. */
-  function turnBack(direction: 1 | -1) {
-    cardDuration = reducedMotion
-      ? reducedFlipDuration
-      : settleDuration(flipDuration, turnScrub ?? 0, 1);
-    turnTowards(direction);
-    turnScrub = undefined;
-    showDescription = false;
-  }
-
-  /** Returns a drag's turn to the text. */
-  function keepText() {
-    if (turnScrub === undefined) return;
-    cardDuration = settleDuration(flipDuration, turnScrub, 0);
-    turnScrub = undefined;
-  }
-
   function next() {
-    void changeTo(nextIndex, 1);
+    changeTo(nextIndex, 1);
   }
   function prev() {
-    void changeTo(previousIndex, -1);
+    changeTo(previousIndex, -1);
   }
   function onkeydown(e: KeyboardEvent) {
     if (!open) return;
@@ -569,48 +685,34 @@
     }
   }
 
-  function cancelNavigation() {
-    navigationRun += 1;
-    change = undefined;
-    blend = undefined;
-    navigating = false;
-    swipeAnimating = false;
-    swipeOffset = 0;
-  }
-
-  /** Eases the strip back to rest, unless a slide takes the strip over meanwhile. */
-  async function snapBack() {
-    if (swipeOffset === 0) return;
-    const run = ++stripRun;
-    swipeAnimating = !reducedMotion;
-    swipeOffset = 0;
-    if (swipeAnimating) await waitFor(slideDuration);
-    if (run === stripRun) swipeAnimating = false;
-  }
-
-  function waitFor(duration: number) {
-    return new Promise<void>((resolve) => setTimeout(resolve, duration));
-  }
-
   /**
-   * A drag at rest scrubs the blend towards a variant, or moves the strip
-   * towards another card.
+   * A drag at rest scrubs the card's blend towards a variant, or moves the
+   * strip towards another card; one that begins while the strip moves takes
+   * the strip from where it is, whichever way it goes.
    */
-  function dragAtRest(deltaX: number) {
-    swipeAnimating = false;
-    const target = deltaX < 0 ? nextIndex : previousIndex;
-    if (deltaX !== 0 && !reducedMotion && isVariant(target)) {
-      swipeOffset = 0;
-      cardDuration = 0;
-      blend = { target, progress: scrubProgress(deltaX, stageWidth) };
-    } else {
-      blend = undefined;
-      swipeOffset = displayedSwipeOffset(deltaX, reducedMotion);
+  function dragAtRest(offset: number) {
+    dragging ??= (() => {
+      const from = (at - strip.current) * stageWidth;
+      return { from, strip: Math.abs(from) >= 0.5 };
+    })();
+    const shift = (pixels: number) =>
+      strip.set(at - displayedSwipeOffset(pixels, reducedMotion) / stageWidth, {
+        duration: 0,
+      });
+    if (dragging.strip) {
+      shift(dragging.from + offset);
+      return;
     }
+    const variant =
+      offset < 0 ? variants.next : offset > 0 ? variants.previous : undefined;
+    shift(variant === undefined ? offset : 0);
+    cardDrag = { offset, turns: false };
   }
 
-  function settleDrag() {
-    return blend ? cancelBlend() : snapBack();
+  /** A drag ends without a change: the strip and the card return to rest. */
+  function settle() {
+    dropDrag();
+    moveStrip();
   }
 
   function constrainedPan(nextPan: Point, nextScale = view.scale) {
@@ -620,6 +722,7 @@
 
   function renderedImageSize() {
     if (lightboxImageSize) return lightboxImageSize;
+    const drawing = live?.drawing;
     if (drawing) return { width: drawing.clientWidth, height: drawing.clientHeight };
   }
 
@@ -636,16 +739,16 @@
 
   /** A comparison set shares one zoom limit, so each variant can take the card's view. */
   function maximumScale() {
-    const set = comparisonSetIndexes(images, cardIndex);
-    return sharedMaximumScale((set.length ? set : [cardIndex]).map(maximumScaleFor));
+    const set = comparisonSetIndexes(images, index);
+    return sharedMaximumScale((set.length ? set : [index]).map(maximumScaleFor));
   }
 
   /** Scales to `scale` while keeping the image point under `point` in place. */
   function zoomTo(scale: number, point: Point) {
-    view = {
+    setView({
       scale,
       pan: constrainedPan(panForZoom(view.pan, view.scale, scale, point), scale),
-    };
+    });
   }
 
   /** A client point relative to the stage centre. */
@@ -661,12 +764,8 @@
     return Array.from(touches, stagePoint);
   }
 
-  function busy() {
-    return lightboxTransitioning || navigating;
-  }
-
   function gestureContext(): GestureContext {
-    return { view, range: zoomRange, flipped, busy: busy() };
+    return { view, range: zoomRange, flipped };
   }
 
   /** Carries out the interpreter's intents for `event`, the input that raised them. */
@@ -680,25 +779,22 @@
           stage.setPointerCapture(event.pointerId);
         }
       } else if (intent.type === 'view') {
-        view = { scale: intent.scale, pan: constrainedPan(intent.pan, intent.scale) };
+        setView({ scale: intent.scale, pan: constrainedPan(intent.pan, intent.scale) });
       } else if (intent.type === 'zoom') {
         zoomTo(intent.scale, intent.point);
       } else if (intent.type === 'drag') {
         dragAtRest(intent.offset);
       } else if (intent.type === 'commit') {
-        void changeTo(intent.direction > 0 ? nextIndex : previousIndex, intent.direction);
+        changeTo(intent.direction > 0 ? nextIndex : previousIndex, intent.direction);
       } else if (intent.type === 'settle') {
-        void settleDrag();
+        settle();
       } else if (intent.type === 'turn') {
-        turnDrag(intent.offset);
+        cardDrag = { offset: intent.offset, turns: true };
       } else if (intent.type === 'turnBack') {
-        turnBack(intent.direction);
-      } else if (intent.type === 'keepText') {
-        keepText();
+        dropDrag();
+        showDescription = false;
       } else {
-        swipeAnimating = false;
-        swipeOffset = 0;
-        blend = undefined;
+        dropDrag();
       }
     }
   }
@@ -753,7 +849,6 @@
     apply(gestures.touchStart(stagePoints(e.touches), selectingText(), gestureContext()), e);
   }
 
-  /** Attached without the `passive` Svelte gives touch handlers, so a claimed move is cancelled. */
   function ontouchmove(e: TouchEvent) {
     apply(gestures.touchMove(stagePoints(e.touches), selectingText(), gestureContext()), e);
   }
@@ -770,15 +865,18 @@
     );
   }
 
-  function onImageLoad() {
-    if (!responsiveImages[cardIndex]) {
+  function onImageLoad(drawing: HTMLImageElement) {
+    if (!responsiveImages[index]) {
       loadedSize = {
-        src: images[cardIndex].image,
+        src: images[index].image,
         width: drawing.naturalWidth,
         height: drawing.naturalHeight,
       };
     }
-    view = { scale: view.scale, pan: constrainedPan(view.pan) };
+    const pan = constrainedPan(view.pan);
+    if (pan.x !== view.pan.x || pan.y !== view.pan.y) {
+      setView({ scale: view.scale, pan });
+    }
   }
 
   function selectingText() {
@@ -789,28 +887,40 @@
         stage.contains(selection.anchorNode),
     );
   }
+
+  // Svelte attaches touch handlers as passive, which ignores their
+  // preventDefault.
+  function cancellable(handler: (event: TouchEvent) => void) {
+    return (element: Element) =>
+      on(element, 'touchmove', handler, { passive: false });
+  }
 </script>
 
 <svelte:window {onkeydown} onpopstate={() => imageHistory.popstate()} />
 
-{#if open}
-  <dialog
-    bind:this={dialog}
-    data-gallery-lightbox
-    class="lightbox fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 bg-black/90 p-0 text-white"
-    style:--lightbox-gap={`${areas.gap}px`}
-    style:--lightbox-band={`${areas.band}px`}
-    style:--lightbox-control={`${CONTROL_SIZE}px`}
-    style:--lightbox-card-duration={`${cardDuration}ms`}
-    aria-label={ui[lang].imageViewer}
-    aria-busy={lightboxTransitioning}
-    oncancel={(event) => {
-      event.preventDefault();
-      requestClose();
-    }}
-    onwheel={preventPageScroll}
-    ontouchmove={preventPageScroll}
-  >
+<!-- Always in the page, so it becomes modal in the click itself; no longer
+     modal while it fades out after closing, so the page behind takes input,
+     but still drawn over it. -->
+<dialog
+  bind:this={dialog}
+  data-gallery-lightbox
+  class="lightbox fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 p-0 text-white"
+  class:lightbox-leaving={mounted && !open}
+  style:--lightbox-gap={`${areas.gap}px`}
+  style:--lightbox-band={`${areas.band}px`}
+  style:--lightbox-control={`${CONTROL_SIZE}px`}
+  style:--lightbox-open={shownOpen.current}
+  aria-label={ui[lang].imageViewer}
+  aria-hidden={open ? undefined : 'true'}
+  inert={!open}
+  oncancel={(event) => {
+    event.preventDefault();
+    requestClose();
+  }}
+  onwheel={preventPageScroll}
+  {@attach cancellable(preventPageScroll)}
+>
+  {#if mounted}
     <!-- Isolated, so no layer inside can paint over the controls that follow. -->
     <div
       bind:this={stage}
@@ -827,108 +937,135 @@
       {onpointerup}
       {onpointercancel}
       {ontouchstart}
-      {@attach (element) => on(element, 'touchmove', ontouchmove, { passive: false })}
+      {@attach cancellable(ontouchmove)}
       {ontouchend}
       ontouchcancel={(e) => apply(gestures.touchCancel(), e)}
     >
-      {#if images.length > 1}
-        {@render neighbour('lightbox-slide-previous', -1, previousIndex)}
-      {/if}
+      <!-- Opening, the card moves from its thumbnail's frame, cropped to it,
+           or, where it cannot, fades in. -->
       <div
-        class="lightbox-slide-current absolute inset-0 overflow-hidden"
-        style:transform={slideTransform(0)}
-        style:transition={slideTransition}
+        class="absolute inset-0"
+        style:transform={opened &&
+          `translate(${opened.x}px, ${opened.y}px) scale(${opened.scale})`}
+        style:clip-path={opened &&
+          `inset(${opened.clip.top}px ${opened.clip.right}px ${opened.clip.bottom}px ${opened.clip.left}px)`}
+        style:opacity={cardShown.current < 1 ? cardShown.current : undefined}
       >
-        <LightboxCard
-          image={card}
-          imageSrc={cardSrc}
-          {incoming}
-          {incomingSrc}
-          blend={blend?.progress ?? 0}
-          flipped={cardFlipped}
-          {turn}
-          {turnDirection}
-          {view}
-          restArea={areas.rest}
-          {columnLimit}
-          {lang}
-          {tiledCanvas}
-          bind:scrollTop={descriptionScroll}
-          bind:drawing
-          bind:turning={cardTurning}
-          onload={onImageLoad}
-        />
+        <!-- One translation moves every slide, so they stay edge to edge. -->
+        <div
+          class="lightbox-strip absolute inset-0"
+          style:transform={`translate3d(${-strip.current * 100}%, 0, 0)`}
+        >
+          {#each slides as slide (slide.id)}
+            {@const isCurrent = slide.position === at}
+            <div
+              class="lightbox-slide absolute inset-0 overflow-hidden"
+              class:lightbox-slide-current={isCurrent}
+              class:lightbox-slide-previous={!isCurrent && slide.position === at - 1}
+              class:lightbox-slide-next={!isCurrent && slide.position === at + 1}
+              style:transform={`translate3d(${slide.position * 100}%, 0, 0)`}
+              aria-hidden={isCurrent ? undefined : 'true'}
+              inert={!isCurrent}
+            >
+              {#if isCurrent || slide.left}
+                {@const left = isCurrent ? undefined : slide.left}
+                <LightboxCard
+                  image={slide.image}
+                  describe={cardImage}
+                  source={drawingUrl}
+                  towards={left?.towards ?? towards}
+                  textUp={left ? left.textUp : flipped}
+                  variants={isCurrent ? variants : noVariants}
+                  drag={isCurrent ? cardDrag : undefined}
+                  view={left?.view ?? view}
+                  viewDuration={isCurrent ? viewDuration : 0}
+                  moving={carried}
+                  restArea={areas.rest}
+                  {columnLimit}
+                  {lang}
+                  {reducedMotion}
+                  {tiledCanvas}
+                  bind:drawing={slide.drawing}
+                  bind:turn={slide.turn}
+                  bind:ready={slide.ready}
+                  onload={isCurrent ? onImageLoad : undefined}
+                />
+              {:else}
+                {@const size = restImageSize(slide.image)}
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <img
+                    src={previewUrl(slide.image)}
+                    width={responsiveImages[slide.image]?.source.width}
+                    height={responsiveImages[slide.image]?.source.height}
+                    alt=""
+                    draggable="false"
+                    decoding="async"
+                    style:width={size ? `${size.width}px` : undefined}
+                    style:height={size ? `${size.height}px` : undefined}
+                    class="h-auto max-h-full w-auto max-w-full object-contain select-none"
+                  />
+                </div>
+              {/if}
+            </div>
+          {/each}
+        </div>
       </div>
-      {#if images.length > 1}
-        {@render neighbour('lightbox-slide-next', 1, nextIndex)}
-      {/if}
     </div>
 
-    <LightboxControls
-      {lang}
-      {setOptions}
-      currentIndex={index}
-      count={images.length}
-      {originalSrc}
-      hasBack={hasBack(current)}
-      {flipped}
-      arrowsAside={phone ? sideTurn : 0}
-      {reducedMotion}
-      bind:closeButton
-      onselect={(setIndex) => void changeTo(setIndex, setIndex > index ? 1 : -1)}
-      onprevious={prev}
-      onnext={next}
-      onclose={requestClose}
-      ontoggle={toggleDescription}
-    />
+    <div class="lightbox-controls absolute inset-0" style:opacity={shownOpen.current}>
+      <LightboxControls
+        {lang}
+        {setOptions}
+        currentIndex={index}
+        count={images.length}
+        {originalSrc}
+        hasBack={hasBack(current)}
+        {flipped}
+        {arrowsAside}
+        {reducedMotion}
+        bind:closeButton
+        onselect={(setIndex) => changeTo(setIndex, setIndex > index ? 1 : -1)}
+        onprevious={prev}
+        onnext={next}
+        onclose={requestClose}
+        ontoggle={toggleDescription}
+      />
+    </div>
     <p role="status" aria-atomic="true" class="sr-only">
       {index + 1} / {images.length}
     </p>
-  </dialog>
-{/if}
-
-<!-- The previous and next images, beside the card in one sliding strip. -->
-{#snippet neighbour(className: string, position: number, imageIndex: number)}
-  {@const size = restImageSize(imageIndex)}
-  <div
-    class="{className} pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-    style:transform={slideTransform(position)}
-    style:transition={slideTransition}
-    aria-hidden="true"
-  >
-    <img
-      src={previewUrl(imageIndex)}
-      width={responsiveImages[imageIndex]?.source.width}
-      height={responsiveImages[imageIndex]?.source.height}
-      alt=""
-      draggable="false"
-      decoding="async"
-      style:width={size ? `${size.width}px` : undefined}
-      style:height={size ? `${size.height}px` : undefined}
-      class="h-auto max-h-full w-auto max-w-full object-contain select-none"
-    />
-  </div>
-{/snippet}
-
-{#snippet tiledCanvas(url: string)}
-  <!-- Starts once opening has finished, so the canvas never shows beneath the
-       moving image. -->
-  {#if !lightboxTransitioning}
-    <LightboxTiles
-      {url}
-      {view}
-      restImage={lightboxImageSize}
-      stage={{ width: stageWidth, height: stageHeight }}
-    />
   {/if}
+</dialog>
+
+{#snippet tiledCanvas(url: string, restImage: Size | undefined, cardView: View)}
+  <LightboxTiles
+    {url}
+    view={cardView}
+    {restImage}
+    stage={{ width: stageWidth, height: stageHeight }}
+  />
 {/snippet}
 
 <style>
-  /* The card's turns and blends, and the edge arrows stepping aside with
-     them, share one duration and easing, so they stay in step. */
+  /* The backdrop is the dialog's own, so it fades with the opening. */
   .lightbox {
     --color-black: #000;
     --color-white: #fff;
-    --lightbox-card-easing: cubic-bezier(0.45, 0.05, 0.2, 1);
+    background: rgb(0 0 0 / calc(91% * var(--lightbox-open)));
+  }
+
+  .lightbox::backdrop {
+    background: transparent;
+  }
+
+  .lightbox-leaving {
+    display: block;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  /* The controls lie over the stage without taking its input. */
+  .lightbox-controls {
+    pointer-events: none;
   }
 </style>

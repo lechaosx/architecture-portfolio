@@ -14,26 +14,58 @@ function galleryImage(page: Page, position: number) {
   });
 }
 
-async function gotoProject(page: Page) {
-  await page.goto(projectPath);
+async function gotoProject(page: Page, path = projectPath) {
+  await installClock(page);
+  await page.goto(path);
   await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
 }
 
 async function waitForLightbox(page: Page) {
   const dialog = page.getByRole('dialog', { name: 'Image viewer' });
   await expect(dialog).toBeVisible();
-  // The lightbox ignores input until it has finished opening.
-  await expect(dialog).not.toHaveAttribute('aria-busy', 'true');
+  // Once its drawing has loaded, the opening takes less than a second.
+  await page.waitForFunction(() =>
+    document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
+      ?.complete,
+  );
+  await page.clock.runFor(1000);
 }
+
+/** How dark the lightbox's backdrop is, 0.91 fully open. */
+function backdrop(page: Page) {
+  return page.evaluate(() => {
+    const colour = getComputedStyle(document.querySelector('[data-gallery-lightbox]')!).backgroundColor;
+    return Number(/rgba?\([^)]*,\s*([\d.]+)\)$/.exec(colour)?.[1] ?? 1);
+  });
+}
+
+// The page's clock runs every move in the lightbox; installed as a page
+// loads, it can be held and stepped.
+const clocked = new WeakSet<Page>();
+
+async function installClock(page: Page) {
+  if (clocked.has(page)) return;
+  clocked.add(page);
+  await page.clock.install();
+}
+
+/**
+ * Holds the page's clock, so nothing moves until it is stepped or released.
+ * It pauses a little ahead, so call it while nothing moves.
+ */
+async function holdTime(page: Page) {
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 500));
+}
+
 
 /** Rendered width of the current lightbox image relative to its rest (100%) width. */
 async function imageZoom(page: Page) {
-  return page
-    .locator('.lightbox-front > img')
-    .evaluate(
-      (image: HTMLImageElement) =>
-        image.getBoundingClientRect().width / image.offsetWidth,
-    );
+  return page.evaluate(() => {
+    const image = document.querySelector<HTMLImageElement>(
+      '.lightbox-slide-current .lightbox-front > img',
+    )!;
+    return image.getBoundingClientRect().width / image.offsetWidth;
+  });
 }
 
 /** Whether the deep-zoom canvas has drawn anything at a viewport point. */
@@ -55,130 +87,32 @@ async function tilesDrawnAt(page: Page, point: { x: number; y: number }) {
     }, point);
 }
 
-async function sampleBoxes(locator: Locator, frames = 8) {
-  return locator.evaluate(
-    async (element, frameCount) => {
-      const boxes = [];
-      for (let frame = 0; frame < frameCount; frame += 1) {
-        const rect = element.getBoundingClientRect();
-        boxes.push({
-          x: rect.x,
-          y: rect.y,
-          width: rect.width,
-          height: rect.height,
-        });
-        await new Promise(requestAnimationFrame);
-      }
-      return boxes;
-    },
-    frames,
-  );
-}
-
-async function expectLightboxTransition(page: Page, type: string) {
-  await expect
-    .poll(() =>
-      page.evaluate((transitionType) =>
-        document.documentElement.matches(
-          `:active-view-transition-type(${transitionType})`,
-        ),
-      type),
-    )
-    .toBe(true);
-}
-
 /**
- * Pauses the next view transition as soon as it starts animating, so the test
- * can act while it runs however slowly the test drives the page. Returns the
- * function that lets it finish.
+ * What shows of the current card's drawing: its box as drawn, less what the
+ * opening's clip cuts off.
  */
-async function holdNextViewTransition(page: Page) {
-  const held = await page.evaluateHandle(() => {
-    const animations = () =>
-      document
-        .getAnimations()
-        .filter(({ effect }) =>
-          (effect as KeyframeEffect | null)?.pseudoElement?.startsWith(
-            '::view-transition',
-          ),
-        );
-    const paused = new Promise<ViewTransition>((resolve, reject) => {
-      document.startViewTransition = (options) => {
-        delete (document as Partial<Document>).startViewTransition;
-        const transition = document.startViewTransition(options);
-        transition.ready.then(() => {
-          for (const animation of animations()) animation.pause();
-          resolve(transition);
-        }, reject);
-        return transition;
-      };
-    });
-    return { paused, animations };
-  });
-  return () =>
-    held.evaluate(async ({ paused, animations }) => {
-      const transition = await paused;
-      for (const animation of animations()) animation.play();
-      await transition.finished;
-    });
-}
-
-async function lightboxTransitionState(page: Page) {
-  await page.waitForFunction(() =>
-    document
-      .getAnimations()
-      .some(
-        ({ effect }) =>
-          (effect as KeyframeEffect | null)?.pseudoElement ===
-          '::view-transition-group(lightbox-image)',
-      ),
-  );
+function visibleCard(page: Page) {
   return page.evaluate(() => {
-    const animations = document.getAnimations();
-    const animation = animations.find(
-      ({ effect }) =>
-        (effect as KeyframeEffect | null)?.pseudoElement ===
-        '::view-transition-group(lightbox-image)',
-    )!;
-    const keyframes = (animation.effect as KeyframeEffect).getKeyframes();
-    const start = keyframes.at(0)!;
-    const end = keyframes.at(-1)!;
-    const imageScaleKeyframes = animations
-      .filter(
-        ({ effect }) =>
-          (effect as KeyframeEffect | null)?.pseudoElement ===
-          '::view-transition-new(lightbox-image)',
-      )
-      .map(({ effect }) => (effect as KeyframeEffect).getKeyframes())
-      .find((frames) => frames.some((frame) => frame.scale !== undefined));
-    const oldImage = getComputedStyle(
-      document.documentElement,
-      '::view-transition-old(lightbox-image)',
-    );
-    const newImage = getComputedStyle(
-      document.documentElement,
-      '::view-transition-new(lightbox-image)',
-    );
+    const drawing = document
+      .querySelector('.lightbox-slide-current .lightbox-front > img')!
+      .getBoundingClientRect();
+    const opening = document.querySelector<HTMLElement>('.lightbox-stage > div')!;
+    const box = opening.getBoundingClientRect();
+    const scale = box.width / opening.offsetWidth;
+    const inset = /inset\(([^)]*)\)/
+      .exec(getComputedStyle(opening).clipPath)?.[1]
+      .split(' ')
+      .map((value) => parseFloat(value) * scale) ?? [0, 0, 0, 0];
+    const [top, right, bottom, left] = [inset[0], inset[1] ?? inset[0], inset[2] ?? inset[0], inset[3] ?? inset[1] ?? inset[0]];
+    const x = Math.max(drawing.x, box.x + left);
+    const y = Math.max(drawing.y, box.y + top);
     return {
-      pairOverflow: getComputedStyle(
-        document.documentElement,
-        '::view-transition-image-pair(lightbox-image)',
-      ).overflow,
-      oldImageVisible: oldImage.display !== 'none',
-      oldImageAnimated: oldImage.animationName !== 'none',
-      oldImageOpacity: Number(oldImage.opacity),
-      oldImageBlendMode: oldImage.mixBlendMode,
-      newImageVisible: newImage.display !== 'none',
-      newImageOpacity: Number(newImage.opacity),
-      newImageBlendMode: newImage.mixBlendMode,
-      newImageStartScale: imageScaleKeyframes
-        ? Number(imageScaleKeyframes.at(0)?.scale)
-        : undefined,
-      newImageEndScale: imageScaleKeyframes
-        ? Number(imageScaleKeyframes.at(-1)?.scale)
-        : undefined,
-      startScale: new DOMMatrix(String(start.transform)).a,
-      endScale: new DOMMatrix(String(end.transform)).a,
+      x,
+      y,
+      width: Math.min(drawing.right, box.right - right) - x,
+      height: Math.min(drawing.bottom, box.bottom - bottom) - y,
+      drawingWidth: drawing.width,
+      opacity: Number(getComputedStyle(opening).opacity),
     };
   });
 }
@@ -190,204 +124,293 @@ async function renderedThumbnailScale(thumbnail: Locator) {
   });
 }
 
-test('native lightbox transitions compose with settled and active thumbnail hover', async ({
+test('the card opens from its thumbnail, cropped as it is and at its hover scale, and closes back to it', async ({
   page,
 }) => {
   await gotoProject(page);
   const thumbnail = galleryImage(page, 10);
   await thumbnail.scrollIntoViewIfNeeded();
-  const stableGeometry = {
-    pairOverflow: 'clip',
-    startScale: 1,
-    endScale: 1,
-  };
-
-  await thumbnail.hover();
-  await page.waitForTimeout(100);
-  await thumbnail.locator('img').evaluate(async (image) => {
-    await Promise.all(
-      image.getAnimations().map(async (animation) => {
-        animation.pause();
-        await animation.ready;
-      }),
+  const frame = (await thumbnail.boundingBox())!;
+  for (const hover of ['settled', 'mid-way'] as const) {
+    await thumbnail.hover();
+    await page.waitForTimeout(hover === 'settled' ? 550 : 100);
+    if (hover === 'mid-way') {
+      await thumbnail.locator('img').evaluate((image) => {
+        for (const animation of image.getAnimations()) animation.pause();
+      });
+    }
+    const hoverScale = await renderedThumbnailScale(thumbnail);
+    await holdTime(page);
+    await thumbnail.click();
+    await page.waitForFunction(() =>
+      document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
+        ?.complete,
     );
-  });
-  const activeHoverScale = await renderedThumbnailScale(thumbnail);
-  await thumbnail.click();
-  await expectLightboxTransition(page, 'lightbox-open');
-  const activeHoverOpening = await lightboxTransitionState(page);
-  expect(activeHoverOpening).toMatchObject({
-    ...stableGeometry,
-    oldImageVisible: false,
-    newImageVisible: true,
-    newImageOpacity: 1,
-    newImageBlendMode: 'normal',
-  });
-  expect(activeHoverOpening.newImageStartScale).toBeCloseTo(
-    activeHoverScale,
-    3,
-  );
-  expect(activeHoverOpening.newImageEndScale).toBe(1);
-  const opening = await sampleBoxes(page.locator('.lightbox-slide-current img'));
-  expect(new Set(opening.map((box) => JSON.stringify(box))).size).toBe(1);
-  await waitForLightbox(page);
+    // Closed, what shows is the thumbnail's frame, the drawing covering it
+    // at the hover scale.
+    let shown = await visibleCard(page);
+    for (const key of ['x', 'y', 'width', 'height'] as const) {
+      expect(shown[key], `${hover} ${key}`).toBeCloseTo(frame[key], 0);
+    }
+    const cover = Math.max(frame.width, frame.height);
+    expect(shown.drawingWidth / cover).toBeCloseTo(hoverScale, 2);
+    await page.clock.runFor(200);
+    const half = await visibleCard(page);
+    expect(half.width).toBeGreaterThan(frame.width);
+    await page.clock.runFor(400);
+    shown = await visibleCard(page);
+    const rest = (await page.locator('.lightbox-slide-current .lightbox-front > img').boundingBox())!;
+    expect(shown.width).toBeCloseTo(rest.width, 0);
+    await page.clock.resume();
+    await waitForLightbox(page);
 
-  await page.getByRole('button', { name: 'Close' }).click();
-  await expectLightboxTransition(page, 'lightbox-close');
-  expect(await lightboxTransitionState(page)).toMatchObject({
-    ...stableGeometry,
-    oldImageVisible: true,
-    oldImageAnimated: false,
-    oldImageOpacity: 1,
-    oldImageBlendMode: 'normal',
-    newImageVisible: false,
-  });
-  const closing = await sampleBoxes(thumbnail);
-  expect(new Set(closing.map((box) => JSON.stringify(box))).size).toBe(1);
-  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
-
-  await page.mouse.move(0, 0);
-  await page.waitForTimeout(550);
-  await thumbnail.hover();
-  await page.waitForTimeout(550);
-  const settledHoverScale = await renderedThumbnailScale(thumbnail);
-  await thumbnail.click();
-  await expectLightboxTransition(page, 'lightbox-open');
-  const settledHoverOpening = await lightboxTransitionState(page);
-  expect(settledHoverOpening).toMatchObject({
-    ...stableGeometry,
-    oldImageVisible: false,
-    newImageVisible: true,
-    newImageOpacity: 1,
-    newImageBlendMode: 'normal',
-  });
-  expect(settledHoverOpening.newImageStartScale).toBeCloseTo(
-    settledHoverScale,
-    3,
-  );
-  expect(settledHoverOpening.newImageEndScale).toBe(1);
-  await waitForLightbox(page);
+    await holdTime(page);
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.clock.runFor(390);
+    shown = await visibleCard(page);
+    expect(shown.x).toBeCloseTo(frame.x, -1);
+    expect(shown.width).toBeCloseTo(frame.width, -1);
+    // The thumbnail is the card until it lands.
+    expect(await thumbnail.evaluate((button) => getComputedStyle(button).opacity)).toBe('0');
+    await page.clock.resume();
+    await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+    await expect(thumbnail).toHaveCSS('opacity', '1');
+    await page.mouse.move(0, 0);
+    await thumbnail.locator('img').evaluate((image) => {
+      for (const animation of image.getAnimations()) animation.play();
+    });
+    await page.waitForTimeout(550);
+  }
 });
 
-test('shared transitions prevent wheel input from moving the page or image', async ({
+test('input while opening acts at once, and a wheel while closing scrolls the page', async ({
   page,
 }) => {
   await gotoProject(page);
   const thumbnail = galleryImage(page, 10);
   await thumbnail.scrollIntoViewIfNeeded();
   const scrollY = await page.evaluate(() => window.scrollY);
-  const lightbox = page.locator('dialog[data-gallery-lightbox]');
 
-  const finishOpening = await holdNextViewTransition(page);
-  await thumbnail.evaluate((button: HTMLButtonElement) => button.click());
-  await page.locator('.lightbox-stage').waitFor({ state: 'visible' });
+  await holdTime(page);
+  await thumbnail.click();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('status')).toHaveText('11 / 17');
+  // Real pointer input, through the browser's own hit testing.
+  const next = (await page.getByRole('button', { name: 'Next image' }).boundingBox())!;
+  await page.mouse.click(next.x + next.width / 2, next.y + next.height / 2);
+  await expect(page.getByRole('status')).toHaveText('12 / 17');
   await page.mouse.move(640, 450);
   await page.mouse.wheel(0, -1200);
-  await expectLightboxTransition(page, 'lightbox-open');
-  const windowWheelPrevented = await page.evaluate(() => {
-    const event = new WheelEvent('wheel', {
-      bubbles: true,
-      cancelable: true,
-      deltaY: 1200,
-    });
-    window.dispatchEvent(event);
-    return event.defaultPrevented;
-  });
-
-  expect(windowWheelPrevented).toBe(true);
-  expect(await imageZoom(page)).toBeCloseTo(1, 2);
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
   expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
-  await expect(lightbox).toHaveAttribute('aria-busy', 'true');
-  await finishOpening();
-  await expect(lightbox).toHaveAttribute('aria-busy', 'false');
+  expect(await backdrop(page)).toBeLessThan(0.91);
+  await page.clock.resume();
   await waitForLightbox(page);
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
 
-  const closingScrollY = await page.evaluate(() => window.scrollY);
-  const closingTarget = await thumbnail.boundingBox();
-  const finishClosing = await holdNextViewTransition(page);
+  await holdTime(page);
   await page.getByRole('button', { name: 'Close' }).click();
-  await expectLightboxTransition(page, 'lightbox-close');
-  await page.mouse.wheel(0, 1200);
-  const closingWheelPrevented = await page.evaluate(() => {
-    const event = new WheelEvent('wheel', {
-      bubbles: true,
-      cancelable: true,
-      deltaY: 1200,
-    });
-    window.dispatchEvent(event);
-    return event.defaultPrevented;
-  });
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await page.mouse.move(640, 400);
+  await page.mouse.wheel(0, 300);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollY);
+  await page.clock.resume();
+});
 
-  expect(closingWheelPrevented).toBe(true);
-  expect(await page.evaluate(() => window.scrollY)).toBe(closingScrollY);
-  expect(await thumbnail.boundingBox()).toEqual(closingTarget);
-  await finishClosing();
+test('a touch swipe while opening on a phone changes image and leaves the page in place', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  const scrollY = await page.evaluate(() => window.scrollY);
+  await holdTime(page);
+  await thumbnail.evaluate((button: HTMLButtonElement) => button.click());
+  const session = await context.newCDPSession(page);
+  const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x?: number) =>
+    session.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: x === undefined ? [] : [{ x, y: 420 }],
+    });
+  await touch('touchStart', 300);
+  for (const x of [250, 200, 150]) await touch('touchMove', x);
+  await touch('touchEnd');
+  await expect(page.getByRole('status')).toHaveText('11 / 17');
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+  await page.clock.resume();
+  await waitForLightbox(page);
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+  await context.close();
+});
+
+/** Steps the held clock a frame at a time until the card is gone, and returns where it was last. */
+async function lastCard(page: Page) {
+  let last = await visibleCard(page);
+  for (let frame = 0; frame < 60; frame += 1) {
+    await page.clock.runFor(16);
+    if (!(await page.locator('.lightbox-slide-current').count())) return last;
+    last = await visibleCard(page);
+  }
+  return last;
+}
+
+/** Records how far the backdrop has darkened, 1 fully, at every step of the held clock. */
+async function openSteps(page: Page, steps: number) {
+  const seen = [];
+  for (let step = 0; step < steps; step += 1) {
+    await page.clock.runFor(16);
+    seen.push((await backdrop(page)) / 0.91);
+  }
+  return seen;
+}
+
+/** The largest step between values, and the values going each way. */
+function turnsOnce(values: number[]) {
+  const steps = values.slice(1).map((value, at) => value - values[at]);
+  return { largest: Math.max(...steps.map(Math.abs)), steps };
+}
+
+test('Escape while opening turns the opening back from where it is', async ({ page }) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await holdTime(page);
+  await thumbnail.click();
+  const opening = await openSteps(page, 6);
+  expect(opening.at(-1)).toBeGreaterThan(0.2);
+  expect(opening.at(-1)).toBeLessThan(0.99);
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+  await expect(thumbnail).toBeFocused();
+  const closing = await openSteps(page, 40);
+  const { largest, steps } = turnsOnce([...opening, ...closing]);
+  expect(largest).toBeLessThan(0.3);
+  // Up to the Escape, then down from where it was.
+  expect(steps.slice(opening.length).every((step) => step <= 0)).toBe(true);
+  expect(closing.at(-1)).toBe(0);
+  await page.clock.resume();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
 });
 
-test('closing a zoomed image uses the overlay transition without an image morph', async ({
-  page,
-}) => {
+for (const [when, beforeClose] of [
+  ['while it opens', 6],
+  ['once it is open', 40],
+] as const) {
+  test(`opening the same image again while it closes ${when} turns it back from where it is`, async ({
+    page,
+  }) => {
+    await gotoProject(page);
+    const thumbnail = galleryImage(page, 2); // a tiled drawing
+    await thumbnail.scrollIntoViewIfNeeded();
+    await holdTime(page);
+    await thumbnail.click();
+    const opening = await openSteps(page, beforeClose);
+    await page.keyboard.press('Escape');
+    const closing = await openSteps(page, 6);
+    await expect(thumbnail).toBeFocused();
+    await page.keyboard.press('Enter');
+    const reopening = await openSteps(page, 40);
+    const { largest } = turnsOnce([...opening, ...closing, ...reopening]);
+    expect(largest).toBeLessThan(0.3);
+    expect(closing.at(-1)).toBeGreaterThan(0);
+    expect(closing.at(-1)).toBeLessThan(opening.at(-1)!);
+    expect(reopening.at(-1)).toBe(1);
+    await page.clock.resume();
+    await waitForLightbox(page);
+    await expect(page).toHaveURL(/#image-2$/);
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('status')).toHaveText('3 / 17');
+    await expect(page.locator('.openseadragon-canvas canvas')).toBeVisible();
+  });
+}
+
+test('a lightbox closed and opened again a frame later works as ever', async ({ page }) => {
   await gotoProject(page);
   const thumbnail = galleryImage(page, 10);
   await thumbnail.scrollIntoViewIfNeeded();
   await thumbnail.click();
   await waitForLightbox(page);
-
-  await page.locator('.lightbox-stage').hover();
-  await page.mouse.wheel(0, -1200);
-  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
-
   await page.getByRole('button', { name: 'Close' }).click();
-  await expectLightboxTransition(page, 'lightbox-close');
-  await page.waitForTimeout(50);
-  expect(
-    await page.evaluate(() =>
-      document
-        .getAnimations()
-        .some(({ effect }) =>
-          (effect as KeyframeEffect | null)?.pseudoElement?.includes(
-            'lightbox-image',
-          ),
-        ),
-    ),
-  ).toBe(false);
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  await page.keyboard.press('Enter');
+  await waitForLightbox(page);
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('status')).toHaveText('11 / 17');
+  await expect(page).toHaveURL(/#image-11$/);
+  await page.goBack();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
 });
 
-test('closing while the description shows uses the overlay transition and reopens on the drawing', async ({
-  page,
-}) => {
+test('a tiled canvas waits for the opening to end', async ({ page }) => {
   await gotoProject(page);
-  const thumbnail = galleryImage(page, 3);
+  const thumbnail = galleryImage(page, 2); // a tiled drawing
   await thumbnail.scrollIntoViewIfNeeded();
+  await holdTime(page);
   await thumbnail.click();
-  await waitForLightbox(page);
-  await page.getByRole('button', { name: 'Show description' }).click();
-
-  await page.keyboard.press('Escape');
-  await expectLightboxTransition(page, 'lightbox-close');
-  await page.waitForTimeout(50);
-  expect(
-    await page.evaluate(() =>
-      document
-        .getAnimations()
-        .some(({ effect }) =>
-          (effect as KeyframeEffect | null)?.pseudoElement?.includes(
-            'lightbox-image',
-          ),
-        ),
-    ),
-  ).toBe(false);
-  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
-  await expect(thumbnail).toBeFocused();
-
-  await thumbnail.click();
-  await waitForLightbox(page);
-  await expect(
-    page.getByRole('button', { name: 'Show description' }),
-  ).toHaveAttribute('aria-pressed', 'false');
+  await openSteps(page, 15);
+  await page.waitForTimeout(300);
+  await expect(page.locator('.openseadragon-canvas')).toHaveCount(0);
+  await page.clock.resume();
+  await expect(page.locator('.openseadragon-canvas canvas')).toBeVisible();
 });
+
+for (const [side, prepare] of [
+  [
+    'zoomed',
+    async (page: Page) => {
+      await page.locator('.lightbox-stage').hover();
+      await page.mouse.wheel(0, -1200);
+      await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
+    },
+  ],
+  [
+    'with its description showing',
+    async (page: Page) => {
+      await page.getByRole('button', { name: 'Show description' }).click();
+      await page.waitForTimeout(700);
+    },
+  ],
+] as const) {
+  test(`closing ${side} only fades, and opening again shows the drawing at rest`, async ({
+    page,
+  }) => {
+    await gotoProject(page);
+    const thumbnail = galleryImage(page, 3);
+    await thumbnail.scrollIntoViewIfNeeded();
+    await thumbnail.click();
+    await waitForLightbox(page);
+    await prepare(page);
+    const before = await visibleCard(page);
+    await holdTime(page);
+    await page.keyboard.press('Escape');
+    await page.clock.runFor(200);
+    const fading = await visibleCard(page);
+    expect(fading.x).toBeCloseTo(before.x, 0);
+    expect(fading.width).toBeCloseTo(before.width, 0);
+    expect(fading.opacity).toBeGreaterThan(0);
+    expect(fading.opacity).toBeLessThan(1);
+    await page.clock.resume();
+    await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+    await expect(thumbnail).toBeFocused();
+
+    await thumbnail.click();
+    await waitForLightbox(page);
+    await expect(
+      page.getByRole('button', { name: 'Show description' }),
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(await imageZoom(page)).toBeCloseTo(1, 2);
+  });
+}
 
 test('a zoomed image stays clipped to its slide during navigation', async ({
   page,
@@ -399,20 +422,16 @@ test('a zoomed image stays clipped to its slide during navigation', async ({
   await page.locator('.lightbox-stage').hover();
   await page.mouse.wheel(0, -1200);
   await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
+  await holdTime(page);
   await page
     .getByRole('button', { name: 'Next image' })
     .evaluate((button: HTMLButtonElement) => button.click());
-  await page.waitForFunction(() => {
-    const slide = document.querySelector('.lightbox-slide-current');
-    const animation = slide?.getAnimations().at(0);
-    if (!animation) return false;
-    animation.pause();
-    animation.currentTime = 90;
-    return true;
-  });
+  await page.clock.runFor(90);
 
-  const bleedsPastSlide = await page.locator('.lightbox-slide-current').evaluate(
-    (slide) => {
+  // The zoomed card sliding away.
+  const bleedsPastSlide = await page
+    .locator('.lightbox-slide:not(.lightbox-slide-current):has([data-lightbox-sheet])')
+    .evaluate((slide) => {
       const image = slide.querySelector('img')!;
       const slideRect = slide.getBoundingClientRect();
       const imageRect = image.getBoundingClientRect();
@@ -424,8 +443,7 @@ test('a zoomed image stays clipped to its slide during navigation', async ({
       return (
         imageRect.right > x && document.elementsFromPoint(x, y).includes(image)
       );
-    },
-  );
+    });
 
   expect(bleedsPastSlide).toBe(false);
 });
@@ -474,7 +492,6 @@ test('hash history does not restore scroll or move the page cover', async ({
   const cover = page.locator('.project-cover');
   const coverBefore = await cover.boundingBox();
   await page.getByRole('button', { name: 'Close' }).click();
-  await expectLightboxTransition(page, 'lightbox-close');
 
   expect(await cover.boundingBox()).toEqual(coverBefore);
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
@@ -497,51 +514,39 @@ test('lightbox reports its position and wraps at either end', async ({ page }) =
   await expect(position).toHaveText(`1 / ${imageCount}`);
 
   await page.getByRole('button', { name: 'Previous image' }).click();
-  await expect(position).toHaveText(`${imageCount} / ${imageCount}`);
-  // The position follows at once; the next change waits for this one to end.
-  await expect(page).toHaveURL(new RegExp(`#image-${imageCount}$`));
-
+  expect(await position.textContent()).toContain(`${imageCount} / ${imageCount}`);
   await page.getByRole('button', { name: 'Next image' }).click();
-  await expect(position).toHaveText(`1 / ${imageCount}`);
+  expect(await position.textContent()).toContain(`1 / ${imageCount}`);
+  await expect(page).toHaveURL(/#image-1$/);
 });
 
-test('header remains in place beneath the lightbox', async ({ page }) => {
+test('header remains in place beneath the lightbox, and the cover keeps its page transition', async ({
+  page,
+}) => {
   await gotoProject(page);
   await galleryImage(page, 1).scrollIntoViewIfNeeded();
   const header = page.locator('body > header');
+  const coverName = () =>
+    page.locator('.project-cover').evaluate((cover) => getComputedStyle(cover).viewTransitionName);
   expect((await header.boundingBox())?.y).toBeCloseTo(0, 0);
+  expect(await coverName()).toBe('cover-urban-study-kyjov');
 
+  await holdTime(page);
   await galleryImage(page, 1).click();
-  await expectLightboxTransition(page, 'lightbox-open');
-  await expect
-    .poll(() =>
-      page
-        .locator('.project-cover')
-        .evaluate((cover) => getComputedStyle(cover).viewTransitionName),
-    )
-    .toBe('none');
+  await page.clock.runFor(200);
+  expect((await header.boundingBox())?.y).toBeCloseTo(0, 0);
+  expect(await coverName()).toBe('cover-urban-study-kyjov');
+  await page.clock.resume();
   await waitForLightbox(page);
   expect((await header.boundingBox())?.y).toBeCloseTo(0, 0);
-  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Close' }).click();
-  await expectLightboxTransition(page, 'lightbox-close');
-  expect(
-    await page
-      .locator('.project-cover')
-      .evaluate((cover) => getComputedStyle(cover).viewTransitionName),
-  ).toBe('none');
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
-  await expect
-    .poll(() =>
-      page
-        .locator('.project-cover')
-        .evaluate((cover) => getComputedStyle(cover).viewTransitionName),
-    )
-    .toBe('cover-urban-study-kyjov');
+  expect((await header.boundingBox())?.y).toBeCloseTo(0, 0);
+  expect(await coverName()).toBe('cover-urban-study-kyjov');
 });
 
-test('an obscured thumbnail uses the overlay transition without an image morph', async ({
+test('an obscured thumbnail opens and closes the lightbox with a fade, the card at rest', async ({
   page,
 }) => {
   await gotoProject(page);
@@ -558,40 +563,33 @@ test('an obscured thumbnail uses the overlay transition without an image morph',
   expect(target.y).toBeLessThan(header.y + header.height);
   expect(target.y + target.height).toBeGreaterThan(header.y + header.height);
 
+  await holdTime(page);
   await page.mouse.click(
     target.x + target.width / 2,
     Math.max(header.y + header.height + 10, target.y + target.height / 2),
   );
-  await expectLightboxTransition(page, 'lightbox-open');
-  await page.waitForTimeout(50);
-  const openingMorphsImage = await page.evaluate(() =>
-    document
-      .getAnimations()
-      .some(({ effect }) =>
-        (effect as KeyframeEffect | null)?.pseudoElement?.includes(
-          'lightbox-image',
-        ),
-      ),
+  await page.waitForFunction(() =>
+    document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
+      ?.complete,
   );
+  await page.clock.runFor(100);
+  const opening = await visibleCard(page);
+  await page.clock.resume();
   await waitForLightbox(page);
+  const rest = await visibleCard(page);
 
+  await holdTime(page);
   await page.getByRole('button', { name: 'Close' }).click();
-  await expectLightboxTransition(page, 'lightbox-close');
-  await page.waitForTimeout(50);
-  const closingMorphsImage = await page.evaluate(() =>
-    document
-      .getAnimations()
-      .some(({ effect }) =>
-        (effect as KeyframeEffect | null)?.pseudoElement?.includes(
-          'lightbox-image',
-        ),
-      ),
-  );
+  await page.clock.runFor(100);
+  const closing = await visibleCard(page);
+  await page.clock.resume();
 
-  expect({ openingMorphsImage, closingMorphsImage }).toEqual({
-    openingMorphsImage: false,
-    closingMorphsImage: false,
-  });
+  for (const shown of [opening, closing]) {
+    expect(shown.x).toBeCloseTo(rest.x, 0);
+    expect(shown.width).toBeCloseTo(rest.width, 0);
+    expect(shown.opacity).toBeGreaterThan(0);
+    expect(shown.opacity).toBeLessThan(1);
+  }
 });
 
 test('dark theme keeps the lightbox surface black and controls white', async ({
@@ -621,7 +619,8 @@ test('dark theme keeps the lightbox surface black and controls white', async ({
       };
     },
   );
-  expect(colors.background).toEqual([0, 0, 0, 230]);
+  // 90 % black, over the 10 % a modal dialog's own backdrop would add.
+  expect(colors.background).toEqual([0, 0, 0, 232]);
   expect(colors.foreground).toEqual([255, 255, 255, 255]);
 });
 
@@ -673,6 +672,8 @@ test('a reopened pyramid matches its canvas to a changed display density', async
   await page.locator('.openseadragon-canvas canvas').waitFor();
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  // Gone from the page: opened again while it fades out, it would go on as it was.
+  await expect(page.locator('[data-gallery-lightbox]')).toBeHidden();
 
   const session = await context.newCDPSession(page);
   await session.send('Emulation.setDeviceMetricsOverride', {
@@ -922,17 +923,14 @@ for (const [route, change] of [
     await page.mouse.wheel(0, -1200);
     await expect.poll(() => imageZoom(page)).toBeGreaterThan(2);
 
-    const midBlend = page.waitForFunction(() => {
-      const animations = document.getAnimations();
-      if (!animations.length) return false;
-      for (const animation of animations) {
-        animation.pause();
-        animation.currentTime = 90;
-      }
-      return true;
-    });
+    await holdTime(page);
     await change(page);
-    await midBlend;
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].every(
+        (image) => image.complete,
+      ),
+    );
+    await page.clock.runFor(90);
 
     const dialog = page.getByRole('dialog', { name: 'Image viewer' });
     for (const control of [
@@ -1005,11 +1003,7 @@ test.describe('reduced motion', () => {
       ),
     ).toBe(true);
     await galleryImage(page, 10).click();
-    expect(
-      await page.evaluate(() =>
-        document.documentElement.matches(':active-view-transition'),
-      ),
-    ).toBe(false);
+    expect(await backdrop(page)).toBeCloseTo(0.91, 3);
     await expect(page.getByRole('dialog', { name: 'Image viewer' })).toBeVisible();
 
     const stage = page.locator('.lightbox-stage');
@@ -1023,4 +1017,198 @@ test.describe('reduced motion', () => {
     await page.mouse.up();
     await expect(page).toHaveURL(/#image-11$/);
   });
+});
+
+test('opening another image while the lightbox fades out leaves every thumbnail showing once closed', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  const [first, second] = [galleryImage(page, 2), galleryImage(page, 3)];
+  await first.scrollIntoViewIfNeeded();
+  await first.click();
+  await waitForLightbox(page);
+  await holdTime(page);
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(150);
+  await second.click();
+  await page.clock.resume();
+  await waitForLightbox(page);
+  await expect(page).toHaveURL(/#image-3$/);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await page.clock.runFor(1000);
+  for (const thumbnail of [first, second]) await expect(thumbnail).toHaveCSS('opacity', '1');
+});
+
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  test(`with a drawing that never arrives the lightbox still opens and takes input (${reducedMotion})`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion });
+    await gotoProject(page);
+    const thumbnail = galleryImage(page, 10);
+    await thumbnail.scrollIntoViewIfNeeded();
+    await page.route('**/_responsive/**', () => {});
+    await thumbnail.click();
+    await page.clock.runFor(1000);
+    expect(await backdrop(page)).toBeCloseTo(0.91, 3);
+    await expect(page.getByRole('button', { name: 'Close' })).toHaveCSS('opacity', '1');
+    // The card has not left the thumbnail, which shows where it is.
+    await expect(thumbnail).toHaveCSS('opacity', '1');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('status')).toHaveText('11 / 17');
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.clock.runFor(1000);
+    await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  });
+}
+
+test('a drawing that arrives late moves from its thumbnail once it has', async ({ page }) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  const frame = (await thumbnail.boundingBox())!;
+  let release = () => {};
+  const arrived = new Promise<void>((resolve) => (release = resolve));
+  await page.route('**/_responsive/**', async (route) => {
+    await arrived;
+    await route.continue();
+  });
+  await holdTime(page);
+  await thumbnail.click();
+  await page.clock.runFor(600);
+  // Open, but the card waits at the thumbnail.
+  expect(await backdrop(page)).toBeCloseTo(0.91, 3);
+  await expect(thumbnail).toHaveCSS('opacity', '1');
+  release();
+  await page.waitForFunction(() =>
+    document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
+      ?.complete,
+  );
+  await page.clock.runFor(32);
+  const leaving = await visibleCard(page);
+  expect(leaving.width).toBeLessThan(frame.width * 1.5);
+  await expect(thumbnail).toHaveCSS('opacity', '0');
+  await page.clock.runFor(600);
+  const rest = (await page.locator('.lightbox-slide-current .lightbox-front > img').boundingBox())!;
+  expect((await visibleCard(page)).width).toBeCloseTo(rest.width, 0);
+  await expect(thumbnail).toHaveCSS('opacity', '1');
+  await page.clock.resume();
+});
+
+test('closing after a change while opening moves the card into the current image’s own thumbnail', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  // Side by side in one row.
+  const [opened, current] = [galleryImage(page, 9), galleryImage(page, 10)];
+  await current.scrollIntoViewIfNeeded();
+  const target = (await current.boundingBox())!;
+  await holdTime(page);
+  await opened.click();
+  await page.waitForFunction(() =>
+    document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
+      ?.complete,
+  );
+  await page.clock.runFor(100);
+  await page.keyboard.press('ArrowRight');
+  await page.waitForFunction(() =>
+    document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
+      ?.complete,
+  );
+  await page.keyboard.press('Escape');
+  // Its last frame, a step short of landing.
+  const landing = await lastCard(page);
+  expect(Math.abs(landing.x - target.x)).toBeLessThan(30);
+  expect(Math.abs(landing.y - target.y)).toBeLessThan(30);
+  expect(Math.abs(landing.width - target.width)).toBeLessThan(30);
+  await page.clock.resume();
+});
+
+test('a card closing into its thumbnail follows the thumbnail as the page scrolls', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await thumbnail.click();
+  await waitForLightbox(page);
+  await holdTime(page);
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(150);
+  await page.evaluate(() => scrollBy(0, 60));
+  const target = (await thumbnail.boundingBox())!;
+  const landing = await lastCard(page);
+  expect(Math.abs(landing.y - target.y)).toBeLessThan(30);
+  expect(Math.abs(landing.x - target.x)).toBeLessThan(30);
+  await page.clock.resume();
+});
+
+test('opened again on another image while it closes, the card waits for that drawing before it moves', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  const [first, second] = [galleryImage(page, 10), galleryImage(page, 3)];
+  await first.scrollIntoViewIfNeeded();
+  await first.click();
+  await waitForLightbox(page);
+  await page.route('**/_responsive/**', () => {});
+  await holdTime(page);
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(150);
+  await second.click();
+  const waiting = await visibleCard(page);
+  for (let frame = 0; frame < 10; frame += 1) {
+    await page.clock.runFor(16);
+    const now = await visibleCard(page);
+    expect(now.x).toBeCloseTo(waiting.x, 1);
+    expect(now.width).toBeCloseTo(waiting.width, 1);
+  }
+  await expect(page.getByRole('status')).toHaveText('3 / 17');
+  await page.clock.resume();
+});
+
+test('opened again while it closes, the thumbnail stays hidden while the card travels from it', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await thumbnail.click();
+  await waitForLightbox(page);
+  await holdTime(page);
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(150);
+  await expect(thumbnail).toHaveCSS('opacity', '0');
+  await page.keyboard.press('Enter');
+  for (let frame = 0; frame < 4; frame += 1) {
+    await page.clock.runFor(16);
+    await expect(thumbnail).toHaveCSS('opacity', '0');
+  }
+  await page.clock.resume();
+  await waitForLightbox(page);
+  await expect(thumbnail).toHaveCSS('opacity', '1');
+});
+
+test('a card closing into its thumbnail lands where the thumbnail is after a resize', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await thumbnail.click();
+  await waitForLightbox(page);
+  await holdTime(page);
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(150);
+  await page.setViewportSize({ width: 1240, height: 800 });
+  await page.waitForFunction(() => innerWidth === 1240);
+  const target = (await thumbnail.boundingBox())!;
+  // Almost at the end of its move, the card is within a pixel of landing.
+  await page.clock.runFor(234);
+  const landing = await visibleCard(page);
+  for (const key of ['x', 'y', 'width', 'height'] as const) {
+    expect(Math.abs(landing[key] - target[key]), key).toBeLessThan(1);
+  }
+  await page.clock.resume();
 });

@@ -67,56 +67,9 @@ html:active-view-transition-type(project-close)::view-transition-old(.project-co
   opacity: 1;
 }
 
-.lightbox-image {
-  view-transition-name: lightbox-image;
-}
-
-::view-transition-group(root),
-::view-transition-group(lightbox-image) {
+::view-transition-group(root) {
   animation-duration: var(--duration-base);
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-html:active-view-transition-type(lightbox-open) .project-cover,
-html:active-view-transition-type(lightbox-close) .project-cover {
-  view-transition-name: none !important;
-}
-
-::view-transition-old(lightbox-image),
-::view-transition-new(lightbox-image) {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-::view-transition-image-pair(lightbox-image) {
-  overflow: clip;
-}
-
-@keyframes lightbox-open-image {
-  from {
-    scale: var(--lightbox-source-scale, 1);
-  }
-  to {
-    scale: 1;
-  }
-}
-
-html:active-view-transition-type(lightbox-open)::view-transition-old(lightbox-image),
-html:active-view-transition-type(lightbox-close)::view-transition-new(lightbox-image) {
-  display: none;
-}
-
-html:active-view-transition-type(lightbox-open)::view-transition-new(lightbox-image) {
-  animation-name: lightbox-open-image;
-  mix-blend-mode: normal;
-  opacity: 1;
-}
-
-html:active-view-transition-type(lightbox-close)::view-transition-old(lightbox-image) {
-  animation: none;
-  mix-blend-mode: normal;
-  opacity: 1;
 }
 
 /* Layered so per-control utilities can override it. */
