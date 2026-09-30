@@ -57,6 +57,13 @@ changes and manual workflow runs execute the full suite. The test job and Astro
 build action share the same `node_modules/.astro` cache key, so the browser-test
 prebuild populates the cache consumed by the deployment build.
 
+### Browser tests bring their own carousel pages — [Implicit]
+
+The shipped content need not contain a carousel, so the carousel tests run
+against test-only pages (`src/pages/[fixture].astro`) that render the carousel
+components with placeholder uploads. They are built only when `E2E_FIXTURES`
+is set; the deployment build never sets it, so they never reach the site.
+
 ---
 
 ## Framework & language
@@ -200,8 +207,10 @@ geometry in `gallery.ts` are tested against their own cases
 
 The owner's rule (AGENTS.md → "Known invariants to protect"): input is never
 ignored, queued or delayed because something is animating, and a move sent
-somewhere new carries on from where it is on screen. The lightbox holds this by
-construction: its **state** — open, the current image, its side, its view and
+somewhere new carries on from where it is on screen. The carousels hold it with
+a kept slide index (see "Home-page carousel"); cross-document page transitions
+are the one accepted exception (see "Page transitions"). The lightbox holds this
+by construction: its **state** — open, the current image, its side, its view and
 the address — changes the moment input arrives, and nothing waits for an
 animation to end before state settles. Its **visuals** are derived from state
 and each is one number that a Svelte `Tween` (`svelte/motion`) chases from its
@@ -634,6 +643,19 @@ Dots retain the same interaction language but use literal media-surface colours,
 including a dark edge for contrast over pale images, rather than inheriting
 page-theme tokens.
 
+The current slide is a kept index, not read back from the scroll position — the
+"State changes instantly" rule. Arrows, dots and auto-advance step the index
+from itself, mark the dots at once and send the track to it with
+`scrollTo({ behavior: 'smooth' })`, which the browser retargets from wherever
+the scroll is. The index is re-read from `scrollLeft` only while the visitor
+scrolls the track themselves: any pointer, key, focus or sideways-wheel input
+on the track marks the scroll as theirs until the next arrow, dot or
+auto-advance step. A vertical wheel over the track scrolls the page and leaves
+the index alone. During a smooth scroll the position is mid-way, so an index
+read from it would drop a quick second press and send Next-then-Previous from
+the first slide to the last. The home and project carousels each keep this in
+their own script — [Implicit]; only the home one auto-advances.
+
 ### Project media blocks render in Astro — [Explicit]
 
 `ProjectBlocks.astro` renders the ordered text, gallery, and image-set sequence
@@ -644,8 +666,8 @@ media blocks use the full frame at every width. Gallery items use the existing
 square thumbnail treatment. A one-item image set keeps the source aspect ratio
 at the project content width; a multi-item set uses a fixed 16:9 scroll-snap
 viewport with `object-contain`, arrows, and dots so drawings are not cropped.
-Its small vanilla script supports every carousel block on the page and does not
-autoplay.
+Its small vanilla script supports every carousel block on the page, keeps the
+slide index as the home carousel does, and does not autoplay.
 Every rendered image button exposes its flattened page index to the single
 `Gallery.svelte` island, so each occurrence of an image is its own lightbox
 slide and close-transition target.
@@ -657,8 +679,9 @@ navigations into the browser's cross-document View Transitions. Pages remain a
 normal multi-page site: there is no client router, swapped DOM, persistence API,
 or script reinitialization lifecycle. Browsers without support perform ordinary
 navigation. Project covers use matching transition names between the work grid
-and project pages. A stable square wrapper owns that name while the nested image
-owns hover scaling, so hover and shared-element geometry do not compete. The
+and project pages. A stable wrapper owns that name while the nested image owns
+hover scaling, so hover and shared-element geometry do not compete: the square
+frame on a work card and the cover's button on a project page. The
 project image carries its native dimensions so an uncached destination has
 stable geometry. One shared transition class keeps the image snapshots covering
 the changing box, progressively cropping or revealing them between the square
@@ -667,11 +690,20 @@ drawn, clipped by the image pair, because blending it with the card's crop
 doubles the image's edges. An inline `<head>` script tags
 each navigation's transition `project-open` (arriving on a project page) or
 `project-close` from `pagereveal`, which must run before the first frame, and
-CSS picks the snapshot by type. On `pageswap` it stores the hovered card
-image's scale in `sessionStorage`; the opening snapshot animates from that scale
-so the hover zoom does not jump. Work cards skip the independent reveal effect because
-starting a second entrance animation during the page transition produces
-competing motion.
+CSS picks the snapshot by type. On `pageswap` it finds the opened card by the
+navigation's destination (`activation.entry.url`), so a card opened from the
+keyboard gets its own scale even with the pointer over another, and stores
+that card image's scale in `sessionStorage`; the opening snapshot animates
+from that scale so the hover zoom does not jump. Without `activation`, the
+snapshot starts unscaled. Work cards skip the independent reveal effect
+because starting a second entrance animation during the page transition
+produces competing motion.
+
+These transitions are the one accepted exception to "State changes instantly"
+— [Explicit]: the owner keeps them. During a cross-document View Transition
+(every same-origin navigation, about 0.4 s) the browser itself holds input,
+and a second navigation skips the running transition rather than retargeting
+it.
 
 ### Reveal-on-scroll: IntersectionObserver on the native scrollbar — [Implicit]
 
@@ -679,6 +711,11 @@ Elements with `.reveal` fade in as they enter the viewport (script in
 `Base.astro`, styles in `global.css`). This explicitly avoids scroll-hijacking
 libraries — the user asked not to reimplement scrolling. It initializes once
 for each normally loaded document and respects `prefers-reduced-motion`.
+The reveal is decoration only — [Explicit]: `.reveal` alone is plain visible
+content, and the script adds `.is-hidden` only to elements the observer's first
+report finds off screen, removing it as they enter the viewport (no root
+margin). So without the script nothing is hidden, and what is on screen at
+load never fades in late.
 
 ---
 

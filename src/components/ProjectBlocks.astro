@@ -84,7 +84,7 @@ const displayBlocks = blocks.map((block) =>
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  class="h-full w-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
                 />
               </button>
             );
@@ -116,7 +116,7 @@ const displayBlocks = blocks.map((block) =>
             alt=""
             loading="lazy"
             decoding="async"
-            class="w-full transition-transform duration-500 group-hover:scale-[1.02]"
+            class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.02]"
           />
         </button>
       );
@@ -226,35 +226,58 @@ const displayBlocks = blocks.map((block) =>
     const dots = Array.from(
       root.querySelectorAll<HTMLElement>('[data-project-dot]'),
     );
-    const indexNow = () => Math.round(track.scrollLeft / track.clientWidth);
+    // The current slide is state; the smooth scroll only chases it. Only the
+    // visitor's own scrolling of the track moves it from the scroll position.
+    let current = 0;
+    let visitorScrolling = false;
+    const sync = () => {
+      dots.forEach((dot, index) =>
+        dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
+      );
+    };
     const goTo = (index: number) => {
-      const next = ((index % slides.length) + slides.length) % slides.length;
+      current = ((index % slides.length) + slides.length) % slides.length;
+      visitorScrolling = false;
+      sync();
       track.scrollTo({
-        left: next * track.clientWidth,
+        left: current * track.clientWidth,
         behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
           ? 'auto'
           : 'smooth',
       });
     };
-    const sync = () => {
-      const current = indexNow();
-      dots.forEach((dot, index) =>
-        dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
-      );
-    };
 
     root
       .querySelector('[data-project-carousel-prev]')
-      ?.addEventListener('click', () => goTo(indexNow() - 1));
+      ?.addEventListener('click', () => goTo(current - 1));
     root
       .querySelector('[data-project-carousel-next]')
-      ?.addEventListener('click', () => goTo(indexNow() + 1));
+      ?.addEventListener('click', () => goTo(current + 1));
     dots.forEach((dot, index) =>
       dot.addEventListener('click', () => goTo(index)),
     );
-    track.addEventListener('scroll', () => requestAnimationFrame(sync), {
-      passive: true,
-    });
+    for (const event of ['pointerdown', 'keydown', 'focusin']) {
+      track.addEventListener(event, () => (visitorScrolling = true), {
+        passive: true,
+      });
+    }
+    // A vertical wheel over the track scrolls the page, not the track.
+    track.addEventListener(
+      'wheel',
+      (event) => {
+        if (event.deltaX || event.shiftKey) visitorScrolling = true;
+      },
+      { passive: true },
+    );
+    track.addEventListener(
+      'scroll',
+      () => {
+        if (!visitorScrolling) return;
+        current = Math.round(track.scrollLeft / track.clientWidth);
+        sync();
+      },
+      { passive: true },
+    );
     sync();
   }
 </script>

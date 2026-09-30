@@ -39,6 +39,32 @@ test('cover hover does not change the shared transition box', async ({ page }) =
   expect((await image.boundingBox())!.width).toBeGreaterThan(imageBefore.width);
 });
 
+test('project page cover hover does not change the shared transition box', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/projects/urban-study-kyjov/');
+  const transitionBox = () =>
+    page.evaluate(() => {
+      const named = Array.from(document.querySelectorAll('*')).find(
+        (element) =>
+          getComputedStyle(element).viewTransitionName ===
+          'cover-urban-study-kyjov',
+      )!;
+      const { width, height } = named.getBoundingClientRect();
+      return { width: Math.round(width), height: Math.round(height) };
+    });
+  const cover = page.getByRole('button', { name: 'Open image 1', exact: true });
+  const image = cover.locator('img');
+  const before = await transitionBox();
+  const imageBefore = (await image.boundingBox())!;
+
+  await cover.hover();
+  await page.waitForTimeout(600);
+  expect(await transitionBox()).toEqual(before);
+  expect((await image.boundingBox())!.width).toBeGreaterThan(imageBefore.width);
+});
+
 test('opening a project starts a cross-document view transition', async ({
   browserName,
   page,
@@ -150,4 +176,50 @@ test('project covers morph one uncropped snapshot in both directions', async ({
   await expect
     .poll(snapshots)
     .toMatchObject({ oldAnimation: 'none', newAnimated: false });
+});
+
+test('a keyboard-opened project starts from its own card, not the hovered one', async ({
+  browserName,
+  page,
+}) => {
+  test.skip(
+    browserName === 'firefox',
+    'The pinned Firefox does not support cross-document View Transitions',
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => {
+    addEventListener('pagereveal', (event) => {
+      const transition = (event as PageRevealEvent).viewTransition;
+      if (!transition) return;
+      void transition.ready.then(() => {
+        const pseudo = '::view-transition-new(cover-urban-study-kyjov)';
+        const opening = document
+          .getAnimations()
+          .find(
+            (animation) =>
+              (animation.effect as KeyframeEffect).pseudoElement === pseudo,
+          );
+        if (!opening) return;
+        opening.pause();
+        opening.currentTime = 0;
+        sessionStorage.setItem(
+          'opening-scale',
+          getComputedStyle(document.documentElement, pseudo).scale,
+        );
+        opening.play();
+      });
+    });
+  });
+
+  await page.goto('/work');
+  await page.locator('a[href="/projects/exotarium-brno-zoo/"]').hover();
+  await page.waitForTimeout(350);
+  await page.locator('a[href="/projects/urban-study-kyjov/"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/projects\/urban-study-kyjov\/$/);
+  await expect
+    .poll(() => page.evaluate(() => sessionStorage.getItem('opening-scale')))
+    .not.toBeNull();
+  const scale = await page.evaluate(() => sessionStorage.getItem('opening-scale'));
+  expect(Number(scale) || 1).toBeCloseTo(1, 2);
 });

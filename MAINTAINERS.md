@@ -35,6 +35,12 @@ against the server startup timeout, and routes are not compiled during interacti
 tests. CI persists `node_modules/.astro` after that prebuild; the
 deployment build and later workflow runs reuse its content-addressed image cache.
 
+That prebuild sets `E2E_FIXTURES=1`, which adds the test-only pages
+`/e2e-carousels/` and `/e2e-single-image/` (`src/pages/[fixture].astro`) that
+the carousel tests run against. When running Playwright directly against your
+own build, build with `E2E_FIXTURES=1 bun run build`; a plain `bun run build`,
+like the deployment's, leaves them out.
+
 ## Project layout
 
 ```
@@ -59,13 +65,14 @@ src/
     work.astro                 project grid
     contact.astro              email, phone, per-day availability (from contact.md)
     projects/[...slug].astro   project detail page
+    [fixture].astro            test-only carousel pages, built with E2E_FIXTURES
   layouts/Base.astro           html shell, reveal + language scripts
   components/
     Nav.astro                  chrome (name from site.md)
     Footer.astro               chrome (email from contact.md) + language/theme toggles
     T.astro                    renders both languages of a label/string (CSS hides one)
     Prose.astro                renders both languages of a rich-text body (via marked)
-    Carousel.astro             home hero image/carousel; images from home.md
+    Carousel.astro             home hero image/carousel; images from home.md by default
     Approaches.astro           vertical "how I work" list (items from home.md)
     ProjectCard.astro          grid card
     ProjectBlocks.astro        ordered project text/gallery/image-set renderer

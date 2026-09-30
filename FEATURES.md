@@ -251,7 +251,8 @@ crossfades instead of a hard reload. Project covers move between the work grid
 and their project page, progressively changing crop between the square card and
 the full image, including on the first uncached visit. Like the lightbox, the
 moving cover is a single full image cropped by its changing frame rather than a
-blend of the two crops, and it starts from the card's hover zoom — [Explicit].
+blend of the two crops, and it starts from the opened card's own hover zoom, if
+it has one — [Explicit].
 Other browsers use normal page navigation. Hover enlargement remains independent
 of the moving cover.
 Work cards skip the general fade-in-on-scroll effect so entering the Work page
@@ -261,6 +262,22 @@ has one transition. Delivers "smoothness" without a heavy SPA.
 
 Content eases in as it scrolls into view, using the real scrollbar (no
 hijacking). Honors the explicit motion boundary.
+
+The fade is decoration only — [Explicit]: the page looks and works the same
+without it. Without JavaScript everything is visible; content already on screen
+when a page loads is simply shown, with no late fade; and content starts to
+appear as soon as any part of it enters the viewport, so nothing on screen is
+ever left invisible.
+
+### Carousels never wait for their scrolling — [Explicit]
+
+The home carousel and project image-set carousels follow the lightbox's rule:
+every arrow, dot and auto-advance step is taken at once and counts from the
+image last moved to, however many come in a row, and the dots mark that image
+straight away. The strip slides after it, and a press while it is still sliding
+sends it on from where it is towards the new image. When the visitor swipes or
+scrolls the strip sideways themselves, the dots follow the strip and the arrows
+carry on from the image it rests on.
 
 ### Dark mode — [Explicit]
 
@@ -608,15 +625,16 @@ still requires its image.
 
 ### Respects reduced-motion preferences — [Implicit]
 
-Users who set `prefers-reduced-motion` get no fade/transform animation. Changes
-to that preference apply immediately. Lightbox open/close transitions, live
-swipe movement, and blends between variants are also disabled (the change
-happens at once), and turning over to an image description becomes a short
-crossfade with the zoom changing at once. A swipe on the text does not turn the
-card with the finger; released past the threshold it crossfades to the drawing,
-and on phones the edge arrows fade aside and back with that crossfade instead
-of sliding — [Implicit]. The same input still reaches the same states at the
-same moments; only the motion between them is left out.
+Users who set `prefers-reduced-motion` get no fade/transform animation, image
+hover zooms included. Changes to that preference apply immediately. Lightbox
+open/close transitions, live swipe movement, and blends between variants are
+also disabled (the change happens at once), and turning over to an image
+description becomes a short crossfade with the zoom changing at once. A swipe on
+the text does not turn the card with the finger; released past the threshold it
+crossfades to the drawing, and on phones the edge arrows fade aside and back
+with that crossfade instead of sliding — [Implicit]. The same input still
+reaches the same states at the same moments; only the motion between them is
+left out.
 
 ---
 

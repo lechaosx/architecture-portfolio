@@ -252,8 +252,11 @@ test('project prose becomes two columns only on wide screens', async ({
 
 test('reduced motion exposes reveal content without animation', async ({ page }) => {
   await page.goto('/');
-  const reveal = page.locator('.reveal').first();
-  await expect(reveal).toBeVisible();
+  // Starts off screen, so the script hides it once it has observed it.
+  const reveal = page.locator('.reveal').last();
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
   expect(
     await reveal.evaluate((element) => {
       const style = getComputedStyle(element);
@@ -264,4 +267,86 @@ test('reduced motion exposes reveal content without animation', async ({ page })
       };
     }),
   ).toEqual({ opacity: '1', transform: 'none', transitionDuration: '0s' });
+});
+
+test('reduced motion keeps project images still on hover', async ({ page }) => {
+  await page.goto('/projects/galerie-hangár/');
+  const variants = {
+    cover: page.locator('.project-cover'),
+    'gallery thumbnail': page.locator('.grid > [data-lightbox-index]').first(),
+    'single-image set': page
+      .locator('article > [data-lightbox-index]:not(.project-cover)')
+      .first(),
+  };
+  const missing = [];
+  for (const [name, button] of Object.entries(variants)) {
+    if ((await button.count()) === 0) missing.push(name);
+  }
+  test.skip(missing.length > 0, `The project has no ${missing.join(', ')}`);
+
+  for (const button of Object.values(variants)) {
+    const image = button.locator('img');
+    await button.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    const before = await image.boundingBox();
+    await button.hover();
+    await page.waitForTimeout(100);
+    expect(await image.boundingBox()).toEqual(before);
+  }
+});
+
+test('reveal content is visible without JavaScript', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  for (const path of ['/', '/contact']) {
+    await page.goto(path);
+    const opacities = await page
+      .locator('.reveal')
+      .evaluateAll((elements) =>
+        elements.map((element) => getComputedStyle(element).opacity),
+      );
+    expect(opacities.length).toBeGreaterThan(0);
+    expect(opacities.every((opacity) => opacity === '1')).toBe(true);
+  }
+  await context.close();
+});
+
+test('reveal content on screen at load shows without a fade', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => {
+    const faded = new Set<Element>();
+    addEventListener('transitionrun', (event) => faded.add(event.target as Element), true);
+    Object.assign(window, { faded });
+  });
+  for (const path of ['/', '/contact']) {
+    await page.setViewportSize({ width: 1280, height: path === '/' ? 1600 : 720 });
+    await page.goto(path);
+    await page.waitForTimeout(1000);
+    const onScreen = await page.locator('.reveal').evaluateAll((elements) =>
+      elements
+        .filter((element) => element.getBoundingClientRect().top < innerHeight)
+        .map((element) => ({
+          faded: (window as unknown as { faded: Set<Element> }).faded.has(element),
+          opacity: getComputedStyle(element).opacity,
+        })),
+    );
+    expect(onScreen.length).toBeGreaterThan(0);
+    expect(onScreen).toEqual(onScreen.map(() => ({ faded: false, opacity: '1' })));
+  }
+});
+
+test('reveal content fades in as soon as it enters the viewport', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/');
+  const reveal = page.locator('.reveal').last();
+  const opacity = () => reveal.evaluate((element) => getComputedStyle(element).opacity);
+  expect(
+    await reveal.evaluate((element) => element.getBoundingClientRect().top > innerHeight),
+  ).toBe(true);
+  await expect.poll(opacity).toBe('0');
+
+  await reveal.evaluate((element) =>
+    scrollBy(0, element.getBoundingClientRect().top - innerHeight + 0.05 * innerHeight),
+  );
+  await expect.poll(opacity).toBe('1');
 });

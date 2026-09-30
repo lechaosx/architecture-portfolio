@@ -9,7 +9,11 @@ import {
 import { getResponsiveImage } from '../server-images';
 import { ui } from '../i18n';
 
-const images: string[] = home.gallery;
+interface Props {
+  images?: string[];
+}
+
+const { images = home.gallery as string[] } = Astro.props;
 const displayImages = await Promise.all(
   images.map(async (src) => {
     const responsive = await getResponsiveImage(src);
@@ -153,33 +157,56 @@ const singleImage = displayImages[0];
     if (slides.length < 2) return;
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const indexNow = () => Math.round(track.scrollLeft / track.clientWidth);
+    // The current slide is state; the smooth scroll only chases it. Only the
+    // visitor's own scrolling of the track moves it from the scroll position.
+    let current = 0;
+    let visitorScrolling = false;
+    const sync = () => {
+      dots.forEach((d, di) =>
+        d.setAttribute('aria-current', di === current ? 'true' : 'false'),
+      );
+    };
     const goto = (i: number) => {
-      const n = ((i % slides.length) + slides.length) % slides.length;
+      current = ((i % slides.length) + slides.length) % slides.length;
+      visitorScrolling = false;
+      sync();
       track.scrollTo({
-        left: n * track.clientWidth,
+        left: current * track.clientWidth,
         behavior: motionQuery.matches ? 'auto' : 'smooth',
       });
-    };
-    const sync = () => {
-      const i = indexNow();
-      dots.forEach((d, di) =>
-        d.setAttribute('aria-current', di === i ? 'true' : 'false'),
-      );
     };
 
     root
       .querySelector('[data-carousel-prev]')
-      ?.addEventListener('click', () => goto(indexNow() - 1));
+      ?.addEventListener('click', () => goto(current - 1));
     root
       .querySelector('[data-carousel-next]')
-      ?.addEventListener('click', () => goto(indexNow() + 1));
+      ?.addEventListener('click', () => goto(current + 1));
     dots.forEach((dot, index) =>
       dot.addEventListener('click', () => goto(index)),
     );
-    track.addEventListener('scroll', () => requestAnimationFrame(sync), {
-      passive: true,
-    });
+    for (const event of ['pointerdown', 'keydown', 'focusin']) {
+      track.addEventListener(event, () => (visitorScrolling = true), {
+        passive: true,
+      });
+    }
+    // A vertical wheel over the track scrolls the page, not the track.
+    track.addEventListener(
+      'wheel',
+      (event) => {
+        if (event.deltaX || event.shiftKey) visitorScrolling = true;
+      },
+      { passive: true },
+    );
+    track.addEventListener(
+      'scroll',
+      () => {
+        if (!visitorScrolling) return;
+        current = Math.round(track.scrollLeft / track.clientWidth);
+        sync();
+      },
+      { passive: true },
+    );
     sync();
 
     let timer: number | undefined;
@@ -192,7 +219,7 @@ const singleImage = displayImages[0];
       if (motionQuery.matches || root.matches(':hover, :focus-within')) {
         stop();
       } else if (timer === undefined) {
-        timer = window.setInterval(() => goto(indexNow() + 1), 5000);
+        timer = window.setInterval(() => goto(current + 1), 5000);
       }
     };
     for (const event of [
