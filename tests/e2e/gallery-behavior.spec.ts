@@ -1237,19 +1237,24 @@ test('without reduced motion the card turns over both ways', async ({ page }) =>
   const turning = async () => Math.abs(await sheetTurn(page)) < 0.99;
   const text = page.getByRole('region', { name: 'Life at the city' });
 
+  await holdTime(page);
   await flip.click();
-  await expect.poll(turning).toBe(true);
+  await page.clock.runFor(200);
+  expect(await turning()).toBe(true);
   expect(
     await text.evaluate((element) =>
       Boolean(element.closest('[data-lightbox-sheet]')),
     ),
   ).toBe(true);
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
+  await page.clock.runFor(1000);
+  expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
   await expect(text).toBeVisible();
 
   await flip.click();
-  await expect.poll(turning).toBe(true);
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
+  await page.clock.runFor(200);
+  expect(await turning()).toBe(true);
+  await page.clock.runFor(1000);
+  expect(await sheetTurn(page)).toBeCloseTo(1, 3);
   await expect(text).toBeHidden();
 });
 
