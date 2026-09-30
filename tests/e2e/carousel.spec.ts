@@ -150,7 +150,9 @@ for (const { name, carousel, track, dot } of [
     test.beforeEach(async ({ page }) => {
       await page.emulateMedia({ reducedMotion: 'no-preference' });
       await page.goto(fixture);
-      await page.locator(carousel).scrollIntoViewIfNeeded();
+      // Auto-advance holds while the pointer is over the carousel, so only
+      // the test's input moves it however long the test takes.
+      await page.locator(carousel).hover();
     });
 
     const parts = (page: Page) => {
