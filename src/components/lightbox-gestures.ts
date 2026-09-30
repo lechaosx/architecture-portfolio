@@ -6,8 +6,6 @@ export interface GestureContext {
   range: ZoomRange;
   /** The text side faces the viewer. */
   flipped: boolean;
-  /** Opening, closing, or changing image: no gesture starts. */
-  busy: boolean;
 }
 
 /**
@@ -22,20 +20,21 @@ export type GestureIntent =
   | { type: 'view'; scale: number; pan: Point }
   /** Zooms to `scale`, keeping the image point under `point` in place. */
   | { type: 'zoom'; scale: number; point: Point }
-  /** A live drag at rest, `offset` px sideways: it moves the strip or scrubs a blend. */
+  /**
+   * A live drag at rest, `offset` px sideways from where it went down: it
+   * moves the strip or scrubs a blend.
+   */
   | { type: 'drag'; offset: number }
   /** A released drag changes image: 1 to the next, −1 to the previous. */
   | { type: 'commit'; direction: 1 | -1 }
   /** A drag at rest ends without changing image. */
   | { type: 'settle' }
-  /** A live drag on the text, `offset` px sideways: it turns the card towards its drawing. */
+  /** A live drag on the text, `offset` px sideways from where it went down: it turns the card. */
   | { type: 'turn'; offset: number }
-  /** A released drag on the text turns the card to its drawing, the way it moved: 1 leftwards, −1 rightwards. */
-  | { type: 'turnBack'; direction: 1 | -1 }
+  /** A released drag on the text turns the card to its drawing. */
+  | { type: 'turnBack' }
   /** A drag on the text ends with the text still up. */
-  | { type: 'keepText' }
-  /** A pinch takes over: the strip and any scrub return to rest at once. */
-  | { type: 'abandon' };
+  | { type: 'keepText' };
 
 type Input = 'mouse' | 'touch';
 
@@ -72,7 +71,7 @@ export class LightboxGestures {
 
   /** On the text side a mouse selects the text, which spans the stage. */
   mouseDown(point: Point, context: GestureContext): GestureIntent[] {
-    if (context.busy || context.flipped) return [];
+    if (context.flipped) return [];
     return [{ type: 'claim' }, ...this.#grab('mouse', point, context)];
   }
 
@@ -96,15 +95,16 @@ export class LightboxGestures {
     selectingText: boolean,
     context: GestureContext,
   ): GestureIntent[] {
-    if (context.busy) return [];
     if (touches.length === 1) {
       this.#tap = context.flipped ? undefined : touches[0];
       if (selectingText && swipes(context)) return this.#become(undefined);
       return this.#grab('touch', touches[0], context);
     }
     if (touches.length === 2 && !context.flipped) {
-      this.#tap = undefined;
+      // The pinch takes over, so a drag it interrupts settles.
+      const stopped = this.#stop();
       return [
+        ...stopped,
         ...this.#become({
           kind: 'pinch',
           input: 'touch',
@@ -112,7 +112,6 @@ export class LightboxGestures {
           center: midpoint(touches[0], touches[1]),
           from: context.view,
         }),
-        { type: 'abandon' },
       ];
     }
     this.#tap = undefined;
@@ -197,7 +196,7 @@ export class LightboxGestures {
     context: GestureContext,
   ): GestureIntent[] {
     if (context.flipped) return [];
-    if (!this.#zoomable(context)) return [{ type: 'claim' }];
+    if (!this.#zoomable()) return [{ type: 'claim' }];
     return [
       { type: 'claim' },
       {
@@ -212,7 +211,7 @@ export class LightboxGestures {
   }
 
   doubleClick(point: Point, context: GestureContext): GestureIntent[] {
-    return context.flipped || !this.#zoomable(context)
+    return context.flipped || !this.#zoomable()
       ? []
       : [{ type: 'zoom', scale: doubleTapScale(context), point }];
   }
@@ -222,7 +221,7 @@ export class LightboxGestures {
     action: 'in' | 'out' | 'reset',
     context: GestureContext,
   ): GestureIntent[] {
-    if (context.flipped || !this.#zoomable(context)) return [];
+    if (context.flipped || !this.#zoomable()) return [];
     const step = action === 'in' ? KEY_ZOOM_STEP : 1 / KEY_ZOOM_STEP;
     const scale =
       action === 'reset'
@@ -310,8 +309,8 @@ export class LightboxGestures {
     return [...ended, { type: gesture.turns ? 'keepText' : 'settle' }];
   }
 
-  #zoomable(context: GestureContext) {
-    return !context.busy && this.#gesture?.kind !== 'swipe';
+  #zoomable() {
+    return this.#gesture?.kind !== 'swipe';
   }
 
   #doubleTapped(touches: Point[], changed: Point[], time: number) {
@@ -342,8 +341,8 @@ function release({ delta, turns }: { delta: Point; turns: boolean }): GestureInt
   ) {
     return { type: turns ? 'keepText' : 'settle' };
   }
-  const direction = delta.x < 0 ? 1 : -1;
-  return { type: turns ? 'turnBack' : 'commit', direction };
+  if (turns) return { type: 'turnBack' };
+  return { type: 'commit', direction: delta.x < 0 ? 1 : -1 };
 }
 
 function doubleTapScale({ view, range }: GestureContext) {

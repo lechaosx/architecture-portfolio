@@ -10,7 +10,6 @@ const rest: GestureContext = {
   view: { scale: 1, pan: { x: 0, y: 0 } },
   range: { min: 1, max: 4 },
   flipped: false,
-  busy: false,
 };
 const zoomed: GestureContext = {
   ...rest,
@@ -21,7 +20,6 @@ const at = (x: number, y = 0): Point => ({ x, y });
 const claim: GestureIntent = { type: 'claim' };
 const drag = (offset: number): GestureIntent => ({ type: 'drag', offset });
 const settle: GestureIntent = { type: 'settle' };
-const abandon: GestureIntent = { type: 'abandon' };
 const grab: GestureIntent = { type: 'grab', grabbing: true };
 const letGo: GestureIntent = { type: 'grab', grabbing: false };
 const commit = (direction: 1 | -1): GestureIntent => ({
@@ -29,10 +27,7 @@ const commit = (direction: 1 | -1): GestureIntent => ({
   direction,
 });
 const turn = (offset: number): GestureIntent => ({ type: 'turn', offset });
-const turnBack = (direction: 1 | -1): GestureIntent => ({
-  type: 'turnBack',
-  direction,
-});
+const turnBack: GestureIntent = { type: 'turnBack' };
 const keepText: GestureIntent = { type: 'keepText' };
 
 /** One finger down at `from` and up at `to`, `time` ms into the test. */
@@ -99,15 +94,6 @@ describe('a mouse drag', () => {
     expect(gestures.mouseUp()).toEqual([]);
   });
 
-  test('does not start while the lightbox is busy', () => {
-    const gestures = new LightboxGestures();
-    expect(gestures.mouseDown(at(0), { ...rest, busy: true })).toEqual(
-      [],
-    );
-    expect(gestures.mouseMove(at(-80), rest)).toEqual([]);
-    expect(gestures.mouseUp()).toEqual([]);
-  });
-
   test('cancelled by the browser settles', () => {
     const gestures = new LightboxGestures();
     gestures.mouseDown(at(0), rest);
@@ -164,18 +150,18 @@ describe('a one-finger touch', () => {
     ]);
   });
 
-  test('on the text past 50 px completes the turn the way it moved, and short of it keeps the text', () => {
+  test('on the text past 50 px either way completes the turn, and short of it keeps the text', () => {
     const gestures = new LightboxGestures();
     gestures.touchStart([at(0)], false, onText);
     gestures.touchMove([at(-50, 5)], false, onText);
     expect(gestures.touchEnd([], [at(-50, 5)], 0, onText)).toEqual([
-      turnBack(1),
+      turnBack,
     ]);
 
     gestures.touchStart([at(0)], false, onText);
     gestures.touchMove([at(120, -20)], false, onText);
     expect(gestures.touchEnd([], [at(120, -20)], 1000, onText)).toEqual([
-      turnBack(-1),
+      turnBack,
     ]);
 
     gestures.touchStart([at(0)], false, onText);
@@ -233,14 +219,6 @@ describe('a one-finger touch', () => {
     expect(gestures.touchEnd([], [at(-120)], 0, rest)).toEqual([]);
   });
 
-  test('does not start while the lightbox is busy', () => {
-    const gestures = new LightboxGestures();
-    expect(
-      gestures.touchStart([at(0)], false, { ...rest, busy: true }),
-    ).toEqual([]);
-    expect(gestures.touchMove([at(-100)], false, rest)).toEqual([]);
-    expect(gestures.touchEnd([], [at(-100)], 0, rest)).toEqual([]);
-  });
 });
 
 describe('a pinch', () => {
@@ -248,9 +226,9 @@ describe('a pinch', () => {
     const gestures = new LightboxGestures();
     const range = { min: 0.7, max: 4 };
     const context = { ...rest, range };
-    expect(gestures.touchStart([at(-50), at(50)], false, context)).toEqual([
-      abandon,
-    ]);
+    expect(gestures.touchStart([at(-50), at(50)], false, context)).toEqual(
+      [],
+    );
     const scaleAt = (distance: number) =>
       (
         gestures.touchMove(
@@ -294,21 +272,14 @@ describe('a pinch', () => {
     ]);
   });
 
-  test('takes over a one-finger drag at once', () => {
+  test('takes over a one-finger drag, which settles', () => {
     const gestures = new LightboxGestures();
     gestures.touchStart([at(0)], false, rest);
     gestures.touchMove([at(-60)], false, rest);
     expect(gestures.touchStart([at(-60), at(40)], false, rest)).toEqual([
-      abandon,
+      settle,
     ]);
     expect(gestures.touchEnd([], [at(-60), at(40)], 0, rest)).toEqual([]);
-  });
-
-  test('does not start while the lightbox is busy', () => {
-    const gestures = new LightboxGestures();
-    const busy = { ...rest, busy: true };
-    expect(gestures.touchStart([at(-50), at(50)], false, busy)).toEqual([]);
-    expect(gestures.touchMove([at(-100), at(100)], false, rest)).toEqual([]);
   });
 
   test('that ends at rest leaves the remaining finger idle', () => {
@@ -406,10 +377,7 @@ describe('the wheel and double-click', () => {
     expect(new LightboxGestures().wheel(-100, at(0), onText)).toEqual([]);
   });
 
-  test('the wheel does not zoom while busy or during a drag at rest', () => {
-    expect(
-      new LightboxGestures().wheel(-100, at(0), { ...rest, busy: true }),
-    ).toEqual([claim]);
+  test('the wheel does not zoom during a drag at rest', () => {
     const dragging = new LightboxGestures();
     dragging.mouseDown(at(0), rest);
     expect(dragging.wheel(-100, at(0), rest)).toEqual([claim]);
@@ -438,7 +406,6 @@ describe('the wheel and double-click', () => {
       { type: 'zoom', scale: 1, point: at(5, 6) },
     ]);
     expect(gestures.doubleClick(at(0), onText)).toEqual([]);
-    expect(gestures.doubleClick(at(0), { ...rest, busy: true })).toEqual([]);
   });
 });
 
@@ -469,11 +436,8 @@ describe('zoom keys', () => {
     ]);
   });
 
-  test('do nothing on the text, while busy, or during a drag at rest', () => {
+  test('do nothing on the text or during a drag at rest', () => {
     expect(new LightboxGestures().key('in', onText)).toEqual([]);
-    expect(new LightboxGestures().key('in', { ...rest, busy: true })).toEqual(
-      [],
-    );
     const mouse = new LightboxGestures();
     mouse.mouseDown(at(0), rest);
     mouse.mouseMove(at(-30), rest);

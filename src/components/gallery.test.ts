@@ -4,6 +4,8 @@ import {
   cardPadding,
   cardScale,
   cardView,
+  cubicBezier,
+  morphFrame,
   clampPan,
   clampScale,
   comparisonSetIndexes,
@@ -11,6 +13,7 @@ import {
   deepZoomViewport,
   displayedSwipeOffset,
   imageText,
+  layerPosition,
   lightboxAreas,
   lightboxImageUrl,
   nativeZoomScale,
@@ -18,6 +21,7 @@ import {
   scrubProgress,
   settleDuration,
   sharedMaximumScale,
+  slidePosition,
   textColumnLimit,
   zoomFloor,
   type GalleryImage,
@@ -187,9 +191,82 @@ describe('lightbox geometry and zoom limits', () => {
     expect(settleDuration(180, 1, 1)).toBe(0);
   });
 
+  test('a move never takes longer than a whole one', () => {
+    expect(settleDuration(180, 0.4, 2)).toBe(180);
+    expect(settleDuration(180, 1, -0.5)).toBe(180);
+  });
+
   test('reduced motion keeps a swipe stationary until navigation', () => {
     expect(displayedSwipeOffset(80, false)).toBe(80);
     expect(displayedSwipeOffset(80, true)).toBe(0);
+  });
+});
+
+/** What a strip or card shows at each position, from a list of [position, image]. */
+const showing =
+  (...entries: [number, number][]) =>
+  (position: number) =>
+    new Map(entries).get(position);
+
+describe('the strip', () => {
+  test('at rest a change moves one slide on, the way it travels', () => {
+    const strip = showing([0, 5], [-1, 4], [1, 6]);
+    expect(slidePosition(0, 0, 1, 6, strip)).toBe(1);
+    expect(slidePosition(0, 0, -1, 4, strip)).toBe(-1);
+  });
+
+  test('a second change mid-slide lands one slide past the one arriving', () => {
+    // Sliding from 5 at 0 towards 6 at 1, 40% of the way.
+    const strip = showing([0, 5], [1, 6], [2, 7]);
+    expect(slidePosition(1, 0.4, 1, 7, strip)).toBe(2);
+  });
+
+  test('turning back mid-slide returns to the card it is leaving', () => {
+    const strip = showing([0, 5], [1, 6]);
+    expect(slidePosition(1, 0.4, -1, 5, strip)).toBe(0);
+  });
+
+  test('a card skipped before it came into view is replaced beside the screen', () => {
+    // Two changes ahead of a strip that has hardly moved: 7 was never shown.
+    const strip = showing([0, 5], [1, 6], [2, 7]);
+    expect(slidePosition(2, 0.05, 1, 8, strip)).toBe(2);
+  });
+
+  test('a slide on screen keeps its image, so one holding another is passed over', () => {
+    // Back from 8 at 2 while 5 and 6 are on screen: 7 enters beyond them.
+    const strip = showing([0, 5], [1, 6], [2, 8]);
+    expect(slidePosition(2, 0.6, -1, 7, strip)).toBe(-1);
+  });
+
+  test('travels the way it is going when the target is on screen behind', () => {
+    // Two images: Next from 1 back to 0 wraps forwards instead of reversing.
+    const strip = showing([0, 0], [1, 1]);
+    expect(slidePosition(1, 0.4, 1, 0, strip)).toBe(2);
+  });
+});
+
+describe("a card's layers", () => {
+  test('at rest a new image is layered over the card', () => {
+    expect(layerPosition(0, 0, 4, showing([0, 3]))).toBe(1);
+  });
+
+  test('a layer on screen that shows the target is reused, whichever way it lies', () => {
+    const layers = showing([0, 3], [1, 4]);
+    expect(layerPosition(1, 0.4, 3, layers)).toBe(0);
+    expect(layerPosition(0, 0.6, 4, layers)).toBe(1);
+  });
+
+  test('a layer is added just above what is on screen, never further', () => {
+    // Blending from 3 to 4, 40% of the way; then two more, before either shows.
+    const layers = showing([0, 3], [1, 4], [2, 5]);
+    expect(layerPosition(1, 0.4, 5, layers)).toBe(2);
+    expect(layerPosition(2, 0.4, 6, layers)).toBe(2);
+  });
+
+  test('a layer on screen holding another image is passed over', () => {
+    // Heading down to 3 from 4, 80% of the way up: 5 goes above both.
+    const layers = showing([0, 3], [1, 4]);
+    expect(layerPosition(0, 0.8, 5, layers)).toBe(2);
   });
 });
 
@@ -300,5 +377,54 @@ describe('lightbox image selection', () => {
     expect(
       lightboxImageUrl(responsiveImage, { width: 800, height: 600 }, 4, 2),
     ).toBe('/_responsive/project/4000.webp');
+  });
+});
+
+describe('easing', () => {
+  test('a cubic bezier runs from 0 to 1 along its curve', () => {
+    const ease = cubicBezier(0.22, 1, 0.36, 1);
+    expect(ease(0)).toBe(0);
+    expect(ease(1)).toBe(1);
+    // Where CSS's cubic-bezier(0.22, 1, 0.36, 1) is at a quarter and half of its time.
+    expect(ease(0.131)).toBeCloseTo(0.5, 2);
+    expect(ease(0.467)).toBeCloseTo(0.95, 2);
+    const linear = cubicBezier(0.25, 0.25, 0.75, 0.75);
+    expect(linear(0.3)).toBeCloseTo(0.3, 5);
+  });
+});
+
+describe('the opening morph', () => {
+  const stage = { width: 1000, height: 800 };
+  const rest = { width: 600, height: 400 };
+  // A square thumbnail at the top left.
+  const thumbnail = { x: 100, y: 100, width: 200, height: 200 };
+
+  test('at rest the card is where it rests, unclipped', () => {
+    expect(morphFrame(thumbnail, rest, stage, 1, 1.2)).toEqual({
+      x: 0,
+      y: 0,
+      scale: 1,
+      clip: { top: 200, right: 200, bottom: 200, left: 200 },
+    });
+  });
+
+  test('closed, the drawing covers the thumbnail, at its hover scale, clipped to it', () => {
+    const frame = morphFrame(thumbnail, rest, stage, 0, 1.2);
+    // Covering 200 × 200 from 600 × 400 takes a scale of 0.5, then the hover.
+    expect(frame.scale).toBeCloseTo(0.6);
+    // Its centre moves from the stage's to the thumbnail's.
+    expect(frame.x).toBeCloseTo(200 - 500);
+    expect(frame.y).toBeCloseTo(200 - 400);
+    // The clip, in the card's own untransformed space, is the thumbnail.
+    expect(frame.clip.top).toBeCloseTo(400 - 100 / 0.6);
+    expect(frame.clip.left).toBeCloseTo(500 - 100 / 0.6);
+  });
+
+  test('half way, the box and the hover scale are half way', () => {
+    const frame = morphFrame(thumbnail, rest, stage, 0.5, 1.2);
+    // Box 400 × 300 at centre (350, 300): cover scale max(400/600, 300/400) = 0.75, hover 1.1.
+    expect(frame.scale).toBeCloseTo(0.75 * 1.1);
+    expect(frame.x).toBeCloseTo(350 - 500);
+    expect(frame.y).toBeCloseTo(300 - 400);
   });
 });

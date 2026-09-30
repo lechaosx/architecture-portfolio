@@ -40,11 +40,13 @@
   });
 
   // Sized once per text, language, image, viewport and loaded font; a resize
-  // keeps the reading position in proportion.
+  // keeps the reading position in proportion, once the card has its new size,
+  // unless it is sized again or leaves the page first.
   $effect(() => {
     void [title, description, lang, fontLoads];
     const image = restImage;
     const limit = columnLimit;
+    let current = true;
     untrack(() => {
       const range = scroller.scrollHeight - scroller.clientHeight;
       const position = range > 0 ? scroller.scrollTop / range : 0;
@@ -53,10 +55,14 @@
         return probe.offsetHeight;
       });
       void tick().then(() => {
+        if (!current) return;
         scrollTop =
           position * Math.max(0, scroller.scrollHeight - scroller.clientHeight);
       });
     });
+    return () => {
+      current = false;
+    };
   });
 
   $effect(() => {

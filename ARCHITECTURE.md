@@ -164,34 +164,145 @@ purpose and a small interface, so each can be read without the others:
 
 | Unit | Owns |
 |------|------|
-| `Gallery.svelte` | The lightbox as a whole: open/closing, the current image, the drawing's view (scale and pan), the side shown, the change of image in progress (the image the card is leaving, slide, blend, their durations and the strip offset), the card's turn (a drag's scrub of it and the way it rotates), the stage size, language and motion preference; the derived sources, sizes and zoom range; keys and the focus trap; composing the parts below. |
-| `lightbox-gestures.ts` | The gesture interpreter: a DOM-free state machine that turns mouse, touch, wheel, double-click and zoom-key input into intents (claim the event, a mouse gesture starting or ending, set the view, zoom about a point, a live drag at rest, commit, settle or abandon a drag, and a live drag on the text that turns the card, completing or keeping that turn). It holds the one live gesture and the tap record, every threshold, and the one rule for when zoom input is ignored. |
-| `LightboxCard.svelte` | The current slide as a card: its front (the drawing, or the tiled canvas over its preview), its back (`LightboxVerso`), the incoming blend layers, and all the CSS that turns and zooms them. |
+| `Gallery.svelte` | The lightbox as a whole and its state: open, the current image, its view (scale and pan), its side, the address; the strip of slides and where it rests; how far open it shows and the thumbnail it opens from; a live drag and what it grabbed; the stage size, language and motion preference; the derived sources, sizes and zoom range; keys and the focus trap; composing the parts below. |
+| `lightbox-gestures.ts` | The gesture interpreter: a DOM-free state machine that turns mouse, touch, wheel, double-click and zoom-key input into intents (claim the event, a mouse gesture starting or ending, set the view, zoom about a point, a live drag at rest, commit or settle a drag, and a live drag on the text that turns the card, completing or keeping that turn). It holds the one live gesture and the tap record, every threshold, and the one rule for when zoom input is ignored. |
+| `LightboxCard.svelte` | One card and how it looks while it changes: its images stacked as layers, the blend and the turn it chases from where they are on screen, waiting for a layer's drawing, what a drag grabbed of it, its front (the drawing, or the tiled canvas over its preview), its back (`LightboxVerso`), and all the CSS that turns, blends and zooms them. |
 | `LightboxVerso.svelte` | The back's scrolling viewport and the card's fit to its text. |
-| `LightboxTiles.svelte` | The OpenSeadragon viewer's lifecycle and syncing its viewport to the lightbox's view. |
-| `LightboxControls.svelte` | The corner controls and set strip, as markup with props and callbacks, and their shared control styles. |
-| `lightbox-history.ts` | The `#image-N` history entry: push, replace, Back/Forward, a linked hash on load, and scroll-restoration suspension. |
-| `lightbox-morph.ts` | The open and close View Transitions between a thumbnail and the lightbox image. |
-| `gallery.ts` | The pure lightbox geometry and image-selection maths shared by the units. |
+| `LightboxTiles.svelte` | The OpenSeadragon viewer's lifecycle and syncing its viewport to a card's view. |
+| `LightboxControls.svelte` | The corner controls and set strip, as markup with props and callbacks, their shared control styles, and the edge arrows stepping aside as far as they are told. |
+| `lightbox-history.ts` | The `#image-N` history entry: push, replace (a run of changes at a rate browsers accept), Back/Forward, closing, a linked hash on load, and scroll-restoration suspension. |
+| `gallery.ts` | The pure lightbox geometry, image-selection and motion maths shared by the units: where a slide or layer goes when a change arrives mid-move, how long a move takes from where it is, the easings, and where the opening puts the card between its thumbnail and rest. |
 
 The seams sit where state and responsibility actually divide. Input
-interpretation needs only the view, the zoom range, the side shown and whether
-the lightbox is busy, so it is a plain class with unit tests
-(`lightbox-gestures.test.ts`) and no knowledge of the DOM; the component feeds
-it stage-centred points and applies the intents, since applying them (clamping
-the pan, scrubbing a blend or moving the strip) depends on lightbox state. The
-cursor's grabbing state is set only by the interpreter's `grab` intents, so it
-cannot drift from the live gesture. The change of image stays in
-`Gallery.svelte` because it moves the index, view, side and history together.
-The card, the tiled viewer and the controls receive data and report back
-through props, bindings and callbacks, so none of them reads another's state.
-What an image shows on its card (its size, title, description and pyramid)
-does not depend on the view and is derived apart from its source URL, which
-does; so panning and zooming update only the image sources and the view, never
-the backs, the set strip or its scroll position. History and the open/close
-morph are browser-API glue with their own invariants, called from a few points
-in the component; history is unit-tested against a fake session history
-(`lightbox-history.test.ts`).
+interpretation needs only the view, the zoom range and the side shown, so it is
+a plain class with unit tests (`lightbox-gestures.test.ts`) and no knowledge of
+the DOM; the component feeds it stage-centred points and applies the intents,
+since applying them (clamping the pan, grabbing the strip or the card from
+where they are on screen) depends on lightbox state and the page. The cursor's
+grabbing state is set only by the interpreter's `grab` intents, so it cannot
+drift from the live gesture. A change of image stays in `Gallery.svelte`
+because it moves the index, view, side, strip and address together; how a card
+shows the change stays in the card, which sees only the image it is on, its
+side, its view and a live drag, so the same card works as the current one, as
+one sliding away, and as one the lightbox comes back to. The tiled viewer and
+the controls receive data and report back through props, bindings and
+callbacks, so none of them reads another's state. What an image shows on its
+card (its size, title, description and pyramid) does not depend on the view and
+is derived apart from its source URL, which does; so panning and zooming update
+only the image sources and the view, never the backs, the set strip or its
+scroll position. History is browser-API glue with its own invariants, called
+from a few points in the component and unit-tested against a fake session
+history (`lightbox-history.test.ts`); the travel, timing, easing and opening
+geometry in `gallery.ts` are tested against their own cases
+(`gallery.test.ts`).
+
+### State changes instantly; the visuals chase it — [Explicit] (model [Implicit])
+
+The owner's rule (AGENTS.md → "Known invariants to protect"): input is never
+ignored, queued or delayed because something is animating, and a move sent
+somewhere new carries on from where it is on screen. The lightbox holds this by
+construction: its **state** — open, the current image, its side, its view and
+the address — changes the moment input arrives, and nothing waits for an
+animation to end before state settles. Its **visuals** are derived from state
+and each is one number that a Svelte `Tween` (`svelte/motion`) chases from its
+value on screen towards the target:
+
+| Visual | Number | Where |
+|--------|--------|-------|
+| The strip | its position, in slides | `Gallery.svelte`, drawn as the strip's translation |
+| The lightbox opening | how far open it shows, 1 at rest | `Gallery.svelte`, drawn as the backdrop and the controls' opacity |
+| The card opening | where it is between its thumbnail (0) and rest (1), and how far it has faded in | `Gallery.svelte`, drawn as a transform, a clip and an opacity of the stage's contents |
+| A card's blend | the layer it rests on | `LightboxCard.svelte`, drawn as each layer's opacity |
+| A card's turn | 1 text side up | `LightboxCard.svelte`, as `--lightbox-turn` |
+| A card's shown view | the drawing's view as shown | `LightboxCard.svelte`, as `--lightbox-view-*` |
+
+The phone's edge arrows are not chased on their own: they step aside by the
+turn of each card on screen, weighted by how much of it the strip shows, so
+they are in step with what shows by construction, a turn and a slide alike.
+
+A tween's `current` is the value on screen, so a change reads where things are
+exactly, with no style reads, and `set(target, { duration })` moves on from
+there; a duration given as a function of where the move starts and ends gives
+it the share of a whole move it has to go (`settleDuration` in `gallery.ts`,
+never more than a whole one). Numbers set in the same update with the same
+duration and easing move in step by construction: a card's blend and turn take
+one duration, so a blend from the text is edge-on halfway through both. A
+tween times a move from when it is set but starts it from its value at its
+next frame, which a move under way would first carry on, so a move is stopped
+where it is before it is sent on (`moveOn`); and a card's move sent on while
+under way eases out, so it moves on at once rather than stalling, as the card's
+own ease-in-out would by starting again from standing. A drag, and reduced motion, set a number with no
+duration, so it follows the
+finger or changes at once; with reduced motion the same state changes happen at
+the same moments, and a turn is a short crossfade of the faces derived from the
+turn itself. The easings are CSS's cubic béziers (`cubicBezier` in
+`gallery.ts`), and the numbers reach the DOM as styles and custom properties,
+from which CSS computes the rest: each face's angle and the view it is drawn
+at. Tweens run in JavaScript each frame rather than as CSS transitions because
+a CSS transition's start cannot be read or timed exactly: browsers start a
+retargeted one from the value on screen at moments a frame apart, and each
+shortens one sent back its own way, where a tween starts from exactly the value
+it holds, the same in both browsers. A move counts from the input that starts
+it and shows first a frame after.
+
+**The strip.** Slides sit at integer positions along one strip, which rests
+with the current image's slide on screen (`at`). A change to another card puts
+the target's slide one position on in the way the change travels, but never
+more than one past what is on screen (`slidePosition`): a card changed away
+from before it came into view is never shown, and a fast run of changes
+travels to the last one without racing through the rest or loading them. A
+slide on screen keeps its image, so one holding another is passed over. Slides
+are rendered in the order they were made and never moved in the page, because
+moving an element in the page loses its scroll position, a card's reading
+position among it. The slide the
+lightbox leaves keeps its card with what it last showed (its image, side and
+view: a card left text side up slides away showing its text, a zoomed one
+stays zoomed and clipped to its slide), and its running blend or turn goes on;
+the arriving card is the current one from the start, so the controls, the
+toggle and zooming act on it while it slides in. A card the strip comes back to
+while it is still on screen becomes current again and eases from how it was
+left to how the current image is shown (drawing side up, at rest), which is
+why the view has a tween of its own. Neighbours are plain previews; once the
+strip rests on screen, it keeps only the current card and its two neighbours.
+
+**The card.** Every image a card shows is a layer at an integer blend
+position, stacked upwards, and each layer is fully shown once the blend
+reaches its position (its opacity `clamp(0, mix − position + 1, 1)`), so
+the layers below stay opaque and a blend never shows the backdrop. A change to
+a variant reuses a layer on screen that already shows it, or layers the image
+just above what is on screen (`layerPosition`), so a blend under way is never
+cut: the new image fades in over whatever is showing, and an image changed away
+from before it showed is never blended through. The back's card view that the
+turn moves the drawing to is each layer's own, weighted by how much of the
+drawing side each layer shows, so it moves with the blend too; a layer whose
+image has no back fades the backs below it. Once the blend rests on a layer,
+the layers it covers go. A layer's drawing must have loaded before the blend
+moves to it (a drawing already loaded is `complete` as it enters the page, in
+both browsers, so a cached one starts at once): until
+then the card holds what it shows, its turn included, and so do the phone's
+edge arrows, which follow the turn on screen; state and further input do not
+wait. A tiled drawing draws its tiles once the card has come to rest on it,
+since creating the tiled canvas mid-move stalls the main thread; until then it
+shows its preview, which is what bounds the number of tiled viewers under
+rapid changes. "At rest" is on screen: the strip and the opening have stopped
+and the blend on screen has reached the layer, not merely been sent there.
+
+**The turn's direction** changes only while the card rests on a side, where
+both directions draw the same card, which the card reads from its turn on
+screen; a turn sent elsewhere mid-way keeps the way it was
+turning, so the card never jumps to its mirror image.
+
+**Drags grab what is on screen.** A drag reads, when it begins, where the
+strip, the blend and the turn are on screen, and moves them from there: a drag
+that begins while the strip moves carries the strip either way; one at rest
+towards a variant moves the blend on from where it is (towards a layer that
+already shows that variant, or one layered above), and holds it where it is
+towards a different card, whose side moves the strip; one on the text turns
+the card from where it is, as a signed share of the way back to the drawing
+whose sign is the way it rotates, so the way changes only as the finger passes
+the text-up point. Released, each moves on to its target from where the drag
+left it. The interpreter's offsets stay relative to where the finger went down; the
+component and the card add what they grabbed.
 
 ### Lightbox soft inset and corner controls — [Explicit]
 
@@ -226,26 +337,27 @@ box.
 
 ### Each lightbox image is a card; a comparison set is one card's variants — [Explicit]
 
-The current slide is the card, `LightboxCard.svelte`: `[data-lightbox-sheet]`
+The current slide is a card, `LightboxCard.svelte`: `[data-lightbox-sheet]`
 inside `.lightbox-slide-current`, whose front face holds the drawing (responsive
 or tiled: for an image with a pyramid the card renders the tiled canvas snippet
 it is given with that pyramid's URL, so the card does not depend on
-OpenSeadragon) and whose back face, present only when the image has a
-description in the current language, is `LightboxVerso.svelte`. The previous
-and next slides are plain drawing fronts. The card takes its image (the image
-on the card, which during a change is not the current one) and an incoming one
-with their sources, the blend, the side that takes input, the turn
-and the way it rotates, and the drawing's view as props, and hands them to CSS
-as numbers on the sheet: `--lightbox-turn`, registered with `@property` so it
-can transition as a number (1 text side up, 0 drawing up);
-`--lightbox-turn-direction` (1: turning back to the drawing rotates the card
-leftwards, and turning over rotates it rightwards; −1 the other way round); the
-drawing's view (`--drawing-*`, the
-lightbox's `view`); the back's card view (`--card-*`, `cardView` of the card's
-scale and scroll); and, during a move to a variant, `--lightbox-blend`. From
-these the sheet derives the shown view, the drawing view blended into the card
-view by the turn, and every face is drawn at it: the images with
-`.lightbox-at-view`, the tiled canvas (which stays at the drawing view) with
+OpenSeadragon) and whose back face, present only when an image on it has a
+description in the current language, is `LightboxVerso.svelte`. A card the
+lightbox has changed away from stays a card while its slide is on screen; the
+neighbouring slides are plain previews. The card takes the image it is on, the
+way the latest change went, its side, the drawing's view, a live drag and the
+variants a drag may blend to as props; it keeps its layers and hands CSS the
+numbers on the sheet: `--lightbox-turn`, the turn on screen (1 text side up, 0
+drawing up); `--lightbox-turn-direction` (1: turning back to the drawing
+rotates the card leftwards, and turning over rotates it rightwards; −1 the
+other way round); the drawing's view (`--drawing-*`, which the shown view
+`--lightbox-view-*` follows); each layer's opacity from the blend (see "State
+changes instantly; the visuals chase it"); and the back's card view (`--back-*`, each
+layer's `cardView` of its card's scale and scroll, weighted by the blend; each
+layer's back also has its own `--card-*`). From these the sheet derives the
+shown view, the drawing view blended into the card view by the turn, and every
+face is drawn at it: the images with `.lightbox-at-view`, the tiled canvas
+(laid out by OpenSeadragon at the drawing view, not the shown one) with
 `.lightbox-from-drawing`, and each back's card (laid out at its own card view)
 with `.lightbox-card` in `LightboxVerso`, whose x terms are mirrored because the
 card is seen from behind the front. The sheet itself does not turn: it sets one
@@ -262,90 +374,70 @@ scroller is transparent until the turn passes edge-on (`--lightbox-back-facing`,
 the turn rounded), so neither its card nor its scrollbar ever shows over the
 drawing. The front hides its turned-away side by backface culling, which Firefox
 applies only to a transformed element and Chromium only within the sheet's
-`transform-style: preserve-3d`. One animated number therefore turns the card and
-zooms all four faces (both fronts, both backs) together, with no JavaScript
-animation. The flip never changes the drawing view: it is the saved view,
-restored by turning back and re-clamped on resize by the same effect as any
-other view. Scrolling the back changes only the card view, so the hidden tiled
-canvas is not re-synced while reading. A `.lightbox-incoming` layer in each face
-shows the variant during a blend: its drawing on the front, unbacked so that
-until it has loaded the current drawing shows through undimmed, and its card on
-the back (a back whose variant has no description fades out instead; one whose
-variant has no responsive entry has no rest size yet, so the current back stays
-until the variant is current and its drawing has loaded). Turn and blend
-transition over `--lightbox-card-duration` with `--lightbox-card-easing`, which
-the lightbox sets on the dialog, so a turn that blends keeps the angle, the
-zoom and the blend in step: edge-on is halfway on both faces. The duration
-(`cardDuration` in the lightbox) is set by whoever moves the card (the flip
-button, a blend, a released drag); `dragAtRest` and `turnDrag` zero it so a
-scrub follows the finger directly, and a slide that lands clears it so the card
-cuts to the image that slid in as it is. The flip button turns in direction 1;
-which way a change or a drag turns is described below. The direction changes
-only while the card rests on a side, where both directions draw the same card:
-the card reports a turn under way from the transition events of
-`--lightbox-turn` (a counter, since a turn that replaces a running one ends it
-as it starts, in either order), and a turn reversed or sent elsewhere in flight
-keeps the direction it was turning in, so the card never jumps to its mirror
-image. A drag on the text takes the turn over at once instead, so its
-direction is the side of its start the finger is on, and changes only as the
-finger passes that point, where the card is text side up. With reduced
-motion nothing turns, the turn does not transition, and the faces crossfade
-instead. The face turned away is `inert` immediately and `visibility: hidden`
-once the turn ends, so it is neither focusable, hit-tested, nor drawn.
+`transform-style: preserve-3d`. The turn and the blend therefore turn and blend
+the card and zoom every face together. The flip
+never changes the drawing view: it is the saved view, restored by turning back
+and re-clamped on resize by the same effect as any other view. Scrolling the
+back changes only the card view, so the hidden tiled canvas is not re-synced
+while reading. A layer over another shows the image blending in on both faces:
+its drawing on the front, and its card on the back (a layer whose image has no
+description fades the backs beneath it instead; one with no responsive entry
+has no rest size until its drawing has loaded, so it has no back to blend in
+until then). Turn and blend take one duration and easing, so
+a turn that blends keeps the angle, the zoom and the blend in step: edge-on is
+halfway on both faces. A live drag sets them with no duration, so a scrub
+follows the finger directly. The flip button turns in direction 1; which way a
+change or a drag turns is described below and under "State changes instantly".
+With reduced motion nothing turns and the blend is instant: the faces
+crossfade by the turn (the front's opacity 1 − turn, the back's the turn) and
+the view goes at once to the side the card turns to. The face turned away is
+`inert` immediately and `visibility: hidden` once the turn on screen reaches
+its side, so it is neither focusable, hit-tested, nor drawn.
 
 Every route to another image (Previous/Next, the arrow keys, a released swipe, a
 set button) goes through `changeTo(target, direction)`, which blends when the
 target is a variant of the current card (`isVariant`: another member of the same
-comparison set) and slides otherwise. It first calls `endDrag` (shared with
-`resetView`), which ends the gesture interpreter's live gesture and returns a
-strip or a turn the drag had moved, so a gesture held through a change cannot
-act again. Both moves then make the target the current image at once
-(`showImage`): `index` is the image the lightbox is on, so the controls, the
-status and whether there is a description toggle describe the target from the
-moment the change is made, and a change that replaces another (history
-navigation) replaces them too. The card meanwhile shows the image it is
-leaving: `change` holds that image and whether its text was up, and the image
-on the card (`cardIndex`) is `change.from` until `endChange` clears it, resets
-the back's reading position and records the address. The view, the zoom range
-and the strip's neighbours belong to the image on the card, so a zoomed drawing
-sliding away keeps its view and limits. `slideTo` translates the strip, then
-ends the change and resets the view. `blendTo` keeps scale and pan: it waits
-for the variant's image to decode (at once when cached, so a released scrub
-never completes onto an unloaded layer), sets `blend = { target, progress: 1 }`
-(an animated blend fades its layers in from `@starting-style`), and on
-completion ends the change while the blended layer stays until the card's own
-image has decoded, so nothing flashes. From the text side `turn` is
-`1 - progress`, so the same move turns the card back, in the direction the
-change travels: Next as a leftward swipe would, Previous as a rightward one —
-[Implicit]. The variant's own text replaces the back only when the change ends,
-and the back's text keeps its scroll position throughout.
+comparison set) and slides otherwise. It ends the gesture interpreter's live
+gesture first (`endDrag`), so a gesture held through a change cannot act again,
+and makes the target the current image at once: `index` is the image the
+lightbox is on, so the controls, the status, whether there is a description
+toggle and the address describe the target from the moment the change is made.
+`slideTo` moves the strip on from where it is to the target's slide and resets
+the view; the card left behind keeps its view, limits and side while it slides
+away. A blend keeps scale and pan: the current card's image changes, and the
+card layers it in. From the text side the target is drawing side up, so the
+same move turns the card back as it blends, in the direction the change
+travels: Next as a leftward swipe would, Previous as a rightward one —
+[Implicit]. The back being left keeps its scroll position, and the variant's
+text starts at the top.
 
-The interpreter reports a drag at rest as a live offset, which the lightbox
-applies with `dragAtRest`: towards a variant it scrubs `blend.progress` by
-`scrubProgress` (the drag as a share of the stage width, as far as a slide would
-have moved the strip) with no transition and leaves the strip in place; towards
-another card it moves the strip by the drag. Until it is released past the
-threshold a drag changes nothing but the card and the strip, so the controls
-stay on the current image. On release the interpreter commits a drag of at
-least its 50 px swipe threshold (and more horizontal than vertical) and settles
-a shorter one: a commit makes `changeTo` continue the scrub from its progress
-for the remaining share of the duration (`settleDuration`); a settle makes
-`cancelBlend` return the blend to the card's image. A second finger turns a
-drag into a pinch, and the interpreter abandons the drag: the strip and any
-scrub return to rest at once. With reduced motion there is no scrub and the
-change is instant.
+The interpreter reports a drag at rest as a live offset from where it went
+down, which the lightbox applies with `dragAtRest`: towards a variant the card
+moves its blend on from where it is by `scrubProgress` (the drag as a share of
+the stage width, as far as a slide would have moved the strip) with no
+transition and the strip stays in place; towards another card the strip moves
+by the drag; a drag that began while the strip was moving carries the strip
+either way. Until it is released past the threshold a drag changes nothing but
+the card and the strip, so the controls stay on the current image. On release
+the interpreter commits a drag of at least its 50 px swipe threshold (and more
+horizontal than vertical) and settles a shorter one: a commit changes image,
+and the blend or the strip carries on from where the drag left it; a settle
+lets the strip and the card chase their rest. A second finger turns a drag into
+a pinch: the interpreter settles the drag as the pinch begins, so the strip and
+any scrub ease back to rest — [Implicit]. With reduced motion there is no scrub
+and the change is instant.
 
 Because the text is inside the stage, the stage's gestures see drags on it, and
 there a sideways drag turns the card instead of changing image — [Explicit],
 whatever the drawing's zoom and whatever lies beside the card. The interpreter
 marks a drag that starts on the text side as one that turns: it reports it as
-live `turn` offsets, which `turnDrag` applies as `turnScrub`, the same share of
-the stage width as a blend scrub (half the width is edge-on), turning the card
-back by it with no transition and in the drag's direction (a leftward drag
-turns it leftwards) — [Explicit]; the strip and the blend are left alone. On
-release, with the same threshold, it gives `turnBack`, which makes the drawing
-side current and lets the turn finish over the remaining share of the flip's
-duration onto the saved view, or `keepText`, which returns it to the text.
+live `turn` offsets, which the card applies as the same share of the stage
+width as a blend scrub (half the width is edge-on), turning the card back by it
+from where the turn was with no duration and the way the finger moves (a
+leftward drag turns it leftwards) — [Explicit]; the strip and the blend are left
+alone. On release, with the same threshold, it gives `turnBack`, which makes
+the drawing side current, so the turn finishes from where it is onto the saved
+view, the way it was turning, or `keepText`, which returns it to the text.
 With reduced motion there is no scrub, and `turnBack` is the flip's crossfade.
 `LightboxVerso` keeps `touch-action: pan-y`, so vertical scrolling and
 long-press selection stay native. On the text side the drag follows only while
@@ -359,26 +451,25 @@ the toggle — [Explicit].
 
 The interpreter claims every touch move it follows (a pan, a pinch, a drag at
 rest, and a drag on the text once it is more horizontal than vertical), and the
-stage attaches its `touchmove` listener without the `passive` Svelte gives touch
-handlers, so the claim cancels the move — [Implicit]. Left to the browser, a
-quick swipe also starts a fling, which the stage's `touch-action: none` (or the
+stage and the dialog attach their `touchmove` listeners without the `passive`
+Svelte gives touch handlers, so a claim, or the dialog keeping the page behind
+from scrolling, cancels the move — [Implicit]. Left to the browser, a quick
+swipe also starts a fling, which the stage's `touch-action: none` (or the
 text's `pan-y`) then forbids, and Chromium swallows the next tap, for as long as
 that fling would have run, as the tap that stops it.
 
 On phones (at `PHONE_WIDTH` and below) the edge arrows make way for the text
 and move with the card's turn — [Explicit]: the lightbox hands
-`LightboxControls` the current image's side (`sideTurn`, 1 text up, less a
-drag's live turn) as how far the arrows have stepped aside, and they translate
-out past their screen edges over the same `--lightbox-card-duration` and
-`--lightbox-card-easing`, so they follow a flip and a drag's live turn in step
-with the card. A change of image from the text brings them back from the
-moment it is made, in the flip's timing (`showImage` sets it; the card's own
-turn to a variant starts with them once the variant has decoded): during a
-slide they ease back in as the next drawing slides in, while the card, which
-keeps its text up, cuts to the new image only when the slide lands —
-[Implicit]. They are `inert` as soon as they start aside and
-`visibility: hidden` once they are fully aside, as a turned-away face is. With
-reduced motion they fade over the flip's crossfade instead — [Implicit].
+`LightboxControls` how far the arrows step aside: the turn of each card on
+screen (1 text up, a drag's live turn included), weighted by how much of it the
+strip shows, so they move with the card's turn, follow a drag on the text
+directly, and wait with the card for a variant that is still loading. A change
+of image from the text to another card brings them back as the next drawing
+slides in, in the slide's time, since the arriving card is drawing side up
+while the one it leaves keeps its text — [Implicit]. They are
+`inert` as soon as they start aside and `visibility: hidden` once they are
+fully aside, as a turned-away face is. With reduced motion they fade over the
+flip's crossfade instead — [Implicit].
 
 `LightboxVerso` is the back's viewport: a native scroll container (the browser's
 own scrollbar and scrolling) spanning the stage, with the control bands as its
@@ -414,8 +505,8 @@ double tap (two short taps within 300 ms and 30 px) and claims the second tap's
 `touchend`, which is cancelled so the browser does not also synthesize a
 `dblclick`. The zoom keys go through the interpreter too (the component only
 leaves modified keys to the browser's own zoom), so one rule decides for every
-zoom input: it waits while the lightbox is busy (opening, closing, or changing
-image) and during a drag at rest, and does nothing on the text side —
+zoom input: it waits during a drag at rest and does nothing on the text side,
+and otherwise zooms whatever is moving, the image being changed to included —
 [Implicit]. Only the mouse drives pointer gestures; touch input arrives through
 touch events.
 
@@ -451,38 +542,68 @@ controls; only the card back takes the page's own surface and text. A
 `data-lang` observer keeps the dialog's accessible names aligned with the global
 language switch.
 
-Opening and closing use a same-document View Transition between the stable
-thumbnail frame and active preview (`lightbox-morph.ts`). The image remains
-nested inside the named thumbnail frame, so its hover transform cannot change
-the shared transition geometry. The current hover scale is frozen at click and
-applied to the opening snapshot, including midway through the hover transition.
-Image width and height metadata reserve geometry before a first download. The
-active preview's dimensions come from the source aspect ratio and the rest area
-of the measured stage, so cached image and tiled-renderer state cannot change
-the endpoint. The image pair clips the destination snapshot on opening and the
-source snapshot on closing while its box changes aspect ratio. Using one image
-snapshot avoids doubled edges from blending different crop states; the document
-snapshot supplies the overlay fade. The image morph runs only when the thumbnail
-is inside the viewport and does not overlap the sticky header. A clipped or
-header-overlapped thumbnail uses the document fade, avoiding the stacking
-discontinuity created when a View Transition isolates it above the header.
-Page-transition elements opt out while this lightbox-only transition is active,
-so their snapshots remain in the document's normal stacking order beneath the
-header and overlay. The tiled renderer starts after opening finishes so its
-canvas cannot appear beneath the moving image. Image gestures and window-level
-wheel or touch scrolling are captured during the shared transition, keeping both
-endpoints fixed without changing document layout. A zoomed preview, or one
-turned over to its description, is not a matching shared element, so closing it
-uses only the document fade. The dialog carries `aria-busy="true"` from the
-start of opening until that transition has settled, the span in which it ignores
-input, so assistive technology and browser tests know when it responds; closing
-removes it from the page before its transition runs — [Implicit]. Reduced-motion
-visitors use the immediate state change. Each translated slide clips its own
-contents, so a transformed image cannot paint over the adjacent slide.
+Opening and closing are the live dialog itself, not a View Transition — the
+design: a View Transition animates snapshots taken when it starts, so it can
+neither be sent somewhere new mid-way nor take input while it runs (Chromium
+delivers pointer input to the document element meanwhile). Opening is three
+more chased numbers (see "State changes instantly"): how far open the lightbox
+shows, from which the backdrop's alpha and the controls' opacity are derived;
+where the card is, 0 at its thumbnail and 1 at rest, from which its move is
+derived; and how far the card has faded in. The dialog is always in the page, so
+it becomes modal in the click itself and every input reaches the real
+lightbox from then on, in both browsers. The backdrop and controls come in at
+once. The card moves from the thumbnail's frame (`morphFrame` in `gallery.ts`):
+a box between the frame and the rest area, the drawing covering it as the
+thumbnail crops it, at the thumbnail's hover scale as measured at the click,
+all as a transform and a clip of the stage's contents, so the crop opens up to
+the whole drawing. That move waits for the drawing to load, so it never moves
+an empty box: meanwhile the card, still at the thumbnail, draws nothing, and the
+thumbnail itself shows beneath the darkening backdrop; the thumbnail is
+transparent only while the card travels from or to it, and stays focusable.
+The card moves only when the thumbnail is fully in view and clear of the sticky
+header; otherwise it fades in at rest, as it does opened from history or with
+reduced motion, where nothing waits. The dialog's own backdrop is transparent:
+its background carries the 90 % black plus the 10 % a modal backdrop adds, so
+both fade together. The tiled canvas waits for the card to come to rest (the
+`rested` latch), so it never starts under a moving card. The page-to-page View
+Transitions are separate and unaffected.
+
+Closing takes effect at once: the dialog stops being modal, the page behind
+takes input and the thumbnail takes focus, while the dialog, `inert` and
+`aria-hidden`, stays drawn over the page until it has faded out and its card
+has landed or faded — [Implicit]. So a click or the wheel on the page acts
+during the close as it would with no animation, and Enter on the focused
+thumbnail opens it again. Staying modal until the end would instead keep the
+page inert for the length of the fade and let the fading lightbox take clicks
+meant for the page. The card goes into the current image's own thumbnail when
+it can (in view and clear of the header, drawing side up, not zoomed), decided
+when the close starts; otherwise it fades where it is — [Implicit]. The frame
+it goes into is the thumbnail as it is on screen, followed as the page scrolls
+or resizes, and the frame the card is in goes on from the one it was in towards it in step
+with the move, so neither a change of image during the opening nor scrolling
+makes it jump; a thumbnail scrolled out of view fades the card where it is.
+Opening again while the lightbox closes goes on from where it is: on the same
+image the card goes back to rest; on another image the lightbox changes to it
+as it comes back in; either way the card moves once its drawing has loaded,
+still leaving the thumbnail it was going into — [Implicit]. A close while opening turns the opening back
+from where it is. With reduced motion the lightbox opens and closes at once.
+Each translated slide clips its own contents, so a transformed image cannot
+paint over the adjacent slide.
 
 Each image maps to a one-based `#image-N` hash (`lightbox-history.ts`). Opening
-pushes one marked history entry; navigation replaces that entry, and the
-popstate handler closes or restores the lightbox for Back and Forward. The
+pushes one marked history entry; navigation replaces that entry at once. A
+burst of 50 writes goes at once, then one every 100 ms at most, since browsers
+ignore (Chromium) or refuse (Firefox) more than about 200 address changes in
+10 s, which only holding an arrow key reaches; closing writes a change still to
+come first, so Forward reopens the last image — [Implicit]. (Browser Back
+during such a held-key run can leave the entry up to 100 ms behind: a page
+cannot rewrite an entry it has left.) Closing calls the lightbox's close at
+once and then goes back over the entry, whose popstate the lightbox, already
+closed, then ignores. Opening again before that traversal has arrived waits
+for it and pushes the new entry after it, since browsers disagree on a push
+made while a traversal is pending (Chromium goes back after the push, Firefox
+drops the traversal). The popstate handler closes or restores the lightbox for
+Back and Forward. The
 history module selects manual browser scroll restoration while its history entry
 is active, preventing hash traversal from moving the page behind the overlay,
 and restores the previous setting when the lightbox closes. On initial
@@ -541,9 +662,9 @@ owns hover scaling, so hover and shared-element geometry do not compete. The
 project image carries its native dimensions so an uncached destination has
 stable geometry. One shared transition class keeps the image snapshots covering
 the changing box, progressively cropping or revealing them between the square
-card and the project image. As in the lightbox, only the project page's
-full-image snapshot is drawn, clipped by the image pair, because blending it
-with the card's crop doubles the image's edges. An inline `<head>` script tags
+card and the project image. Only the project page's full-image snapshot is
+drawn, clipped by the image pair, because blending it with the card's crop
+doubles the image's edges. An inline `<head>` script tags
 each navigation's transition `project-open` (arriving on a project page) or
 `project-close` from `pagereveal`, which must run before the first frame, and
 CSS picks the snapshot by type. On `pageswap` it stores the hovered card

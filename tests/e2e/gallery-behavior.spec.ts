@@ -16,46 +16,77 @@ function galleryImage(page: Page, position: number, label = 'Open image') {
   });
 }
 
-async function gotoProject(page: Page, suffix = '') {
-  await page.goto(`${projectPath}${suffix}`);
+/**
+ * Opens the project page, on `suffix` if given, with the page's clock faked
+ * so a test can hold and step it.
+ */
+async function gotoProject(page: Page, suffix = '', path = projectPath) {
+  await installClock(page);
+  await page.goto(`${path}${suffix}`);
   await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
 }
 
 async function waitForLightbox(page: Page, name = 'Image viewer') {
   const dialog = page.getByRole('dialog', { name });
   await expect(dialog).toBeVisible();
-  // The lightbox ignores input until it has finished opening.
-  await expect(dialog).not.toHaveAttribute('aria-busy', 'true');
+  // Once its drawing has loaded, the opening takes less than a second.
+  await page.waitForFunction(() =>
+    document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
+      ?.complete,
+  );
+  if (clocked.has(page)) await page.clock.runFor(1000);
+  else await page.waitForTimeout(1000);
 }
 
-/** Rendered width of the current lightbox image relative to its rest (100%) width. */
-async function imageZoom(page: Page) {
-  return page
-    .locator('.lightbox-front > img')
-    .evaluate(
-      (image: HTMLImageElement) =>
-        image.getBoundingClientRect().width / image.offsetWidth,
-    );
+// The page's clock runs every move in the lightbox; installed as a page
+// loads, it can be held and stepped.
+const clocked = new WeakSet<Page>();
+
+async function installClock(page: Page) {
+  if (clocked.has(page)) return;
+  clocked.add(page);
+  await page.clock.install();
 }
 
 /**
- * Pauses every running card move (turn and blend) at `time` ms and reports
- * the turn (1 text side up, 0 drawing side up) and each face's blend.
+ * Holds the page's clock, so nothing moves until it is stepped or released.
+ * It pauses a little ahead, so call it while nothing moves.
  */
-function pausedCardMove(page: Page, time: number) {
-  return page.waitForFunction((at) => {
-    const sheet = document.querySelector<HTMLElement>('[data-lightbox-sheet]')!;
-    const layers = [...sheet.querySelectorAll<HTMLElement>('.lightbox-incoming')];
-    const animations = [sheet, ...layers].flatMap((element) => element.getAnimations());
-    if (!layers.length || !animations.length) return false;
-    for (const animation of animations) {
-      animation.pause();
-      animation.currentTime = at;
-    }
+async function holdTime(page: Page) {
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 500));
+}
+
+
+/** Rendered width of the current lightbox image relative to its rest (100%) width. */
+async function imageZoom(page: Page) {
+  return page.evaluate(() => {
+    const image = document.querySelector<HTMLImageElement>(
+      '.lightbox-slide-current .lightbox-front > img',
+    )!;
+    return image.getBoundingClientRect().width / image.offsetWidth;
+  });
+}
+
+/**
+ * Makes `change` with time held, steps `time` ms into the move it starts,
+ * and reports the turn (1 text side up, 0 drawing side up), each face's
+ * blend and where the strip is. Time stays held until the clock is resumed.
+ */
+async function cardMoveAt(page: Page, time: number, change: () => Promise<unknown>) {
+  await holdTime(page);
+  await change();
+  // A blend waits for its drawing, which loads whatever the clock does.
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].every(
+      (image) => image.complete,
+    ),
+  );
+  await page.clock.runFor(time);
+  return page.evaluate(() => {
+    const sheet = document.querySelector<HTMLElement>('.lightbox-slide-current [data-lightbox-sheet]')!;
     const blend = (face: string) =>
       Number(
-        getComputedStyle(sheet.querySelector(`${face} .lightbox-incoming`) ?? sheet)
-          .opacity,
+        getComputedStyle(sheet.querySelector(`${face} .lightbox-incoming`) ?? sheet).opacity,
       );
     const m11 = new DOMMatrix(
       getComputedStyle(sheet.querySelector('.lightbox-front')!).transform,
@@ -69,13 +100,13 @@ function pausedCardMove(page: Page, time: number) {
         .querySelector('.lightbox-slide-current')!
         .getBoundingClientRect().x,
     };
-  }, time);
+  });
 }
 
 /** Horizontal scale of the current card's turn: 1 drawing side up, −1 text side up. */
 async function sheetTurn(page: Page) {
   return page
-    .locator('.lightbox-front')
+    .locator('.lightbox-slide-current .lightbox-front')
     .evaluate((front) => new DOMMatrix(getComputedStyle(front).transform).m11);
 }
 
@@ -160,69 +191,72 @@ function boxes(page: Page) {
   });
 }
 
+/** Waits until nothing in the lightbox has moved for a few frames. */
 async function settled(page: Page) {
-  await expect
-    .poll(() => page.evaluate(() => document.getAnimations().length))
-    .toBe(0);
+  await page.waitForFunction(
+    () =>
+      new Promise<boolean>((resolve) => {
+        const look = () =>
+          [...document.querySelectorAll('[data-gallery-lightbox], [data-gallery-lightbox] [style]')]
+            .map((element) => element.getAttribute('style'))
+            .join('|') + document.getAnimations().length;
+        let last = look();
+        let still = 0;
+        const frame = () => {
+          const now = look();
+          still = now === last ? still + 1 : 0;
+          last = now;
+          if (still >= 5) resolve(true);
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
 }
 
 /** The front drawing's computed transform, as scale and offset. */
 function drawingView(page: Page) {
-  return page.locator('.lightbox-front > img').evaluate((image) => {
+  return page.evaluate(() => {
+    const image = document.querySelector('.lightbox-slide-current .lightbox-front > img')!;
     const matrix = new DOMMatrix(getComputedStyle(image).transform);
     return { scale: matrix.a, x: matrix.e, y: matrix.f };
   });
 }
 
 /**
- * Starts a turn (by default with the flip button) with every animation paused
- * together, so each face's own timing stays in step; the returned function
- * seeks to a turn and reports the card's and the front drawing's projected
+ * Starts a turn (by default with the flip button) with time held; the
+ * returned function steps time on until the turn reaches `turn`, going the
+ * way it goes, and reports the card's and the front drawing's projected
  * boxes there.
  */
 async function pausedFlip(
   page: Page,
   start = () => page.getByRole('button', { name: 'Show description' }).click(),
 ) {
-  const paused = page.waitForFunction(() => {
-    const sheet = document.querySelector('[data-lightbox-sheet]')!;
-    if (!sheet.getAnimations().length) return false;
-    for (const animation of document.getAnimations()) animation.pause();
-    return true;
-  });
+  const turned = () =>
+    page.evaluate(() =>
+      Number(
+        document
+          .querySelector<HTMLElement>('.lightbox-slide-current [data-lightbox-sheet]')!
+          .style.getPropertyValue('--lightbox-turn'),
+      ),
+    );
+  await holdTime(page);
+  const from = await turned();
   await start();
-  await paused;
-  return (turn: number) =>
-    page.evaluate((target) => {
-      const sheet = document.querySelector<HTMLElement>(
-        '[data-lightbox-sheet]',
-      )!;
-      const [turning] = sheet.getAnimations();
-      const at = (time: number) => {
-        for (const animation of document.getAnimations())
-          animation.currentTime = time;
-        return Number(
-          getComputedStyle(sheet).getPropertyValue('--lightbox-turn'),
-        );
-      };
-      let [low, high] = [0, Number(turning.effect!.getTiming().duration)];
-      // Seeking to the very end would finish, and so remove, the transition.
-      const turningOver = at(high / 2) > at(low);
-      for (let step = 0; step < 30; step += 1) {
-        const middle = (low + high) / 2;
-        if (at(middle) < target === turningOver) low = middle;
-        else high = middle;
-      }
-      at(high);
+  const over = from < 0.5;
+  return async (turn: number) => {
+    while ((await turned()) < turn === over) await page.clock.runFor(4);
+    return page.evaluate(() => {
       const box = (selector: string) => {
-        const rect = document.querySelector(selector)!.getBoundingClientRect();
+        const rect = document
+          .querySelector(`.lightbox-slide-current ${selector}`)!
+          .getBoundingClientRect();
         return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
       };
-      return {
-        card: box('.lightbox-card'),
-        front: box('.lightbox-front > img'),
-      };
-    }, turn);
+      return { card: box('.lightbox-card'), front: box('.lightbox-front > img') };
+    });
+  };
 }
 
 async function pixelAt(page: Page, x: number, y: number) {
@@ -591,19 +625,14 @@ test('comparison shortcuts preserve the inspected area without changing page pre
     .locator('.lightbox-front > img')
     .evaluate((image: HTMLImageElement) => getComputedStyle(image).transform);
 
-  const blend = pausedCardMove(page, 90);
-  await comparison.getByRole('button', { name: 'Basement floor plan' }).click();
-  const blendState = await (await blend).jsonValue();
-  if (!blendState) throw new Error('Expected an active blend');
+  const blendState = await cardMoveAt(page, 90, () => comparison.getByRole('button', { name: 'Basement floor plan' }).click());
   expect(blendState.front).toBeGreaterThan(0);
   expect(blendState.front).toBeLessThan(1);
   expect(blendState.stripX).toBe(0);
   expect(
     await page.locator('[aria-label="Images in this set"] button:disabled').count(),
   ).toBe(1);
-  await page.evaluate(() =>
-    document.getAnimations().forEach((animation) => animation.play()),
-  );
+  await page.clock.resume();
   await expect(page).toHaveURL(/#image-6$/);
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
@@ -975,17 +1004,9 @@ test('on a phone the edge arrows step aside with the turn and come back with it'
   const rest = await Promise.all(arrows.map(async (arrow) => (await arrow.boundingBox())!));
   /** Clicks the toggle and holds the turn halfway, where the arrows are halfway aside. */
   const halfway = async () => {
-    const paused = page.waitForFunction(() => {
-      const animations = document.getAnimations();
-      if (!animations.length) return false;
-      for (const animation of animations) {
-        animation.pause();
-        animation.currentTime = 280;
-      }
-      return true;
-    });
+    await holdTime(page);
     await flip.click();
-    await paused;
+    await page.clock.runFor(280);
     const [previous, next] = await Promise.all(
       arrows.map(async (arrow) => (await arrow.boundingBox())!),
     );
@@ -994,9 +1015,7 @@ test('on a phone the edge arrows step aside with the turn and come back with it'
     expect(previous.x + previous.width).toBeGreaterThan(0);
     expect(next.x).toBeGreaterThan(rest[1].x + 4);
     expect(next.x).toBeLessThan(390);
-    await page.evaluate(() => {
-      for (const animation of document.getAnimations()) animation.play();
-    });
+    await page.clock.resume();
     await settled(page);
   };
 
@@ -1206,14 +1225,11 @@ test('without reduced motion the card turns over both ways', async ({ page }) =>
   await galleryImage(page, 3).click();
   await waitForLightbox(page);
   const flip = page.getByRole('button', { name: 'Show description' });
-  const turning = () =>
-    page
-      .locator('[data-lightbox-sheet]')
-      .evaluate((sheet) => sheet.getAnimations().length > 0);
+  const turning = async () => Math.abs(await sheetTurn(page)) < 0.99;
   const text = page.getByRole('region', { name: 'Life at the city' });
 
   await flip.click();
-  expect(await turning()).toBe(true);
+  await expect.poll(turning).toBe(true);
   expect(
     await text.evaluate((element) =>
       Boolean(element.closest('[data-lightbox-sheet]')),
@@ -1223,7 +1239,7 @@ test('without reduced motion the card turns over both ways', async ({ page }) =>
   await expect(text).toBeVisible();
 
   await flip.click();
-  expect(await turning()).toBe(true);
+  await expect.poll(turning).toBe(true);
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
   await expect(text).toBeHidden();
 });
@@ -1239,43 +1255,38 @@ test('Next from the description slides the card away without turning it', async 
   await flip.click();
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
 
-  const midSlide = page.waitForFunction(() => {
-    const slide = document.querySelector<HTMLElement>('.lightbox-slide-current')!;
-    const animation = slide.getAnimations().at(0);
-    if (!animation) return false;
-    animation.pause();
-    animation.currentTime = 90;
-    const sheet = slide.querySelector('[data-lightbox-sheet]')!;
-    const text = slide.querySelector('[role="region"]');
+  await holdTime(page);
+  await page.getByRole('button', { name: 'Next image' }).click();
+  await page.clock.runFor(90);
+  const state = await page.evaluate(() => {
+    // The card it leaves, and the one arriving.
+    const [leaving, arriving] = [':not(.lightbox-slide-current)', '.lightbox-slide-current'].map(
+      (kind) => document.querySelector(`.lightbox-slide${kind}:has([data-lightbox-sheet])`)!,
+    );
+    const text = leaving.querySelector('[role="region"]');
+    const turn = (slide: Element) =>
+      new DOMMatrix(getComputedStyle(slide.querySelector('.lightbox-front')!).transform).m11;
     return {
       hash: location.hash,
-      slideX: slide.getBoundingClientRect().x,
+      leavingX: leaving.getBoundingClientRect().x,
       text: text?.getAttribute('aria-label'),
       textVisible: Boolean(text?.checkVisibility({ visibilityProperty: true })),
-      sheetTurn: new DOMMatrix(
-        getComputedStyle(sheet.querySelector('.lightbox-front')!).transform,
-      ).m11,
-      sheetAnimations: sheet.getAnimations().length,
+      leavingTurn: turn(leaving),
+      arrivingTurn: turn(arriving),
     };
   });
-  await page.getByRole('button', { name: 'Next image' }).click();
-  const state = await (await midSlide).jsonValue();
-  if (!state) throw new Error('Expected a running slide');
-  expect(state.hash).toBe('#image-6');
-  expect(state.slideX).toBeLessThan(0);
+  expect(state.hash).toBe('#image-7');
+  expect(state.leavingX).toBeLessThan(0);
   expect(state.text).toBe('Limitations of the Area');
   expect(state.textVisible).toBe(true);
-  expect(state.sheetTurn).toBeCloseTo(-1, 3);
-  expect(state.sheetAnimations).toBe(0);
-
-  await expect(page).toHaveURL(/#image-7$/);
+  expect(state.leavingTurn).toBeCloseTo(-1, 3);
+  expect(state.arrivingTurn).toBeCloseTo(1, 3);
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
+
+  await page.clock.resume();
+  await settled(page);
   expect(await sheetTurn(page)).toBeCloseTo(1, 3);
-  expect(
-    await page
-      .locator('[data-lightbox-sheet]')
-      .evaluate((sheet) => sheet.getAnimations().length),
-  ).toBe(0);
+  await expect(page.locator('[data-lightbox-sheet]')).toHaveCount(1);
   await expect(page.getByRole('region', { name: 'Site Plan' })).toBeHidden();
 });
 
@@ -1292,19 +1303,14 @@ test('Next from the description to a variant turns back while blending both face
   await flip.click();
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
 
-  const midTurn = pausedCardMove(page, 200);
-  await page.getByRole('button', { name: 'Next image' }).click();
-  const state = await (await midTurn).jsonValue();
-  if (!state) throw new Error('Expected a turn and blend');
-  expect(state.hash).toBe('#image-3');
+  const state = await cardMoveAt(page, 200, () => page.getByRole('button', { name: 'Next image' }).click());
+  expect(state.hash).toBe('#image-4');
   expect(state.stripX).toBe(0);
   expect(state.turn).toBeGreaterThan(0.2);
   expect(state.turn).toBeLessThan(0.8);
   expect(state.front).toBeCloseTo(1 - state.turn, 1);
   expect(state.back).toBeCloseTo(1 - state.turn, 1);
-  await page.evaluate(() =>
-    document.getAnimations().forEach((animation) => animation.play()),
-  );
+  await page.clock.resume();
 
   await expect(page).toHaveURL(/#image-4$/);
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
@@ -1328,22 +1334,17 @@ test('a set button from the description turns back while blending both faces', a
   await flip.click();
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
 
-  const midTurn = pausedCardMove(page, 200);
-  await page
+  const state = await cardMoveAt(page, 200, () => page
     .getByRole('navigation', { name: 'Images in this set' })
     .getByRole('button', { name: 'Values of the Area' })
-    .click();
-  const state = await (await midTurn).jsonValue();
-  if (!state) throw new Error('Expected a turn and blend');
-  expect(state.hash).toBe('#image-3');
+    .click());
+  expect(state.hash).toBe('#image-5');
   expect(state.stripX).toBe(0);
   expect(state.turn).toBeGreaterThan(0.2);
   expect(state.turn).toBeLessThan(0.8);
   expect(state.front).toBeCloseTo(1 - state.turn, 1);
   expect(state.back).toBeCloseTo(1 - state.turn, 1);
-  await page.evaluate(() =>
-    document.getAnimations().forEach((animation) => animation.play()),
-  );
+  await page.clock.resume();
 
   await expect(page).toHaveURL(/#image-5$/);
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
@@ -1369,18 +1370,14 @@ test('Next inside a set blends and keeps the view; leaving the set slides', asyn
     .locator('.lightbox-front > img')
     .evaluate((image: HTMLImageElement) => getComputedStyle(image).transform);
 
-  const midBlend = pausedCardMove(page, 90);
-  await page.getByRole('button', { name: 'Next image' }).click();
-  const state = await (await midBlend).jsonValue();
-  if (!state) throw new Error('Expected a blend');
+  const state = await cardMoveAt(page, 90, () => page.getByRole('button', { name: 'Next image' }).click());
   expect(state.front).toBeGreaterThan(0);
   expect(state.front).toBeLessThan(1);
   expect(state.stripX).toBe(0);
   expect(state.turn).toBeCloseTo(0, 3);
-  await page.evaluate(() =>
-    document.getAnimations().forEach((animation) => animation.play()),
-  );
+  await page.clock.resume();
   await expect(page).toHaveURL(/#image-4$/);
+  await settled(page);
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
   expect(
     await page
@@ -1394,8 +1391,9 @@ test('Next inside a set blends and keeps the view; leaving the set slides', asyn
   await expect(page).toHaveURL(/#image-6$/);
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
 
+  // The next image slides in from the side.
   const slide = page.waitForFunction(
-    () => document.querySelector('.lightbox-slide-current')!.getAnimations().length > 0,
+    () => document.querySelector('.lightbox-slide-current')!.getBoundingClientRect().x > 0,
   );
   await page.getByRole('button', { name: 'Next image' }).click();
   await slide;
@@ -1404,15 +1402,11 @@ test('Next inside a set blends and keeps the view; leaving the set slides', asyn
 });
 
 /**
- * Pauses the change of image as soon as it moves and reports what the
- * controls say then: the position, the set strip's current image and whether
- * the description toggle is there.
+ * What the controls say: the position, the set strip's current image and
+ * whether the description toggle is there.
  */
-function controlsMidChange(page: Page) {
-  return page.waitForFunction(() => {
-    const animations = document.getAnimations();
-    if (!animations.length) return false;
-    for (const animation of animations) animation.pause();
+function controlsNow(page: Page) {
+  return page.evaluate(() => {
     const dialog = document.querySelector('[data-gallery-lightbox]')!;
     return {
       position: dialog
@@ -1460,9 +1454,8 @@ for (const [route, start, change, expected] of [
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await gotoProject(page, `#image-${start}`);
     await waitForLightbox(page);
-    const midChange = controlsMidChange(page);
     await change(page);
-    expect(await (await midChange).jsonValue()).toEqual(expected);
+    expect(await controlsNow(page)).toEqual(expected);
   });
 }
 
@@ -1641,25 +1634,36 @@ test('a change made while the card turns over carries on the turn without jumpin
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await gotoProject(page, '#image-4');
   await waitForLightbox(page);
-  const turning = page.waitForFunction(
-    () => document.querySelector('[data-lightbox-sheet]')!.getAnimations().length > 0,
-  );
+  await holdTime(page);
   await page.getByRole('button', { name: 'Show description' }).click();
-  await turning;
-  // The card hears that its turn has started a frame after the turn is made.
-  await nextFrame(page);
-  await page.evaluate(() => {
-    for (const animation of document.getAnimations()) {
-      animation.pause();
-      animation.currentTime = 200;
-    }
-  });
+  // Well short of edge-on, where the card's lean shows clearly.
+  await page.clock.runFor(150);
   const lean = await faceLean(page);
   expect(lean).not.toBe('nowhere');
 
+  // Every frame of the turn back leans the same way, until the card lies flat.
+  const leans = page.evaluate(
+    () =>
+      new Promise<string[]>((resolve) => {
+        const seen: string[] = [];
+        const end = performance.now() + 900;
+        const frame = () => {
+          const front = document.querySelector('.lightbox-front')!;
+          const facing = new DOMMatrix(getComputedStyle(front).transform).m11 >= 0;
+          const box = document
+            .querySelector(facing ? '.lightbox-front > img' : '.lightbox-card')!
+            .getBoundingClientRect();
+          const offset = box.x + box.width / 2 - innerWidth / 2;
+          if (Math.abs(offset) >= 1) seen.push(offset > 0 ? 'right' : 'left');
+          if (performance.now() < end) requestAnimationFrame(frame);
+          else resolve(seen);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
   await page.keyboard.press('ArrowLeft');
-  await nextFrame(page);
-  expect(await faceLean(page)).toBe(lean);
+  await page.clock.resume();
+  expect(new Set(await leans)).toEqual(new Set([lean]));
   await expect(page).toHaveURL(/#image-3$/);
 });
 
@@ -1671,23 +1675,22 @@ test('the toggle tapped while a swipe turns the card back reverses the turn with
   const { context, page, flip, touch } = await phoneReading(browser, 'no-preference');
   await touch('touchStart', 100);
   await touch('touchMove', 220);
+  await holdTime(page);
   await touch('touchEnd');
-  await nextFrame(page);
-  await page.evaluate(() => {
-    for (const animation of document.getAnimations()) animation.pause();
-  });
+  await page.clock.runFor(32);
   const lean = await faceLean(page);
   expect(lean).not.toBe('nowhere');
 
   const box = (await flip.boundingBox())!;
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
   await expect(flip).toHaveAttribute('aria-pressed', 'true');
-  await nextFrame(page);
+  await page.clock.runFor(32);
   expect(await faceLean(page)).toBe(lean);
+  await page.clock.resume();
   await context.close();
 });
 
-test('a drag on the text that takes over a turn keeps one direction', async ({
+test('a drag on the text that takes over a turn keeps the way it was turning', async ({
   browser,
   browserName,
 }) => {
@@ -1705,16 +1708,19 @@ test('a drag on the text that takes over a turn keeps one direction', async ({
   await page.getByRole('button', { name: 'Show description' }).click();
   await page.waitForTimeout(250);
 
-  // Rightwards all the way, over a turn still under way.
-  const leans = [];
+  // Rightwards, over a turn still under way, and short of turning it text up.
   await touch('touchStart', 100);
-  for (const x of [135, 170, 205]) {
+  await nextFrame(page);
+  const lean = await faceLean(page);
+  expect(lean).not.toBe('nowhere');
+  const leans = [];
+  for (const x of [110, 120, 130]) {
     await touch('touchMove', x);
     await nextFrame(page);
-    leans.push(await backTurningTowards(page));
+    leans.push(await faceLean(page));
   }
   await touch('touchEnd');
-  expect(leans).toEqual(['right', 'right', 'right']);
+  expect(leans).toEqual([lean, lean, lean]);
   await context.close();
 });
 
@@ -1806,16 +1812,19 @@ test('with reduced motion a drag on the text turns nothing until released past t
 
   await touch('touchStart', 300);
   await touch('touchMove', 200);
-  await page.evaluate(() => new Promise(requestAnimationFrame));
+  await page.waitForTimeout(100);
   expect(await turn()).toBe(1);
-  expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  await holdTime(page);
   await touch('touchEnd');
   // The reduced turn: the faces crossfade.
-  expect(
-    await page
-      .locator('.lightbox-back')
-      .evaluate((face) => face.getAnimations().length),
-  ).toBeGreaterThan(0);
+  await page.clock.runFor(64);
+  const back = await page
+    .locator('.lightbox-back')
+    .evaluate((face) => Number(getComputedStyle(face).opacity));
+  expect(back).toBeGreaterThan(0);
+  expect(back).toBeLessThan(1);
+  expect(await sheetTurn(page)).toBe(1);
+  await page.clock.resume();
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByRole('region', { name: 'Life at the city' })).toBeHidden();
   await expect(page).toHaveURL(/#image-3$/);
@@ -1837,12 +1846,12 @@ test('a drag on the text turns the card the way the finger moves', async ({
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
   expect(await backTurningTowards(page)).toBe('right');
   // Released, the turn carries on the same way.
+  await holdTime(page);
   await touch('touchEnd');
-  await page.evaluate(() => {
-    for (const animation of document.getAnimations()) animation.pause();
-  });
+  await page.clock.runFor(16);
   expect(await sheetTurn(page)).toBeLessThan(Math.cos(Math.PI * 0.6));
   expect(await backTurningTowards(page)).toBe('right');
+  await page.clock.resume();
   await context.close();
 });
 
@@ -1859,10 +1868,7 @@ for (const [key, towards] of [
     await page.getByRole('button', { name: 'Show description' }).click();
     await settled(page);
 
-    const midTurn = pausedCardMove(page, 150);
-    await page.keyboard.press(key);
-    const state = await (await midTurn).jsonValue();
-    if (!state) throw new Error('Expected a turn and blend');
+    const state = await cardMoveAt(page, 150, () => page.keyboard.press(key));
     expect(state.turn).toBeGreaterThan(0.5);
     expect(await backTurningTowards(page)).toBe(towards);
   });
@@ -1929,7 +1935,7 @@ test('a drag cannot redirect a blend that is already running', async ({
   await waitForLightbox(page);
   const incoming = () =>
     page.evaluate(
-      () => document.querySelector('.lightbox-incoming img')?.getAttribute('src') ?? '',
+      () => document.querySelector('img.lightbox-incoming')?.getAttribute('src') ?? '',
     );
 
   await page.mouse.move(700, 400);
@@ -1937,9 +1943,12 @@ test('a drag cannot redirect a blend that is already running', async ({
   await page.mouse.move(680, 400);
   await expect.poll(incoming).not.toBe('');
   const towardsNext = await incoming();
+  // Held while the blend it carries on runs.
+  await holdTime(page);
   await page.keyboard.press('ArrowRight');
   await page.mouse.move(900, 400);
   expect(await incoming()).toBe(towardsNext);
+  await page.clock.resume();
   await page.mouse.up();
   await expect(page).toHaveURL(/#image-4$/);
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
@@ -1984,11 +1993,16 @@ for (const input of ['mouse', 'touch'] as const) {
     await expect(page).toHaveURL(/#image-3$/);
     expect(await stripX()).toBe(0);
     await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-    // The strip's ease-back has ended: a new drag follows the finger directly.
-    await expect(page.locator('.lightbox-slide-current')).toHaveCSS(
-      'transition-duration',
-      '0s',
-    );
+    // A new drag follows the finger directly: back towards the variant it
+    // came from, by the share of the 390 px stage it has moved.
+    await press(100);
+    await move(200);
+    expect(
+      await page.evaluate(() =>
+        Number(getComputedStyle(document.querySelector('.lightbox-incoming')!).opacity),
+      ),
+    ).toBeCloseTo(100 / 390, 2);
+    await lift();
     await context.close();
   });
 }
@@ -2115,14 +2129,11 @@ test('flipping from a zoomed corner turns about the card and zooms out to the ca
     .evaluate((image) => getComputedStyle(image).transform);
   const flip = page.getByRole('button', { name: 'Show description' });
 
-  const midFlip = page.waitForFunction(() => {
-    const sheet = document.querySelector('[data-lightbox-sheet]')!;
-    const animations = sheet.getAnimations();
-    if (!animations.length) return false;
-    for (const animation of animations) {
-      animation.pause();
-      animation.currentTime = 280;
-    }
+  await holdTime(page);
+  await flip.click();
+  await page.clock.runFor(280);
+  const middle = await page.evaluate(() => {
+    const sheet = document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!;
     const matrix = new DOMMatrix(
       getComputedStyle(document.querySelector('.lightbox-front > img')!)
         .transform,
@@ -2136,16 +2147,11 @@ test('flipping from a zoomed corner turns about the card and zooms out to the ca
       sheetWidth: front.offsetWidth,
     };
   });
-  await flip.click();
-  const middle = await (await midFlip).jsonValue();
-  if (!middle) throw new Error('Expected a running flip');
   expect(middle.scale).toBeLessThan(zoomed.scale);
   expect(middle.scale).toBeGreaterThan(1);
   expect(Math.abs(middle.x)).toBeLessThan(Math.abs(zoomed.x));
   expect(middle.originX).toBeCloseTo(middle.sheetWidth / 2, 0);
-  await page.evaluate(() =>
-    document.getAnimations().forEach((animation) => animation.play()),
-  );
+  await page.clock.resume();
   await settled(page);
 
   // The back view: the whole card, centred on the turning axis.
@@ -2181,15 +2187,11 @@ test('flip and blend to a variant zooms back into the saved view', async ({
   await page.getByRole('button', { name: 'Show description' }).click();
   await settled(page);
 
-  const midTurn = pausedCardMove(page, 280);
-  await page.getByRole('button', { name: 'Next image' }).click();
-  expect(await (await midTurn).jsonValue()).toBeTruthy();
+  await cardMoveAt(page, 280, () => page.getByRole('button', { name: 'Next image' }).click());
   const middle = await drawingView(page);
   expect(middle.scale).toBeGreaterThan(1);
   expect(middle.scale).toBeLessThan(zoomed.scale);
-  await page.evaluate(() =>
-    document.getAnimations().forEach((animation) => animation.play()),
-  );
+  await page.clock.resume();
 
   await expect(page).toHaveURL(/#image-4$/);
   await settled(page);
@@ -2265,7 +2267,27 @@ for (const [turn, hash, rightwards] of [
       return Math.max(...(await pixelAt(page, x, y))) < 80;
     };
 
-    for (const turn of [0.1, 0.25, 0.4, 0.6, 0.75, 0.9]) {
+    /**
+     * With `face` left out, nothing is drawn where the card is: the face
+     * turned away from the viewer draws nothing.
+     */
+    const drawsNothingWithout = async (face: string) => {
+      const hidden = page.locator(`.lightbox-slide-current ${face}`);
+      await hidden.evaluate((element: HTMLElement) => (element.style.display = 'none'));
+      await page.waitForTimeout(100);
+      for (const [x, y] of [
+        [400, 300],
+        [720, 450],
+        [1000, 600],
+      ]) {
+        expect(await dark(x, y), `${face} left out`).toBe(true);
+      }
+      await hidden.evaluate((element: HTMLElement) => (element.style.display = ''));
+    };
+
+    // In the order the turn passes them.
+    const turns = [0.1, 0.25, 0.4, 0.6, 0.75, 0.9];
+    for (const turn of rightwards ? turns.reverse() : turns) {
       const { card, front } = await frameAt(turn);
       expect(card.x).toBeCloseTo(front.x, 0);
       expect(card.width).toBeCloseTo(front.width, 0);
@@ -2276,34 +2298,10 @@ for (const [turn, hash, rightwards] of [
       // Beside the card only the backdrop shows: no drawing, and no light back.
       expect(await dark(card.x - 6, middle)).toBe(true);
       expect(await dark(card.x + card.width + 6, middle)).toBe(true);
-    }
-
-    // While the drawing faces the viewer, the card is not drawn at all.
-    await frameAt(0.25);
-    const front = page.locator('.lightbox-front');
-    await front.evaluate((face: HTMLElement) => (face.style.display = 'none'));
-    await page.waitForTimeout(100);
-    for (const [x, y] of [
-      [400, 300],
-      [720, 450],
-      [1000, 600],
-    ]) {
-      expect(await dark(x, y)).toBe(true);
-    }
-    await front.evaluate((face: HTMLElement) => (face.style.display = ''));
-
-    // While the back faces the viewer, the drawing is not drawn at all.
-    await frameAt(0.75);
-    await page
-      .locator('.lightbox-back')
-      .evaluate((back: HTMLElement) => (back.style.display = 'none'));
-    await page.waitForTimeout(100);
-    for (const [x, y] of [
-      [400, 300],
-      [720, 450],
-      [1000, 600],
-    ]) {
-      expect(await dark(x, y)).toBe(true);
+      // While the drawing faces the viewer the card is not drawn at all, and
+      // while the back does, the drawing is not.
+      if (turn === 0.25) await drawsNothingWithout('.lightbox-front');
+      if (turn === 0.75) await drawsNothingWithout('.lightbox-back');
     }
   });
 }
@@ -2421,9 +2419,7 @@ test("with classic scrollbars the back's scrollbar shows only while the back fac
       await overAt(turn);
       expect(await scrollbarShows(), `turning over, at ${turn}`).toBe(shows);
     }
-    await page.evaluate(() => {
-      for (const animation of document.getAnimations()) animation.finish();
-    });
+    await page.clock.resume();
     await settled(page);
 
     const backAt = await pausedFlip(page);
@@ -2487,9 +2483,7 @@ test('an image without responsive variants still turns over to its description',
       expect(flat[key], `${key} at ${turn}`).toBeCloseTo(rest[key], 0);
     }
   }
-  await page.evaluate(() => {
-    for (const animation of document.getAnimations()) animation.finish();
-  });
+  await page.clock.resume();
   await settled(page);
   await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
   const { card } = await boxes(page);
@@ -2599,9 +2593,7 @@ test('a variant fading in on the back uses the themed card too', async ({
   await waitForLightbox(page);
   await page.getByRole('button', { name: 'Show description' }).click();
   await settled(page);
-  const midTurn = pausedCardMove(page, 200);
-  await page.getByRole('button', { name: 'Next image' }).click();
-  expect(await (await midTurn).jsonValue()).toBeTruthy();
+  await cardMoveAt(page, 200, () => page.getByRole('button', { name: 'Next image' }).click());
   const [incoming, surface] = await page.evaluate(() => [
     getComputedStyle(
       document.querySelector(
@@ -2725,18 +2717,20 @@ test('with reduced motion a change to a variant is instant', async ({
     page.evaluate(() => ({
       hash: location.hash,
       blending: Boolean(document.querySelector('.lightbox-incoming')),
-      animating: document.getAnimations().length > 0,
+      turning: document
+        .querySelector<HTMLElement>('.lightbox-slide-current [data-lightbox-sheet]')!
+        .style.getPropertyValue('--lightbox-turn'),
     }));
 
   const touch = await oneFinger(context, page);
   await touch('touchStart', 300);
   await touch('touchMove', 200);
   await page.evaluate(() => new Promise(requestAnimationFrame));
-  expect(await changed()).toEqual({ hash: '#image-3', blending: false, animating: false });
+  expect(await changed()).toEqual({ hash: '#image-3', blending: false, turning: '0' });
   expect((await page.locator('.lightbox-slide-current').boundingBox())!.x).toBe(0);
   await touch('touchEnd');
   await expect(page).toHaveURL(/#image-4$/);
-  expect(await changed()).toEqual({ hash: '#image-4', blending: false, animating: false });
+  expect(await changed()).toEqual({ hash: '#image-4', blending: false, turning: '0' });
 
   // A variant keeps the inspected view.
   await page.keyboard.press('+');
@@ -2744,7 +2738,7 @@ test('with reduced motion a change to a variant is instant', async ({
   await page
     .getByRole('button', { name: 'Next image' })
     .evaluate((button: HTMLButtonElement) => button.click());
-  expect(await changed()).toEqual({ hash: '#image-5', blending: false, animating: false });
+  expect(await changed()).toEqual({ hash: '#image-5', blending: false, turning: '0' });
   expect(await imageZoom(page)).toBeCloseTo(1.25, 2);
   await context.close();
 });
@@ -2876,4 +2870,742 @@ test('double-tap zooms on touch screens', async ({ browser, browserName }) => {
   await page.touchscreen.tap(195, 420);
   await expect.poll(() => imageZoom(page)).toBeCloseTo(1, 2);
   await context.close();
+});
+
+// State changes instantly; the visuals chase it.
+
+/** The position the lightbox reports, and the one its original link shows. */
+function positions(page: Page) {
+  return page.evaluate(() => {
+    const dialog = document.querySelector('[data-gallery-lightbox]')!;
+    return [
+      dialog.querySelector('[role="status"]')!.textContent!.trim(),
+      dialog.querySelector('a[target="_blank"]')!.textContent!.replace(/\s+/g, ' ').trim(),
+    ];
+  });
+}
+
+test('each of five quick presses changes image at once; Back then closes and Forward reopens the last', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-1');
+  await waitForLightbox(page);
+  // A slide to the set, then blends through it.
+  for (const position of [2, 3, 4, 5, 6]) {
+    await page.keyboard.press('ArrowRight');
+    expect(await positions(page)).toEqual([`${position} / 17`, `${position} / 17`]);
+  }
+  await expect(page).toHaveURL(/#image-6$/);
+  await expect(page.locator('[aria-current="true"]')).toHaveText('Limitations of the Area');
+
+  await page.goBack();
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+  await page.goForward();
+  await waitForLightbox(page);
+  await expect(page).toHaveURL(/#image-6$/);
+  expect(await positions(page)).toEqual(['6 / 17', '6 / 17']);
+});
+
+/**
+ * Holds time on a frame and reads `read` there and after each frame that
+ * `step` moves the page's clock on, 16 ms apart. Stepped
+ * frame by frame, what a frame shows does not depend on how busy the machine
+ * is; starting on one, a change made between steps is a whole frame from the
+ * next.
+ */
+async function recording<T>(page: Page, read: () => Promise<T>) {
+  await holdTime(page);
+  const now = await page.evaluate(() => performance.now());
+  const frame = page.evaluate(
+    () => new Promise<number>((resolve) => requestAnimationFrame(() => resolve(performance.now()))),
+  );
+  await page.clock.runFor(16);
+  await page.clock.runFor((await frame) - now);
+  const frames = [await read()];
+  const step = async (count: number) => {
+    for (let frame = 0; frame < count; frame += 1) {
+      await page.clock.runFor(16);
+      frames.push(await read());
+    }
+  };
+  return { frames, step };
+}
+
+/** Where the strip is, in stage widths, and whether its slides cover the stage edge to edge. */
+function stripNow(page: Page) {
+  return page.evaluate(() => {
+    const strip = document.querySelector('.lightbox-strip')!;
+    const slides = [...document.querySelectorAll('.lightbox-slide')]
+      .map((slide) => slide.getBoundingClientRect())
+      .filter((box) => box.right > 0.5 && box.left < innerWidth - 0.5)
+      .sort((a, b) => a.left - b.left);
+    return {
+      x: strip.getBoundingClientRect().x / innerWidth,
+      covered:
+        slides.length > 0 &&
+        slides[0].left <= 0.5 &&
+        slides.at(-1)!.right >= innerWidth - 0.5 &&
+        slides.every((box, at) => at === 0 || Math.abs(box.left - slides[at - 1].right) < 1),
+    };
+  });
+}
+
+/** Every step between frames. */
+function steps(values: number[]) {
+  return values.slice(1).map((value, at) => value - values[at]);
+}
+
+/**
+ * The steps between frames at which a value that was moving jumped: it moved
+ * further than `floor`, over twice as far as in the frames either side. A move
+ * under way changes speed gradually, however it eases; a jump stands out. A
+ * move from rest may start at speed.
+ */
+function jumps(values: number[], floor = 0.15) {
+  const moved = steps(values).map(Math.abs);
+  return moved.flatMap((step, at) => {
+    const around = [moved[at - 1] ?? 0, moved[at + 1] ?? 0];
+    return step > floor && around[0] > 0 && step > 2 * Math.max(...around)
+      ? [{ at, values: values.slice(Math.max(0, at - 2), at + 4) }]
+      : [];
+  });
+}
+
+test('a second change mid-slide carries the strip on from where it is, with no gap between cards', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-11');
+  await waitForLightbox(page);
+  const strip = await recording(page, () => stripNow(page));
+  await page.keyboard.press('ArrowRight');
+  await strip.step(2);
+  await page.keyboard.press('ArrowRight');
+  expect(await positions(page)).toEqual(['13 / 17', '13 / 17']);
+  await strip.step(20);
+
+  const xs = strip.frames.map(({ x }) => x);
+  // Leftwards all the way, two cards on, without a jump or a gap.
+  for (const step of steps(xs)) expect(step).toBeLessThanOrEqual(0.001);
+  expect(jumps(xs)).toEqual([]);
+  expect(xs.at(-1)! - xs[0]).toBeCloseTo(-2, 2);
+  expect(strip.frames.every(({ covered }) => covered)).toBe(true);
+});
+
+test('turning back mid-slide returns the strip from where it is, and Next at the end wraps onwards', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-16');
+  await waitForLightbox(page);
+  let strip = await recording(page, () => stripNow(page));
+  await page.keyboard.press('ArrowRight');
+  // Early, but once it is on its way.
+  while (strip.frames.at(-1)!.x > -0.02) await strip.step(1);
+  const pressed = strip.frames.length - 1;
+  await page.keyboard.press('ArrowLeft');
+  expect(await positions(page)).toEqual(['16 / 17', '16 / 17']);
+  await strip.step(20);
+  let xs = strip.frames.map(({ x }) => x);
+  expect(jumps(xs)).toEqual([]);
+  for (const [at, step] of steps(xs).entries()) {
+    // Out and back once: leftwards until it was pressed, rightwards after.
+    if (at < pressed) expect(step).toBeLessThanOrEqual(0.001);
+    else expect(step).toBeGreaterThanOrEqual(-0.001);
+  }
+  expect(xs.at(-1)!).toBeCloseTo(xs[0], 2);
+
+  // From the last image Next travels on to the first, never back across: one
+  // slide if the last image was changed away from before it came into view,
+  // two if it had.
+  strip = await recording(page, () => stripNow(page));
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  expect(await positions(page)).toEqual(['1 / 17', '1 / 17']);
+  await strip.step(20);
+  xs = strip.frames.map(({ x }) => x);
+  for (const step of steps(xs)) expect(step).toBeLessThanOrEqual(0.001);
+  const travelled = xs.at(-1)! - xs[0];
+  expect([-1, -2]).toContain(Math.round(travelled));
+  expect(travelled).toBeCloseTo(Math.round(travelled), 2);
+});
+
+/**
+ * How much of the drawing side each image shows, keyed by its source, from
+ * the opacity of each drawn layer.
+ */
+function blendNow(page: Page) {
+  return page.evaluate(() => {
+    const front = document.querySelector('.lightbox-slide-current .lightbox-front')!;
+    const shares: Record<string, number> = {};
+    let left = 1;
+    for (const layer of [...front.querySelectorAll('img')].reverse()) {
+      const share = Number(getComputedStyle(layer).opacity) * left;
+      const src = decodeURIComponent(new URL(layer.src).pathname);
+      shares[src] = (shares[src] ?? 0) + share;
+      left -= share;
+    }
+    return shares;
+  });
+}
+
+/**
+ * Where the blend is in each frame, as the images it shows in the order they
+ * first show, each weighted by its share (0 fully the first, 1 fully the
+ * second, and so on).
+ */
+function blendAt(frames: Record<string, number>[]) {
+  const order = [...new Set(frames.flatMap((shares) => Object.keys(shares)))];
+  return frames.map((shares) => order.reduce((sum, src, at) => sum + at * (shares[src] ?? 0), 0));
+}
+
+for (const [route, second, expected] of [
+  ['on to another variant', 'ArrowRight', '5 / 17'],
+  ['back', 'ArrowLeft', '3 / 17'],
+] as const) {
+  test(`a change mid-blend ${route} carries on from the mix on screen`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, '#image-3');
+    await waitForLightbox(page);
+    // Once shown, the variant has loaded, so its blend has nothing to wait for.
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowLeft');
+    await settled(page);
+    const blend = await recording(page, () => blendNow(page));
+    await page.keyboard.press('ArrowRight');
+    await blend.step(2);
+    const pressed = blend.frames.length - 1;
+    await page.keyboard.press(second);
+    expect(await positions(page)).toEqual([expected, expected]);
+    await blend.step(20);
+    await page.clock.resume();
+    const seen = blend.frames;
+    const at = blendAt(seen);
+    expect(jumps(at)).toEqual([]);
+    // Onwards all the way, or back from the mix shown when it was pressed.
+    const turn = second === 'ArrowRight' ? at.length : pressed;
+    for (const [frame, step] of steps(at).entries()) {
+      if (frame < turn) expect(step).toBeGreaterThanOrEqual(-0.001);
+      else expect(step).toBeLessThanOrEqual(0.001);
+    }
+    const [[before]] = Object.entries(seen[0]).sort((a, b) => b[1] - a[1]);
+    // Past a third image, or back to the first, which it then shows alone.
+    const shown = new Set(seen.flatMap((shares) => Object.keys(shares)));
+    expect(shown.size).toBe(second === 'ArrowRight' ? 3 : 2);
+    await settled(page);
+    const last = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].map(
+        (image) => decodeURIComponent(new URL(image.src).pathname),
+      ),
+    );
+    expect(last).toHaveLength(1);
+    expect(last[0] === before).toBe(second === 'ArrowLeft');
+  });
+}
+
+/** The current card's turn: 0 drawing side up, 1 text side up. */
+function turnNow(page: Page) {
+  return page.evaluate(() => {
+    const sheet = document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!;
+    return Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn'));
+  });
+}
+
+test('the toggle reversed mid-turn turns back from where the card is', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const toggle = page.getByRole('button', { name: 'Show description' });
+  const turns = await recording(page, () => turnNow(page));
+  await toggle.click();
+  while (turns.frames.at(-1)! < 0.2) await turns.step(1);
+  expect(turns.frames.at(-1)).toBeLessThan(0.6);
+  const pressed = turns.frames.length - 1;
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await turns.step(40);
+  const seen = turns.frames;
+  const top = Math.max(...seen);
+  expect(seen.indexOf(top)).toBe(pressed);
+  expect(top).toBeLessThan(0.9);
+  for (const step of steps(seen)) expect(Math.abs(step)).toBeLessThan(0.25);
+  expect(seen.at(-1)).toBe(0);
+});
+
+test('a drag that starts mid-slide takes the strip from where it is', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-11');
+  await waitForLightbox(page);
+  const stripX = () =>
+    page.evaluate(() => document.querySelector('.lightbox-slide-current')!.getBoundingClientRect().x);
+  await page.mouse.move(640, 400);
+  await holdTime(page);
+  await page.keyboard.press('ArrowRight');
+  await page.clock.runFor(60);
+  await page.mouse.down();
+  const grabbed = await stripX();
+  expect(grabbed).toBeGreaterThan(0);
+  await page.mouse.move(630, 400);
+  await page.clock.runFor(16);
+  expect(await stripX()).toBeCloseTo(grabbed - 10, 0);
+  // Held, it stays under the finger.
+  await page.clock.resume();
+  await page.waitForTimeout(250);
+  expect(await stripX()).toBeCloseTo(grabbed - 10, 0);
+  await page.mouse.up();
+  await expect.poll(stripX).toBeCloseTo(0, 0);
+  expect(await positions(page)).toEqual(['12 / 17', '12 / 17']);
+});
+
+test('a drag that starts mid-blend takes the blend from where it is', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const incoming = () =>
+    page.evaluate(() => {
+      const layer = document.querySelector('.lightbox-slide-current .lightbox-front .lightbox-incoming');
+      return layer ? Number(getComputedStyle(layer).opacity) : 0;
+    });
+  // Once shown, the variant has loaded, so its blend has nothing to wait for.
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowLeft');
+  await settled(page);
+  await page.mouse.move(640, 400);
+  await holdTime(page);
+  await page.keyboard.press('ArrowRight');
+  await page.clock.runFor(60);
+  await page.mouse.down();
+  const grabbed = await incoming();
+  expect(grabbed).toBeGreaterThan(0);
+  expect(grabbed).toBeLessThan(1);
+  await page.mouse.move(638, 400);
+  await page.clock.resume();
+  await page.waitForTimeout(250);
+  expect(await incoming()).toBeCloseTo(grabbed, 1);
+  await page.mouse.up();
+  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+  expect(await positions(page)).toEqual(['4 / 17', '4 / 17']);
+});
+
+test('a drag on the text that starts mid-turn takes the turn from where it is', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const touch = await oneFinger(context, page);
+  const turn = () =>
+    page.evaluate(() =>
+      Number(
+        getComputedStyle(
+          document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!,
+        ).getPropertyValue('--lightbox-turn'),
+      ),
+    );
+  await page.getByRole('button', { name: 'Show description' }).click();
+  await page.waitForFunction(() => {
+    const sheet = document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!;
+    const turn = Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn'));
+    return turn > 0.2 && turn < 0.7;
+  });
+  await touch('touchStart', 300);
+  const grabbed = await turn();
+  expect(grabbed).toBeGreaterThan(0.05);
+  expect(grabbed).toBeLessThan(0.95);
+  await touch('touchMove', 298);
+  await nextFrame(page);
+  expect(await turn()).toBeCloseTo(grabbed, 1);
+  await page.waitForTimeout(250);
+  expect(await turn()).toBeCloseTo(grabbed, 1);
+  await touch('touchEnd');
+  await expect.poll(turn).toBe(1);
+  await context.close();
+});
+
+test('an image still loading delays only its blend: state and further changes go on at once', async ({
+  page,
+}) => {
+  // Below 100% a variant needs a smaller file than its neighbour preview.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-5', '/projects/galerie-hang%C3%A1r/');
+  await waitForLightbox(page);
+  await page.keyboard.press('-');
+  await expect.poll(() => imageZoom(page)).toBeLessThan(1);
+  await settled(page);
+  const before = await page.locator('.lightbox-front > img').first().getAttribute('src');
+  await page.route('**/_responsive/**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await route.continue();
+  });
+  const blend = await recording(page, () => blendNow(page));
+  await page.keyboard.press('ArrowRight');
+  expect(await positions(page)).toEqual(['6 / 27', '6 / 27']);
+  await page.keyboard.press('ArrowRight');
+  expect(await positions(page)).toEqual(['7 / 27', '7 / 27']);
+  await blend.step(20);
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].every(
+      (image) => image.complete,
+    ),
+  );
+  await blend.step(20);
+  // The skipped variant never showed, the drawing never darkened, and the
+  // blend ran only once the last one had loaded.
+  const shown = new Set(
+    blend.frames.flatMap((shares) => Object.keys(shares).filter((src) => shares[src] > 0.001)),
+  );
+  expect(shown.size).toBe(2);
+  expect(shown.has(decodeURIComponent(new URL(before!, page.url()).pathname))).toBe(true);
+  for (const shares of blend.frames) {
+    expect(Object.values(shares).reduce((sum, share) => sum + share, 0)).toBeCloseTo(1, 3);
+  }
+  await expect(page).toHaveURL(/#image-7$/);
+});
+
+test('on a phone the edge arrows wait with the card for a variant still loading', async ({
+  browser,
+}) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const hangar = '/projects/galerie-hang%C3%A1r/';
+  await withDescription(page, hangar, '/uploads/02 GALERIE - Půdorys 1NP+.webp', 'A short note.');
+  await page.goto(`${hangar}#image-5`);
+  await waitForLightbox(page);
+  // Below 100% the variant needs a file its neighbour preview did not load.
+  await page.keyboard.press('-');
+  await expect.poll(() => imageZoom(page)).toBeLessThan(1);
+  const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
+  const toggle = page.getByRole('button', { name: 'Show description' });
+  await toggle.click();
+  await settled(page);
+  await expect(next).toBeHidden();
+  await page.route('**/_responsive/**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    await route.continue();
+  });
+  await page.keyboard.press('ArrowRight');
+  expect(await positions(page)).toEqual(['6 / 27', '6 / 27']);
+  await page.waitForTimeout(400);
+  expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
+  await expect(next).toBeHidden();
+  // Once it has loaded, both come back together.
+  await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
+  await expect(next).toBeVisible();
+  await context.close();
+});
+
+/**
+ * Watches for `ms` how many tiled viewers are created while the strip or a
+ * card is still moving, and the most there are at once.
+ */
+function viewersCreatedMidMove(page: Page, ms: number) {
+  return page.evaluate(
+    (duration) =>
+      new Promise<{ midMove: number; most: number }>((resolve) => {
+        // The strip between slides, a card between layers or sides, or the
+        // lightbox opening.
+        const moving = () => {
+          const strip = document.querySelector<HTMLElement>('.lightbox-strip')!.style.transform;
+          const along = Number(/-?[\d.]+(?=%)/.exec(strip)?.[0] ?? 0) / 100;
+          const sheet = document.querySelector<HTMLElement>(
+            '.lightbox-slide-current [data-lightbox-sheet]',
+          );
+          const turn = Number(sheet?.style.getPropertyValue('--lightbox-turn'));
+          const open = Number(
+            document
+              .querySelector<HTMLElement>('[data-gallery-lightbox]')!
+              .style.getPropertyValue('--lightbox-open'),
+          );
+          return (
+            !Number.isInteger(along) ||
+            (turn !== 0 && turn !== 1) ||
+            (sheet?.querySelectorAll('.lightbox-front > img').length ?? 0) > 1 ||
+            open !== 1
+          );
+        };
+        let midMove = 0;
+        let most = 0;
+        const observer = new MutationObserver((records) => {
+          for (const record of records) {
+            for (const node of record.addedNodes) {
+              if (node instanceof Element && node.matches('.openseadragon-container') && moving()) {
+                midMove += 1;
+              }
+            }
+          }
+          most = Math.max(most, document.querySelectorAll('.openseadragon-container').length);
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => {
+          observer.disconnect();
+          resolve({ midMove, most });
+        }, duration);
+      }),
+    ms,
+  );
+}
+
+test('a blend onto a tiled variant runs frame by frame, its tiles starting once it rests', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  await page.locator('.openseadragon-canvas canvas').waitFor();
+  // Drawing the first tiles is a burst of work of its own.
+  await page.waitForTimeout(1000);
+  const blend = await recording(page, () => blendNow(page));
+  const created = viewersCreatedMidMove(page, 1200);
+  await page.keyboard.press('ArrowRight');
+  await blend.step(20);
+  const mid = blend.frames.filter((shares) =>
+    Object.values(shares).every((share) => share < 0.98),
+  );
+  // 180 ms at 60 frames a second, with a few to spare.
+  expect(mid.length).toBeGreaterThanOrEqual(6);
+  expect(jumps(blendAt(blend.frames))).toEqual([]);
+  await page.clock.runFor(900);
+  expect((await created).midMove).toBe(0);
+  await page.clock.resume();
+  await expect(page.locator('.openseadragon-container')).toHaveCount(1);
+});
+
+test('tiled viewers stay bounded through a fast run of changes', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-2');
+  await waitForLightbox(page);
+  await page.locator('.openseadragon-canvas canvas').waitFor();
+  const created = viewersCreatedMidMove(page, 1500);
+  for (let press = 0; press < 7; press += 1) await page.keyboard.press('ArrowRight');
+  expect(await positions(page)).toEqual(['9 / 17', '9 / 17']);
+  const { midMove, most } = await created;
+  expect(midMove).toBe(0);
+  // The one sliding away, and the one it rests on.
+  expect(most).toBeLessThanOrEqual(2);
+  await settled(page);
+  await expect(page.locator('.openseadragon-container')).toHaveCount(1);
+});
+
+test('the toggle tapped while a card slides in turns that card', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-6'); // the next image is another card, with a description
+  await waitForLightbox(page);
+  const toggle = page.getByRole('button', { name: 'Show description' });
+  await toggle.click();
+  await settled(page);
+  const turns = await recording(page, () => turnNow(page));
+  await page.keyboard.press('ArrowRight');
+  await toggle.evaluate((button: HTMLButtonElement) => button.click());
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await turns.step(40);
+  const seen = turns.frames;
+  expect(seen.some((turn) => turn > 0.1 && turn < 0.9)).toBe(true);
+  expect(seen.at(-1)).toBe(1);
+  await expect(page.getByRole('region', { name: 'Site Plan' })).toBeVisible();
+});
+
+test('reduced motion reaches the same states at the same moments', async ({ browser }) => {
+  const run = async (reducedMotion: 'reduce' | 'no-preference') => {
+    const page = await browser.newPage();
+    await page.emulateMedia({ reducedMotion });
+    await gotoProject(page, '#image-1');
+    await waitForLightbox(page);
+    const states = [];
+    const toggle = page.getByRole('button', { name: 'Show description' });
+    for (const step of [
+      () => page.keyboard.press('ArrowRight'),
+      () => page.keyboard.press('ArrowRight'),
+      () => toggle.click(),
+      () => page.keyboard.press('ArrowRight'),
+      () => toggle.click(),
+      () => page.keyboard.press('ArrowLeft'),
+      () => page.getByRole('button', { name: 'Cycling Transport Analysis' }).click(),
+      () => page.keyboard.press('ArrowLeft'),
+      () => page.keyboard.press('ArrowLeft'),
+    ]) {
+      await step();
+      states.push(
+        await page.evaluate(() => {
+          const dialog = document.querySelector('[data-gallery-lightbox]')!;
+          return {
+            position: dialog.querySelector('[role="status"]')!.textContent!.trim(),
+            current: dialog.querySelector('[aria-current="true"]')?.textContent?.trim(),
+            text: dialog.querySelector('[aria-pressed]')?.getAttribute('aria-pressed'),
+          };
+        }),
+      );
+    }
+    await expect(page).toHaveURL(/#image-17$/);
+    await page.close();
+    return states;
+  };
+  expect(await run('no-preference')).toEqual(await run('reduce'));
+});
+
+test('a touch that moves over the controls leaves the page behind in place', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await gotoProject(page, '#image-7');
+  await waitForLightbox(page);
+  const before = await page.evaluate(() => window.scrollY);
+  const box = (await page.getByRole('link', { name: /^Open original/ }).boundingBox())!;
+  const session = await context.newCDPSession(page);
+  const at = (y: number) => [{ x: box.x + box.width / 2, y }];
+  const start = box.y + box.height / 2;
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(start) });
+  for (const step of [1, 2, 3, 4, 5, 6]) {
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: at(start - step * 60),
+    });
+  }
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.scrollY)).toBe(before);
+  await context.close();
+});
+
+test('on a phone the edge arrows stay in step with a turn reversed mid-way', async ({ browser }) => {
+  // It steps some two hundred frames, each a round trip to the page.
+  test.slow();
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const toggle = () =>
+    page
+      .getByRole('button', { name: 'Show description' })
+      .evaluate((button: HTMLButtonElement) => button.click());
+  // Reversed once and twice, and a change to a variant in the middle of the
+  // turn, which blends as it turns the card back; numbers are ms between
+  // the changes.
+  for (const steps of [
+    [toggle, 200, toggle],
+    [toggle, 150, toggle, 100, toggle],
+    [toggle, 250, () => page.keyboard.press('ArrowRight')],
+  ] as const) {
+    const apart = await recording(page, () =>
+      page.evaluate(() => {
+        const sheet = document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!;
+        const arrow = document.querySelector('[aria-label="Next image"]')!;
+        return Math.abs(
+          Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn')) -
+            Number(getComputedStyle(arrow).getPropertyValue('--lightbox-arrows-aside')),
+        );
+      }),
+    );
+    for (const step of steps) {
+      if (typeof step === 'number') await apart.step(Math.round(step / 16));
+      else await step();
+    }
+    await apart.step(40);
+    expect(Math.max(...apart.frames)).toBeLessThan(0.02);
+    await page.clock.resume();
+    await settled(page);
+  }
+  await context.close();
+});
+
+test('Escape right after the click closes, with nothing shown and no errors', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await thumbnail.click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`${projectPath}$`));
+  await page.waitForTimeout(600);
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await expect(thumbnail).toBeFocused();
+  expect(errors).toEqual([]);
+});
+
+test('Back straight after quick presses, then Forward, reopens the last image', async ({ page }) => {
+  await gotoProject(page, '#image-11');
+  await waitForLightbox(page);
+  await page.evaluate(() => {
+    for (let press = 0; press < 3; press += 1) {
+      dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    }
+    history.back();
+  });
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await page.goForward();
+  await waitForLightbox(page);
+  await expect(page).toHaveURL(/#image-14$/);
+  expect(await positions(page)).toEqual(['14 / 17', '14 / 17']);
+});
+
+test('opening, fast changes and turns log no page errors', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  const toggle = page.getByRole('button', { name: 'Show description' });
+  for (const step of [
+    () => page.keyboard.press('ArrowRight'),
+    () => toggle.click(),
+    () => page.keyboard.press('ArrowRight'),
+    () => toggle.click(),
+    () => page.keyboard.press('ArrowRight'),
+    () => page.keyboard.press('ArrowLeft'),
+    () => toggle.click(),
+    () => page.keyboard.press('ArrowRight'),
+  ]) {
+    await step();
+  }
+  await settled(page);
+  expect(errors).toEqual([]);
+});
+
+test('a turn sent back mid-way keeps moving, without stalling', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoProject(page, '#image-3');
+  await waitForLightbox(page);
+  const toggle = page.getByRole('button', { name: 'Show description' });
+  const turned = async () => Math.acos(Math.max(-1, Math.min(1, await sheetTurn(page)))) / Math.PI;
+  await holdTime(page);
+  await toggle.click();
+  const turns = [];
+  for (let frame = 0; frame < 14; frame += 1) {
+    await page.clock.runFor(16);
+    turns.push(await turned());
+  }
+  await toggle.click();
+  for (let frame = 0; frame < 4; frame += 1) {
+    await page.clock.runFor(16);
+    turns.push(await turned());
+  }
+  await page.clock.resume();
+  const moved = steps(turns).map(Math.abs);
+  const before = moved[12];
+  // The two frames after the change move at least a third as far as the
+  // frame before it.
+  for (const after of moved.slice(14, 16)) expect(after).toBeGreaterThan(before / 3);
 });

@@ -1,5 +1,6 @@
 import type { CollectionEntry } from 'astro:content';
 import type { Lang } from '../i18n';
+import type { Tween } from 'svelte/motion';
 import type { ResponsiveImage } from '../images';
 
 type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
@@ -241,13 +242,78 @@ export function scrubProgress(deltaX: number, stageWidth: number) {
   return Math.min(1, Math.abs(deltaX) / stageWidth);
 }
 
-/** Time a released move from `progress` to `target` takes of its full `duration`. */
+/**
+ * Time a move from `progress` to `target` takes of its full `duration`: the
+ * share still to go, and never longer than a whole move.
+ */
 export function settleDuration(
   duration: number,
   progress: number,
   target: number,
 ) {
-  return duration * Math.abs(target - progress);
+  return duration * Math.min(1, Math.abs(target - progress));
+}
+
+/** What a strip of slides or a stack of layers shows at a position, if anything. */
+export type ImageAt = (position: number) => number | undefined;
+
+/** Whether the slide or layer at `position` is on screen while `onScreen` is. */
+function visible(position: number, onScreen: number) {
+  return Math.abs(position - onScreen) < 1;
+}
+
+/**
+ * Where the strip puts the slide for `target` when a change travels
+ * `direction` from the slide at `at`, the strip being at `onScreen` (in
+ * slides): one slide on, but never past the first one beyond the screen, so a
+ * card skipped before it came into view is never shown. A slide on screen
+ * keeps its image, so one that holds another is passed over.
+ */
+export function slidePosition(
+  at: number,
+  onScreen: number,
+  direction: 1 | -1,
+  target: number,
+  imageAt: ImageAt,
+) {
+  const beyond =
+    direction > 0 ? Math.ceil(onScreen + 1) : Math.floor(onScreen - 1);
+  const next =
+    direction > 0 ? Math.min(at + 1, beyond) : Math.max(at - 1, beyond);
+  return keeps(next, onScreen, target, imageAt) ? beyond : next;
+}
+
+/**
+ * Where a card puts the layer for `target` when it changes to it from the
+ * layer at `at`, its blend being at `onScreen` (in layers): a layer on screen
+ * that shows it already, or one layer above `at`, but never past the first
+ * one above the screen, so an image skipped before it showed is never
+ * blended through. A layer on screen keeps its image, so one that holds
+ * another is passed over.
+ */
+export function layerPosition(
+  at: number,
+  onScreen: number,
+  target: number,
+  imageAt: ImageAt,
+) {
+  const shown = [Math.floor(onScreen), Math.ceil(onScreen)].find(
+    (position) =>
+      visible(position, onScreen) && imageAt(position) === target,
+  );
+  return shown ?? slidePosition(at, onScreen, 1, target, imageAt);
+}
+
+function keeps(
+  position: number,
+  onScreen: number,
+  target: number,
+  imageAt: ImageAt,
+) {
+  const image = imageAt(position);
+  return (
+    visible(position, onScreen) && image !== undefined && image !== target
+  );
 }
 
 export function displayedSwipeOffset(deltaX: number, reducedMotion: boolean) {
@@ -283,4 +349,87 @@ export function lightboxImageUrl(
     .find(({ width }) => width >= requiredWidth);
 
   return variant?.url ?? image.source.url;
+}
+
+/** CSS's `cubic-bezier(x1, y1, x2, y2)` as an easing of time from 0 to 1. */
+export function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
+  const along = (a: number, b: number, t: number) =>
+    3 * (1 - t) ** 2 * t * a + 3 * (1 - t) * t ** 2 * b + t ** 3;
+  return (time: number) => {
+    if (time <= 0 || time >= 1) return time <= 0 ? 0 : 1;
+    let [low, high] = [0, 1];
+    for (let step = 0; step < 40; step += 1) {
+      const middle = (low + high) / 2;
+      if (along(x1, x2, middle) < time) low = middle;
+      else high = middle;
+    }
+    return along(y1, y2, (low + high) / 2);
+  };
+}
+
+/** Stops `number` where it is on screen. */
+export function stop(number: Tween<number>) {
+  number.set(number.current, { duration: 0 });
+}
+
+/**
+ * Sends `number` to `to` from where it is on screen. A tween times a move
+ * from when it is set but starts it from its value at its next frame, which
+ * a move still under way would first carry on: it is stopped where it is.
+ */
+export function moveOn(
+  number: Tween<number>,
+  to: number,
+  options: Parameters<Tween<number>['set']>[1],
+) {
+  stop(number);
+  return number.set(to, options);
+}
+
+/**
+ * The strip's and the lightbox's opening easing, the card's, and CSS's
+ * `ease-out`, for a move sent on while it is under way.
+ */
+export const STRIP_EASING = cubicBezier(0.22, 1, 0.36, 1);
+export const CARD_EASING = cubicBezier(0.45, 0.05, 0.2, 1);
+export const EASE_OUT = cubicBezier(0, 0, 0.58, 1);
+
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Where the opening puts the card, `open` of the way from a thumbnail's
+ * frame to rest: the box between them, the drawing covering it as the
+ * thumbnail crops it (at `hover` scale when closed), given as a move and a
+ * scale of the stage about its centre and a clip inset in the stage's own
+ * untransformed space.
+ */
+export function morphFrame(
+  thumbnail: Rect,
+  rest: Size,
+  stage: Size,
+  open: number,
+  hover: number,
+) {
+  const at = (from: number, to: number) => from + (to - from) * open;
+  const width = at(thumbnail.width, rest.width);
+  const height = at(thumbnail.height, rest.height);
+  const centre = {
+    x: at(thumbnail.x + thumbnail.width / 2, stage.width / 2),
+    y: at(thumbnail.y + thumbnail.height / 2, stage.height / 2),
+  };
+  const scale =
+    Math.max(width / rest.width, height / rest.height) * at(hover, 1);
+  const vertical = stage.height / 2 - height / 2 / scale;
+  const horizontal = stage.width / 2 - width / 2 / scale;
+  return {
+    x: centre.x - stage.width / 2,
+    y: centre.y - stage.height / 2,
+    scale,
+    clip: { top: vertical, right: horizontal, bottom: vertical, left: horizontal },
+  };
 }
