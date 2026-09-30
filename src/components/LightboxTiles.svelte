@@ -12,46 +12,55 @@
     view,
     restImage,
     stage,
+    resting,
   }: {
     url: string;
     view: View;
     /** The drawing's size at 100%. */
     restImage: Size | undefined;
     stage: Size;
+    /** Its card is at rest on it now. */
+    resting: boolean;
   } = $props();
 
   let element: HTMLDivElement;
   let viewer = $state.raw<OpenSeadragon.Viewer>();
+  let createViewer = $state.raw<typeof OpenSeadragon>();
+  // The viewer is created only while the card rests, as creating it mid-move
+  // stalls the move; its code loads lazily, and the card may have moved on
+  // by the time it arrives. Once created, it stays while the card moves.
+  let start = $state(false);
+
+  void import('openseadragon').then((module) => (createViewer = module.default));
+
+  $effect.pre(() => {
+    if (createViewer && resting) start = true;
+  });
 
   $effect(() => {
     const tileSources = url;
-    let cancelled = false;
-    let created: OpenSeadragon.Viewer | undefined;
-    void import('openseadragon').then(({ default: createViewer }) => {
-      if (cancelled) return;
-      // OpenSeadragon caches this module-wide, including while no viewer exists.
-      Object.assign(createViewer, {
-        pixelDensityRatio: createViewer.getCurrentPixelDensityRatio(),
-      });
-      const opening = createViewer({
-        element,
-        tileSources,
-        mouseNavEnabled: false,
-        keyboardNavEnabled: false,
-        tabIndex: -1,
-        showNavigationControl: false,
-        showNavigator: false,
-        autoResize: false,
-        minPixelRatio: 0.5,
-        animationTime: 0,
-        immediateRender: true,
-      });
-      created = opening;
-      opening.addHandler('open', () => (viewer = opening));
+    const create = createViewer;
+    if (!start || !create) return;
+    // OpenSeadragon caches this module-wide, including while no viewer exists.
+    Object.assign(create, {
+      pixelDensityRatio: create.getCurrentPixelDensityRatio(),
     });
+    const opening = create({
+      element,
+      tileSources,
+      mouseNavEnabled: false,
+      keyboardNavEnabled: false,
+      tabIndex: -1,
+      showNavigationControl: false,
+      showNavigator: false,
+      autoResize: false,
+      minPixelRatio: 0.5,
+      animationTime: 0,
+      immediateRender: true,
+    });
+    opening.addHandler('open', () => (viewer = opening));
     return () => {
-      cancelled = true;
-      created?.destroy();
+      opening.destroy();
       viewer = undefined;
     };
   });
