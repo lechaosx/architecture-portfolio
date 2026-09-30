@@ -1,4 +1,56 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+
+/** Waits for the transitions under way on `locator`, such as its hover's, to end. */
+function transitionsEnd(locator: Locator) {
+  return locator.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+}
+
+const recordsReveals = new WeakSet<Page>();
+
+/**
+ * Runs `navigate` until the page it reaches at `url` is revealed with a view
+ * transition, going back to try again; fails after three without one. A busy
+ * Chromium can skip a transition the page asks for.
+ */
+async function navigateWithTransition(
+  page: Page,
+  url: RegExp,
+  navigate: () => Promise<unknown>,
+) {
+  if (!recordsReveals.has(page)) {
+    recordsReveals.add(page);
+    await page.addInitScript(() => {
+      addEventListener('pagereveal', (event) => {
+        sessionStorage.setItem(
+          'revealed',
+          JSON.stringify({
+            href: location.href,
+            transition: Boolean((event as PageRevealEvent).viewTransition),
+          }),
+        );
+      });
+    });
+  }
+  const revealed = () =>
+    page.evaluate(
+      () =>
+        JSON.parse(sessionStorage.getItem('revealed') ?? 'null') as {
+          href: string;
+          transition: boolean;
+        } | null,
+    );
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (attempt > 0) await page.goBack();
+    await page.evaluate(() => sessionStorage.removeItem('revealed'));
+    await navigate();
+    await expect(page).toHaveURL(url);
+    await expect.poll(async () => url.test((await revealed())?.href ?? '')).toBe(true);
+    if ((await revealed())!.transition) return;
+  }
+  throw new Error(`Three navigations to ${url} went without a view transition`);
+}
 
 test('work cards do not start a second entrance animation after navigation', async ({
   page,
@@ -34,7 +86,7 @@ test('cover hover does not change the shared transition box', async ({ page }) =
   const imageBefore = (await image.boundingBox())!;
 
   await project.hover();
-  await page.waitForTimeout(350);
+  await transitionsEnd(image);
   expect(await transitionCover.boundingBox()).toEqual(before);
   expect((await image.boundingBox())!.width).toBeGreaterThan(imageBefore.width);
 });
@@ -60,7 +112,7 @@ test('project page cover hover does not change the shared transition box', async
   const imageBefore = (await image.boundingBox())!;
 
   await cover.hover();
-  await page.waitForTimeout(600);
+  await transitionsEnd(image);
   expect(await transitionBox()).toEqual(before);
   expect((await image.boundingBox())!.width).toBeGreaterThan(imageBefore.width);
 });
@@ -73,24 +125,11 @@ test('opening a project starts a cross-document view transition', async ({
     browserName === 'firefox',
     'The pinned Firefox does not support cross-document View Transitions',
   );
-  await page.addInitScript(() => {
-    addEventListener('pagereveal', (event) => {
-      sessionStorage.setItem(
-        'page-transition-started',
-        String(Boolean((event as PageRevealEvent).viewTransition)),
-      );
-    });
-  });
   await page.goto('/work');
-  await page.evaluate(() => sessionStorage.removeItem('page-transition-started'));
-
-  await page.locator('a[href="/projects/urban-study-kyjov/"]').click();
-  await expect(page).toHaveURL(/\/projects\/urban-study-kyjov\/$/);
-  await expect
-    .poll(() =>
-      page.evaluate(() => sessionStorage.getItem('page-transition-started')),
-    )
-    .toBe('true');
+  // The page asks for a transition, which the browser may skip when busy.
+  await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, () =>
+    page.locator('a[href="/projects/urban-study-kyjov/"]').click(),
+  );
 });
 
 test('non-square project cover uses the shared crop transition class', async ({
@@ -160,18 +199,20 @@ test('project covers morph one uncropped snapshot in both directions', async ({
 
   await page.goto('/work');
   const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
-  await project.hover();
-  await page.waitForTimeout(350);
-  await project.click();
-  await expect(page).toHaveURL(/\/projects\/urban-study-kyjov\/$/);
+  await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, async () => {
+    await project.hover();
+    await transitionsEnd(project.locator('img'));
+    await project.click();
+  });
   await expect
     .poll(snapshots)
     .toMatchObject({ oldAnimated: false, newAnimated: true });
   expect((await snapshots()).newScale).toBeCloseTo(1.03, 2);
 
   await page.evaluate(() => sessionStorage.removeItem('cover-snapshots'));
-  await page.getByRole('link', { name: 'Back to work' }).click();
-  await expect(page).toHaveURL(/\/work\/?$/);
+  await navigateWithTransition(page, /\/work\/?$/, () =>
+    page.getByRole('link', { name: 'Back to work' }).click(),
+  );
   // The retained project snapshot holds still while its box shrinks to the card.
   await expect
     .poll(snapshots)
@@ -212,11 +253,13 @@ test('a keyboard-opened project starts from its own card, not the hovered one', 
   });
 
   await page.goto('/work');
-  await page.locator('a[href="/projects/exotarium-brno-zoo/"]').hover();
-  await page.waitForTimeout(350);
-  await page.locator('a[href="/projects/urban-study-kyjov/"]').focus();
-  await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/\/projects\/urban-study-kyjov\/$/);
+  const hovered = page.locator('a[href="/projects/exotarium-brno-zoo/"]');
+  await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, async () => {
+    await hovered.hover();
+    await transitionsEnd(hovered.locator('img'));
+    await page.locator('a[href="/projects/urban-study-kyjov/"]').focus();
+    await page.keyboard.press('Enter');
+  });
   await expect
     .poll(() => page.evaluate(() => sessionStorage.getItem('opening-scale')))
     .not.toBeNull();

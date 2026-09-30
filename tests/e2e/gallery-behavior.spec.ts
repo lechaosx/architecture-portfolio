@@ -77,6 +77,18 @@ async function imageZoom(page: Page) {
 }
 
 /**
+ * Waits for the current card's drawings to load. A blend, and a turn that
+ * goes with it, waits for its drawing, which loads whatever the clock does.
+ */
+async function drawingsLoaded(page: Page) {
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].every(
+      (image) => image.complete,
+    ),
+  );
+}
+
+/**
  * Makes `change` with time held, steps `time` ms into the move it starts,
  * and reports the turn (1 text side up, 0 drawing side up), each face's
  * blend and where the strip is. Time stays held until the clock is resumed.
@@ -84,12 +96,7 @@ async function imageZoom(page: Page) {
 async function cardMoveAt(page: Page, time: number, change: () => Promise<unknown>) {
   await holdTime(page);
   await change();
-  // A blend waits for its drawing, which loads whatever the clock does.
-  await page.waitForFunction(() =>
-    [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].every(
-      (image) => image.complete,
-    ),
-  );
+  await drawingsLoaded(page);
   await page.clock.runFor(time);
   return page.evaluate(() => {
     const sheet = document.querySelector<HTMLElement>('.lightbox-slide-current [data-lightbox-sheet]')!;
@@ -1052,30 +1059,21 @@ test('on a phone the edge arrows ease back in as a slide from the text brings th
   await settled(page);
   await expect(next).toBeHidden();
 
-  const partway = page.evaluate(
-    (restX) =>
-      new Promise<boolean>((resolve) => {
-        const arrow = document.querySelector('[aria-label="Next image"]')!;
-        const end = performance.now() + 900;
-        let seen = false;
-        const frame = () => {
-          const { x } = arrow.getBoundingClientRect();
-          if (
-            arrow.checkVisibility({ visibilityProperty: true }) &&
-            x > restX + 4 &&
-            x < innerWidth - 4
-          ) {
-            seen = true;
-          }
-          if (performance.now() < end) requestAnimationFrame(frame);
-          else resolve(seen);
-        };
-        requestAnimationFrame(frame);
-      }),
-    rest.x,
+  const partway = await recording(page, () =>
+    page.evaluate((restX) => {
+      const arrow = document.querySelector('[aria-label="Next image"]')!;
+      const { x } = arrow.getBoundingClientRect();
+      return (
+        arrow.checkVisibility({ visibilityProperty: true }) &&
+        x > restX + 4 &&
+        x < innerWidth - 4
+      );
+    }, rest.x),
   );
   await page.keyboard.press('ArrowRight');
-  expect(await partway).toBe(true);
+  await partway.step(20);
+  await page.clock.resume();
+  expect(partway.frames).toContain(true);
   await expect(page).toHaveURL(/#image-7$/);
   await settled(page);
   await expect(next).toBeVisible();
@@ -1406,11 +1404,13 @@ test('Next inside a set blends and keeps the view; leaving the set slides', asyn
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
 
   // The next image slides in from the side.
-  const slide = page.waitForFunction(
-    () => document.querySelector('.lightbox-slide-current')!.getBoundingClientRect().x > 0,
-  );
+  await holdTime(page);
   await page.getByRole('button', { name: 'Next image' }).click();
-  await slide;
+  await page.clock.runFor(90);
+  expect(
+    await page.evaluate(() => document.querySelector('.lightbox-slide-current')!.getBoundingClientRect().x),
+  ).toBeGreaterThan(0);
+  await page.clock.resume();
   await expect(page).toHaveURL(/#image-7$/);
   expect(await imageZoom(page)).toBeCloseTo(1, 2);
 });
@@ -1636,12 +1636,6 @@ function faceLean(page: Page) {
   });
 }
 
-async function nextFrame(page: Page) {
-  await page.evaluate(
-    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-  );
-}
-
 test('a change made while the card turns over carries on the turn without jumping to its mirror image', async ({
   page,
 }) => {
@@ -1656,28 +1650,16 @@ test('a change made while the card turns over carries on the turn without jumpin
   expect(lean).not.toBe('nowhere');
 
   // Every frame of the turn back leans the same way, until the card lies flat.
-  const leans = page.evaluate(
-    () =>
-      new Promise<string[]>((resolve) => {
-        const seen: string[] = [];
-        const end = performance.now() + 900;
-        const frame = () => {
-          const front = document.querySelector('.lightbox-front')!;
-          const facing = new DOMMatrix(getComputedStyle(front).transform).m11 >= 0;
-          const box = document
-            .querySelector(facing ? '.lightbox-front > img' : '.lightbox-card')!
-            .getBoundingClientRect();
-          const offset = box.x + box.width / 2 - innerWidth / 2;
-          if (Math.abs(offset) >= 1) seen.push(offset > 0 ? 'right' : 'left');
-          if (performance.now() < end) requestAnimationFrame(frame);
-          else resolve(seen);
-        };
-        requestAnimationFrame(frame);
-      }),
-  );
   await page.keyboard.press('ArrowLeft');
+  await drawingsLoaded(page);
+  const leans = new Set<string>();
+  for (let time = 0; time < 900; time += 16) {
+    await page.clock.runFor(16);
+    const now = await faceLean(page);
+    if (now !== 'nowhere') leans.add(now);
+  }
   await page.clock.resume();
-  expect(new Set(await leans)).toEqual(new Set([lean]));
+  expect(leans).toEqual(new Set([lean]));
   await expect(page).toHaveURL(/#image-3$/);
 });
 
@@ -1719,21 +1701,23 @@ test('a drag on the text that takes over a turn keeps the way it was turning', a
   await gotoProject(page, '#image-3');
   await waitForLightbox(page);
   const touch = await oneFinger(context, page);
+  await holdTime(page);
   await page.getByRole('button', { name: 'Show description' }).click();
-  await page.waitForTimeout(250);
+  await page.clock.runFor(250);
 
   // Rightwards, over a turn still under way, and short of turning it text up.
   await touch('touchStart', 100);
-  await nextFrame(page);
+  await page.clock.runFor(32);
   const lean = await faceLean(page);
   expect(lean).not.toBe('nowhere');
   const leans = [];
   for (const x of [110, 120, 130]) {
     await touch('touchMove', x);
-    await nextFrame(page);
+    await page.clock.runFor(32);
     leans.push(await faceLean(page));
   }
   await touch('touchEnd');
+  await page.clock.resume();
   expect(leans).toEqual([lean, lean, lean]);
   await context.close();
 });
@@ -1999,10 +1983,10 @@ for (const input of ['mouse', 'touch'] as const) {
     await expect.poll(stripX).toBeCloseTo(100, 0);
     await page.keyboard.press('ArrowRight'); // the next image is a variant
     await move(250);
-    await page.waitForTimeout(500);
+    await page.clock.runFor(500);
     await move(360);
     await lift();
-    await page.waitForTimeout(500);
+    await page.clock.runFor(500);
 
     await expect(page).toHaveURL(/#image-3$/);
     expect(await stripX()).toBe(0);
@@ -2875,13 +2859,23 @@ test('double-tap zooms on touch screens', async ({ browser, browserName }) => {
   await gotoProject(page);
   await galleryImage(page, 3).click();
   await waitForLightbox(page);
-  await page.touchscreen.tap(195, 420);
-  await page.touchscreen.tap(195, 420);
+  // The page tells a double tap by when its events arrive, so both taps are
+  // sent in one go rather than each waiting on the last.
+  const session = await context.newCDPSession(page);
+  const doubleTap = () =>
+    Promise.all(
+      (['touchStart', 'touchEnd', 'touchStart', 'touchEnd'] as const).map((type) =>
+        session.send('Input.dispatchTouchEvent', {
+          type,
+          touchPoints: type === 'touchStart' ? [{ x: 195, y: 420 }] : [],
+        }),
+      ),
+    );
+  await doubleTap();
   await expect.poll(() => imageZoom(page)).toBeCloseTo(2.5, 2);
   await expect(page).toHaveURL(/#image-3$/);
 
-  await page.touchscreen.tap(195, 420);
-  await page.touchscreen.tap(195, 420);
+  await doubleTap();
   await expect.poll(() => imageZoom(page)).toBeCloseTo(1, 2);
   await context.close();
 });
@@ -3083,16 +3077,14 @@ for (const [route, second, expected] of [
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await gotoProject(page, '#image-3');
     await waitForLightbox(page);
-    // Once shown, the variant has loaded, so its blend has nothing to wait for.
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('ArrowLeft');
-    await settled(page);
     const blend = await recording(page, () => blendNow(page));
     await page.keyboard.press('ArrowRight');
+    await drawingsLoaded(page);
     await blend.step(2);
     const pressed = blend.frames.length - 1;
     await page.keyboard.press(second);
     expect(await positions(page)).toEqual([expected, expected]);
+    await drawingsLoaded(page);
     await blend.step(20);
     await page.clock.resume();
     const seen = blend.frames;
@@ -3182,13 +3174,10 @@ test('a drag that starts mid-blend takes the blend from where it is', async ({ p
       const layer = document.querySelector('.lightbox-slide-current .lightbox-front .lightbox-incoming');
       return layer ? Number(getComputedStyle(layer).opacity) : 0;
     });
-  // Once shown, the variant has loaded, so its blend has nothing to wait for.
-  await page.keyboard.press('ArrowRight');
-  await page.keyboard.press('ArrowLeft');
-  await settled(page);
   await page.mouse.move(640, 400);
   await holdTime(page);
   await page.keyboard.press('ArrowRight');
+  await drawingsLoaded(page);
   await page.clock.runFor(60);
   await page.mouse.down();
   const grabbed = await incoming();
@@ -3226,22 +3215,20 @@ test('a drag on the text that starts mid-turn takes the turn from where it is', 
         ).getPropertyValue('--lightbox-turn'),
       ),
     );
+  await holdTime(page);
   await page.getByRole('button', { name: 'Show description' }).click();
-  await page.waitForFunction(() => {
-    const sheet = document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!;
-    const turn = Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn'));
-    return turn > 0.2 && turn < 0.7;
-  });
+  while ((await turn()) <= 0.2) await page.clock.runFor(16);
   await touch('touchStart', 300);
   const grabbed = await turn();
   expect(grabbed).toBeGreaterThan(0.05);
   expect(grabbed).toBeLessThan(0.95);
   await touch('touchMove', 298);
-  await nextFrame(page);
+  await page.clock.runFor(32);
   expect(await turn()).toBeCloseTo(grabbed, 1);
-  await page.waitForTimeout(250);
+  await page.clock.runFor(250);
   expect(await turn()).toBeCloseTo(grabbed, 1);
   await touch('touchEnd');
+  await page.clock.resume();
   await expect.poll(turn).toBe(1);
   await context.close();
 });
@@ -3268,11 +3255,7 @@ test('an image still loading delays only its blend: state and further changes go
   await page.keyboard.press('ArrowRight');
   expect(await positions(page)).toEqual(['7 / 27', '7 / 27']);
   await blend.step(20);
-  await page.waitForFunction(() =>
-    [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].every(
-      (image) => image.complete,
-    ),
-  );
+  await drawingsLoaded(page);
   await blend.step(20);
   // The skipped variant never showed, the drawing never darkened, and the
   // blend ran only once the last one had loaded.
@@ -3295,7 +3278,7 @@ test('on a phone the edge arrows wait with the card for a variant still loading'
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   const hangar = '/projects/galerie-hang%C3%A1r/';
   await withDescription(page, hangar, '/uploads/02 GALERIE - Půdorys 1NP+.webp', 'A short note.');
-  await page.goto(`${hangar}#image-5`);
+  await gotoProject(page, '#image-5', hangar);
   await waitForLightbox(page);
   // Below 100% the variant needs a file its neighbour preview did not load.
   await page.keyboard.press('-');
@@ -3305,16 +3288,19 @@ test('on a phone the edge arrows wait with the card for a variant still loading'
   await toggle.click();
   await settled(page);
   await expect(next).toBeHidden();
+  let release = () => {};
+  const arrived = new Promise<void>((resolve) => (release = resolve));
   await page.route('**/_responsive/**', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    await arrived;
     await route.continue();
   });
   await page.keyboard.press('ArrowRight');
   expect(await positions(page)).toEqual(['6 / 27', '6 / 27']);
-  await page.waitForTimeout(400);
+  await page.clock.runFor(400);
   expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
   await expect(next).toBeHidden();
   // Once it has loaded, both come back together.
+  release();
   await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
   await expect(next).toBeVisible();
   await context.close();
@@ -3383,6 +3369,7 @@ test('a blend onto a tiled variant runs frame by frame, its tiles starting once 
   const blend = await recording(page, () => blendNow(page));
   const created = viewersCreatedMidMove(page, 1200);
   await page.keyboard.press('ArrowRight');
+  await drawingsLoaded(page);
   await blend.step(20);
   const mid = blend.frames.filter((shares) =>
     Object.values(shares).every((share) => share < 0.98),

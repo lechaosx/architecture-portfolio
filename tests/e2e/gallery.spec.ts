@@ -140,12 +140,20 @@ test('the card opens from its thumbnail, cropped as it is and at its hover scale
   const thumbnail = galleryImage(page, 10);
   await thumbnail.scrollIntoViewIfNeeded();
   const frame = (await thumbnail.boundingBox())!;
+  const hoverSettles = () =>
+    thumbnail
+      .locator('img')
+      .evaluate((image) => Promise.all(image.getAnimations().map((animation) => animation.finished)));
   for (const hover of ['settled', 'mid-way'] as const) {
     await thumbnail.hover();
-    await page.waitForTimeout(hover === 'settled' ? 550 : 100);
-    if (hover === 'mid-way') {
+    if (hover === 'settled') {
+      await hoverSettles();
+    } else {
       await thumbnail.locator('img').evaluate((image) => {
-        for (const animation of image.getAnimations()) animation.pause();
+        for (const animation of image.getAnimations()) {
+          animation.pause();
+          animation.currentTime = 100;
+        }
       });
     }
     const hoverScale = await renderedThumbnailScale(thumbnail);
@@ -188,7 +196,7 @@ test('the card opens from its thumbnail, cropped as it is and at its hover scale
     await thumbnail.locator('img').evaluate((image) => {
       for (const animation of image.getAnimations()) animation.play();
     });
-    await page.waitForTimeout(550);
+    await hoverSettles();
   }
 });
 
@@ -386,7 +394,7 @@ for (const [side, prepare] of [
     'with its description showing',
     async (page: Page) => {
       await page.getByRole('button', { name: 'Show description' }).click();
-      await page.waitForTimeout(700);
+      await page.clock.runFor(700);
     },
   ],
 ] as const) {
