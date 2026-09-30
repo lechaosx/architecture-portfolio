@@ -10,7 +10,7 @@
     "start": "bun run dev",
     "check": "astro check --minimumFailingSeverity hint",
     "test": "bun test --path-ignore-patterns 'tests/e2e/**'",
-    "pretest:e2e": "bun run build",
+    "pretest:e2e": "E2E_FIXTURES=1 bun run build",
     "test:e2e": "playwright test",
     "test:all": "bun run check && bun run test && bun run test:e2e",
     "prebuild": "bun run images",

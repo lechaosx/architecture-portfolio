@@ -1,0 +1,38 @@
+---
+// Test-only pages for components that the shipped content may not exercise.
+// Built only when E2E_FIXTURES is set, which the e2e build does.
+import Base from '../layouts/Base.astro';
+import Carousel from '../components/Carousel.astro';
+import ProjectBlocks from '../components/ProjectBlocks.astro';
+
+export function getStaticPaths() {
+  if (!process.env.E2E_FIXTURES) return [];
+  const images = [
+    '/uploads/placeholder-cover.svg',
+    '/uploads/placeholder-1.svg',
+    '/uploads/placeholder-2.svg',
+  ];
+  return [
+    { params: { fixture: 'e2e-carousels' }, props: { images } },
+    { params: { fixture: 'e2e-single-image' }, props: { images: images.slice(0, 1) } },
+  ];
+}
+
+const { images } = Astro.props;
+---
+
+<Base title={{ cs: 'E2E', en: 'E2E' }}>
+  <Carousel {images} />
+  {
+    images.length > 1 && (
+      <div class="mx-auto max-w-6xl px-6 pb-16">
+        <ProjectBlocks
+          blocks={[
+            { type: 'image_set', images: images.map((image) => ({ image })) },
+          ]}
+          responsiveImages={[]}
+        />
+      </div>
+    )
+  }
+</Base>

@@ -210,21 +210,21 @@ html[data-theme="dark"] .theme-icon-moon {
 /* Reveal-on-scroll — driven by IntersectionObserver, so it rides the NATIVE
    scrollbar. No scroll hijacking. */
 .reveal {
-  opacity: 0;
-  transform: translateY(0.875rem);
   transition: opacity var(--duration-slow) ease, transform var(--duration-slow) ease;
   will-change: opacity, transform;
 }
-.reveal.is-visible {
-  opacity: 1;
-  transform: none;
+.reveal.is-hidden {
+  opacity: 0;
+  transform: translateY(0.875rem);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal {
+    transition: none;
+  }
+  .reveal.is-hidden {
     opacity: 1;
     transform: none;
-    transition: none;
   }
 }
 
