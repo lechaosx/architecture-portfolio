@@ -1037,9 +1037,10 @@
   {/if}
 </dialog>
 
-{#snippet tiledCanvas(url: string, restImage: Size | undefined, cardView: View)}
+{#snippet tiledCanvas(url: string, restImage: Size | undefined, cardView: View, resting: boolean)}
   <LightboxTiles
     {url}
+    {resting}
     view={cardView}
     {restImage}
     stage={{ width: stageWidth, height: stageHeight }}

@@ -3412,6 +3412,41 @@ test('tiled viewers stay bounded through a fast run of changes', async ({ page }
   await expect(page.locator('.openseadragon-container')).toHaveCount(1);
 });
 
+test('a tiled canvas whose code arrives while its card moves on waits for the card to rest', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  let asked = () => {};
+  const requested = new Promise<void>((resolve) => (asked = resolve));
+  let release = () => {};
+  const arrived = new Promise<void>((resolve) => (release = resolve));
+  let code = '';
+  await page.route('**/_astro/openseadragon.*.js', async (route) => {
+    code = route.request().url();
+    asked();
+    await arrived;
+    await route.continue();
+  });
+  await gotoProject(page, '#image-2');
+  await waitForLightbox(page);
+  // At rest, the card's tiled canvas has asked for OpenSeadragon.
+  await requested;
+  await holdTime(page);
+  await page.keyboard.press('ArrowRight'); // a variant, which blends in
+  release();
+  // Resolves after the canvas's own import of the same module.
+  await page.evaluate((url) => import(url).then(() => {}), code);
+  expect(
+    await page.evaluate(() => ({
+      blending:
+        document.querySelectorAll('.lightbox-slide-current .lightbox-front > img').length > 1,
+      viewers: document.querySelectorAll('.openseadragon-container').length,
+    })),
+  ).toEqual({ blending: true, viewers: 0 });
+  await page.clock.resume();
+  await expect(page.locator('.openseadragon-container')).toHaveCount(1);
+});
+
 test('the toggle tapped while a card slides in turns that card', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await gotoProject(page, '#image-6'); // the next image is another card, with a description

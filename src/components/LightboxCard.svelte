@@ -90,8 +90,11 @@
     columnLimit: number;
     lang: Lang;
     reducedMotion: boolean;
-    /** Draws a deep-zoom pyramid's tiles over its preview, at a view. */
-    tiledCanvas: Snippet<[string, Size | undefined, View]>;
+    /**
+     * Draws a deep-zoom pyramid's tiles over its preview, at a view; the flag
+     * says the card is at rest on it now.
+     */
+    tiledCanvas: Snippet<[string, Size | undefined, View, boolean]>;
     /** The drawing of the image the card is on. */
     drawing?: HTMLImageElement;
     /** The card's turn on screen, 1 text side up, for what moves with it. */
@@ -187,11 +190,15 @@
     if (target) untrack(() => chase(target));
   });
 
+  // At rest on screen: the blend has reached the current layer, and nothing
+  // drags or carries the card.
+  let resting = $derived(mix.current === at && !drag && current.ready && !moving);
+
   // Once the blend rests on the image it moved to, the layers it covers go,
   // and once the card rests too, its tiles may start.
   $effect.pre(() => {
     if (mix.current !== at || drag || !current.ready) return;
-    const still = !moving;
+    const still = resting;
     untrack(() => {
       if (layers.length > 1) layers = [current];
       if (still) current.rested = true;
@@ -404,7 +411,7 @@
           class="lightbox-from-drawing absolute inset-0"
           style:opacity={reach(layer.position)}
         >
-          {@render tiledCanvas(card.tiles, card.size, view)}
+          {@render tiledCanvas(card.tiles, card.size, view, layer === current && resting)}
         </div>
       {/if}
     {/each}
