@@ -50,10 +50,19 @@ async function installClock(page: Page) {
 
 /**
  * Holds the page's clock, so nothing moves until it is stepped or released.
- * It pauses a little ahead, so call it while nothing moves.
+ * It pauses a little ahead, so call it while nothing moves. A busy machine can
+ * take longer than that between reading the page's time and pausing, which
+ * Playwright rejects as a pause in the past; it then reads the time again.
  */
 async function holdTime(page: Page) {
-  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 500));
+  for (;;) {
+    try {
+      await page.clock.pauseAt(await page.evaluate(() => Date.now() + 500));
+      return;
+    } catch (error) {
+      if (!String(error).includes('Cannot fast-forward to the past')) throw error;
+    }
+  }
 }
 
 
