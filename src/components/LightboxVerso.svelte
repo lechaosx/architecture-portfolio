@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
+  import { on } from 'svelte/events';
   import { ui, type Lang } from '../i18n';
   import { cardColumn, cardScale as fitCard, type Size } from './gallery';
 
@@ -23,9 +24,9 @@
     scrollTop?: number;
   } = $props();
 
-  let scroller = $state<HTMLDivElement>()!;
+  let scroller: HTMLDivElement;
   let viewHeight = $state(0);
-  let probe = $state<HTMLDivElement>()!;
+  let probe: HTMLDivElement;
   let fontLoads = $state(0);
   let cardWidth = $derived(restImage.width * cardScale);
   let column = $derived(cardColumn(cardWidth, columnLimit));
@@ -35,8 +36,7 @@
   onMount(() => {
     const remeasure = () => (fontLoads += 1);
     void document.fonts.ready.then(remeasure);
-    document.fonts.addEventListener('loadingdone', remeasure);
-    return () => document.fonts.removeEventListener('loadingdone', remeasure);
+    return on(document.fonts, 'loadingdone', remeasure);
   });
 
   // Sized once per text, language, image, viewport and loaded font; a resize

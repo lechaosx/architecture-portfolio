@@ -1,7 +1,6 @@
 ---
-import { frontmatter as site } from '../content/singletons/site.md';
-import { frontmatter as contact } from '../content/singletons/contact.md';
-import { ui } from '../i18n';
+import { contact, site } from '../singletons';
+import T from './T.astro';
 
 const year = new Date().getFullYear();
 ---
@@ -24,9 +23,9 @@ const year = new Date().getFullYear();
         <button
           type="button"
           data-theme-toggle
-          class="flex h-10 w-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
+          class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
         >
-          <span class="relative block h-4 w-4">
+          <span class="relative block size-4">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -34,7 +33,7 @@ const year = new Date().getFullYear();
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-              class="theme-icon-sun absolute inset-0 h-4 w-4"
+              class="theme-icon-sun absolute inset-0 size-4"
               aria-hidden="true"
             >
               <circle cx="12" cy="12" r="4" />
@@ -47,27 +46,25 @@ const year = new Date().getFullYear();
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-              class="theme-icon-moon absolute inset-0 h-4 w-4"
+              class="theme-icon-moon absolute inset-0 size-4"
               aria-hidden="true"
             >
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
             </svg>
           </span>
-          <span lang="cs" class="sr-only">{ui.cs.switchTheme}</span>
-          <span lang="en" class="sr-only">{ui.en.switchTheme}</span>
+          <T k="switchTheme" class="sr-only" />
         </button>
 
         <button
           type="button"
           data-lang-toggle
-          class="flex h-10 w-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
+          class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
         >
           <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
             <span class="language-option-cs absolute inset-0" aria-hidden="true">CZ</span>
             <span class="language-option-en absolute inset-0" aria-hidden="true">EN</span>
           </span>
-          <span lang="cs" class="sr-only">{ui.cs.switchLanguage}</span>
-          <span lang="en" class="sr-only">{ui.en.switchLanguage}</span>
+          <T k="switchLanguage" class="sr-only" />
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { tick, untrack } from 'svelte';
+  import { untrack } from 'svelte';
+  import { prefersReducedMotion } from 'svelte/motion';
   import { ui, type Lang } from '../i18n';
 
   // The lightbox's corner controls: the set strip and close button along the
@@ -15,7 +16,6 @@
     hasBack,
     flipped,
     arrowsAside,
-    reducedMotion,
     closeButton = $bindable(),
     onselect,
     onprevious,
@@ -33,7 +33,6 @@
     flipped: boolean;
     /** How far the edge arrows step aside, 1 fully: on a phone they make way for the text. */
     arrowsAside: number;
-    reducedMotion: boolean;
     closeButton?: HTMLButtonElement;
     onselect: (index: number) => void;
     onprevious: () => void;
@@ -50,15 +49,11 @@
     const nav = setStrip;
     const selectedIndex = currentIndex;
     if (!nav || !setOptions.some(({ index }) => index === selectedIndex)) return;
-    const behavior = untrack(() => (reducedMotion ? 'auto' : 'smooth'));
-    void tick().then(() => {
-      if (nav !== setStrip || currentIndex !== selectedIndex) return;
-      const selected = nav.querySelector<HTMLElement>('[aria-current="true"]');
-      if (!selected) return;
-      nav.scrollTo({
-        left: selected.offsetLeft - (nav.clientWidth - selected.offsetWidth) / 2,
-        behavior,
-      });
+    const selected = nav.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!selected) return;
+    nav.scrollTo({
+      left: selected.offsetLeft - (nav.clientWidth - selected.offsetWidth) / 2,
+      behavior: untrack(() => (prefersReducedMotion.current ? 'auto' : 'smooth')),
     });
   });
 
@@ -110,8 +105,10 @@
 </div>
 <button
   type="button"
-  class="lightbox-control lightbox-arrow lightbox-arrow-previous left-(--lightbox-gap)"
-  class:lightbox-arrow-away={arrowsAside === 1}
+  class={[
+    'lightbox-control lightbox-arrow lightbox-arrow-previous left-(--lightbox-gap)',
+    { 'lightbox-arrow-away': arrowsAside === 1 },
+  ]}
   style:--lightbox-arrows-aside={arrowsAside}
   inert={arrowsAside > 0}
   onclick={onprevious}
@@ -120,7 +117,7 @@
   <svg
     aria-hidden="true"
     viewBox="0 0 24 24"
-    class="h-5 w-5"
+    class="size-5"
     fill="none"
     stroke="currentColor"
     stroke-width="1.5"
@@ -130,8 +127,10 @@
 </button>
 <button
   type="button"
-  class="lightbox-control lightbox-arrow right-(--lightbox-gap)"
-  class:lightbox-arrow-away={arrowsAside === 1}
+  class={[
+    'lightbox-control lightbox-arrow right-(--lightbox-gap)',
+    { 'lightbox-arrow-away': arrowsAside === 1 },
+  ]}
   style:--lightbox-arrows-aside={arrowsAside}
   inert={arrowsAside > 0}
   onclick={onnext}
@@ -140,7 +139,7 @@
   <svg
     aria-hidden="true"
     viewBox="0 0 24 24"
-    class="h-5 w-5"
+    class="size-5"
     fill="none"
     stroke="currentColor"
     stroke-width="1.5"
@@ -159,7 +158,7 @@
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      class="h-5 w-5"
+      class="size-5"
       fill="none"
       stroke="currentColor"
       stroke-width="1.5"
@@ -197,7 +196,7 @@
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      class="h-4 w-4"
+      class="size-4"
       fill="none"
       stroke="currentColor"
       stroke-width="1.5"

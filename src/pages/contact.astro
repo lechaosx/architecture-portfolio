@@ -2,12 +2,10 @@
 import Base from '../layouts/Base.astro';
 import T from '../components/T.astro';
 import { credentialedName } from '../site-title';
-import { frontmatter as contact } from '../content/singletons/contact.md';
+import { contact } from '../singletons';
 import { ui } from '../i18n';
 
-const { email, phone } = contact;
-const hours: { day_cs: string; day_en: string; hours: string }[] =
-  contact.hours ?? [];
+const { email, phone, hours } = contact;
 ---
 
 <Base

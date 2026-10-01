@@ -4,11 +4,11 @@ import Carousel from '../components/Carousel.astro';
 import Approaches from '../components/Approaches.astro';
 import T from '../components/T.astro';
 import Prose from '../components/Prose.astro';
-import { frontmatter as home } from '../content/singletons/home.md';
+import { home } from '../singletons';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { getResponsiveImage } from '../server-images';
-import { displayImageUrl } from '../images';
+import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
 
 const responsivePortrait = home.portrait
   ? await getResponsiveImage(home.portrait)
@@ -37,6 +37,10 @@ const responsivePortrait = home.portrait
         home.portrait && (
           <img
             src={displayImageUrl(responsivePortrait, home.portrait)}
+            srcset={responsiveSrcset(responsivePortrait, THUMBNAIL_WIDTHS)}
+            sizes="(min-width: 1152px) 520px, (min-width: 768px) calc(50vw - 56px), calc(100vw - 48px)"
+            width={responsivePortrait?.source.width}
+            height={responsivePortrait?.source.height}
             alt=""
             loading="lazy"
             class="reveal w-full bg-neutral-100 md:order-last"

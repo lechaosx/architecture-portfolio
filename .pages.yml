@@ -91,40 +91,41 @@ content:
         type: object
         list: true
         fields:
-          - { name: label_cs, label: Label (Czech), type: string }
-          - { name: label_en, label: Label (English), type: string }
-          - { name: text_cs, label: Text (Czech), type: text }
-          - { name: text_en, label: Text (English), type: text }
+          - { name: label_cs, label: Label (Czech), type: string, required: true }
+          - { name: label_en, label: Label (English), type: string, required: true }
+          - { name: text_cs, label: Text (Czech), type: text, required: true }
+          - { name: text_en, label: Text (English), type: text, required: true }
           - name: icon
             label: Icon
             type: select
+            required: true
             options:
               values: [place, scale, material, thinking]
-      - { name: body_cs, label: About text (Czech), type: rich-text }
-      - { name: body_en, label: About text (English), type: rich-text }
+      - { name: body_cs, label: About text (Czech), type: rich-text, required: true }
+      - { name: body_en, label: About text (English), type: rich-text, required: true }
 
   - name: contact
     label: Contact
     type: file
     path: src/content/singletons/contact.md
     fields:
-      - { name: email, label: Email, type: string }
+      - { name: email, label: Email, type: string, required: true }
       - { name: phone, label: Phone, type: string, required: false }
       - name: hours
         label: When I'm reachable (per day)
         type: object
         list: true
         fields:
-          - { name: day_cs, label: Day (Czech), type: string }
-          - { name: day_en, label: Day (English), type: string }
-          - { name: hours, label: Hours (e.g. 10:00 – 15:00, or —), type: string }
+          - { name: day_cs, label: Day (Czech), type: string, required: true }
+          - { name: day_en, label: Day (English), type: string, required: true }
+          - { name: hours, label: Hours (e.g. 10:00 – 15:00, or —), type: string, required: true }
 
   - name: site
     label: Site settings
     type: file
     path: src/content/singletons/site.md
     fields:
-      - { name: name, label: Name, type: string }
+      - { name: name, label: Name, type: string, required: true }
       - { name: credential, label: Credential (e.g. Ing. arch.), type: string }
       - { name: description_cs, label: SEO description (Czech), type: text }
       - { name: description_en, label: SEO description (English), type: text }

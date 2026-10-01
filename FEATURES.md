@@ -110,6 +110,11 @@ structure, navigation, and section labels ("Work", "About", "Approach",
 **Home**, **Projects**, **Contact**, and global **Site settings** — each backed by
 a file under `src/content/singletons/` (or the `projects` collection).
 
+The CMS requires what a page cannot do without — [Implicit]: the name in Site
+settings, the contact email, both About texts, and every field of an Approach
+item or an availability row. Anything else may stay empty, and an edit that
+leaves a page unrenderable stops the deploy at the build.
+
 ### Larger changes are made by the developer — [Explicit]
 
 Structural/design changes are done in code by the developer, on the same repo.

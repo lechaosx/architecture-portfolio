@@ -31,40 +31,40 @@ test('primary navigation reaches every page and marks the current section', asyn
   await expect(page).toHaveURL(/\/$/);
 });
 
-test('language selection follows URL, saved choice, and browser preference', async ({
-  browser,
-}) => {
-  const context = await browser.newContext({ locale: 'cs-CZ' });
-  const page = await context.newPage();
+test.describe(() => {
+  test.use({ locale: 'cs-CZ' });
 
-  await page.goto('/');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
-  await expect(page.getByRole('link', { name: 'Práce' })).toBeVisible();
+  test('language selection follows URL, saved choice, and browser preference', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
+    await expect(page.getByRole('link', { name: 'Práce' })).toBeVisible();
 
-  await page.evaluate(() => localStorage.setItem('lang', 'en'));
-  await page.goto('/contact');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(
-    page.getByRole('heading', { name: 'When to reach me' }),
-  ).toBeVisible();
+    await page.evaluate(() => localStorage.setItem('lang', 'en'));
+    await page.goto('/contact/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(
+      page.getByRole('heading', { name: 'When to reach me' }),
+    ).toBeVisible();
 
-  await page.goto('/?lang=cs');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
-  await expect(page.getByRole('heading', { name: 'O mně' })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('lang'))).toBe('cs');
+    await page.goto('/?lang=cs');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
+    await expect(page.getByRole('heading', { name: 'O mně' })).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('lang'))).toBe('cs');
 
-  await page.getByRole('button', { name: 'Přepnout do angličtiny' }).click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
-  await expect(page).toHaveTitle(/Architecture/);
-  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
-    'content',
-    /architect/i,
-  );
+    await page.getByRole('button', { name: 'Přepnout do angličtiny' }).click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
+    await expect(page).toHaveTitle(/Architecture/);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      'content',
+      /architect/i,
+    );
 
-  await page.goto('/contact');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await context.close();
+    await page.goto('/contact/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  });
 });
 
 test('tab titles name the page and the credentialed architect in both languages', async ({
@@ -73,8 +73,8 @@ test('tab titles name the page and the credentialed architect in both languages'
   const owner = 'Ing. arch. Tereza Kalábková';
   const titles = [
     ['/', `${owner} | Architecture`, `${owner} | Architektura`],
-    ['/work', `Work | ${owner}`, `Práce | ${owner}`],
-    ['/contact', `Contact | ${owner}`, `Kontakt | ${owner}`],
+    ['/work/', `Work | ${owner}`, `Práce | ${owner}`],
+    ['/contact/', `Contact | ${owner}`, `Kontakt | ${owner}`],
     [
       '/projects/urban-study-kyjov/',
       `Urban Intervention | Kyjov | ${owner}`,
@@ -89,31 +89,32 @@ test('tab titles name the page and the credentialed architect in both languages'
   }
 });
 
-test('theme follows the system and an explicit choice persists across navigation', async ({
-  browser,
-}) => {
-  const context = await browser.newContext({ colorScheme: 'dark' });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+test.describe(() => {
+  test.use({ colorScheme: 'dark' });
 
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  expect(
-    await page
-      .locator('main img')
-      .first()
-      .evaluate((image) => getComputedStyle(image).filter),
-  ).toBe('none');
+  test('theme follows the system and an explicit choice persists across navigation', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
 
-  await page.getByRole('button', { name: 'Toggle theme' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('light');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    expect(
+      await page
+        .locator('main img')
+        .first()
+        .evaluate((image) => getComputedStyle(image).filter),
+    ).toBe('none');
 
-  await page.goto('/work');
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.getByRole('button', { name: 'Toggle theme' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await context.close();
+    await page.getByRole('button', { name: 'Toggle theme' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('light');
+
+    await page.goto('/work/');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await page.getByRole('button', { name: 'Toggle theme' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  });
 });
 
 test('footer toggles share dimensions and show the state they switch to', async ({
@@ -153,7 +154,7 @@ test('work projects are sorted and the grid follows its responsive breakpoints',
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('/work');
+  await page.goto('/work/');
   const grid = page.locator('main section.grid');
   const cards = grid.locator(':scope > a');
   const rendered = await cards.evaluateAll((elements) =>
@@ -181,7 +182,7 @@ test('work projects are sorted and the grid follows its responsive breakpoints',
 });
 
 test('contact details remain actionable in both languages', async ({ page }) => {
-  await page.goto('/contact');
+  await page.goto('/contact/');
   const main = page.locator('main');
   const email = main.locator('a[href^="mailto:"]');
   const phone = main.locator('a[href^="tel:"]');
@@ -197,7 +198,7 @@ test('contact details remain actionable in both languages', async ({ page }) => 
   await expect(
     page.getByRole('heading', { name: 'When to reach me' }),
   ).toBeVisible();
-  expect(await main.locator('ul li').count()).toBeGreaterThan(0);
+  await expect(main.locator('ul li')).not.toHaveCount(0);
 
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
   await expect(
@@ -295,20 +296,22 @@ test('reduced motion keeps project images still on hover', async ({ page }) => {
   }
 });
 
-test('reveal content is visible without JavaScript', async ({ browser }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false });
-  const page = await context.newPage();
-  for (const path of ['/', '/contact']) {
-    await page.goto(path);
-    const opacities = await page
-      .locator('.reveal')
-      .evaluateAll((elements) =>
-        elements.map((element) => getComputedStyle(element).opacity),
-      );
-    expect(opacities.length).toBeGreaterThan(0);
-    expect(opacities.every((opacity) => opacity === '1')).toBe(true);
-  }
-  await context.close();
+test.describe(() => {
+  test.use({ javaScriptEnabled: false });
+
+  test('reveal content is visible without JavaScript', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    for (const path of ['/', '/contact/']) {
+      await page.goto(path);
+      const opacities = await page
+        .locator('.reveal')
+        .evaluateAll((elements) =>
+          elements.map((element) => getComputedStyle(element).opacity),
+        );
+      expect(opacities.length).toBeGreaterThan(0);
+      expect(opacities.every((opacity) => opacity === '1')).toBe(true);
+    }
+  });
 });
 
 test('reveal content on screen at load shows without a fade', async ({ page }) => {
@@ -318,7 +321,7 @@ test('reveal content on screen at load shows without a fade', async ({ page }) =
     addEventListener('transitionrun', (event) => faded.add(event.target as Element), true);
     Object.assign(window, { faded });
   });
-  for (const path of ['/', '/contact']) {
+  for (const path of ['/', '/contact/']) {
     await page.setViewportSize({ width: 1280, height: path === '/' ? 1600 : 720 });
     await page.goto(path);
     await page.waitForTimeout(1000);

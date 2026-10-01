@@ -1,4 +1,4 @@
-import { frontmatter as site } from './content/singletons/site.md';
+import { site } from './singletons';
 
 export const credentialedName = [site.credential, site.name]
   .filter(Boolean)

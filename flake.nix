@@ -1,14 +1,17 @@
 {
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-  outputs = { self, nixpkgs }:
-    let
-      pkgs = nixpkgs.legacyPackages.x86_64-linux;
-    in
-    {
-      devShells.x86_64-linux.default = pkgs.mkShell {
-        packages = [ pkgs.nodejs_24 pkgs.playwright-driver.browsers pkgs.util-linux ];
-        PLAYWRIGHT_BROWSERS_PATH = pkgs.playwright-driver.browsers;
-      };
-    };
+  outputs = { nixpkgs, ... }: {
+    devShells = nixpkgs.lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+        browsers = pkgs.playwright-driver.browsers.override { withWebkit = false; };
+      in
+      {
+        default = pkgs.mkShell {
+          packages = [ pkgs.nodejs_24 browsers pkgs.util-linux ];
+          PLAYWRIGHT_BROWSERS_PATH = browsers;
+        };
+      });
+  };
 }

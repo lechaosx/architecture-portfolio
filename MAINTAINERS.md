@@ -46,11 +46,10 @@ like the deployment's, leaves them out.
 ## Project layout
 
 ```
-flake.nix                     Node 24, Playwright browsers, flock (x86_64-linux)
+flake.nix                     Node 24, Chromium + Firefox for Playwright, flock (Linux)
 .envrc                        automatic flake shell activation with direnv
-astro.config.mjs              site (for sitemap) + integrations; no base
-vitest.config.ts              where unit tests live (src/, scripts/)
-svelte.config.js              Svelte preprocess
+astro.config.mjs              site (for sitemap), trailing slashes, integrations; no base
+vitest.config.ts              unit tests (src/, scripts/) on Astro's Vite config
 tsconfig.json                 extends astro/tsconfigs/strict
 .pages.yml                    Pages CMS schema (the browser editing UI)
 .github/workflows/deploy.yml  test, build with npm, and deploy on push to master
@@ -59,7 +58,8 @@ src/
   images.ts                    responsive derivative URL/srcset contract
   server-images.ts             reads the image manifest, again when it changes
   site-title.ts                credential + owner name used in browser tab titles
-  content.config.ts           projects collection schema (Zod); bilingual fields
+  content.config.ts           project and singleton schemas (Zod); bilingual fields
+  singletons.ts                reads the site, home and contact singletons
   i18n.ts                      baked-in UI labels ({cs, en} dictionary)
   content/projects/*.md        one file per project (text in _cs/_en frontmatter)
   content/singletons/          CMS singletons: site.md, home.md, contact.md
@@ -190,22 +190,21 @@ original** still uses the untouched upload and its real filename.
 
 The content shape is declared **twice** and they must agree:
 
-1. `src/content.config.ts` — the Zod schema (build-time validation).
+1. `src/content.config.ts` — the Zod schemas (build-time validation).
 2. `.pages.yml` — the Pages CMS fields (the editing UI).
 
 If you add/rename/remove a field in one, do the same in the other in the **same
 change**. A mismatch means either the build fails (schema stricter than CMS) or
 the architect can't edit a field the site expects (CMS missing a field). This is
 the project's sharpest maintenance edge — see AGENTS.md. Pages CMS fields are
-optional unless `.pages.yml` sets `required: true`; the content-schema test keeps
-those flags aligned with Astro's required project fields.
+optional unless `.pages.yml` sets `required: true`; the content-schema test fails
+unless both places declare the same fields, required in the same places, down to
+list rows and blocks.
 
-This double-declaration applies to the **`projects` collection**. The
-**singletons** (`src/content/singletons/*.md`: site, home, contact) have
-**no Zod mirror** — they're declared only in `.pages.yml` and read straight from
-their Markdown by the component that imports them. So for a singleton field, keep
-`.pages.yml` and the consuming component in sync, and have that component tolerate
-missing/empty values (the current ones already do).
+This double-declaration applies to the **`projects` collection** and to the
+**singletons** (`src/content/singletons/*.md`: site, home, contact), each the
+one entry of its own collection, which components read through
+`src/singletons.ts`.
 
 Translatable fields come in `_cs`/`_en` pairs — when you add one, add **both**
 halves in **both** schema places, and render them through `T.astro`/`Prose.astro`
@@ -230,7 +229,7 @@ The site serves from a single custom domain at the root. To change it, edit
 `astro.config.mjs` to the matching `https://…` origin (that value only feeds the
 sitemap). Then update the domain under GitHub **Settings → Pages** and its DNS.
 
-Internal links and assets are plain root-absolute paths (`/work`,
+Internal links and assets are plain root-absolute paths (`/work/`,
 `/uploads/…`) — there is no `base` and no link helper, because the site is
 mounted at the root. Don't reintroduce a `base`/subpath deployment without also
 routing every link/asset through a base-aware helper; see ARCHITECTURE.md →
@@ -271,8 +270,8 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
   `nix eval --raw --inputs-from . nixpkgs#playwright-driver.version`. CI
   installs the browsers that match the pin.
 - **`typescript` stays on 6.x** until `@astrojs/check` supports TypeScript 7:
-  its peer range (and `@astrojs/svelte`'s) ends at `^6.0.0`, and
-  `astro check` refuses TypeScript 7.
+  its peer range (and `@astrojs/svelte`'s and `svelte-check`'s) ends at
+  `^6.0.0`, and `astro check` refuses TypeScript 7.
 - **`@types/node` stays on the major of the Node it runs on** (24), so the types
   describe the runtime the scripts actually use.
 - **Pages CMS behavior is untested end-to-end** (it's hosted; needs the live
