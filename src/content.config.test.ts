@@ -1,17 +1,10 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
+import { z } from 'astro/zod';
+import { collections } from './content.config';
 
-vi.mock('astro:content', async () => ({
-  defineCollection: <T>(collection: T) => collection,
-  z: (await import('astro/zod')).z,
-}));
-
-const { collections } = await import('./content.config');
-const projectSchema = collections.projects.schema;
-if (!projectSchema || typeof projectSchema === 'function') {
-  throw new TypeError('Expected a static project schema');
-}
+const projectSchema = staticSchema('projects');
 
 interface CmsField {
   name: string;
@@ -37,6 +30,75 @@ const homeEditor = pagesConfig.content.find((entry) => entry.name === 'home');
 if (!homeEditor?.fields) throw new TypeError('Expected a home editor');
 const homeEditorFields = homeEditor.fields;
 
+function staticSchema(name: keyof typeof collections) {
+  const schema = collections[name].schema;
+  if (!schema || typeof schema === 'function') {
+    throw new TypeError(`Expected a static ${name} schema`);
+  }
+  return schema;
+}
+
+function frontmatter(path: string): Record<string, unknown> {
+  const match = /^---\n([\s\S]*?)\n---/.exec(readFileSync(path, 'utf8'));
+  if (!match) throw new TypeError(`Expected frontmatter in ${path}`);
+  return parse(match[1]);
+}
+
+/** A field, whether it may be left out, and the fields of its rows or blocks. */
+interface FieldShape {
+  name: string;
+  required?: boolean;
+  fields?: FieldShape[];
+}
+
+const byName = (first: FieldShape, second: FieldShape) =>
+  first.name.localeCompare(second.name);
+
+function editorShape(fields: CmsField[]): FieldShape[] {
+  return fields
+    .map((field) => ({
+      name: field.name,
+      required: field.required === true,
+      fields: field.fields
+        ? editorShape(field.fields)
+        : field.blocks
+            ?.map((block) => ({ name: block.name, fields: editorShape(block.fields ?? []) }))
+            .sort(byName),
+    }))
+    .sort(byName);
+}
+
+function schemaShape(shape: Record<string, z.ZodType>, discriminator?: string): FieldShape[] {
+  return Object.entries(shape)
+    .filter(([name]) => name !== discriminator)
+    .map(([name, schema]) => ({
+      name,
+      required: !schema.safeParse(undefined).success,
+      fields: rowShape(schema),
+    }))
+    .sort(byName);
+}
+
+/** The fields of a list's rows or blocks, through preprocessing, defaults and optionality. */
+function rowShape(schema: z.ZodType): FieldShape[] | undefined {
+  if (schema instanceof z.ZodPipe) return rowShape(schema.out as z.ZodType);
+  if (schema instanceof z.ZodDefault || schema instanceof z.ZodOptional) {
+    return rowShape(schema.unwrap() as z.ZodType);
+  }
+  if (schema instanceof z.ZodArray) return rowShape(schema.element as z.ZodType);
+  if (schema instanceof z.ZodObject) return schemaShape(schema.shape);
+  if (schema instanceof z.ZodDiscriminatedUnion) {
+    const key = schema.def.discriminator;
+    return (schema.options as z.ZodObject[])
+      .map((option) => ({
+        name: String((option.shape[key] as z.ZodLiteral).value),
+        fields: schemaShape(option.shape, key),
+      }))
+      .sort(byName);
+  }
+  return undefined;
+}
+
 const project = {
   title_cs: 'Projekt',
   title_en: 'Project',
@@ -44,43 +106,37 @@ const project = {
   cover: '/uploads/cover.jpg',
 };
 
-describe('project content schema', () => {
-  test('marks every build-required field as required in Pages CMS', () => {
-    for (const name of [
-      'title_cs',
-      'title_en',
-      'year',
-      'cover',
-    ]) {
-      expect(
-        projectEditorFields.find((field) => field.name === name),
-      ).toMatchObject({ required: true });
-    }
+describe.each(['projects', 'site', 'home', 'contact'] as const)('%s schema', (name) => {
+  test('declares the same fields as Pages CMS, required in the same places', () => {
+    const editor = pagesConfig.content.find((entry) => entry.name === name);
+    expect(editorShape(editor?.fields ?? [])).toEqual(rowShape(staticSchema(name)));
   });
+});
 
+describe('project content schema', () => {
   test('allows a project with no content blocks', () => {
-    const result = projectSchema.safeParse(project);
-
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.blocks).toEqual([]);
+    expect(projectSchema.safeParse(project)).toMatchObject({
+      success: true,
+      data: { blocks: [] },
+    });
   });
 
   test('treats an empty CMS block row as no content', () => {
-    const result = projectSchema.safeParse({ ...project, blocks: [{}] });
-
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.blocks).toEqual([]);
+    expect(projectSchema.safeParse({ ...project, blocks: [{}] })).toMatchObject({
+      success: true,
+      data: { blocks: [] },
+    });
   });
 
   test('accepts independently ordered text, gallery, and image-set blocks', () => {
     const blocks = [
-      { type: 'text' as const, body_cs: 'Popis', body_en: 'Description' },
+      { type: 'text', body_cs: 'Popis', body_en: 'Description' },
       {
-        type: 'gallery' as const,
+        type: 'gallery',
         images: [{ image: '/uploads/thumbnail.jpg' }],
       },
       {
-        type: 'image_set' as const,
+        type: 'image_set',
         images: [
           {
             image: '/uploads/full-width.jpg',
@@ -89,10 +145,10 @@ describe('project content schema', () => {
         ],
       },
     ];
-    const result = projectSchema.safeParse({ ...project, blocks });
-
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.blocks).toEqual(blocks);
+    expect(projectSchema.safeParse({ ...project, blocks })).toMatchObject({
+      success: true,
+      data: { blocks },
+    });
   });
 
   test('rejects an image block without images', () => {
@@ -135,4 +191,9 @@ describe('home content schema', () => {
       list: { min: 1 },
     });
   });
+});
+
+test.each(['site', 'home', 'contact'] as const)('the committed %s singleton is valid', (name) => {
+  const content = frontmatter(`src/content/singletons/${name}.md`);
+  expect(staticSchema(name).safeParse(content).success).toBe(true);
 });

@@ -1,16 +1,8 @@
 ---
-import { frontmatter as home } from '../content/singletons/home.md';
+import { home } from '../singletons';
 import T from './T.astro';
 
-interface Item {
-  label_cs: string;
-  label_en: string;
-  text_cs: string;
-  text_en: string;
-  icon: 'place' | 'scale' | 'material' | 'thinking';
-}
-
-const items: Item[] = home.approaches ?? [];
+const items = home.approaches;
 ---
 
 {

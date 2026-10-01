@@ -1,13 +1,9 @@
-import {
-  expect,
-  test,
-  type Browser,
-  type BrowserContext,
-  type Page,
-} from '@playwright/test';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import sharp from 'sharp';
 
 const projectPath = '/projects/urban-study-kyjov/';
+const phone = { viewport: { width: 390, height: 844 } };
+const touchPhone = { ...phone, hasTouch: true, isMobile: true };
 
 function galleryImage(page: Page, position: number, label = 'Open image') {
   return page.getByRole('button', {
@@ -473,54 +469,51 @@ test('pyramid previews form a loaded strip with no navigation gutter', async ({
   await expect(page).toHaveURL(/#image-2$/);
 });
 
-test('the pyramid requests the closest level that does not need upscaling', async ({
-  browserName,
-  browser,
-}) => {
+test.describe(() => {
+  test.use({ viewport: { width: 390, height: 667 }, deviceScaleFactor: 2 });
   test.skip(
-    browserName !== 'chromium',
+    ({ browserName }) => browserName !== 'chromium',
     'One browser verifies the shared DZI requests',
   );
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 667 },
-    deviceScaleFactor: 2,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  const tileLevels: number[] = [];
-  page.on('request', (request) => {
-    const match = /\/image_files\/(\d+)\//.exec(request.url());
-    if (match) tileLevels.push(Number(match[1]));
-  });
-  await gotoProject(page);
-  await galleryImage(page, 2).click();
-  await waitForLightbox(page);
-  await expect.poll(() => tileLevels.length).toBeGreaterThan(0);
 
-  const image = page.locator('.lightbox-slide-current img');
-  const dimensions = await image.evaluate((element: HTMLImageElement) => ({
-    sourceWidth: Number(element.getAttribute('width')),
-    sourceHeight: Number(element.getAttribute('height')),
-    renderedWidth: element.getBoundingClientRect().width,
-    renderedHeight: element.getBoundingClientRect().height,
-    pixelRatio: devicePixelRatio,
-  }));
-  const maxLevel = Math.ceil(
-    Math.log2(Math.max(dimensions.sourceWidth, dimensions.sourceHeight)),
-  );
-  const selectedLevel = Math.max(...tileLevels);
-  const divisor = 2 ** (maxLevel - selectedLevel);
-  const levelWidth = Math.ceil(dimensions.sourceWidth / divisor);
-  const levelHeight = Math.ceil(dimensions.sourceHeight / divisor);
-  const lowerWidth = Math.ceil(dimensions.sourceWidth / (divisor * 2));
-  const lowerHeight = Math.ceil(dimensions.sourceHeight / (divisor * 2));
-  const requiredWidth = dimensions.renderedWidth * dimensions.pixelRatio;
-  const requiredHeight = dimensions.renderedHeight * dimensions.pixelRatio;
+  test('the pyramid requests the closest level that does not need upscaling', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const tileLevels: number[] = [];
+    page.on('request', (request) => {
+      const match = /\/image_files\/(\d+)\//.exec(request.url());
+      if (match) tileLevels.push(Number(match[1]));
+    });
+    await gotoProject(page);
+    await galleryImage(page, 2).click();
+    await waitForLightbox(page);
+    await expect.poll(() => tileLevels.length).toBeGreaterThan(0);
 
-  expect(levelWidth).toBeGreaterThanOrEqual(requiredWidth);
-  expect(levelHeight).toBeGreaterThanOrEqual(requiredHeight);
-  expect(lowerWidth < requiredWidth || lowerHeight < requiredHeight).toBe(true);
-  await context.close();
+    const image = page.locator('.lightbox-slide-current img');
+    const dimensions = await image.evaluate((element: HTMLImageElement) => ({
+      sourceWidth: Number(element.getAttribute('width')),
+      sourceHeight: Number(element.getAttribute('height')),
+      renderedWidth: element.getBoundingClientRect().width,
+      renderedHeight: element.getBoundingClientRect().height,
+      pixelRatio: devicePixelRatio,
+    }));
+    const maxLevel = Math.ceil(
+      Math.log2(Math.max(dimensions.sourceWidth, dimensions.sourceHeight)),
+    );
+    const selectedLevel = Math.max(...tileLevels);
+    const divisor = 2 ** (maxLevel - selectedLevel);
+    const levelWidth = Math.ceil(dimensions.sourceWidth / divisor);
+    const levelHeight = Math.ceil(dimensions.sourceHeight / divisor);
+    const lowerWidth = Math.ceil(dimensions.sourceWidth / (divisor * 2));
+    const lowerHeight = Math.ceil(dimensions.sourceHeight / (divisor * 2));
+    const requiredWidth = dimensions.renderedWidth * dimensions.pixelRatio;
+    const requiredHeight = dimensions.renderedHeight * dimensions.pixelRatio;
+
+    expect(levelWidth).toBeGreaterThanOrEqual(requiredWidth);
+    expect(levelHeight).toBeGreaterThanOrEqual(requiredHeight);
+    expect(lowerWidth < requiredWidth || lowerHeight < requiredHeight).toBe(true);
+  });
 });
 
 test('mouse swipe, zoom, pan, and reset use the same direct manipulation model', async ({
@@ -674,165 +667,157 @@ test('comparison shortcuts preserve the inspected area without changing page pre
   ).toHaveCount(0);
 });
 
-test('the set strip scrolls beside the close control on a narrow screen', async ({
-  browser,
-}) => {
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 1,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/projects/galerie-hang%C3%A1r/');
-  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
-  await galleryImage(page, 6).click();
-  await waitForLightbox(page);
+test.describe(() => {
+  test.use({ ...phone, deviceScaleFactor: 1 });
 
-  const comparison = page.getByRole('navigation', {
-    name: 'Images in this set',
-  });
-  const [closeBox, comparisonBox, buttonBox] = await Promise.all([
-    page.getByRole('button', { name: 'Close' }).boundingBox(),
-    comparison.boundingBox(),
-    comparison.getByRole('button', { name: 'Roof plan' }).boundingBox(),
-  ]);
-  expect(buttonBox!.y).toBeCloseTo(closeBox!.y, 0);
-  expect(buttonBox!.height).toBe(closeBox!.height);
-  expect(comparisonBox!.x).toBeLessThan(20);
-  expect(comparisonBox!.x + comparisonBox!.width).toBeLessThanOrEqual(
-    closeBox!.x,
-  );
+  test('the set strip scrolls beside the close control on a narrow screen', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/projects/galerie-hang%C3%A1r/');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await galleryImage(page, 6).click();
+    await waitForLightbox(page);
 
-  const visibility = await comparison.evaluate((navigation) => {
-    const selected = navigation.querySelector<HTMLElement>(
-      '[aria-current="true"]',
-    )!;
-    const navigationBox = navigation.getBoundingClientRect();
-    const selectedBox = selected.getBoundingClientRect();
-    return {
-      overflows: navigation.scrollWidth > navigation.clientWidth,
-      selectedLeft: selectedBox.left - navigationBox.left,
-      selectedRight: navigationBox.right - selectedBox.right,
-    };
-  });
-  expect(visibility.overflows).toBe(true);
-  expect(visibility.selectedLeft).toBeGreaterThanOrEqual(0);
-  expect(visibility.selectedRight).toBeGreaterThanOrEqual(0);
-
-  await comparison.evaluate((navigation) => (navigation.scrollLeft = 0));
-  const pageScroll = await page.evaluate(() => scrollY);
-  await comparison.hover();
-  await page.mouse.wheel(0, 120);
-  await expect
-    .poll(() => comparison.evaluate((navigation) => navigation.scrollLeft))
-    .toBeGreaterThan(0);
-  expect(await page.evaluate(() => scrollY)).toBe(pageScroll);
-
-  await context.close();
-});
-
-test('the set strip centres the current image again when the language changes its labels', async ({
-  browser,
-}) => {
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoProject(page);
-  await galleryImage(page, 3).click();
-  await waitForLightbox(page);
-  const dialog = page.getByRole('dialog');
-  // Named in the current language, so found by its role alone.
-  const strip = dialog.getByRole('navigation');
-  /** How far the current button's centre lies from the strip's centre. */
-  const offCentre = () =>
-    strip.evaluate((navigation) => {
-      const selected = navigation
-        .querySelector('[aria-current="true"]')!
-        .getBoundingClientRect();
-      const box = navigation.getBoundingClientRect();
-      return Math.abs(
-        selected.left + selected.width / 2 - (box.left + box.width / 2),
-      );
+    const comparison = page.getByRole('navigation', {
+      name: 'Images in this set',
     });
-  await expect.poll(offCentre).toBeLessThanOrEqual(1.5);
+    const [closeBox, comparisonBox, buttonBox] = await Promise.all([
+      page.getByRole('button', { name: 'Close' }).boundingBox(),
+      comparison.boundingBox(),
+      comparison.getByRole('button', { name: 'Roof plan' }).boundingBox(),
+    ]);
+    expect(buttonBox!.y).toBeCloseTo(closeBox!.y, 0);
+    expect(buttonBox!.height).toBe(closeBox!.height);
+    expect(comparisonBox!.x).toBeLessThan(20);
+    expect(comparisonBox!.x + comparisonBox!.width).toBeLessThanOrEqual(
+      closeBox!.x,
+    );
 
-  await dialog.locator('[data-lang-toggle]').click();
-  await expect(strip).toHaveAccessibleName('Obrázky v sadě');
-  await expect.poll(offCentre).toBeLessThanOrEqual(1.5);
-  await context.close();
+    const visibility = await comparison.evaluate((navigation) => {
+      const selected = navigation.querySelector<HTMLElement>(
+        '[aria-current="true"]',
+      )!;
+      const navigationBox = navigation.getBoundingClientRect();
+      const selectedBox = selected.getBoundingClientRect();
+      return {
+        overflows: navigation.scrollWidth > navigation.clientWidth,
+        selectedLeft: selectedBox.left - navigationBox.left,
+        selectedRight: navigationBox.right - selectedBox.right,
+      };
+    });
+    expect(visibility.overflows).toBe(true);
+    expect(visibility.selectedLeft).toBeGreaterThanOrEqual(0);
+    expect(visibility.selectedRight).toBeGreaterThanOrEqual(0);
+
+    await comparison.evaluate((navigation) => (navigation.scrollLeft = 0));
+    const pageScroll = await page.evaluate(() => scrollY);
+    await comparison.hover();
+    await page.mouse.wheel(0, 120);
+    await expect
+      .poll(() => comparison.evaluate((navigation) => navigation.scrollLeft))
+      .toBeGreaterThan(0);
+    expect(await page.evaluate(() => scrollY)).toBe(pageScroll);
+  });
 });
 
-test('mobile touch stays inside the modal and navigation overlays the image edges', async ({
-  browserName,
-  browser,
-}) => {
+test.describe(() => {
+  test.use(phone);
+
+  test('the set strip centres the current image again when the language changes its labels', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoProject(page);
+    await galleryImage(page, 3).click();
+    await waitForLightbox(page);
+    const dialog = page.getByRole('dialog');
+    // Named in the current language, so found by its role alone.
+    const strip = dialog.getByRole('navigation');
+    /** How far the current button's centre lies from the strip's centre. */
+    const offCentre = () =>
+      strip.evaluate((navigation) => {
+        const selected = navigation
+          .querySelector('[aria-current="true"]')!
+          .getBoundingClientRect();
+        const box = navigation.getBoundingClientRect();
+        return Math.abs(
+          selected.left + selected.width / 2 - (box.left + box.width / 2),
+        );
+      });
+    await expect.poll(offCentre).toBeLessThanOrEqual(1.5);
+
+    await dialog.locator('[data-lang-toggle]').click();
+    await expect(strip).toHaveAccessibleName('Obrázky v sadě');
+    await expect.poll(offCentre).toBeLessThanOrEqual(1.5);
+  });
+});
+
+test.describe(() => {
+  test.use({ ...touchPhone, deviceScaleFactor: 2 });
   test.skip(
-    browserName !== 'chromium',
+    ({ browserName }) => browserName !== 'chromium',
     'One touch-capable browser covers shared input handling',
   );
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 2,
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoProject(page);
-  const thumbnail = galleryImage(page, 10);
-  await thumbnail.scrollIntoViewIfNeeded();
-  const scrollY = await page.evaluate(() => window.scrollY);
-  await thumbnail.click();
-  await waitForLightbox(page);
 
-  const stage = page.locator('.lightbox-stage');
-  const stageBox = (await stage.boundingBox())!;
-  const previousBox = (await page
-    .getByRole('button', { name: 'Previous image' })
-    .boundingBox())!;
-  expect(stageBox).toEqual({ x: 0, y: 0, width: 390, height: 844 });
-  expect(previousBox.x).toBeLessThan(20);
-  expect(previousBox.y + previousBox.height / 2).toBeCloseTo(844 / 2, 0);
-  await expect(stage).toHaveCSS('overflow', 'hidden');
+  test('mobile touch stays inside the modal and navigation overlays the image edges', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoProject(page);
+    const thumbnail = galleryImage(page, 10);
+    await thumbnail.scrollIntoViewIfNeeded();
+    const scrollY = await page.evaluate(() => window.scrollY);
+    await thumbnail.click();
+    await waitForLightbox(page);
 
-  const session = await context.newCDPSession(page);
-  const center = {
-    x: stageBox.x + stageBox.width / 2,
-    y: stageBox.y + stageBox.height / 2,
-  };
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchStart',
-    touchPoints: [{ x: center.x + 75, y: center.y }],
-  });
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchMove',
-    touchPoints: [{ x: center.x - 75, y: center.y }],
-  });
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchEnd',
-    touchPoints: [],
-  });
-  await expect(page).toHaveURL(/#image-11$/);
-  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+    const stage = page.locator('.lightbox-stage');
+    const stageBox = (await stage.boundingBox())!;
+    const previousBox = (await page
+      .getByRole('button', { name: 'Previous image' })
+      .boundingBox())!;
+    expect(stageBox).toEqual({ x: 0, y: 0, width: 390, height: 844 });
+    expect(previousBox.x).toBeLessThan(20);
+    expect(previousBox.y + previousBox.height / 2).toBeCloseTo(844 / 2, 0);
+    await expect(stage).toHaveCSS('overflow', 'hidden');
 
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchStart',
-    touchPoints: [
-      { x: center.x - 55, y: center.y },
-      { x: center.x + 55, y: center.y },
-    ],
+    const session = await context.newCDPSession(page);
+    const center = {
+      x: stageBox.x + stageBox.width / 2,
+      y: stageBox.y + stageBox.height / 2,
+    };
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x: center.x + 75, y: center.y }],
+    });
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x: center.x - 75, y: center.y }],
+    });
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [],
+    });
+    await expect(page).toHaveURL(/#image-11$/);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [
+        { x: center.x - 55, y: center.y },
+        { x: center.x + 55, y: center.y },
+      ],
+    });
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [
+        { x: center.x - 105, y: center.y },
+        { x: center.x + 105, y: center.y },
+      ],
+    });
+    await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
   });
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchMove',
-    touchPoints: [
-      { x: center.x - 105, y: center.y },
-      { x: center.x + 105, y: center.y },
-    ],
-  });
-  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
-  await context.close();
 });
 
 test('the description is on the back of the drawing', async ({ page }) => {
@@ -916,178 +901,162 @@ test('long text scrolls inside the back and the wheel never zooms the hidden dra
   expect(await imageZoom(page)).toBeCloseTo(1, 2);
 });
 
-test('on a phone the text uses the width and a sideways drag turns it back to the drawing', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page);
-  await galleryImage(page, 6).click(); // the set's last member; next is another card
-  await waitForLightbox(page);
-  const flip = page.getByRole('button', { name: 'Show description' });
-  await flip.click();
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
-  await settled(page);
-  const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
-  await expect(next).toBeHidden();
-  const text = page.getByRole('region', { name: 'Limitations of the Area' });
-  const paragraph = (await text.locator('p').boundingBox())!;
-  expect(Math.round(paragraph.width)).toBe(390 - 48);
-
-  const slide = page.locator('.lightbox-slide-current');
-  const touch = await oneFinger(context, page);
-  // On the 390 px stage the turn follows |dx| / 390: dx −100 has turned
-  // 100 / 390 of the way back.
-  await touch('touchStart', 300);
-  await touch('touchMove', 200);
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * (1 - 100 / 390)), 2);
-  expect((await slide.boundingBox())!.x).toBe(0);
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  // The arrows come back with the turn, part of the way.
-  await expect(next).toBeVisible();
-  const partway = (await next.boundingBox())!;
-  expect(partway.x).toBeGreaterThan(390 - partway.width);
-  expect(partway.x).toBeLessThan(390);
-  await touch('touchMove', 90);
-  await touch('touchEnd');
-
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
-  await expect(page).toHaveURL(/#image-6$/);
-  await expect(flip).toHaveAttribute('aria-pressed', 'false');
-  await expect(text).toBeHidden();
-  await expect(next).toBeVisible();
-  await context.close();
-});
-
-test('the description toggle takes a tap right after a quick swipe on either side', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page);
-  await galleryImage(page, 6).click(); // the next image is another card, with a description
-  await waitForLightbox(page);
-  const touch = await oneFinger(context, page);
-  // One long move is as quick as a swipe gets: the browser sees a fling.
-  await touch('touchStart', 300);
-  await touch('touchMove', 150);
-  await touch('touchEnd');
-  await expect(page).toHaveURL(/#image-7$/);
-
-  const flip = page.getByRole('button', { name: 'Show description' });
-  const box = (await flip.boundingBox())!;
-  const tap = () => page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-  await tap();
-  await expect(flip).toHaveAttribute('aria-pressed', 'true');
-  await settled(page);
-
-  // On the text the swipe turns the card back, and the tap turns it over again.
-  await touch('touchStart', 300);
-  await touch('touchMove', 150);
-  await touch('touchEnd');
-  await expect(flip).toHaveAttribute('aria-pressed', 'false');
-  await tap();
-  await expect(flip).toHaveAttribute('aria-pressed', 'true');
-  await context.close();
-});
-
-test('on a phone the edge arrows step aside with the turn and come back with it', async ({
-  browser,
-}) => {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-3');
-  await waitForLightbox(page);
-  const flip = page.getByRole('button', { name: 'Show description' });
-  const arrows = ['Previous image', 'Next image'].map((name) =>
-    page.getByRole('button', { name, includeHidden: true }),
+test.describe(() => {
+  test.use(touchPhone);
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
   );
-  const rest = await Promise.all(arrows.map(async (arrow) => (await arrow.boundingBox())!));
-  /** Clicks the toggle and holds the turn halfway, where the arrows are halfway aside. */
-  const halfway = async () => {
-    await holdTime(page);
+
+  test('on a phone the text uses the width and a sideways drag turns it back to the drawing', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page);
+    await galleryImage(page, 6).click(); // the set's last member; next is another card
+    await waitForLightbox(page);
+    const flip = page.getByRole('button', { name: 'Show description' });
     await flip.click();
-    await page.clock.runFor(280);
-    const [previous, next] = await Promise.all(
-      arrows.map(async (arrow) => (await arrow.boundingBox())!),
-    );
-    for (const arrow of arrows) await expect(arrow).toBeVisible();
-    expect(previous.x).toBeLessThan(rest[0].x - 4);
-    expect(previous.x + previous.width).toBeGreaterThan(0);
-    expect(next.x).toBeGreaterThan(rest[1].x + 4);
-    expect(next.x).toBeLessThan(390);
-    await page.clock.resume();
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
     await settled(page);
-  };
+    const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
+    await expect(next).toBeHidden();
+    const text = page.getByRole('region', { name: 'Limitations of the Area' });
+    const paragraph = (await text.locator('p').boundingBox())!;
+    expect(Math.round(paragraph.width)).toBe(390 - 48);
 
-  await halfway();
-  for (const arrow of arrows) await expect(arrow).toBeHidden();
-  await halfway();
-  for (const [at, arrow] of arrows.entries()) {
-    await expect(arrow).toBeVisible();
-    expect((await arrow.boundingBox())!.x).toBeCloseTo(rest[at].x, 0);
-  }
-  await context.close();
-});
+    const slide = page.locator('.lightbox-slide-current');
+    const touch = await oneFinger(context, page);
+    // On the 390 px stage the turn follows |dx| / 390: dx −100 has turned
+    // 100 / 390 of the way back.
+    await touch('touchStart', 300);
+    await touch('touchMove', 200);
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * (1 - 100 / 390)), 2);
+    expect((await slide.boundingBox())!.x).toBe(0);
+    await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+    // The arrows come back with the turn, part of the way.
+    await expect(next).toBeVisible();
+    const partway = (await next.boundingBox())!;
+    expect(partway.x).toBeGreaterThan(390 - partway.width);
+    expect(partway.x).toBeLessThan(390);
+    await touch('touchMove', 90);
+    await touch('touchEnd');
 
-test('on a phone the edge arrows ease back in as a slide from the text brings the next drawing', async ({
-  browser,
-}) => {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-6'); // the next image is another card
-  await waitForLightbox(page);
-  const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
-  const rest = (await next.boundingBox())!;
-  await page.getByRole('button', { name: 'Show description' }).click();
-  await settled(page);
-  await expect(next).toBeHidden();
-
-  const partway = await recording(page, () =>
-    page.evaluate((restX) => {
-      const arrow = document.querySelector('[aria-label="Next image"]')!;
-      const { x } = arrow.getBoundingClientRect();
-      return (
-        arrow.checkVisibility({ visibilityProperty: true }) &&
-        x > restX + 4 &&
-        x < innerWidth - 4
-      );
-    }, rest.x),
-  );
-  await page.keyboard.press('ArrowRight');
-  await partway.step(20);
-  await page.clock.resume();
-  expect(partway.frames).toContain(true);
-  await expect(page).toHaveURL(/#image-7$/);
-  await settled(page);
-  await expect(next).toBeVisible();
-  expect((await next.boundingBox())!.x).toBeCloseTo(rest.x, 0);
-  await context.close();
-});
-
-async function phoneOnText(browser: Browser) {
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
+    await expect(page).toHaveURL(/#image-6$/);
+    await expect(flip).toHaveAttribute('aria-pressed', 'false');
+    await expect(text).toBeHidden();
+    await expect(next).toBeVisible();
   });
-  const page = await context.newPage();
+
+  test('the description toggle takes a tap right after a quick swipe on either side', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page);
+    await galleryImage(page, 6).click(); // the next image is another card, with a description
+    await waitForLightbox(page);
+    const touch = await oneFinger(context, page);
+    // One long move is as quick as a swipe gets: the browser sees a fling.
+    await touch('touchStart', 300);
+    await touch('touchMove', 150);
+    await touch('touchEnd');
+    await expect(page).toHaveURL(/#image-7$/);
+
+    const flip = page.getByRole('button', { name: 'Show description' });
+    const box = (await flip.boundingBox())!;
+    const tap = () => page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await tap();
+    await expect(flip).toHaveAttribute('aria-pressed', 'true');
+    await settled(page);
+
+    // On the text the swipe turns the card back, and the tap turns it over again.
+    await touch('touchStart', 300);
+    await touch('touchMove', 150);
+    await touch('touchEnd');
+    await expect(flip).toHaveAttribute('aria-pressed', 'false');
+    await tap();
+    await expect(flip).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+test.describe(() => {
+  test.use(phone);
+
+  test('on a phone the edge arrows step aside with the turn and come back with it', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, '#image-3');
+    await waitForLightbox(page);
+    const flip = page.getByRole('button', { name: 'Show description' });
+    const arrows = ['Previous image', 'Next image'].map((name) =>
+      page.getByRole('button', { name, includeHidden: true }),
+    );
+    const rest = await Promise.all(arrows.map(async (arrow) => (await arrow.boundingBox())!));
+    /** Clicks the toggle and holds the turn halfway, where the arrows are halfway aside. */
+    const halfway = async () => {
+      await holdTime(page);
+      await flip.click();
+      await page.clock.runFor(280);
+      const [previous, next] = await Promise.all(
+        arrows.map(async (arrow) => (await arrow.boundingBox())!),
+      );
+      for (const arrow of arrows) await expect(arrow).toBeVisible();
+      expect(previous.x).toBeLessThan(rest[0].x - 4);
+      expect(previous.x + previous.width).toBeGreaterThan(0);
+      expect(next.x).toBeGreaterThan(rest[1].x + 4);
+      expect(next.x).toBeLessThan(390);
+      await page.clock.resume();
+      await settled(page);
+    };
+
+    await halfway();
+    for (const arrow of arrows) await expect(arrow).toBeHidden();
+    await halfway();
+    for (const [at, arrow] of arrows.entries()) {
+      await expect(arrow).toBeVisible();
+      expect((await arrow.boundingBox())!.x).toBeCloseTo(rest[at].x, 0);
+    }
+  });
+
+  test('on a phone the edge arrows ease back in as a slide from the text brings the next drawing', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, '#image-6'); // the next image is another card
+    await waitForLightbox(page);
+    const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
+    const rest = (await next.boundingBox())!;
+    await page.getByRole('button', { name: 'Show description' }).click();
+    await settled(page);
+    await expect(next).toBeHidden();
+
+    const partway = await recording(page, () =>
+      page.evaluate((restX) => {
+        const arrow = document.querySelector('[aria-label="Next image"]')!;
+        const { x } = arrow.getBoundingClientRect();
+        return (
+          arrow.checkVisibility({ visibilityProperty: true }) &&
+          x > restX + 4 &&
+          x < innerWidth - 4
+        );
+      }, rest.x),
+    );
+    await page.keyboard.press('ArrowRight');
+    await partway.step(20);
+    await page.clock.resume();
+    expect(partway.frames).toContain(true);
+    await expect(page).toHaveURL(/#image-7$/);
+    await settled(page);
+    await expect(next).toBeVisible();
+    expect((await next.boundingBox())!.x).toBeCloseTo(rest.x, 0);
+  });
+});
+
+async function phoneOnText(context: BrowserContext, page: Page) {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await gotoProject(page);
   await galleryImage(page, 3).click();
@@ -1135,64 +1104,68 @@ async function phoneOnText(browser: Browser) {
     });
     return moves;
   };
-  return { context, page, drag };
+  return { drag };
 }
 
 const untouched = { turn: -1, strip: 0, blend: 0 };
 
-test('scrolling the text on a phone leaves the card as it is', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const { context, page, drag } = await phoneOnText(browser);
-  const text = page.getByRole('region', { name: 'Life at the city' });
-  const scrollTop = () => text.evaluate((element) => element.scrollTop);
-
-  // Mostly vertical: dx −60, dy −300.
-  const diagonal = await drag(
-    Array.from({ length: 16 }, (_, step) => ({ x: 300 - step * 4, y: 700 - step * 20 })),
+test.describe(() => {
+  test.use(touchPhone);
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
   );
-  await expect.poll(scrollTop).toBeGreaterThan(0);
-  expect(diagonal).toEqual(diagonal.map(() => untouched));
-  await page.waitForTimeout(500);
-  const afterDiagonal = await scrollTop();
 
-  // A scroll that turns sideways afterwards is still a scroll.
-  const turning = [
-    ...Array.from({ length: 16 }, (_, step) => ({ x: 360, y: 300 + step * 20 })),
-    ...Array.from({ length: 9 }, (_, step) => ({ x: 320 - step * 40, y: 600 })),
-  ];
-  const moves = await drag(turning);
-  await expect.poll(scrollTop).toBeLessThan(afterDiagonal);
-  expect(moves).toEqual(moves.map(() => untouched));
-  await page.waitForTimeout(400);
-  await expect(page).toHaveURL(/#image-3$/);
-  expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
-  await context.close();
-});
+  test('scrolling the text on a phone leaves the card as it is', async ({
+    page,
+    context,
+  }) => {
+    const { drag } = await phoneOnText(context, page);
+    const text = page.getByRole('region', { name: 'Life at the city' });
+    const scrollTop = () => text.evaluate((element) => element.scrollTop);
 
-test('a text selection keeps a sideways drag from turning the card', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const { context, page, drag } = await phoneOnText(browser);
-  await page
-    .getByRole('region', { name: 'Life at the city' })
-    .locator('p')
-    .evaluate((paragraph) => getSelection()!.selectAllChildren(paragraph));
-  const moves = await drag([
-    { x: 300, y: 420 },
-    { x: 200, y: 422 },
-    { x: 90, y: 430 },
-  ]);
+    // Mostly vertical: dx −60, dy −300.
+    const diagonal = await drag(
+      Array.from({ length: 16 }, (_, step) => ({ x: 300 - step * 4, y: 700 - step * 20 })),
+    );
+    await expect.poll(scrollTop).toBeGreaterThan(0);
+    expect(diagonal).toEqual(diagonal.map(() => untouched));
+    await page.waitForTimeout(500);
+    const afterDiagonal = await scrollTop();
 
-  expect(moves).toEqual(moves.map(() => untouched));
-  await page.waitForTimeout(400);
-  await expect(page).toHaveURL(/#image-3$/);
-  expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
-  await context.close();
+    // A scroll that turns sideways afterwards is still a scroll.
+    const turning = [
+      ...Array.from({ length: 16 }, (_, step) => ({ x: 360, y: 300 + step * 20 })),
+      ...Array.from({ length: 9 }, (_, step) => ({ x: 320 - step * 40, y: 600 })),
+    ];
+    const moves = await drag(turning);
+    await expect.poll(scrollTop).toBeLessThan(afterDiagonal);
+    expect(moves).toEqual(moves.map(() => untouched));
+    await page.waitForTimeout(400);
+    await expect(page).toHaveURL(/#image-3$/);
+    expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
+  });
+
+  test('a text selection keeps a sideways drag from turning the card', async ({
+    page,
+    context,
+  }) => {
+    const { drag } = await phoneOnText(context, page);
+    await page
+      .getByRole('region', { name: 'Life at the city' })
+      .locator('p')
+      .evaluate((paragraph) => getSelection()!.selectAllChildren(paragraph));
+    const moves = await drag([
+      { x: 300, y: 420 },
+      { x: 200, y: 422 },
+      { x: 90, y: 430 },
+    ]);
+
+    expect(moves).toEqual(moves.map(() => untouched));
+    await page.waitForTimeout(400);
+    await expect(page).toHaveURL(/#image-3$/);
+    expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
+  });
 });
 
 test('Tab reaches the scrollable description', async ({ page }) => {
@@ -1487,13 +1460,13 @@ test('a drag that has not changed image leaves the controls as they were', async
   await page.mouse.down();
   await page.mouse.move(700, 400);
   await expect(page.locator('.lightbox-front .lightbox-incoming')).toHaveCount(1);
-  expect(await position.textContent()).toMatch(/^\s*3 \/ 17/);
-  expect(await current.textContent()).toBe('Life at the city');
+  await expect(position).toHaveText(/^\s*3 \/ 17/);
+  await expect(current).toHaveText('Life at the city');
   await page.mouse.move(880, 400);
   await page.mouse.up();
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  expect(await position.textContent()).toMatch(/^\s*3 \/ 17/);
-  expect(await current.textContent()).toBe('Life at the city');
+  await expect(position).toHaveText(/^\s*3 \/ 17/);
+  await expect(current).toHaveText('Life at the city');
 
   // The strip moved towards another card.
   await page.goto(`${projectPath}#image-9`);
@@ -1504,68 +1477,68 @@ test('a drag that has not changed image leaves the controls as they were', async
   await expect
     .poll(async () => (await page.locator('.lightbox-slide-current').boundingBox())!.x)
     .toBeCloseTo(-200, 0);
-  expect(await position.textContent()).toMatch(/^\s*9 \/ 17/);
-  expect(await current.textContent()).toBe('Urban Detail');
+  await expect(position).toHaveText(/^\s*9 \/ 17/);
+  await expect(current).toHaveText('Urban Detail');
   await page.mouse.up();
 });
 
-test('a drag towards a variant scrubs the blend instead of moving the strip', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+test.describe(() => {
+  test.use(touchPhone);
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
+  );
+
+  test('a drag towards a variant scrubs the blend instead of moving the strip', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page);
+    await galleryImage(page, 3).click();
+    await waitForLightbox(page);
+    const touch = await oneFinger(context, page);
+    const blend = () =>
+      page.evaluate(() => {
+        const layer = document.querySelector('.lightbox-incoming');
+        return layer ? Number(getComputedStyle(layer).opacity) : 0;
+      });
+    const stripX = async () =>
+      (await page.locator('.lightbox-slide-current').boundingBox())!.x;
+
+    // On the 390 px stage the blend follows |dx| / 390, as a slide would move.
+    await touch('touchStart', 300);
+    await touch('touchMove', 144);
+    await expect.poll(blend).toBeCloseTo(0.4, 2);
+    expect(await stripX()).toBe(0);
+    await touch('touchMove', 222);
+    await expect.poll(blend).toBeCloseTo(0.2, 2);
+    await touch('touchMove', 270);
+    await expect.poll(blend).toBeCloseTo(30 / 390, 2);
+    await touch('touchEnd');
+    await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+    await expect(page).toHaveURL(/#image-3$/);
+
+    await touch('touchStart', 300);
+    await touch('touchMove', 183);
+    await expect.poll(blend).toBeCloseTo(0.3, 2);
+    expect(await stripX()).toBe(0);
+    await touch('touchEnd');
+    await expect(page).toHaveURL(/#image-4$/);
+    await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+
+    // At the set's first member the previous image is a different card.
+    await page.getByRole('button', { name: 'Previous image' }).click();
+    await expect(page).toHaveURL(/#image-3$/);
+    await page.getByRole('button', { name: 'Previous image' }).click();
+    await expect(page).toHaveURL(/#image-2$/);
+    await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+    await touch('touchStart', 100);
+    await touch('touchMove', 200);
+    await expect.poll(stripX).toBeCloseTo(100, 0);
+    expect(await blend()).toBe(0);
+    await touch('touchEnd');
   });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page);
-  await galleryImage(page, 3).click();
-  await waitForLightbox(page);
-  const touch = await oneFinger(context, page);
-  const blend = () =>
-    page.evaluate(() => {
-      const layer = document.querySelector('.lightbox-incoming');
-      return layer ? Number(getComputedStyle(layer).opacity) : 0;
-    });
-  const stripX = async () =>
-    (await page.locator('.lightbox-slide-current').boundingBox())!.x;
-
-  // On the 390 px stage the blend follows |dx| / 390, as a slide would move.
-  await touch('touchStart', 300);
-  await touch('touchMove', 144);
-  await expect.poll(blend).toBeCloseTo(0.4, 2);
-  expect(await stripX()).toBe(0);
-  await touch('touchMove', 222);
-  await expect.poll(blend).toBeCloseTo(0.2, 2);
-  await touch('touchMove', 270);
-  await expect.poll(blend).toBeCloseTo(30 / 390, 2);
-  await touch('touchEnd');
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  await expect(page).toHaveURL(/#image-3$/);
-
-  await touch('touchStart', 300);
-  await touch('touchMove', 183);
-  await expect.poll(blend).toBeCloseTo(0.3, 2);
-  expect(await stripX()).toBe(0);
-  await touch('touchEnd');
-  await expect(page).toHaveURL(/#image-4$/);
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-
-  // At the set's first member the previous image is a different card.
-  await page.getByRole('button', { name: 'Previous image' }).click();
-  await expect(page).toHaveURL(/#image-3$/);
-  await page.getByRole('button', { name: 'Previous image' }).click();
-  await expect(page).toHaveURL(/#image-2$/);
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  await touch('touchStart', 100);
-  await touch('touchMove', 200);
-  await expect.poll(stripX).toBeCloseTo(100, 0);
-  expect(await blend()).toBe(0);
-  await touch('touchEnd');
-  await context.close();
 });
 
 test('a mouse drag towards a variant scrubs the blend too', async ({ page }) => {
@@ -1589,13 +1562,11 @@ test('a mouse drag towards a variant scrubs the blend too', async ({ page }) => 
 });
 
 /** A phone showing image 3's text side, and one finger on it. */
-async function phoneReading(browser: Browser, reducedMotion: 'reduce' | 'no-preference') {
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await context.newPage();
+async function phoneReading(
+  context: BrowserContext,
+  page: Page,
+  reducedMotion: 'reduce' | 'no-preference',
+) {
   await page.emulateMedia({ reducedMotion });
   await gotoProject(page);
   await galleryImage(page, 3).click();
@@ -1604,7 +1575,7 @@ async function phoneReading(browser: Browser, reducedMotion: 'reduce' | 'no-pref
   await flip.click();
   await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
   await settled(page);
-  return { context, page, flip, touch: await oneFinger(context, page) };
+  return { flip, touch: await oneFinger(context, page) };
 }
 
 /**
@@ -1663,194 +1634,178 @@ test('a change made while the card turns over carries on the turn without jumpin
   await expect(page).toHaveURL(/#image-3$/);
 });
 
-test('the toggle tapped while a swipe turns the card back reverses the turn without jumping', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const { context, page, flip, touch } = await phoneReading(browser, 'no-preference');
-  await touch('touchStart', 100);
-  await touch('touchMove', 220);
-  await holdTime(page);
-  await touch('touchEnd');
-  await page.clock.runFor(32);
-  const lean = await faceLean(page);
-  expect(lean).not.toBe('nowhere');
+test.describe(() => {
+  test.use(touchPhone);
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
+  );
 
-  const box = (await flip.boundingBox())!;
-  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(flip).toHaveAttribute('aria-pressed', 'true');
-  await page.clock.runFor(32);
-  expect(await faceLean(page)).toBe(lean);
-  await page.clock.resume();
-  await context.close();
-});
-
-test('a drag on the text that takes over a turn keeps the way it was turning', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-3');
-  await waitForLightbox(page);
-  const touch = await oneFinger(context, page);
-  await holdTime(page);
-  await page.getByRole('button', { name: 'Show description' }).click();
-  await page.clock.runFor(250);
-
-  // Rightwards, over a turn still under way, and short of turning it text up.
-  await touch('touchStart', 100);
-  await page.clock.runFor(32);
-  const lean = await faceLean(page);
-  expect(lean).not.toBe('nowhere');
-  const leans = [];
-  for (const x of [110, 120, 130]) {
-    await touch('touchMove', x);
+  test('the toggle tapped while a swipe turns the card back reverses the turn without jumping', async ({
+    page,
+    context,
+  }) => {
+    const { flip, touch } = await phoneReading(context, page, 'no-preference');
+    await touch('touchStart', 100);
+    await touch('touchMove', 220);
+    await holdTime(page);
+    await touch('touchEnd');
     await page.clock.runFor(32);
-    leans.push(await faceLean(page));
-  }
-  await touch('touchEnd');
-  await page.clock.resume();
-  expect(leans).toEqual([lean, lean, lean]);
-  await context.close();
-});
+    const lean = await faceLean(page);
+    expect(lean).not.toBe('nowhere');
 
-test('a drag on the text towards a variant only turns the card, and released short turns it back', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const { context, page, flip, touch } = await phoneReading(browser, 'no-preference');
-  const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
-
-  // On the 390 px stage: dx −117 turns 0.3 of the way back (126°), and half
-  // the width (dx −195) is edge-on.
-  await touch('touchStart', 300);
-  await touch('touchMove', 183);
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
-  await touch('touchMove', 105);
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(0, 2);
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  expect((await page.locator('.lightbox-slide-current').boundingBox())!.x).toBe(0);
-  await touch('touchMove', 270);
-  await expect
-    .poll(() => sheetTurn(page))
-    .toBeCloseTo(Math.cos(Math.PI * (1 - 30 / 390)), 2);
-  await touch('touchEnd');
-
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
-  await expect(page).toHaveURL(/#image-3$/);
-  await expect(flip).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
-  await expect(next).toBeHidden();
-  await context.close();
-});
-
-test('a drag on the text past the threshold turns back to the drawing view the visitor left', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+    const box = (await flip.boundingBox())!;
+    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(flip).toHaveAttribute('aria-pressed', 'true');
+    await page.clock.runFor(32);
+    expect(await faceLean(page)).toBe(lean);
+    await page.clock.resume();
   });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-3');
-  await waitForLightbox(page);
-  await page.keyboard.press('+');
-  await page.keyboard.press('+');
-  await expect
-    .poll(async () => (await drawingView(page)).scale)
-    .toBeCloseTo(1.5625, 3);
-  await settled(page);
-  const zoomedTransform = await page
-    .locator('.lightbox-front > img')
-    .evaluate((image) => getComputedStyle(image).transform);
-  const flip = page.getByRole('button', { name: 'Show description' });
-  await flip.click();
-  await settled(page);
-  const touch = await oneFinger(context, page);
 
-  await touch('touchStart', 300);
-  await touch('touchMove', 183);
-  await touch('touchEnd');
-  await expect(flip).toHaveAttribute('aria-pressed', 'false');
-  await settled(page);
-  await expect(page).toHaveURL(/#image-3$/);
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  expect(await sheetTurn(page)).toBeCloseTo(1, 3);
-  expect(
-    await page
+  test('a drag on the text that takes over a turn keeps the way it was turning', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, '#image-3');
+    await waitForLightbox(page);
+    const touch = await oneFinger(context, page);
+    await holdTime(page);
+    await page.getByRole('button', { name: 'Show description' }).click();
+    await page.clock.runFor(250);
+
+    // Rightwards, over a turn still under way, and short of turning it text up.
+    await touch('touchStart', 100);
+    await page.clock.runFor(32);
+    const lean = await faceLean(page);
+    expect(lean).not.toBe('nowhere');
+    const leans = [];
+    for (const x of [110, 120, 130]) {
+      await touch('touchMove', x);
+      await page.clock.runFor(32);
+      leans.push(await faceLean(page));
+    }
+    await touch('touchEnd');
+    await page.clock.resume();
+    expect(leans).toEqual([lean, lean, lean]);
+  });
+
+  test('a drag on the text towards a variant only turns the card, and released short turns it back', async ({
+    page,
+    context,
+  }) => {
+    const { flip, touch } = await phoneReading(context, page, 'no-preference');
+    const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
+
+    // On the 390 px stage: dx −117 turns 0.3 of the way back (126°), and half
+    // the width (dx −195) is edge-on.
+    await touch('touchStart', 300);
+    await touch('touchMove', 183);
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
+    await touch('touchMove', 105);
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(0, 2);
+    await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+    expect((await page.locator('.lightbox-slide-current').boundingBox())!.x).toBe(0);
+    await touch('touchMove', 270);
+    await expect
+      .poll(() => sheetTurn(page))
+      .toBeCloseTo(Math.cos(Math.PI * (1 - 30 / 390)), 2);
+    await touch('touchEnd');
+
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
+    await expect(page).toHaveURL(/#image-3$/);
+    await expect(flip).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
+    await expect(next).toBeHidden();
+  });
+
+  test('a drag on the text past the threshold turns back to the drawing view the visitor left', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, '#image-3');
+    await waitForLightbox(page);
+    await page.keyboard.press('+');
+    await page.keyboard.press('+');
+    await expect
+      .poll(async () => (await drawingView(page)).scale)
+      .toBeCloseTo(1.5625, 3);
+    await settled(page);
+    const zoomedTransform = await page
       .locator('.lightbox-front > img')
-      .evaluate((image) => getComputedStyle(image).transform),
-  ).toBe(zoomedTransform);
-  await context.close();
-});
+      .evaluate((image) => getComputedStyle(image).transform);
+    const flip = page.getByRole('button', { name: 'Show description' });
+    await flip.click();
+    await settled(page);
+    const touch = await oneFinger(context, page);
 
-test('with reduced motion a drag on the text turns nothing until released past the threshold', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const { context, page, flip, touch } = await phoneReading(browser, 'reduce');
-  const turn = () =>
-    page
-      .locator('[data-lightbox-sheet]')
-      .evaluate((sheet) => Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn')));
+    await touch('touchStart', 300);
+    await touch('touchMove', 183);
+    await touch('touchEnd');
+    await expect(flip).toHaveAttribute('aria-pressed', 'false');
+    await settled(page);
+    await expect(page).toHaveURL(/#image-3$/);
+    await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+    expect(await sheetTurn(page)).toBeCloseTo(1, 3);
+    expect(
+      await page
+        .locator('.lightbox-front > img')
+        .evaluate((image) => getComputedStyle(image).transform),
+    ).toBe(zoomedTransform);
+  });
 
-  await touch('touchStart', 300);
-  await touch('touchMove', 200);
-  await page.waitForTimeout(100);
-  expect(await turn()).toBe(1);
-  await holdTime(page);
-  await touch('touchEnd');
-  // The reduced turn: the faces crossfade.
-  await page.clock.runFor(64);
-  const back = await page
-    .locator('.lightbox-back')
-    .evaluate((face) => Number(getComputedStyle(face).opacity));
-  expect(back).toBeGreaterThan(0);
-  expect(back).toBeLessThan(1);
-  expect(await sheetTurn(page)).toBe(1);
-  await page.clock.resume();
-  await expect(flip).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeHidden();
-  await expect(page).toHaveURL(/#image-3$/);
-  await context.close();
-});
+  test('with reduced motion a drag on the text turns nothing until released past the threshold', async ({
+    page,
+    context,
+  }) => {
+    const { flip, touch } = await phoneReading(context, page, 'reduce');
+    const turn = () =>
+      page
+        .locator('[data-lightbox-sheet]')
+        .evaluate((sheet) => Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn')));
 
-test('a drag on the text turns the card the way the finger moves', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const { context, page, touch } = await phoneReading(browser, 'no-preference');
+    await touch('touchStart', 300);
+    await touch('touchMove', 200);
+    await page.waitForTimeout(100);
+    expect(await turn()).toBe(1);
+    await holdTime(page);
+    await touch('touchEnd');
+    // The reduced turn: the faces crossfade.
+    await page.clock.runFor(64);
+    const back = await page
+      .locator('.lightbox-back')
+      .evaluate((face) => Number(getComputedStyle(face).opacity));
+    expect(back).toBeGreaterThan(0);
+    expect(back).toBeLessThan(1);
+    expect(await sheetTurn(page)).toBe(1);
+    await page.clock.resume();
+    await expect(flip).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByRole('region', { name: 'Life at the city' })).toBeHidden();
+    await expect(page).toHaveURL(/#image-3$/);
+  });
 
-  await touch('touchStart', 300);
-  await touch('touchMove', 183);
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
-  expect(await backTurningTowards(page)).toBe('left');
-  await touch('touchMove', 417);
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
-  expect(await backTurningTowards(page)).toBe('right');
-  // Released, the turn carries on the same way.
-  await holdTime(page);
-  await touch('touchEnd');
-  await page.clock.runFor(16);
-  expect(await sheetTurn(page)).toBeLessThan(Math.cos(Math.PI * 0.6));
-  expect(await backTurningTowards(page)).toBe('right');
-  await page.clock.resume();
-  await context.close();
+  test('a drag on the text turns the card the way the finger moves', async ({
+    page,
+    context,
+  }) => {
+    const { touch } = await phoneReading(context, page, 'no-preference');
+
+    await touch('touchStart', 300);
+    await touch('touchMove', 183);
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
+    expect(await backTurningTowards(page)).toBe('left');
+    await touch('touchMove', 417);
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(Math.cos(Math.PI * 0.7), 2);
+    expect(await backTurningTowards(page)).toBe('right');
+    // Released, the turn carries on the same way.
+    await holdTime(page);
+    await touch('touchEnd');
+    await page.clock.runFor(16);
+    expect(await sheetTurn(page)).toBeLessThan(Math.cos(Math.PI * 0.6));
+    expect(await backTurningTowards(page)).toBe('right');
+    await page.clock.resume();
+  });
 });
 
 for (const [key, towards] of [
@@ -1953,55 +1908,53 @@ test('a drag cannot redirect a blend that is already running', async ({
 });
 
 for (const input of ['mouse', 'touch'] as const) {
-  test(`a change of image ends the ${input} drag in progress`, async ({
-    browser,
-    browserName,
-  }) => {
+  test.describe(() => {
+    test.use(input === 'touch' ? touchPhone : phone);
     test.skip(
-      input === 'touch' && browserName !== 'chromium',
+      ({ browserName }) => input === 'touch' && browserName !== 'chromium',
       'One touch-capable browser covers this',
     );
-    const context = await browser.newContext({
-      viewport: { width: 390, height: 844 },
-      ...(input === 'touch' ? { hasTouch: true, isMobile: true } : {}),
+
+    test(`a change of image ends the ${input} drag in progress`, async ({
+      page,
+      context,
+    }) => {
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await gotoProject(page);
+      await galleryImage(page, 2).click(); // the previous image is a different card
+      await waitForLightbox(page);
+      const touch = input === 'touch' ? await oneFinger(context, page) : undefined;
+      const press = (x: number) =>
+        touch ? touch('touchStart', x) : page.mouse.move(x, 420).then(() => page.mouse.down());
+      const move = (x: number) => (touch ? touch('touchMove', x) : page.mouse.move(x, 420));
+      const lift = () => (touch ? touch('touchEnd') : page.mouse.up());
+      const stripX = async () =>
+        (await page.locator('.lightbox-slide-current').boundingBox())!.x;
+
+      await press(100);
+      await move(200);
+      await expect.poll(stripX).toBeCloseTo(100, 0);
+      await page.keyboard.press('ArrowRight'); // the next image is a variant
+      await move(250);
+      await page.clock.runFor(500);
+      await move(360);
+      await lift();
+      await page.clock.runFor(500);
+
+      await expect(page).toHaveURL(/#image-3$/);
+      expect(await stripX()).toBe(0);
+      await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
+      // A new drag follows the finger directly: back towards the variant it
+      // came from, by the share of the 390 px stage it has moved.
+      await press(100);
+      await move(200);
+      expect(
+        await page.evaluate(() =>
+          Number(getComputedStyle(document.querySelector('.lightbox-incoming')!).opacity),
+        ),
+      ).toBeCloseTo(100 / 390, 2);
+      await lift();
     });
-    const page = await context.newPage();
-    await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await gotoProject(page);
-    await galleryImage(page, 2).click(); // the previous image is a different card
-    await waitForLightbox(page);
-    const touch = input === 'touch' ? await oneFinger(context, page) : undefined;
-    const press = (x: number) =>
-      touch ? touch('touchStart', x) : page.mouse.move(x, 420).then(() => page.mouse.down());
-    const move = (x: number) => (touch ? touch('touchMove', x) : page.mouse.move(x, 420));
-    const lift = () => (touch ? touch('touchEnd') : page.mouse.up());
-    const stripX = async () =>
-      (await page.locator('.lightbox-slide-current').boundingBox())!.x;
-
-    await press(100);
-    await move(200);
-    await expect.poll(stripX).toBeCloseTo(100, 0);
-    await page.keyboard.press('ArrowRight'); // the next image is a variant
-    await move(250);
-    await page.clock.runFor(500);
-    await move(360);
-    await lift();
-    await page.clock.runFor(500);
-
-    await expect(page).toHaveURL(/#image-3$/);
-    expect(await stripX()).toBe(0);
-    await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-    // A new drag follows the finger directly: back towards the variant it
-    // came from, by the share of the 390 px stage it has moved.
-    await press(100);
-    await move(200);
-    expect(
-      await page.evaluate(() =>
-        Number(getComputedStyle(document.querySelector('.lightbox-incoming')!).opacity),
-      ),
-    ).toBeCloseTo(100 / 390, 2);
-    await lift();
-    await context.close();
   });
 }
 
@@ -2696,49 +2649,49 @@ test('reading a long description leaves the drawing view and its tiles alone', a
   ).toBe(zoomedTransform);
 });
 
-test('with reduced motion a change to a variant is instant', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+test.describe(() => {
+  test.use(touchPhone);
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
+  );
+
+  test('with reduced motion a change to a variant is instant', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoProject(page);
+    await galleryImage(page, 3).click();
+    await waitForLightbox(page);
+    const changed = () =>
+      page.evaluate(() => ({
+        hash: location.hash,
+        blending: Boolean(document.querySelector('.lightbox-incoming')),
+        turning: document
+          .querySelector<HTMLElement>('.lightbox-slide-current [data-lightbox-sheet]')!
+          .style.getPropertyValue('--lightbox-turn'),
+      }));
+
+    const touch = await oneFinger(context, page);
+    await touch('touchStart', 300);
+    await touch('touchMove', 200);
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    expect(await changed()).toEqual({ hash: '#image-3', blending: false, turning: '0' });
+    expect((await page.locator('.lightbox-slide-current').boundingBox())!.x).toBe(0);
+    await touch('touchEnd');
+    await expect(page).toHaveURL(/#image-4$/);
+    expect(await changed()).toEqual({ hash: '#image-4', blending: false, turning: '0' });
+
+    // A variant keeps the inspected view.
+    await page.keyboard.press('+');
+    await expect.poll(() => imageZoom(page)).toBeCloseTo(1.25, 2);
+    await page
+      .getByRole('button', { name: 'Next image' })
+      .evaluate((button: HTMLButtonElement) => button.click());
+    expect(await changed()).toEqual({ hash: '#image-5', blending: false, turning: '0' });
+    expect(await imageZoom(page)).toBeCloseTo(1.25, 2);
   });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoProject(page);
-  await galleryImage(page, 3).click();
-  await waitForLightbox(page);
-  const changed = () =>
-    page.evaluate(() => ({
-      hash: location.hash,
-      blending: Boolean(document.querySelector('.lightbox-incoming')),
-      turning: document
-        .querySelector<HTMLElement>('.lightbox-slide-current [data-lightbox-sheet]')!
-        .style.getPropertyValue('--lightbox-turn'),
-    }));
-
-  const touch = await oneFinger(context, page);
-  await touch('touchStart', 300);
-  await touch('touchMove', 200);
-  await page.evaluate(() => new Promise(requestAnimationFrame));
-  expect(await changed()).toEqual({ hash: '#image-3', blending: false, turning: '0' });
-  expect((await page.locator('.lightbox-slide-current').boundingBox())!.x).toBe(0);
-  await touch('touchEnd');
-  await expect(page).toHaveURL(/#image-4$/);
-  expect(await changed()).toEqual({ hash: '#image-4', blending: false, turning: '0' });
-
-  // A variant keeps the inspected view.
-  await page.keyboard.press('+');
-  await expect.poll(() => imageZoom(page)).toBeCloseTo(1.25, 2);
-  await page
-    .getByRole('button', { name: 'Next image' })
-    .evaluate((button: HTMLButtonElement) => button.click());
-  expect(await changed()).toEqual({ hash: '#image-5', blending: false, turning: '0' });
-  expect(await imageZoom(page)).toBeCloseTo(1.25, 2);
-  await context.close();
 });
 
 test('resizing while the description shows reflows the text and its arrows', async ({
@@ -2847,37 +2800,37 @@ test('zoom keys, like the wheel, wait for a drag at rest to end', async ({
   await expect.poll(() => imageZoom(page)).toBeCloseTo(1.25, 2);
 });
 
-test('double-tap zooms on touch screens', async ({ browser, browserName }) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoProject(page);
-  await galleryImage(page, 3).click();
-  await waitForLightbox(page);
-  // The page tells a double tap by when its events arrive, so both taps are
-  // sent in one go rather than each waiting on the last.
-  const session = await context.newCDPSession(page);
-  const doubleTap = () =>
-    Promise.all(
-      (['touchStart', 'touchEnd', 'touchStart', 'touchEnd'] as const).map((type) =>
-        session.send('Input.dispatchTouchEvent', {
-          type,
-          touchPoints: type === 'touchStart' ? [{ x: 195, y: 420 }] : [],
-        }),
-      ),
-    );
-  await doubleTap();
-  await expect.poll(() => imageZoom(page)).toBeCloseTo(2.5, 2);
-  await expect(page).toHaveURL(/#image-3$/);
+test.describe(() => {
+  test.use(touchPhone);
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
+  );
 
-  await doubleTap();
-  await expect.poll(() => imageZoom(page)).toBeCloseTo(1, 2);
-  await context.close();
+  test('double-tap zooms on touch screens', async ({ page, context }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoProject(page);
+    await galleryImage(page, 3).click();
+    await waitForLightbox(page);
+    // The page tells a double tap by when its events arrive, so both taps are
+    // sent in one go rather than each waiting on the last.
+    const session = await context.newCDPSession(page);
+    const doubleTap = () =>
+      Promise.all(
+        (['touchStart', 'touchEnd', 'touchStart', 'touchEnd'] as const).map((type) =>
+          session.send('Input.dispatchTouchEvent', {
+            type,
+            touchPoints: type === 'touchStart' ? [{ x: 195, y: 420 }] : [],
+          }),
+        ),
+      );
+    await doubleTap();
+    await expect.poll(() => imageZoom(page)).toBeCloseTo(2.5, 2);
+    await expect(page).toHaveURL(/#image-3$/);
+
+    await doubleTap();
+    await expect.poll(() => imageZoom(page)).toBeCloseTo(1, 2);
+  });
 });
 
 // State changes instantly; the visuals chase it.
@@ -3192,45 +3145,45 @@ test('a drag that starts mid-blend takes the blend from where it is', async ({ p
   expect(await positions(page)).toEqual(['4 / 17', '4 / 17']);
 });
 
-test('a drag on the text that starts mid-turn takes the turn from where it is', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+test.describe(() => {
+  test.use(touchPhone);
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
+  );
+
+  test('a drag on the text that starts mid-turn takes the turn from where it is', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, '#image-3');
+    await waitForLightbox(page);
+    const touch = await oneFinger(context, page);
+    const turn = () =>
+      page.evaluate(() =>
+        Number(
+          getComputedStyle(
+            document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!,
+          ).getPropertyValue('--lightbox-turn'),
+        ),
+      );
+    await holdTime(page);
+    await page.getByRole('button', { name: 'Show description' }).click();
+    while ((await turn()) <= 0.2) await page.clock.runFor(16);
+    await touch('touchStart', 300);
+    const grabbed = await turn();
+    expect(grabbed).toBeGreaterThan(0.05);
+    expect(grabbed).toBeLessThan(0.95);
+    await touch('touchMove', 298);
+    await page.clock.runFor(32);
+    expect(await turn()).toBeCloseTo(grabbed, 1);
+    await page.clock.runFor(250);
+    expect(await turn()).toBeCloseTo(grabbed, 1);
+    await touch('touchEnd');
+    await page.clock.resume();
+    await expect.poll(turn).toBe(1);
   });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-3');
-  await waitForLightbox(page);
-  const touch = await oneFinger(context, page);
-  const turn = () =>
-    page.evaluate(() =>
-      Number(
-        getComputedStyle(
-          document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!,
-        ).getPropertyValue('--lightbox-turn'),
-      ),
-    );
-  await holdTime(page);
-  await page.getByRole('button', { name: 'Show description' }).click();
-  while ((await turn()) <= 0.2) await page.clock.runFor(16);
-  await touch('touchStart', 300);
-  const grabbed = await turn();
-  expect(grabbed).toBeGreaterThan(0.05);
-  expect(grabbed).toBeLessThan(0.95);
-  await touch('touchMove', 298);
-  await page.clock.runFor(32);
-  expect(await turn()).toBeCloseTo(grabbed, 1);
-  await page.clock.runFor(250);
-  expect(await turn()).toBeCloseTo(grabbed, 1);
-  await touch('touchEnd');
-  await page.clock.resume();
-  await expect.poll(turn).toBe(1);
-  await context.close();
 });
 
 test('an image still loading delays only its blend: state and further changes go on at once', async ({
@@ -3270,41 +3223,42 @@ test('an image still loading delays only its blend: state and further changes go
   await expect(page).toHaveURL(/#image-7$/);
 });
 
-test('on a phone the edge arrows wait with the card for a variant still loading', async ({
-  browser,
-}) => {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  const hangar = '/projects/galerie-hang%C3%A1r/';
-  await withDescription(page, hangar, '/uploads/02 GALERIE - Půdorys 1NP+.webp', 'A short note.');
-  await gotoProject(page, '#image-5', hangar);
-  await waitForLightbox(page);
-  // Zoomed in, the variant needs a larger file than the page's thumbnails and
-  // its neighbour preview have loaded.
-  await page.keyboard.press('+');
-  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
-  const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
-  const toggle = page.getByRole('button', { name: 'Show description' });
-  await toggle.click();
-  await settled(page);
-  await expect(next).toBeHidden();
-  let release = () => {};
-  const arrived = new Promise<void>((resolve) => (release = resolve));
-  await page.route('**/_responsive/**', async (route) => {
-    await arrived;
-    await route.continue();
+test.describe(() => {
+  test.use(phone);
+
+  test('on a phone the edge arrows wait with the card for a variant still loading', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    const hangar = '/projects/galerie-hang%C3%A1r/';
+    await withDescription(page, hangar, '/uploads/02 GALERIE - Půdorys 1NP+.webp', 'A short note.');
+    await gotoProject(page, '#image-5', hangar);
+    await waitForLightbox(page);
+    // Zoomed in, the variant needs a larger file than the page's thumbnails and
+    // its neighbour preview have loaded.
+    await page.keyboard.press('+');
+    await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
+    const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
+    const toggle = page.getByRole('button', { name: 'Show description' });
+    await toggle.click();
+    await settled(page);
+    await expect(next).toBeHidden();
+    let release = () => {};
+    const arrived = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/_responsive/**', async (route) => {
+      await arrived;
+      await route.continue();
+    });
+    await page.keyboard.press('ArrowRight');
+    expect(await positions(page)).toEqual(['6 / 27', '6 / 27']);
+    await page.clock.runFor(400);
+    expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
+    await expect(next).toBeHidden();
+    // Once it has loaded, both come back together.
+    release();
+    await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
+    await expect(next).toBeVisible();
   });
-  await page.keyboard.press('ArrowRight');
-  expect(await positions(page)).toEqual(['6 / 27', '6 / 27']);
-  await page.clock.runFor(400);
-  expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
-  await expect(next).toBeHidden();
-  // Once it has loaded, both come back together.
-  release();
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(1, 3);
-  await expect(next).toBeVisible();
-  await context.close();
 });
 
 /**
@@ -3491,78 +3445,81 @@ test('reduced motion reaches the same states at the same moments', async ({ brow
   expect(await run('no-preference')).toEqual(await run('reduce'));
 });
 
-test('a touch that moves over the controls leaves the page behind in place', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+test.describe(() => {
+  test.use(touchPhone);
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
+  );
+
+  test('a touch that moves over the controls leaves the page behind in place', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoProject(page, '#image-7');
+    await waitForLightbox(page);
+    const before = await page.evaluate(() => window.scrollY);
+    const box = (await page.getByRole('link', { name: /^Open original/ }).boundingBox())!;
+    const session = await context.newCDPSession(page);
+    const at = (y: number) => [{ x: box.x + box.width / 2, y }];
+    const start = box.y + box.height / 2;
+    await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(start) });
+    for (const step of [1, 2, 3, 4, 5, 6]) {
+      await session.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: at(start - step * 60),
+      });
+    }
+    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => window.scrollY)).toBe(before);
   });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoProject(page, '#image-7');
-  await waitForLightbox(page);
-  const before = await page.evaluate(() => window.scrollY);
-  const box = (await page.getByRole('link', { name: /^Open original/ }).boundingBox())!;
-  const session = await context.newCDPSession(page);
-  const at = (y: number) => [{ x: box.x + box.width / 2, y }];
-  const start = box.y + box.height / 2;
-  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(start) });
-  for (const step of [1, 2, 3, 4, 5, 6]) {
-    await session.send('Input.dispatchTouchEvent', {
-      type: 'touchMove',
-      touchPoints: at(start - step * 60),
-    });
-  }
-  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await page.waitForTimeout(300);
-  expect(await page.evaluate(() => window.scrollY)).toBe(before);
-  await context.close();
 });
 
-test('on a phone the edge arrows stay in step with a turn reversed mid-way', async ({ browser }) => {
-  // It steps some two hundred frames, each a round trip to the page.
-  test.slow();
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-3');
-  await waitForLightbox(page);
-  const toggle = () =>
-    page
-      .getByRole('button', { name: 'Show description' })
-      .evaluate((button: HTMLButtonElement) => button.click());
-  // Reversed once and twice, and a change to a variant in the middle of the
-  // turn, which blends as it turns the card back; numbers are ms between
-  // the changes.
-  for (const steps of [
-    [toggle, 200, toggle],
-    [toggle, 150, toggle, 100, toggle],
-    [toggle, 250, () => page.keyboard.press('ArrowRight')],
-  ] as const) {
-    const apart = await recording(page, () =>
-      page.evaluate(() => {
-        const sheet = document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!;
-        const arrow = document.querySelector('[aria-label="Next image"]')!;
-        return Math.abs(
-          Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn')) -
-            Number(getComputedStyle(arrow).getPropertyValue('--lightbox-arrows-aside')),
-        );
-      }),
-    );
-    for (const step of steps) {
-      if (typeof step === 'number') await apart.step(Math.round(step / 16));
-      else await step();
+test.describe(() => {
+  test.use(phone);
+
+  test('on a phone the edge arrows stay in step with a turn reversed mid-way', async ({
+    page,
+  }) => {
+    // It steps some two hundred frames, each a round trip to the page.
+    test.slow();
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page, '#image-3');
+    await waitForLightbox(page);
+    const toggle = () =>
+      page
+        .getByRole('button', { name: 'Show description' })
+        .evaluate((button: HTMLButtonElement) => button.click());
+    // Reversed once and twice, and a change to a variant in the middle of the
+    // turn, which blends as it turns the card back; numbers are ms between
+    // the changes.
+    for (const steps of [
+      [toggle, 200, toggle],
+      [toggle, 150, toggle, 100, toggle],
+      [toggle, 250, () => page.keyboard.press('ArrowRight')],
+    ] as const) {
+      const apart = await recording(page, () =>
+        page.evaluate(() => {
+          const sheet = document.querySelector('.lightbox-slide-current [data-lightbox-sheet]')!;
+          const arrow = document.querySelector('[aria-label="Next image"]')!;
+          return Math.abs(
+            Number(getComputedStyle(sheet).getPropertyValue('--lightbox-turn')) -
+              Number(getComputedStyle(arrow).getPropertyValue('--lightbox-arrows-aside')),
+          );
+        }),
+      );
+      for (const step of steps) {
+        if (typeof step === 'number') await apart.step(Math.round(step / 16));
+        else await step();
+      }
+      await apart.step(40);
+      expect(Math.max(...apart.frames)).toBeLessThan(0.02);
+      await page.clock.resume();
+      await settled(page);
     }
-    await apart.step(40);
-    expect(Math.max(...apart.frames)).toBeLessThan(0.02);
-    await page.clock.resume();
-    await settled(page);
-  }
-  await context.close();
+  });
 });
 
 test('Escape right after the click closes, with nothing shown and no errors', async ({ page }) => {

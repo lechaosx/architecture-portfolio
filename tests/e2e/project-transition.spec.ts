@@ -78,7 +78,7 @@ test('work cards do not start a second entrance animation after navigation', asy
 
 test('cover hover does not change the shared transition box', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/work');
+  await page.goto('/work/');
   const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
   const transitionCover = project.locator('.project-cover');
   const image = project.locator('img');
@@ -125,7 +125,7 @@ test('opening a project starts a cross-document view transition', async ({
     browserName === 'firefox',
     'The pinned Firefox does not support cross-document View Transitions',
   );
-  await page.goto('/work');
+  await page.goto('/work/');
   // The page asks for a transition, which the browser may skip when busy.
   await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, () =>
     page.locator('a[href="/projects/urban-study-kyjov/"]').click(),
@@ -135,7 +135,7 @@ test('opening a project starts a cross-document view transition', async ({
 test('non-square project cover uses the shared crop transition class', async ({
   page,
 }) => {
-  await page.goto('/work');
+  await page.goto('/work/');
   const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
   await project.click();
   await expect(page).toHaveURL(/\/projects\/urban-study-kyjov\/$/);
@@ -197,7 +197,7 @@ test('project covers morph one uncropped snapshot in both directions', async ({
       JSON.parse(sessionStorage.getItem('cover-snapshots') ?? 'null'),
     );
 
-  await page.goto('/work');
+  await page.goto('/work/');
   const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
   await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, async () => {
     await project.hover();
@@ -252,7 +252,7 @@ test('a keyboard-opened project starts from its own card, not the hovered one', 
     });
   });
 
-  await page.goto('/work');
+  await page.goto('/work/');
   const hovered = page.locator('a[href="/projects/exotarium-brno-zoo/"]');
   await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, async () => {
     await hovered.hover();

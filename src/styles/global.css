@@ -10,6 +10,9 @@
 
 @theme {
   --font-sans: "Roboto Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
   --duration-fast: 0.3s;
   --duration-base: 0.4s;
   --duration-slow: 0.7s;
@@ -211,7 +214,6 @@ html[data-theme="dark"] .theme-icon-moon {
    scrollbar. No scroll hijacking. */
 .reveal {
   transition: opacity var(--duration-slow) ease, transform var(--duration-slow) ease;
-  will-change: opacity, transform;
 }
 .reveal.is-hidden {
   opacity: 0;
@@ -229,9 +231,9 @@ html[data-theme="dark"] .theme-icon-moon {
 }
 
 /* Carousel track scrolls natively (scroll-snap); hide the scrollbar chrome. */
-.no-scrollbar {
+@utility no-scrollbar {
   scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

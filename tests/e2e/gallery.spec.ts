@@ -227,46 +227,46 @@ test('input while opening acts at once, and a wheel while closing scrolls the pa
 
   await holdTime(page);
   await page.getByRole('button', { name: 'Close' }).click();
-  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+  await expect(page.locator('[data-gallery-lightbox]')).toHaveAttribute('inert');
   await page.mouse.move(640, 400);
   await page.mouse.wheel(0, 300);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollY);
   await page.clock.resume();
 });
 
-test('a touch swipe while opening on a phone changes image and leaves the page in place', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
+test.describe(() => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
+  );
+
+  test('a touch swipe while opening on a phone changes image and leaves the page in place', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await gotoProject(page);
+    const thumbnail = galleryImage(page, 10);
+    await thumbnail.scrollIntoViewIfNeeded();
+    const scrollY = await page.evaluate(() => window.scrollY);
+    await holdTime(page);
+    await thumbnail.evaluate((button: HTMLButtonElement) => button.click());
+    const session = await context.newCDPSession(page);
+    const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x?: number) =>
+      session.send('Input.dispatchTouchEvent', {
+        type,
+        touchPoints: x === undefined ? [] : [{ x, y: 420 }],
+      });
+    await touch('touchStart', 300);
+    for (const x of [250, 200, 150]) await touch('touchMove', x);
+    await touch('touchEnd');
+    await expect(page.getByRole('status')).toHaveText('11 / 17');
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+    await page.clock.resume();
+    await waitForLightbox(page);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
   });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page);
-  const thumbnail = galleryImage(page, 10);
-  await thumbnail.scrollIntoViewIfNeeded();
-  const scrollY = await page.evaluate(() => window.scrollY);
-  await holdTime(page);
-  await thumbnail.evaluate((button: HTMLButtonElement) => button.click());
-  const session = await context.newCDPSession(page);
-  const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', x?: number) =>
-    session.send('Input.dispatchTouchEvent', {
-      type,
-      touchPoints: x === undefined ? [] : [{ x, y: 420 }],
-    });
-  await touch('touchStart', 300);
-  for (const x of [250, 200, 150]) await touch('touchMove', x);
-  await touch('touchEnd');
-  await expect(page.getByRole('status')).toHaveText('11 / 17');
-  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
-  await page.clock.resume();
-  await waitForLightbox(page);
-  expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
-  await context.close();
 });
 
 /** Steps the held clock a frame at a time until the card is gone, and returns where it was last. */
@@ -531,9 +531,9 @@ test('lightbox reports its position and wraps at either end', async ({ page }) =
   await expect(position).toHaveText(`1 / ${imageCount}`);
 
   await page.getByRole('button', { name: 'Previous image' }).click();
-  expect(await position.textContent()).toContain(`${imageCount} / ${imageCount}`);
+  await expect(position).toHaveText(`${imageCount} / ${imageCount}`);
   await page.getByRole('button', { name: 'Next image' }).click();
-  expect(await position.textContent()).toContain(`1 / ${imageCount}`);
+  await expect(position).toHaveText(`1 / ${imageCount}`);
   await expect(page).toHaveURL(/#image-1$/);
 });
 
@@ -641,80 +641,80 @@ test('dark theme keeps the lightbox surface black and controls white', async ({
   expect(colors.foreground).toEqual([255, 255, 255, 255]);
 });
 
-test('2x display density selects enough pixels without exceeding the source', async ({
-  browser,
-}) => {
-  const context = await browser.newContext({ deviceScaleFactor: 2 });
-  const page = await context.newPage();
-  await gotoProject(page);
-  await galleryImage(page, 10).click();
-  await waitForLightbox(page);
+test.describe(() => {
+  test.use({ deviceScaleFactor: 2 });
 
-  const resolution = await page.locator('.lightbox-slide-current img').evaluate(
-    (element) => {
-      const image = element as HTMLImageElement;
-      return {
-        naturalWidth: image.naturalWidth,
-        renderedWidth: image.getBoundingClientRect().width,
-        sourceWidth: Number(image.getAttribute('width')),
-        pixelRatio: devicePixelRatio,
-      };
-    },
-  );
-  expect(resolution.naturalWidth).toBeGreaterThanOrEqual(
-    Math.min(
-      resolution.sourceWidth,
-      Math.ceil(resolution.renderedWidth * resolution.pixelRatio),
-    ),
-  );
-  expect(resolution.naturalWidth).toBeLessThanOrEqual(resolution.sourceWidth);
-  await context.close();
+  test('2x display density selects enough pixels without exceeding the source', async ({
+    page,
+  }) => {
+    await gotoProject(page);
+    await galleryImage(page, 10).click();
+    await waitForLightbox(page);
+
+    const resolution = await page.locator('.lightbox-slide-current img').evaluate(
+      (element) => {
+        const image = element as HTMLImageElement;
+        return {
+          naturalWidth: image.naturalWidth,
+          renderedWidth: image.getBoundingClientRect().width,
+          sourceWidth: Number(image.getAttribute('width')),
+          pixelRatio: devicePixelRatio,
+        };
+      },
+    );
+    expect(resolution.naturalWidth).toBeGreaterThanOrEqual(
+      Math.min(
+        resolution.sourceWidth,
+        Math.ceil(resolution.renderedWidth * resolution.pixelRatio),
+      ),
+    );
+    expect(resolution.naturalWidth).toBeLessThanOrEqual(resolution.sourceWidth);
+  });
 });
 
-test('a reopened pyramid matches its canvas to a changed display density', async ({
-  browserName,
-  browser,
-}) => {
+test.describe(() => {
+  test.use({ viewport: { width: 1280, height: 720 } });
   test.skip(
-    browserName !== 'chromium',
+    ({ browserName }) => browserName !== 'chromium',
     'Playwright only exposes dynamic display density through CDP',
   );
-  const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
-  });
-  const page = await context.newPage();
-  await gotoProject(page);
-  await galleryImage(page, 2).click();
-  await waitForLightbox(page);
-  await page.locator('.openseadragon-canvas canvas').waitFor();
-  await page.getByRole('button', { name: 'Close' }).click();
-  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
-  // Gone from the page: opened again while it fades out, it would go on as it was.
-  await expect(page.locator('[data-gallery-lightbox]')).toBeHidden();
 
-  const session = await context.newCDPSession(page);
-  await session.send('Emulation.setDeviceMetricsOverride', {
-    width: 1280,
-    height: 720,
-    deviceScaleFactor: 2,
-    mobile: false,
-  });
-  await expect.poll(() => page.evaluate(() => devicePixelRatio)).toBe(2);
-  await galleryImage(page, 2).click();
-  await waitForLightbox(page);
-  const canvas = page.locator('.openseadragon-canvas canvas');
-  await canvas.waitFor();
+  test('a reopened pyramid matches its canvas to a changed display density', async ({
+    page,
+    context,
+  }) => {
+    await gotoProject(page);
+    await galleryImage(page, 2).click();
+    await waitForLightbox(page);
+    await page.locator('.openseadragon-canvas canvas').waitFor();
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+    // Gone from the page: opened again while it fades out, it would go on as it was.
+    await expect(page.locator('[data-gallery-lightbox]')).toBeHidden();
 
-  await expect
-    .poll(() =>
-      canvas.evaluate(
-        (element) =>
-          (element as HTMLCanvasElement).width /
-          element.getBoundingClientRect().width,
-      ),
-    )
-    .toBe(2);
-  await context.close();
+    const session = await context.newCDPSession(page);
+    await session.send('Emulation.setDeviceMetricsOverride', {
+      width: 1280,
+      height: 720,
+      deviceScaleFactor: 2,
+      mobile: false,
+    });
+    await expect.poll(() => page.evaluate(() => devicePixelRatio)).toBe(2);
+    await galleryImage(page, 2).click();
+    await waitForLightbox(page);
+    const canvas = page.locator('.openseadragon-canvas canvas');
+    await canvas.waitFor();
+
+    await expect
+      .poll(() =>
+        canvas.evaluate(
+          (element) =>
+            (element as HTMLCanvasElement).width /
+            element.getBoundingClientRect().width,
+        ),
+      )
+      .toBe(2);
+  });
 });
 
 test('the lightbox is full screen with controls in the corners', async ({
@@ -853,53 +853,53 @@ test('a tiled image corner can be pulled clear of the controls and draws there',
   expect(await tilesDrawnAt(page, { x: corner.x + 4, y: corner.y - 4 })).toBe(false);
 });
 
-test('on a phone the rest view uses the full width and zooming out clears the arrows', async ({
-  browser,
-  browserName,
-}) => {
-  test.skip(browserName !== 'chromium', 'One touch-capable browser covers this');
-  const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-    hasTouch: true,
-    isMobile: true,
-  });
-  const page = await context.newPage();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await gotoProject(page);
-  await galleryImage(page, 3).click();
-  await waitForLightbox(page);
-  const image = page.locator('.lightbox-slide-current img');
-  expect(Math.round((await image.boundingBox())!.width)).toBe(390);
+test.describe(() => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  test.skip(
+    ({ browserName }) => browserName !== 'chromium',
+    'One touch-capable browser covers this',
+  );
 
-  const session = await context.newCDPSession(page);
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchStart',
-    touchPoints: [
-      { x: 95, y: 420 },
-      { x: 295, y: 420 },
-    ],
+  test('on a phone the rest view uses the full width and zooming out clears the arrows', async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await gotoProject(page);
+    await galleryImage(page, 3).click();
+    await waitForLightbox(page);
+    const image = page.locator('.lightbox-slide-current img');
+    expect(Math.round((await image.boundingBox())!.width)).toBe(390);
+
+    const session = await context.newCDPSession(page);
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [
+        { x: 95, y: 420 },
+        { x: 295, y: 420 },
+      ],
+    });
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [
+        { x: 175, y: 420 },
+        { x: 215, y: 420 },
+      ],
+    });
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchEnd',
+      touchPoints: [],
+    });
+    const zoomedOut = (await image.boundingBox())!;
+    const previous = (await page
+      .getByRole('button', { name: 'Previous image' })
+      .boundingBox())!;
+    const next = (await page
+      .getByRole('button', { name: 'Next image' })
+      .boundingBox())!;
+    expect(zoomedOut.x).toBeGreaterThanOrEqual(previous.x + previous.width - 1);
+    expect(zoomedOut.x + zoomedOut.width).toBeLessThanOrEqual(next.x + 1);
   });
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchMove',
-    touchPoints: [
-      { x: 175, y: 420 },
-      { x: 215, y: 420 },
-    ],
-  });
-  await session.send('Input.dispatchTouchEvent', {
-    type: 'touchEnd',
-    touchPoints: [],
-  });
-  const zoomedOut = (await image.boundingBox())!;
-  const previous = (await page
-    .getByRole('button', { name: 'Previous image' })
-    .boundingBox())!;
-  const next = (await page
-    .getByRole('button', { name: 'Next image' })
-    .boundingBox())!;
-  expect(zoomedOut.x).toBeGreaterThanOrEqual(previous.x + previous.width - 1);
-  expect(zoomedOut.x + zoomedOut.width).toBeLessThanOrEqual(next.x + 1);
-  await context.close();
 });
 
 test('resizing while zoomed keeps the image within its pan limits', async ({

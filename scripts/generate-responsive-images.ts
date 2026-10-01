@@ -103,7 +103,7 @@ const manifest: ImageManifest = { version: 3, images: {} };
 for (const sourcePath of await referencedImages()) {
   const relativePath = relative(sourceDirectory, sourcePath);
   const source = await readFile(sourcePath);
-  const sourceMetadata = await sharp(sourcePath, {
+  const sourceMetadata = await sharp(source, {
     limitInputPixels: false,
   }).metadata();
   if (!sourceMetadata.width || !sourceMetadata.height || !sourceMetadata.format) {
@@ -163,7 +163,7 @@ for (const sourcePath of await referencedImages()) {
       await mkdir(dirname(cachePath), { recursive: true });
       // Renamed into place once complete, because reuse reads only its header.
       const temporaryCachePath = `${cachePath}.tmp`;
-      const result = await sharp(sourcePath, { limitInputPixels: false })
+      const result = await sharp(source, { limitInputPixels: false })
         .autoOrient()
         .gamma(recipe.gamma)
         .resize({ width, kernel: recipe.kernel })
@@ -227,7 +227,7 @@ for (const sourcePath of await referencedImages()) {
         );
         const levelTargetPath = join(levelDirectory, 'image.dz');
         await mkdir(levelDirectory, { recursive: true });
-        await sharp(sourcePath, { limitInputPixels: false })
+        await sharp(source, { limitInputPixels: false })
           .autoOrient()
           .gamma(deepZoomRecipe.gamma)
           .resize({

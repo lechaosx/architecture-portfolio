@@ -26,7 +26,7 @@
 
 <script lang="ts">
   import { untrack, type Snippet } from 'svelte';
-  import { Tween } from 'svelte/motion';
+  import { Tween, prefersReducedMotion } from 'svelte/motion';
   import type { Lang } from '../i18n';
   import {
     CARD_EASING,
@@ -60,7 +60,6 @@
     restArea,
     columnLimit,
     lang,
-    reducedMotion,
     tiledCanvas,
     drawing = $bindable(),
     turn = $bindable(),
@@ -89,7 +88,6 @@
     restArea: Size;
     columnLimit: number;
     lang: Lang;
-    reducedMotion: boolean;
     /**
      * Draws a deep-zoom pyramid's tiles over its preview, at a view; the flag
      * says the card is at rest on it now.
@@ -257,7 +255,7 @@
   function targets():
     | { mix: number; turn: number; direction?: 1 | -1; follows: boolean }
     | undefined {
-    if (!drag || reducedMotion) {
+    if (!drag || prefersReducedMotion.current) {
       grab = undefined;
       return current.ready
         ? { mix: at, turn: textUp ? 1 : 0, follows: false }
@@ -312,7 +310,7 @@
     const turns = target.turn !== turning.target;
     const blends = target.mix !== mix.target;
     if (!turns && !blends) return;
-    const full = reducedMotion ? CROSSFADE_DURATION : TURN_DURATION;
+    const full = prefersReducedMotion.current ? CROSSFADE_DURATION : TURN_DURATION;
     const duration = target.follows
       ? 0
       : Math.max(
@@ -327,7 +325,10 @@
       number.current === number.target ? CARD_EASING : EASE_OUT;
     if (turns) moveOn(turning, target.turn, { duration, easing: easing(turning) });
     if (blends) {
-      moveOn(mix, target.mix, { duration: reducedMotion ? 0 : duration, easing: easing(mix) });
+      moveOn(mix, target.mix, {
+        duration: prefersReducedMotion.current ? 0 : duration,
+        easing: easing(mix),
+      });
     }
   }
 
@@ -384,8 +385,10 @@
   style:--back-y={`${back.y}px`}
 >
   <div
-    class="lightbox-front lightbox-face flex items-center justify-center"
-    class:lightbox-away={turning.current === 1}
+    class={[
+      'lightbox-front lightbox-face flex items-center justify-center',
+      { 'lightbox-away': turning.current === 1 },
+    ]}
     inert={textUp}
   >
     {#each layers as layer, order (key(layer))}
@@ -401,9 +404,11 @@
         style:width={card.size ? `${card.size.width}px` : undefined}
         style:height={card.size ? `${card.size.height}px` : undefined}
         style:opacity={reach(layer.position)}
-        class:lightbox-incoming={order > 0}
-        class="lightbox-at-view absolute h-auto max-h-full w-auto max-w-full object-contain select-none"
-        onload={(event) => loaded(layer, event.currentTarget)}
+        class={[
+          'lightbox-at-view absolute size-auto max-h-full max-w-full object-contain select-none',
+          { 'lightbox-incoming': order > 0 },
+        ]}
+        onload={() => loaded(layer, layer.drawing!)}
         onerror={() => (layer.ready = true)}
       />
       {#if card.tiles && layer.rested}
@@ -418,8 +423,7 @@
   </div>
   {#if layers.some((layer) => hasBack(describe(layer.image)))}
     <div
-      class="lightbox-back lightbox-face"
-      class:lightbox-away={turning.current === 0}
+      class={['lightbox-back lightbox-face', { 'lightbox-away': turning.current === 0 }]}
       inert={!textUp}
     >
       {#each layers as layer, order (key(layer))}
@@ -427,12 +431,10 @@
         {#if hasBack(card)}
           {@const view = backView(layer)}
           <div
-            class="absolute inset-0"
-            class:lightbox-incoming={order > 0}
+            class={['absolute inset-0', { 'lightbox-incoming': order > 0 }]}
             style:opacity={shows(layer, (above) => !hasBack(describe(above.image)))}
             style:--card-scale={view.scale}
             style:--card-y={`${view.y}px`}
-            aria-hidden={layer === current ? undefined : 'true'}
             inert={layer !== current}
           >
             <LightboxVerso

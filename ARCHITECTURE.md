@@ -31,13 +31,18 @@ work too, but later gave up dual-URL support to keep the setup simple. Choosing
 the root as the only mount point is what makes the code simple:
 
 - There is **no `base`** to configure — at the root, plain root-absolute paths
-  (`/about`, `/uploads/…`, `/favicon.svg`) just work, both in `astro dev` and in
+  (`/work/`, `/uploads/…`, `/favicon.svg`) just work, both in `astro dev` and in
   the build. No `withBase()` helper, no per-target config, no dev override.
 - **The custom domain is committed as `public/CNAME`** (a static file Astro
   copies to `dist/`). No build hook generates it.
-- `astro.config.mjs` sets a single hardcoded `site` (the canonical origin),
-  registers the Svelte, sitemap, and Tailwind integrations, and keeps `.direnv`
-  out of the dev file watcher (see "Dev environment") — nothing else.
+- `astro.config.mjs` sets a single hardcoded `site` (the canonical origin)
+  and `trailingSlash: 'always'`, registers the Svelte, sitemap, and Tailwind
+  integrations, and keeps `.direnv` out of the dev file watcher (see "Dev
+  environment") — nothing else.
+- **Page URLs end in a slash** (`/work/`) — [Explicit]. GitHub Pages serves each
+  page as a directory's `index.html` and 301-redirects the slashless form, so
+  internal links name the final URL. `astro dev` and `astro preview` both answer
+  the slashless form with a 404, so a link missing its slash shows up locally.
 - `site` feeds only the sitemap's absolute URLs (SEO — see below).
 
 Trade-off given up: the bare `*.github.io/<repo>/` URL doesn't serve correctly on
@@ -48,12 +53,16 @@ visitors still land in the right place.
 ### CI/CD: GitHub Actions → Pages — [Explicit]
 
 `.github/workflows/deploy.yml` runs static analysis, unit tests, and Chromium and
-Firefox interaction tests, builds with `withastro/action` (with npm),
-and deploys via `actions/deploy-pages`; a push to `master` is the trigger. Pushes
-whose complete diff is confined to `src/content/**` and `public/uploads/**` skip
-the test steps but still build and deploy, keeping CMS edit cycles short while
+Firefox interaction tests, builds with `withastro/action` (with npm, on Node
+24), and deploys via `actions/deploy-pages`; a push to `master` is the trigger.
+A `changes` job decides whether the `test` job runs: pushes whose complete diff
+is confined to `src/content/**` and `public/uploads/**` skip it (it shows as
+skipped) but still build and deploy, keeping CMS edit cycles short while
 retaining Astro content validation and responsive-image generation. Mixed
-changes and manual workflow runs execute the full suite. The test job and Astro
+changes and manual workflow runs execute the full suite. The workflow's token
+can only read the repository; only the deploy job may write to Pages and
+request an OIDC token. A new run waits for one in progress rather than
+cancelling it, so a deployment under way always completes. The test job and Astro
 build action share the same `node_modules/.astro` cache key, so the browser-test
 prebuild populates the cache consumed by the deployment build.
 
@@ -77,8 +86,12 @@ content. The user accepted the recommended stack without pushback.
 ### Language: TypeScript — [Explicit]
 
 Chosen from the offered options (over plain JavaScript). Uses Astro's `strict`
-tsconfig. `npm run check` runs Astro's project checker across Astro, Svelte,
-TypeScript, and JavaScript sources and fails on errors, warnings, or hints. The
+tsconfig. `npm run check` runs Astro's project checker across Astro,
+TypeScript, and JavaScript sources and fails on errors, warnings, or hints, then
+`svelte-check --fail-on-warnings` across the Svelte components, failing on type
+errors and Svelte compiler warnings — [Explicit]. Astro's checker does not
+type-check inside `.svelte` files or run the Svelte compiler, so it alone would
+let both through. The
 tsconfig also checks JavaScript and reports unused or unreachable code so config
 files and scripts are held to the same zero-diagnostic rule. The content schema
 in `src/content.config.ts` is the main place types earn their keep — [Explicit].
@@ -87,14 +100,19 @@ in `src/content.config.ts` is the main place types earn their keep — [Explicit
 
 The user chose Node and npm. Node 24, an LTS line, runs the TypeScript
 scripts directly by stripping their types; the image script
-therefore imports local modules with their `.ts` extensions. Unit tests run
-under Vitest. Used only at build/dev time — nothing runtime-specific ships to
+therefore imports local modules with their `.ts` extensions, and the tsconfig's
+`erasableSyntaxOnly` rejects syntax that stripping cannot run (enums,
+namespaces, parameter properties). Unit tests run
+under Vitest on Astro's own Vite config (`getViteConfig`), so a test imports
+`astro:content` modules such as the content schema as the build does. Used only
+at build/dev time — nothing runtime-specific ships to
 production.
 
 ### Dev environment: minimal Nix flake — [Explicit]
 
-`flake.nix` provides Node 24 (with npm), the pinned Playwright browser package,
-and util-linux (for `flock`) for `x86_64-linux`. It sets only the browser path
+`flake.nix` provides Node 24 (with npm), Chromium and Firefox from the pinned
+Playwright browser package (the tests run no WebKit), and util-linux (for
+`flock`) for `x86_64-linux` and `aarch64-linux`. It sets only the browser path
 needed by the test runner and has no description. `.gitignore` was likewise
 trimmed on request.
 
@@ -138,8 +156,9 @@ rendering paths support pointer-centred wheel zoom, double-click and double-tap
 zoom, key zoom, touch pinch and pan, and constrain maximum zoom to native image
 detail. At and below the base scale, horizontal mouse and one-finger gestures
 drive the same animated navigation. Svelte's window primitives update image
-selection when viewport size or display density changes; a live media query
-applies reduced-motion changes immediately. Gesture distance remains separate
+selection when viewport size or display density changes, and `svelte/motion`'s
+`prefersReducedMotion`, read by each lightbox component that needs it, applies
+reduced-motion changes immediately. Gesture distance remains separate
 from its rendered
 offset so reduced-motion swipes can retain their navigation threshold without
 moving the slide. Previous, current, and next processed previews are
@@ -167,7 +186,7 @@ purpose and a small interface, so each can be read without the others:
 
 | Unit | Owns |
 |------|------|
-| `Gallery.svelte` | The lightbox as a whole and its state: open, the current image, its view (scale and pan), its side, the address; the strip of slides and where it rests; how far open it shows and the thumbnail it opens from; a live drag and what it grabbed; the stage size, language and motion preference; the derived sources, sizes and zoom range; keys and the focus trap; composing the parts below. |
+| `Gallery.svelte` | The lightbox as a whole and its state: open, the current image, its view (scale and pan), its side, the address; the strip of slides and where it rests; how far open it shows and the thumbnail it opens from; a live drag and what it grabbed; the stage size and language; the derived sources, sizes and zoom range; keys and the focus trap; composing the parts below. |
 | `lightbox-gestures.ts` | The gesture interpreter: a DOM-free state machine that turns mouse, touch, wheel, double-click and zoom-key input into intents (claim the event, a mouse gesture starting or ending, set the view, zoom about a point, a live drag at rest, commit or settle a drag, and a live drag on the text that turns the card, completing or keeping that turn). It holds the one live gesture and the tap record, every threshold, and the one rule for when zoom input is ignored. |
 | `LightboxCard.svelte` | One card and how it looks while it changes: its images stacked as layers, the blend and the turn it chases from where they are on screen, waiting for a layer's drawing, what a drag grabbed of it, its front (the drawing, or the tiled canvas over its preview), its back (`LightboxVerso`), and all the CSS that turns, blends and zooms them. |
 | `LightboxVerso.svelte` | The back's scrolling viewport and the card's fit to its text. |
@@ -574,8 +593,8 @@ both fade together. The tiled canvas waits for the card to come to rest (the
 Transitions are separate and unaffected.
 
 Closing takes effect at once: the dialog stops being modal, the page behind
-takes input and the thumbnail takes focus, while the dialog, `inert` and
-`aria-hidden`, stays drawn over the page until it has faded out and its card
+takes input and the thumbnail takes focus, while the dialog, `inert`, stays
+drawn over the page until it has faded out and its card
 has landed or faded — [Implicit]. So a click or the wheel on the page acts
 during the close as it would with no animation, and Enter on the focused
 thumbnail opens it again. Staying modal until the end would instead keep the
@@ -740,8 +759,8 @@ these rules govern the arbitrary values and the custom CSS in `global.css`.
   term (`clamp(1rem, 0.5rem + 1.5vw, 1.5rem)`) so it still responds to zoom.
 - **unitless** — `line-height` (a ratio, not a length). Tailwind's
   `leading-none`/`leading-normal` already are.
-- Prefer **tokens/variables** (Tailwind's scale, or `@theme` custom props such as
-  `--font-sans` and `--duration-*`) over hardcoded values — but don't invent a
+- Prefer **tokens/variables** (Tailwind's scale, `@theme` tokens such as
+  `--font-sans`, or custom properties such as `--duration-*`) over hardcoded values — but don't invent a
   token for a genuine one-off; a single literal is clearer inline.
 - Don't use the 62.5% root font-size hack.
 
@@ -780,12 +799,13 @@ wishlist — is commercial with no free web licence and is omitted; to add it (o
 any distinct heading face) later, self-host the licensed `woff2`, reintroduce a
 `--font-display` token in `@theme`, and apply it to the headings/nav.
 
-### Motion durations as `@theme` tokens — [Implicit]
+### Motion durations as custom properties — [Implicit]
 
 The three transition speeds used by the CSS animations (reveal-on-scroll and the
-theme-icon cross-fade) live as `--duration-fast/base/slow` tokens in `@theme`
-rather than as inline seconds, so the values stay consistent and adjustable in
-one place. The reveal offset is authored in `rem` (`translateY(0.875rem)`), not
+theme-icon cross-fade) live as `--duration-fast/base/slow` custom properties on
+`:root` rather than as inline seconds, so the values stay consistent and
+adjustable in one place. Only hand-written CSS reads them, so they sit outside
+`@theme`, whose variables are the ones Tailwind generates utilities from. The reveal offset is authored in `rem` (`translateY(0.875rem)`), not
 `px`, so it scales with the root font size like the rest of the spacing.
 
 ### Dark mode: palette remap via CSS variables — [Implicit]
@@ -823,13 +843,18 @@ so no-JS still falls back to light. The toggle shows the mode it switches _to_
 `src/content.config.ts` defines a `projects` collection loaded from
 `src/content/projects/*.md`, with a Zod schema validating frontmatter. The
 singletons — Site settings, Home, and Contact — are single Markdown files under
-`src/content/singletons/`, imported directly where they're needed (`home.md`
-supplies the home page's bio + portrait + gallery + approaches in
-`index.astro`/`Carousel`/`Approaches`; `contact.md` in `contact.astro` and the
-footer; `site.md` in the layout/nav). They are not collections (each is a one-off)
-and are validated only through `.pages.yml` + their consuming code, not Zod.
-Components guard optional fields where their content model permits them (e.g. an
-empty approach list hides the section). Project frontmatter
+`src/content/singletons/`, each the one entry of its own collection (`site`,
+`home`, `contact`) with its own Zod schema — [Explicit]. So a CMS edit the
+pages cannot render fails the build instead of shipping a broken page.
+`src/singletons.ts` reads the three entries with `getEntry` and fails the build
+if a file is missing; `home` supplies the home page's bio + portrait + gallery +
+approaches in `index.astro`/`Carousel`/`Approaches`, `contact` the contact page
+and the footer, `site` the layout, nav and tab titles. A field is required when
+the pages cannot do without it (the name, the email, the About text, every field
+of an approach or an hours row); the rest are optional, and an optional list
+defaults to empty, so an empty approach list hides the section — [Implicit].
+Approach and hours rows drop Pages CMS's blank `{}` rows as project blocks do
+(see "Empty project block lists"). Project frontmatter
 stores an ordered discriminated block list: bilingual text, thumbnail gallery,
 or full-width image set. All human-readable text is bilingual (paired
 `_cs`/`_en` fields); the Markdown file *bodies* are unused — even the bio and
@@ -1003,7 +1028,7 @@ Translatable fields are declared as pairs (`title_cs`/`title_en`,
 `body_cs`/`body_en`, `label_cs`/`label_en`, `day_cs`/`day_en`, …); genuinely
 language-neutral fields (images, `year`, `email`, `phone`) stay single. This keeps
 one file per project/singleton (rather than a file per language) and keeps the CMS
-a single form. The `projects` Zod schema and `.pages.yml` both encode the pairs and
+a single form. The Zod schemas and `.pages.yml` both encode the pairs and
 must stay in sync (see below). Sorting uses the English title for stability. The
 project route uses Astro's filename-derived content ID. Pages CMS initially
 generates the filename from the English title and exposes the complete filename
@@ -1031,12 +1056,12 @@ operate.
 The frontmatter schema is declared **twice**: in `src/content.config.ts` (build-
 time validation) and in `.pages.yml` (the editing UI). They must be kept in sync
 by hand — see MAINTAINERS.md and AGENTS.md. This applies to the `projects`
-collection. The singletons (Site, Home, Contact) have no Zod mirror — they are
-declared only in `.pages.yml` and read straight from their Markdown — so for those
-the pair to keep in sync is `.pages.yml` and the consuming component. Pages CMS
-treats fields as optional unless `required: true` is explicit, so
-`src/content.config.test.ts` checks that every field required by the Astro project
-schema is also required in the editor.
+collection and the three singletons alike. Pages CMS treats fields as optional
+unless `required: true` is explicit, so `src/content.config.test.ts` checks, for
+each collection, that the Zod schema and the editor declare the same fields and
+mark the same ones required, at every level: list rows and project blocks
+included. A field counts as required in Zod when the schema rejects it left out.
+The test also checks that each committed singleton file is valid.
 
 ### Empty project block lists — [Explicit]
 

@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   LightboxHistory,
   galleryImageHash,
@@ -64,26 +64,24 @@ function openImage(index: number) {
   open = true;
 }
 
-const settled = () => new Promise((resolve) => setTimeout(resolve));
+const settled = () => vi.advanceTimersByTime(0);
 /** Longer than the least time between two address writes. */
-const written = () => new Promise((resolve) => setTimeout(resolve, 150));
+const written = () => vi.advanceTimersByTime(150);
 
 function load(url: string) {
   browser = new FakeBrowser(url);
-  Object.assign(globalThis, {
-    history: browser,
-    location: {
-      get pathname() {
-        return browser.url.split(/[?#]/)[0];
-      },
-      get search() {
-        const query = browser.url.split('#')[0].split('?')[1];
-        return query ? `?${query}` : '';
-      },
-      get hash() {
-        const hash = browser.url.split('#')[1];
-        return hash ? `#${hash}` : '';
-      },
+  vi.stubGlobal('history', browser);
+  vi.stubGlobal('location', {
+    get pathname() {
+      return browser.url.split(/[?#]/)[0];
+    },
+    get search() {
+      const query = browser.url.split('#')[0].split('?')[1];
+      return query ? `?${query}` : '';
+    },
+    get hash() {
+      const hash = browser.url.split('#')[1];
+      return hash ? `#${hash}` : '';
     },
   });
   shown = [];
@@ -103,17 +101,13 @@ function load(url: string) {
   browser.onpopstate = () => history.popstate();
 }
 
-const globals = ['history', 'location'].map(
-  (name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)] as const,
-);
+beforeEach(() => {
+  vi.useFakeTimers();
+  load('/projects/a/');
+});
 
-beforeEach(() => load('/projects/a/'));
-
-afterAll(() => {
-  for (const [name, descriptor] of globals) {
-    if (descriptor) Object.defineProperty(globalThis, name, descriptor);
-    else delete (globalThis as Record<string, unknown>)[name];
-  }
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('image hashes', () => {
@@ -136,7 +130,7 @@ describe('image hashes', () => {
 });
 
 describe('the lightbox history', () => {
-  test('opening adds one entry, changing image replaces it, and Back closes', async () => {
+  test('opening adds one entry, changing image replaces it, and Back closes', () => {
     openImage(2);
     expect(browser.entries.map((entry) => entry.url)).toEqual([
       '/projects/a/',
@@ -144,12 +138,12 @@ describe('the lightbox history', () => {
     ]);
     history.change(5);
     history.change(6);
-    await written();
+    written();
     expect(browser.entries).toHaveLength(2);
     expect(browser.url).toBe('/projects/a/#image-7');
 
     browser.back();
-    await settled();
+    settled();
     expect(closes).toBe(1);
     expect(browser.url).toBe('/projects/a/');
   });
@@ -162,7 +156,7 @@ describe('the lightbox history', () => {
     }
   });
 
-  test('a long burst writes the latest address about ten times a second', async () => {
+  test('a long burst writes the latest address ten times a second', () => {
     // Browsers stop taking more than about 200 address changes in 10 s.
     load('/projects/a/');
     history = new LightboxHistory(200, {
@@ -173,26 +167,25 @@ describe('the lightbox history', () => {
     openImage(0);
     const before = browser.replacements;
     for (let index = 1; index < 120; index += 1) history.change(index);
-    const atOnce = browser.replacements - before;
-    expect(atOnce).toBeGreaterThanOrEqual(20);
-    expect(atOnce).toBeLessThanOrEqual(60);
-    await written();
+    expect(browser.replacements - before).toBe(50);
+    written();
     expect(browser.url).toBe('/projects/a/#image-120');
-    expect(browser.replacements - before).toBe(atOnce + 1);    history.destroy();
+    expect(browser.replacements - before).toBe(51);
+    history.destroy();
   });
 
-  test('closing first writes an address still to be written, so Forward reopens the last image', async () => {
+  test('closing first writes an address still to be written, so Forward reopens the last image', () => {
     openImage(0);
     history.change(1);
     history.change(2);
     history.close();
-    await written();
+    written();
     expect(browser.url).toBe('/projects/a/');
     browser.go(1);
     expect(shown).toEqual([2]);
   });
 
-  test('a held key keeps writing about ten addresses a second', async () => {
+  test('a held key keeps writing ten addresses a second', () => {
     load('/projects/a/');
     history = new LightboxHistory(200, {
       isOpen: () => open,
@@ -204,15 +197,14 @@ describe('the lightbox history', () => {
     const before = browser.replacements;
     // A change every 30 ms for 0.6 s.
     for (let index = 60; index < 80; index += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 30));
+      vi.advanceTimersByTime(30);
       history.change(index);
     }
-    expect(browser.replacements - before).toBeGreaterThanOrEqual(4);
-    expect(browser.replacements - before).toBeLessThanOrEqual(8);
+    expect(browser.replacements - before).toBe(6);
     history.destroy();
   });
 
-  test('opening again before the browser has gone back waits for it, then pushes its entry', async () => {
+  test('opening again before the browser has gone back waits for it, then pushes its entry', () => {
     openImage(0);
     // Browsers traverse history asynchronously, and disagree on a push made
     // while a traversal is pending.
@@ -221,7 +213,7 @@ describe('the lightbox history', () => {
     browser.back = () => setTimeout(back);
     history.close();
     openImage(4);
-    await written();
+    written();
     expect(browser.entries.map((entry) => entry.url)).toEqual([
       '/projects/a/',
       '/projects/a/#image-5',
@@ -246,13 +238,13 @@ describe('the lightbox history', () => {
     expect(closes).toBe(1);
   });
 
-  test('closing starts at once, before the browser has gone back', async () => {
+  test('closing starts at once, before the browser has gone back', () => {
     openImage(0);
     // Browsers traverse history asynchronously.
     browser.onpopstate = () => setTimeout(() => history.popstate());
     history.close();
     expect(closes).toBe(1);
-    await settled();
+    settled();
     expect(closes).toBe(1);
     expect(browser.url).toBe('/projects/a/');
   });
@@ -263,7 +255,7 @@ describe('the lightbox history', () => {
     expect(browser.state).toMatchObject({ page: 1 });
   });
 
-  test('a directly linked image first closes to its page before Back leaves it', async () => {
+  test('a directly linked image first closes to its page before Back leaves it', () => {
     load('/projects/a/?lang=cs#image-4');
     history.restore();
     expect(shown).toEqual([3]);
@@ -272,7 +264,7 @@ describe('the lightbox history', () => {
       '/projects/a/?lang=cs#image-4',
     ]);
     history.close();
-    await settled();
+    settled();
     expect(closes).toBe(1);
     expect(browser.url).toBe('/projects/a/?lang=cs');
   });
@@ -283,21 +275,21 @@ describe('the lightbox history', () => {
     expect(browser.entries).toHaveLength(1);
   });
 
-  test('closes in place when its entry is not the lightbox one', async () => {
+  test('closes in place when its entry is not the lightbox one', () => {
     openImage(1);
     browser.replaceState(null, '', '/projects/a/#image-2');
     history.close();
-    await settled();
+    settled();
     expect(closes).toBe(1);
     expect(browser.url).toBe('/projects/a/');
     expect(browser.entries).toHaveLength(2);
   });
 
-  test('suspends scroll restoration while its entry is active', async () => {
+  test('suspends scroll restoration while its entry is active', () => {
     openImage(1);
     expect(browser.scrollRestoration).toBe('manual');
     history.close();
-    await settled();
+    settled();
     expect(browser.scrollRestoration).toBe('auto');
   });
 

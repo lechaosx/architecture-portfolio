@@ -6,13 +6,12 @@ import T from '../components/T.astro';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 
-const projects = (await getCollection('projects'))
-  .filter((p) => !p.data.draft)
-  .sort(
-    (a, b) =>
-      b.data.year - a.data.year ||
-      a.data.title_en.localeCompare(b.data.title_en),
-  );
+const projects = (
+  await getCollection('projects', ({ data }) => !data.draft)
+).sort(
+  (a, b) =>
+    b.data.year - a.data.year || a.data.title_en.localeCompare(b.data.title_en),
+);
 ---
 
 <Base

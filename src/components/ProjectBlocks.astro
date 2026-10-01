@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import Prose from './Prose.astro';
+import T from './T.astro';
 import { ui } from '../i18n';
 import {
   coverSizes,
@@ -58,12 +59,11 @@ const displayBlocks = blocks.map((block) =>
                 data-lightbox-index={index}
                 class="group aspect-square overflow-hidden bg-neutral-100"
               >
-                <span lang="cs" class="sr-only">
-                  {ui.cs.openImage} {index + 1}
-                </span>
-                <span lang="en" class="sr-only">
-                  {ui.en.openImage} {index + 1}
-                </span>
+                <T
+                  cs={`${ui.cs.openImage} ${index + 1}`}
+                  en={`${ui.en.openImage} ${index + 1}`}
+                  class="sr-only"
+                />
                 <img
                   src={displayImageUrl(responsive, item.image)}
                   srcset={responsiveSrcset(responsive, THUMBNAIL_WIDTHS)}
@@ -84,7 +84,7 @@ const displayBlocks = blocks.map((block) =>
                   alt=""
                   loading="lazy"
                   decoding="async"
-                  class="h-full w-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
+                  class="size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
                 />
               </button>
             );
@@ -101,12 +101,11 @@ const displayBlocks = blocks.map((block) =>
           data-lightbox-index={index}
           class="group mt-12 block w-full overflow-hidden bg-neutral-100"
         >
-          <span lang="cs" class="sr-only">
-            {ui.cs.openImage} {index + 1}
-          </span>
-          <span lang="en" class="sr-only">
-            {ui.en.openImage} {index + 1}
-          </span>
+          <T
+            cs={`${ui.cs.openImage} ${index + 1}`}
+            en={`${ui.en.openImage} ${index + 1}`}
+            class="sr-only"
+          />
           <img
             src={displayImageUrl(responsive, item.image)}
             srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
@@ -116,7 +115,7 @@ const displayBlocks = blocks.map((block) =>
             alt=""
             loading="lazy"
             decoding="async"
-            class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[1.02]"
+            class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-102"
           />
         </button>
       );
@@ -126,21 +125,20 @@ const displayBlocks = blocks.map((block) =>
       <div data-project-carousel class="relative mt-12 bg-neutral-100">
         <div
           data-project-carousel-track
-          class="no-scrollbar flex aspect-[16/9] snap-x snap-mandatory overflow-x-auto"
+          class="no-scrollbar flex aspect-video snap-x snap-mandatory overflow-x-auto"
         >
           {block.images.map(({ item, index, responsive }) => (
             <button
               type="button"
               data-lightbox-index={index}
               data-project-slide
-              class="relative h-full w-full shrink-0 snap-start"
+              class="relative size-full shrink-0 snap-start"
             >
-              <span lang="cs" class="sr-only">
-                {ui.cs.openImage} {index + 1}
-              </span>
-              <span lang="en" class="sr-only">
-                {ui.en.openImage} {index + 1}
-              </span>
+              <T
+                cs={`${ui.cs.openImage} ${index + 1}`}
+                en={`${ui.en.openImage} ${index + 1}`}
+                class="sr-only"
+              />
               <img
                 src={displayImageUrl(responsive, item.image)}
                 srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
@@ -150,7 +148,7 @@ const displayBlocks = blocks.map((block) =>
                 alt=""
                 loading="lazy"
                 decoding="async"
-                class="h-full w-full object-contain"
+                class="size-full object-contain"
               />
             </button>
           ))}
@@ -163,15 +161,14 @@ const displayBlocks = blocks.map((block) =>
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
-            class="h-5 w-5"
+            class="size-5"
             fill="none"
             stroke="currentColor"
             stroke-width="1.5"
           >
             <path d="M15.5 5l-7 7 7 7" />
           </svg>
-          <span lang="cs" class="sr-only">{ui.cs.previousImage}</span>
-          <span lang="en" class="sr-only">{ui.en.previousImage}</span>
+          <T k="previousImage" class="sr-only" />
         </button>
         <button
           type="button"
@@ -181,29 +178,27 @@ const displayBlocks = blocks.map((block) =>
           <svg
             aria-hidden="true"
             viewBox="0 0 24 24"
-            class="h-5 w-5"
+            class="size-5"
             fill="none"
             stroke="currentColor"
             stroke-width="1.5"
           >
             <path d="M8.5 5l7 7-7 7" />
           </svg>
-          <span lang="cs" class="sr-only">{ui.cs.nextImage}</span>
-          <span lang="en" class="sr-only">{ui.en.nextImage}</span>
+          <T k="nextImage" class="sr-only" />
         </button>
         <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
           {block.images.map((_, index) => (
             <button
               type="button"
               data-project-dot
-              class="carousel-dot h-2.5 w-2.5 rounded-full"
+              class="carousel-dot size-2.5 rounded-full"
             >
-              <span lang="cs" class="sr-only">
-                {ui.cs.goToImage} {index + 1}
-              </span>
-              <span lang="en" class="sr-only">
-                {ui.en.goToImage} {index + 1}
-              </span>
+              <T
+                cs={`${ui.cs.goToImage} ${index + 1}`}
+                en={`${ui.en.goToImage} ${index + 1}`}
+                class="sr-only"
+              />
             </button>
           ))}
         </div>

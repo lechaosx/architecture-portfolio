@@ -1,15 +1,14 @@
 ---
-import { frontmatter as site } from '../content/singletons/site.md';
+import { site } from '../singletons';
 import type { UiKey } from '../i18n';
 import T from './T.astro';
 
 const links: { href: string; key: UiKey }[] = [
-  { href: '/work', key: 'workNav' },
-  { href: '/contact', key: 'contactNav' },
+  { href: '/work/', key: 'workNav' },
+  { href: '/contact/', key: 'contactNav' },
 ];
 
-const current = Astro.url.pathname.replace(/\/+$/, '') || '/';
-const isActive = (href: string) => current === href;
+const isActive = (href: string) => Astro.url.pathname === href;
 ---
 
 <header class="sticky top-0 z-40 border-b border-black bg-white">

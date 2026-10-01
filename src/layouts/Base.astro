@@ -3,7 +3,7 @@ import '@fontsource-variable/roboto/index.css';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { frontmatter as site } from '../content/singletons/site.md';
+import { site } from '../singletons';
 
 interface Props {
   title: { cs: string; en: string };
@@ -22,84 +22,82 @@ const { title } = Astro.props;
     <!-- Pick the language before first paint (query > saved > browser > en) so
          the correct-language content shows without a flash. -->
     <script is:inline>
-      (function () {
-        var url = new URLSearchParams(location.search).get('lang');
-        var saved = null;
+      {
+        const url = new URLSearchParams(location.search).get('lang');
+        let saved = null;
         try {
           saved = localStorage.getItem('lang');
-        } catch (e) {}
-        var nav = (navigator.language || '').toLowerCase();
-        var lang = url || saved || (nav.indexOf('cs') === 0 ? 'cs' : 'en');
+        } catch {}
+        const nav = (navigator.language || '').toLowerCase();
+        let lang = url || saved || (nav.startsWith('cs') ? 'cs' : 'en');
         if (lang !== 'cs' && lang !== 'en') lang = 'en';
         if (url === 'cs' || url === 'en') {
           try {
             localStorage.setItem('lang', url);
-          } catch (e) {}
+          } catch {}
         }
         document.documentElement.dataset.lang = lang;
         document.documentElement.lang = lang;
-      })();
+      }
     </script>
 
     <!-- Pick the saved theme or current system preference before first paint. -->
     <script is:inline>
-      (function () {
-        var saved = null;
+      {
+        let saved = null;
         try {
           saved = localStorage.getItem('theme');
-        } catch (e) {}
-        var system = matchMedia('(prefers-color-scheme: dark)').matches
+        } catch {}
+        const system = matchMedia('(prefers-color-scheme: dark)').matches
           ? 'dark'
           : 'light';
         document.documentElement.dataset.theme =
           saved === 'dark' || saved === 'light' ? saved : system;
-      })();
+      }
     </script>
 
     <!-- Tag cover transitions with their direction; pagereveal must be handled
          before the first frame. The opened card's hover scale is carried over
          so the opening snapshot starts where the card image was. -->
     <script is:inline>
-      (function () {
-        var key = 'project-cover-scale';
-        addEventListener('pageswap', function (event) {
-          var swap = /** @type {PageSwapEvent} */ (event);
+      {
+        const key = 'project-cover-scale';
+        addEventListener('pageswap', (event) => {
+          const swap = /** @type {PageSwapEvent} */ (event);
           if (!swap.viewTransition || !swap.activation) return;
-          var url = swap.activation.entry.url;
-          var link = Array.from(document.querySelectorAll('a')).find(
-            function (a) {
-              return a.href === url;
-            },
+          const url = swap.activation.entry.url;
+          const link = Array.from(document.querySelectorAll('a')).find(
+            (a) => a.href === url,
           );
-          var cover = link && link.querySelector('.project-cover');
-          var image = cover && cover.querySelector('img');
+          const cover = link?.querySelector('.project-cover');
+          const image = cover?.querySelector('img');
           if (!cover || !image) return;
           try {
             sessionStorage.setItem(
               key,
               String(image.getBoundingClientRect().width / cover.clientWidth),
             );
-          } catch (e) {}
+          } catch {}
         });
-        addEventListener('pagereveal', function (event) {
-          var scale = null;
+        addEventListener('pagereveal', (event) => {
+          let scale = null;
           try {
             scale = sessionStorage.getItem(key);
             sessionStorage.removeItem(key);
-          } catch (e) {}
-          var transition = /** @type {PageRevealEvent} */ (event).viewTransition;
+          } catch {}
+          const transition = /** @type {PageRevealEvent} */ (event).viewTransition;
           if (!transition) return;
-          var opening = location.pathname.indexOf('/projects/') === 0;
+          const opening = location.pathname.startsWith('/projects/');
           transition.types.add(opening ? 'project-open' : 'project-close');
           if (opening && scale) {
-            var root = document.documentElement;
+            const root = document.documentElement;
             root.style.setProperty('--project-source-scale', scale);
-            transition.finished.finally(function () {
+            transition.finished.finally(() => {
               root.style.removeProperty('--project-source-scale');
             });
           }
         });
-      })();
+      }
     </script>
 
     <title>{title.en}</title>

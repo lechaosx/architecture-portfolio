@@ -63,4 +63,62 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { projects };
+// Each singleton is one Markdown file, read as the one entry of its own
+// collection.
+const singletons = './src/content/singletons';
+
+const site = defineCollection({
+  loader: glob({ pattern: 'site.md', base: singletons }),
+  schema: z.object({
+    name: z.string(),
+    credential: z.string().optional(),
+    description_cs: z.string().optional(),
+    description_en: z.string().optional(),
+  }),
+});
+
+const home = defineCollection({
+  loader: glob({ pattern: 'home.md', base: singletons }),
+  schema: z.object({
+    portrait: z.string().optional(),
+    gallery: z.array(z.string()).min(1),
+    approaches: z.preprocess(
+      withoutEmptyCmsRows,
+      z
+        .array(
+          z.object({
+            label_cs: z.string(),
+            label_en: z.string(),
+            text_cs: z.string(),
+            text_en: z.string(),
+            icon: z.enum(['place', 'scale', 'material', 'thinking']),
+          }),
+        )
+        .default([]),
+    ),
+    body_cs: z.string(),
+    body_en: z.string(),
+  }),
+});
+
+const contact = defineCollection({
+  loader: glob({ pattern: 'contact.md', base: singletons }),
+  schema: z.object({
+    email: z.string(),
+    phone: z.string().optional(),
+    hours: z.preprocess(
+      withoutEmptyCmsRows,
+      z
+        .array(
+          z.object({
+            day_cs: z.string(),
+            day_en: z.string(),
+            hours: z.string(),
+          }),
+        )
+        .default([]),
+    ),
+  }),
+});
+
+export const collections = { projects, site, home, contact };

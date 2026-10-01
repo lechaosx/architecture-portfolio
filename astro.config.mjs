@@ -9,6 +9,7 @@ import tailwindcss from '@tailwindcss/vite';
 // The custom domain is committed as public/CNAME.
 export default defineConfig({
   site: 'https://kalabkova.cz',
+  trailingSlash: 'always',
   integrations: [svelte(), sitemap()],
   vite: {
     plugins: [tailwindcss()],

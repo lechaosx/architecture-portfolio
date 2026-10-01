@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
   import { on } from 'svelte/events';
-  import { Tween } from 'svelte/motion';
+  import { Tween, prefersReducedMotion } from 'svelte/motion';
   import {
     devicePixelRatio,
     innerHeight,
@@ -126,18 +126,17 @@
   let cardDrag = $state<{ offset: number; turns: boolean }>();
   // Set only by the interpreter's `grab` intents, for the cursor.
   let grabbing = $state(false);
-  let reducedMotion = $state(false);
   let stageWidth = $state(0);
   let stageHeight = $state(0);
   let pixelRatio = $derived(devicePixelRatio.current ?? 1);
   let stage = $state<HTMLDivElement>()!;
-  let dialog = $state<HTMLDialogElement>()!;
+  let dialog: HTMLDialogElement;
   let closeButton = $state<HTMLButtonElement>();
   let trigger: HTMLButtonElement | undefined;
   let thumbnailButtons: HTMLButtonElement[] = [];
   let nextSlideId = 0;
   const gestures = new LightboxGestures();
-  const imageHistory = new LightboxHistory(images.length, {
+  const imageHistory = new LightboxHistory(untrack(() => images.length), {
     isOpen: () => open,
     show: showFromHistory,
     close: closeFromHistory,
@@ -209,7 +208,7 @@
     max: maximumScale(),
   });
   $effect(() => {
-    if (reducedMotion) untrack(() => strip.set(at, { duration: 0 }));
+    if (prefersReducedMotion.current) untrack(() => strip.set(at, { duration: 0 }));
   });
   // At rest the strip holds only the current image and its neighbours.
   $effect(() => {
@@ -270,15 +269,13 @@
     });
   });
   onMount(() => {
-    const triggerHandlers = Array.from(
+    const removeTriggers = Array.from(
       document.querySelectorAll<HTMLButtonElement>('[data-lightbox-index]'),
     ).flatMap((button) => {
       const imageIndex = Number(button.dataset.lightboxIndex);
       if (!Number.isInteger(imageIndex) || !images[imageIndex]) return [];
       thumbnailButtons[imageIndex] = button;
-      const handler = () => void show(imageIndex, button);
-      button.addEventListener('click', handler);
-      return [{ button, handler }];
+      return [on(button, 'click', () => void show(imageIndex, button))];
     });
     const syncLang = () => {
       lang = document.documentElement.dataset.lang === 'cs' ? 'cs' : 'en';
@@ -289,21 +286,12 @@
       attributes: true,
       attributeFilter: ['data-lang'],
     });
-    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const syncMotionPreference = () => {
-      reducedMotion = motionQuery.matches;
-    };
-    syncMotionPreference();
-    motionQuery.addEventListener('change', syncMotionPreference);
 
     imageHistory.restore();
     return () => {
       imageHistory.destroy();
-      for (const { button, handler } of triggerHandlers) {
-        button.removeEventListener('click', handler);
-      }
+      for (const remove of removeTriggers) remove();
       languageObserver.disconnect();
-      motionQuery.removeEventListener('change', syncMotionPreference);
     };
   });
 
@@ -407,7 +395,7 @@
     towards = 1;
     showDescription = false;
     if (again && live?.image === i) {
-      setView(rest, reducedMotion ? 0 : slideDuration);
+      setView(rest, prefersReducedMotion.current ? 0 : slideDuration);
       moveStrip();
     } else {
       setView(rest);
@@ -424,7 +412,7 @@
       morph = frame && { from: frame, at: cardAt.current, thumbnail: morph?.thumbnail };
       stop(cardAt);
     } else {
-      const from = source && !reducedMotion ? thumbnailFrame(source) : undefined;
+      const from = source && !prefersReducedMotion.current ? thumbnailFrame(source) : undefined;
       morph = from && { from, at: 0, thumbnail: source };
       cardAt.set(from ? 0 : 1, { duration: 0 });
       cardShown.set(from ? 1 : 0, { duration: 0 });
@@ -449,7 +437,9 @@
     moveOn(number, to, {
       duration:
         duration ??
-        (reducedMotion ? 0 : (from, next) => settleDuration(openDuration, from, next)),
+        (prefersReducedMotion.current
+          ? 0
+          : (from, next) => settleDuration(openDuration, from, next)),
     });
   }
 
@@ -509,7 +499,13 @@
     trigger?.focus({ preventScroll: true });
     moveCard(shownOpen, 0);
     const thumbnail = thumbnailButtons[index];
-    if (thumbnail && view.scale === 1 && !flipped && cardShown.current === 1 && !reducedMotion) {
+    if (
+      thumbnail &&
+      view.scale === 1 &&
+      !flipped &&
+      cardShown.current === 1 &&
+      !prefersReducedMotion.current
+    ) {
       closeInto(thumbnail);
     } else {
       fadeCard();
@@ -571,7 +567,7 @@
       live!.image = target;
       moveStrip();
     } else {
-      setView(rest, reducedMotion ? 0 : slideDuration);
+      setView(rest, prefersReducedMotion.current ? 0 : slideDuration);
     }
     imageHistory.change(target);
   }
@@ -604,7 +600,9 @@
   /** Eases the strip on from where it is to rest at the current image's slide. */
   function moveStrip() {
     moveOn(strip, at, {
-      duration: reducedMotion ? 0 : (from, to) => settleDuration(slideDuration, from, to),
+      duration: prefersReducedMotion.current
+        ? 0
+        : (from, to) => settleDuration(slideDuration, from, to),
     });
   }
 
@@ -696,9 +694,10 @@
       return { from, strip: Math.abs(from) >= 0.5 };
     })();
     const shift = (pixels: number) =>
-      strip.set(at - displayedSwipeOffset(pixels, reducedMotion) / stageWidth, {
-        duration: 0,
-      });
+      strip.set(
+        at - displayedSwipeOffset(pixels, prefersReducedMotion.current) / stageWidth,
+        { duration: 0 },
+      );
     if (dragging.strip) {
       shift(dragging.from + offset);
       return;
@@ -891,7 +890,7 @@
   // Svelte attaches touch handlers as passive, which ignores their
   // preventDefault.
   function cancellable(handler: (event: TouchEvent) => void) {
-    return (element: Element) =>
+    return (element: HTMLElement) =>
       on(element, 'touchmove', handler, { passive: false });
   }
 </script>
@@ -904,14 +903,15 @@
 <dialog
   bind:this={dialog}
   data-gallery-lightbox
-  class="lightbox fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 p-0 text-white"
-  class:lightbox-leaving={mounted && !open}
+  class={[
+    'lightbox fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden border-0 p-0 text-white',
+    { 'lightbox-leaving': mounted && !open },
+  ]}
   style:--lightbox-gap={`${areas.gap}px`}
   style:--lightbox-band={`${areas.band}px`}
   style:--lightbox-control={`${CONTROL_SIZE}px`}
   style:--lightbox-open={shownOpen.current}
   aria-label={ui[lang].imageViewer}
-  aria-hidden={open ? undefined : 'true'}
   inert={!open}
   oncancel={(event) => {
     event.preventDefault();
@@ -959,12 +959,15 @@
           {#each slides as slide (slide.id)}
             {@const isCurrent = slide.position === at}
             <div
-              class="lightbox-slide absolute inset-0 overflow-hidden"
-              class:lightbox-slide-current={isCurrent}
-              class:lightbox-slide-previous={!isCurrent && slide.position === at - 1}
-              class:lightbox-slide-next={!isCurrent && slide.position === at + 1}
+              class={[
+                'lightbox-slide absolute inset-0 overflow-hidden',
+                {
+                  'lightbox-slide-current': isCurrent,
+                  'lightbox-slide-previous': !isCurrent && slide.position === at - 1,
+                  'lightbox-slide-next': !isCurrent && slide.position === at + 1,
+                },
+              ]}
               style:transform={`translate3d(${slide.position * 100}%, 0, 0)`}
-              aria-hidden={isCurrent ? undefined : 'true'}
               inert={!isCurrent}
             >
               {#if isCurrent || slide.left}
@@ -983,7 +986,6 @@
                   restArea={areas.rest}
                   {columnLimit}
                   {lang}
-                  {reducedMotion}
                   {tiledCanvas}
                   bind:drawing={slide.drawing}
                   bind:turn={slide.turn}
@@ -1002,7 +1004,7 @@
                     decoding="async"
                     style:width={size ? `${size.width}px` : undefined}
                     style:height={size ? `${size.height}px` : undefined}
-                    class="h-auto max-h-full w-auto max-w-full object-contain select-none"
+                    class="size-auto max-h-full max-w-full object-contain select-none"
                   />
                 </div>
               {/if}
@@ -1022,7 +1024,6 @@
         hasBack={hasBack(current)}
         {flipped}
         {arrowsAside}
-        {reducedMotion}
         bind:closeButton
         onselect={(setIndex) => changeTo(setIndex, setIndex > index ? 1 : -1)}
         onprevious={prev}
