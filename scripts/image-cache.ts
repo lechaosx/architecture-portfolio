@@ -26,6 +26,7 @@ export function shouldPublishDerivative(
   return derivativeBytes < sourceBytes;
 }
 
+// Vite's dev and preview servers leave `%2B` undecoded and 404 (https://github.com/vitejs/vite/issues/20799).
 export function displaySourceUrl(
   originalUrl: string,
   cacheKey: string,
