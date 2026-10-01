@@ -33,7 +33,7 @@ describe('imageCacheKey', () => {
 });
 
 describe('derivative selection', () => {
-  test('uses a hash-only display URL when an upload path contains a plus sign', () => {
+  test('gives an upload with a plus sign a display URL the dev and preview servers resolve', () => {
     expect(
       displaySourceUrl('/uploads/Plan%2Bchanges.webp', 'abc123', 'webp'),
     ).toBe('/_responsive/abc123/source.webp');

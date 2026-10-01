@@ -280,9 +280,6 @@ server survives builds and tests — [Implicit]. Runs are serialized with `flock
 because overlapping runs delete each other's output — [Implicit]; Linux is the
 only build platform.
 
-An upload whose path contains `+` gets a hash-only display URL, because Astro's
-static preview misresolves `%2B`.
-
 ### Image items are caption records — [Explicit]
 
 Each gallery or image-set item keeps its image, optional bilingual title and
