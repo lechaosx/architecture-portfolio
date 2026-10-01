@@ -147,9 +147,9 @@ assistive technology because the adjacent title already names them.
 
 ### Auto-detected, with a manual switch in the footer — [Explicit]
 
-The language comes from `?lang=` in the URL, else a saved choice, else the
-browser, else English. The footer button shows the language it switches _to_ and
-switches without a reload. It sits in the footer, not the nav, because with
+The language comes from a saved choice, else the browser, else English. The
+footer button shows the language it switches _to_, switches without a reload and
+saves the choice. It sits in the footer, not the nav, because with
 auto-detection it is a fallback, and in the nav it confused the architect.
 
 ---
