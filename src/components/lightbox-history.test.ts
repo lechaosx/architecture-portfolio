@@ -256,17 +256,17 @@ describe('the lightbox history', () => {
   });
 
   test('a directly linked image first closes to its page before Back leaves it', () => {
-    load('/projects/a/?lang=cs#image-4');
+    load('/projects/a/?x=1#image-4');
     history.restore();
     expect(shown).toEqual([3]);
     expect(browser.entries.map((entry) => entry.url)).toEqual([
-      '/projects/a/?lang=cs',
-      '/projects/a/?lang=cs#image-4',
+      '/projects/a/?x=1',
+      '/projects/a/?x=1#image-4',
     ]);
     history.close();
     settled();
     expect(closes).toBe(1);
-    expect(browser.url).toBe('/projects/a/?lang=cs');
+    expect(browser.url).toBe('/projects/a/?x=1');
   });
 
   test('ignores a page without an image hash', () => {

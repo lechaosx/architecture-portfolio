@@ -36,24 +36,13 @@ test('primary navigation reaches every page and marks the current section', asyn
 test.describe(() => {
   test.use({ locale: 'cs-CZ' });
 
-  test('language selection follows URL, saved choice, and browser preference', async ({
+  test('language follows the saved choice, else the browser, and ignores ?lang=', async ({
     page,
   }) => {
-    await page.goto('/');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
-    await expect(page.getByRole('link', { name: 'Práce' })).toBeVisible();
-
-    await page.evaluate(() => localStorage.setItem('lang', 'en'));
-    await page.goto('/contact/');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(
-      page.getByRole('heading', { name: 'When to reach me' }),
-    ).toBeVisible();
-
-    await page.goto('/?lang=cs');
+    await page.goto('/?lang=en');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
     await expect(page.getByRole('heading', { name: 'O mně' })).toBeVisible();
-    expect(await page.evaluate(() => localStorage.getItem('lang'))).toBe('cs');
+    expect(await page.evaluate(() => localStorage.getItem('lang'))).toBeNull();
 
     await page.getByRole('button', { name: 'Přepnout do angličtiny' }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
@@ -64,8 +53,12 @@ test.describe(() => {
       /architect/i,
     );
 
-    await page.goto('/contact/');
+    await page.goto('/contact/?lang=cs');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(
+      page.getByRole('heading', { name: 'When to reach me' }),
+    ).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('lang'))).toBe('en');
   });
 });
 
@@ -83,10 +76,13 @@ test('tab titles name the page and the credentialed architect in both languages'
     // tests/e2e/pages/[fixture].astro, which the e2e build adds.
     ['/e2e/project/', `Test project | ${owner}`, `Testovací projekt | ${owner}`],
   ];
+  await page.goto('/');
   for (const [path, en, cs] of titles) {
-    await page.goto(`${path}?lang=en`);
+    await page.evaluate(() => localStorage.setItem('lang', 'en'));
+    await page.goto(path);
     await expect(page).toHaveTitle(en);
-    await page.goto(`${path}?lang=cs`);
+    await page.evaluate(() => localStorage.setItem('lang', 'cs'));
+    await page.goto(path);
     await expect(page).toHaveTitle(cs);
   }
 });

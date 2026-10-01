@@ -19,23 +19,17 @@ const { title } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <!-- Pick the language before first paint (query > saved > browser > en) so
-         the correct-language content shows without a flash. -->
+    <!-- Pick the language before first paint (saved > browser > en) so the
+         correct-language content shows without a flash. -->
     <script is:inline>
       {
-        const url = new URLSearchParams(location.search).get('lang');
         let saved = null;
         try {
           saved = localStorage.getItem('lang');
         } catch {}
         const nav = (navigator.language || '').toLowerCase();
-        let lang = url || saved || (nav.startsWith('cs') ? 'cs' : 'en');
+        let lang = saved || (nav.startsWith('cs') ? 'cs' : 'en');
         if (lang !== 'cs' && lang !== 'en') lang = 'en';
-        if (url === 'cs' || url === 'en') {
-          try {
-            localStorage.setItem('lang', url);
-          } catch {}
-        }
         document.documentElement.dataset.lang = lang;
         document.documentElement.lang = lang;
       }
