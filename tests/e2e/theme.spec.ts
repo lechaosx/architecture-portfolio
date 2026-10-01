@@ -31,8 +31,8 @@ test('carousel overlay controls keep their colors across page themes', async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: 'light' });
-  // Built by the e2e build (E2E_FIXTURES) from src/pages/[fixture].astro.
-  await page.goto('/e2e-carousels/');
+  // tests/e2e/pages/[fixture].astro, which the e2e build adds.
+  await page.goto('/e2e/carousels/');
 
   const overlayColors = () =>
     page.locator('[data-carousel]').evaluate((carousel) => {

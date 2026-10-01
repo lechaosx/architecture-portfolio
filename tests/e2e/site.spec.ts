@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { parse } from 'yaml';
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -70,16 +72,16 @@ test.describe(() => {
 test('tab titles name the page and the credentialed architect in both languages', async ({
   page,
 }) => {
-  const owner = 'Ing. arch. Tereza Kalábková';
+  const site = parse(
+    readFileSync('src/content/singletons/site.md', 'utf8').split('---')[1],
+  );
+  const owner = [site.credential, site.name].filter(Boolean).join(' ');
   const titles = [
     ['/', `${owner} | Architecture`, `${owner} | Architektura`],
     ['/work/', `Work | ${owner}`, `Práce | ${owner}`],
     ['/contact/', `Contact | ${owner}`, `Kontakt | ${owner}`],
-    [
-      '/projects/urban-study-kyjov/',
-      `Urban Intervention | Kyjov | ${owner}`,
-      `Drobný urbanismus | Kyjov | ${owner}`,
-    ],
+    // tests/e2e/pages/[fixture].astro, which the e2e build adds.
+    ['/e2e/project/', `Test project | ${owner}`, `Testovací projekt | ${owner}`],
   ];
   for (const [path, en, cs] of titles) {
     await page.goto(`${path}?lang=en`);
@@ -235,7 +237,7 @@ test('project prose becomes two columns only on wide screens', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto('/projects/galerie-hang%C3%A1r/');
+  await page.goto('/e2e/project/');
   const prose = page.locator('article .prose[lang="en"]').first();
   await expect(prose).toBeVisible();
 
@@ -271,7 +273,7 @@ test('reduced motion exposes reveal content without animation', async ({ page })
 });
 
 test('reduced motion keeps project images still on hover', async ({ page }) => {
-  await page.goto('/projects/galerie-hangár/');
+  await page.goto('/e2e/project/');
   const variants = {
     cover: page.locator('.project-cover'),
     'gallery thumbnail': page.locator('.grid > [data-lightbox-index]').first(),
@@ -279,11 +281,6 @@ test('reduced motion keeps project images still on hover', async ({ page }) => {
       .locator('article > [data-lightbox-index]:not(.project-cover)')
       .first(),
   };
-  const missing = [];
-  for (const [name, button] of Object.entries(variants)) {
-    if ((await button.count()) === 0) missing.push(name);
-  }
-  test.skip(missing.length > 0, `The project has no ${missing.join(', ')}`);
 
   for (const button of Object.values(variants)) {
     const image = button.locator('img');

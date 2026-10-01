@@ -1,0 +1,119 @@
+---
+// Pages the browser tests run against, so they do not depend on the shipped
+// content; astro.config.e2e.mjs adds them at /e2e/. Their images are
+// tests/e2e/images, served by images/[file].ts.
+import type { CollectionEntry } from 'astro:content';
+import Base from '../../../src/layouts/Base.astro';
+import Carousel from '../../../src/components/Carousel.astro';
+import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
+import ProjectPage from '../../../src/components/ProjectPage.astro';
+
+export function getStaticPaths() {
+  const images = [
+    '/e2e/images/placeholder-cover.svg',
+    '/e2e/images/placeholder-1.svg',
+    '/e2e/images/placeholder-2.svg',
+  ];
+
+  const sentence = {
+    en: 'The drawing follows how a square, a park and a stadium meet along a river, and where a new path could join them.',
+    cs: 'Výkres sleduje, jak se náměstí, park a stadion potkávají podél řeky a kudy by je mohla spojit nová cesta.',
+  };
+  const text = (sentences: number) => ({
+    en: Array(sentences).fill(sentence.en).join(' '),
+    cs: Array(sentences).fill(sentence.cs).join(' '),
+  });
+  const described = (sentences: number) => ({
+    description_en: text(sentences).en,
+    description_cs: text(sentences).cs,
+  });
+  const short = {
+    description_en: 'A short note.',
+    description_cs: 'Krátká poznámka.',
+  };
+  const tiled = { comparison_set: 'tiled' };
+  const untiled = { comparison_set: 'untiled' };
+  const item = (file: string, title?: [en: string, cs: string], more = {}) => ({
+    image: `/e2e/images/${file}`,
+    ...(title && { title_en: title[0], title_cs: title[1] }),
+    ...more,
+  });
+  // Each title ends in its image's lightbox position.
+  const project: CollectionEntry<'projects'>['data'] = {
+    title_en: 'Test project',
+    title_cs: 'Testovací projekt',
+    year: 2026,
+    location_en: 'Nowhere',
+    location_cs: 'Nikde',
+    draft: false,
+    cover: '/e2e/images/cover.png',
+    blocks: [
+      { type: 'text', body_en: text(6).en, body_cs: text(6).cs },
+      {
+        type: 'gallery',
+        images: [
+          // All tiled, since a set zooms only as far as its least detailed
+          // image allows. Its titles are long enough for a phone's set strip
+          // to centre the second.
+          item('tiled-1.png', ['Tiled variant 2', 'Dlaždicová varianta 2'], { ...tiled, ...described(8) }),
+          item('tiled-2.png', ['Tiled variant 3', 'Dlaždicová varianta 3'], { ...tiled, ...described(24) }),
+          item('tiled-3.png', ['Tiled variant 4', 'Dlaždicová varianta 4'], { ...tiled, ...described(8) }),
+          item('tiled-4.png', ['Tiled variant 5', 'Dlaždicová varianta 5'], { ...tiled, ...described(8) }),
+          item('tiled-5.png', ['Tiled variant 6', 'Dlaždicová varianta 6'], { ...tiled, ...described(8) }),
+          item('square-1.png', ['Drawing 7', 'Výkres 7'], described(8)),
+          item('tiled-1.png', ['Drawing 8', 'Výkres 8'], described(24)),
+          item('tiled-3.png', ['Drawing 9', 'Výkres 9'], described(8)),
+          item('square-2.png', ['Drawing 10', 'Výkres 10']),
+          item('wide.png', ['View 11', 'Pohled 11']),
+          item('wide.png', ['View 12', 'Pohled 12'], described(24)),
+          item('wide.png', ['View 13', 'Pohled 13']),
+          item('wide.png', ['View 14', 'Pohled 14']),
+          item('wide.png', ['View 15', 'Pohled 15']),
+          item('wide.png', ['View 16', 'Pohled 16']),
+          // An SVG has no responsive variants.
+          item('vector.svg', ['Vector 17', 'Vektor 17'], short),
+        ],
+      },
+      {
+        type: 'gallery',
+        images: [
+          item('untiled-1.png', ['Untiled variant 18', 'Varianta bez dlaždic 18'], { ...untiled, ...short }),
+          item('untiled-2.png', ['Untiled variant 19', 'Varianta bez dlaždic 19'], untiled),
+          item('untiled-3.png', ['Untiled variant 20', 'Varianta bez dlaždic 20'], untiled),
+          item('wide.png'),
+        ],
+      },
+      { type: 'image_set', images: [item('wide.png')] },
+      { type: 'gallery', images: [item('square-1.png'), item('cover.png')] },
+    ],
+  };
+
+  return [
+    { params: { fixture: 'carousels' }, props: { images } },
+    { params: { fixture: 'single-image' }, props: { images: images.slice(0, 1) } },
+    { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project } } },
+  ];
+}
+
+const { images, project } = Astro.props;
+---
+
+{
+  project ? (
+    <ProjectPage {project} />
+  ) : (
+    <Base title={{ cs: 'E2E', en: 'E2E' }}>
+      <Carousel {images} />
+      {images.length > 1 && (
+        <div class="mx-auto max-w-6xl px-6 pb-16">
+          <ProjectBlocks
+            blocks={[
+              { type: 'image_set', images: images.map((image) => ({ image })) },
+            ]}
+            responsiveImages={[]}
+          />
+        </div>
+      )}
+    </Base>
+  )
+}

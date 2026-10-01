@@ -66,12 +66,50 @@ cancelling it, so a deployment under way always completes. The test job and Astr
 build action share the same `node_modules/.astro` cache key, so the browser-test
 prebuild populates the cache consumed by the deployment build.
 
-### Browser tests bring their own carousel pages — [Implicit]
+### Browser tests bring their own pages — [Explicit] (shape [Implicit])
 
-The shipped content need not contain a carousel, so the carousel tests run
-against test-only pages (`src/pages/[fixture].astro`) that render the carousel
-components with placeholder uploads. They are built only when `E2E_FIXTURES`
-is set; the deployment build never sets it, so they never reach the site.
+The browser tests run against test-only pages (`tests/e2e/pages/`) rather than
+the shipped content, which need not contain a carousel and which the CMS can
+change between test runs (content-only pushes skip the tests). Every test-only
+route lives under `/e2e/` — [Explicit]. Nothing in `src/` or `scripts/` knows
+about them — [Explicit]:
+
+- `astro.config.e2e.mjs` merges the site's config (`mergeConfig`) with an
+  integration that adds the pages through `injectRoute`, Astro's way to add
+  routes from outside `src/pages`. A separate config rather than an
+  environment-variable check keeps the plain build's config free of test code,
+  and its own `outDir` (`dist-e2e/`) keeps running the tests from replacing
+  `dist/` with a build that is not the deployed one — [Implicit].
+- The image script takes which images to process as arguments: the uploads a
+  content directory refers to (`--content`, by default `src/content`) and every
+  raster in a directory at a URL path (`--images <directory>=<path>`). The test
+  build passes both; the plain build passes neither — [Explicit] (form
+  [Implicit]). They share `public/_responsive`: the test images' keys
+  (`/e2e/images/…`) cannot collide with uploads, derivative paths are
+  content-addressed, and the plain build's own run removes the test ones before
+  Astro copies the directory, so a separate output would buy nothing —
+  [Implicit].
+- The carousel pages render the carousel components with test-owned copies of
+  the placeholder SVGs — [Implicit].
+- `/e2e/project/` is a project rendered by `ProjectPage.astro`, the component
+  every project page renders, from data in that file that TypeScript checks
+  against the projects collection's type. The lightbox and project-page tests
+  depend on its images' positions, titles, comparison sets and descriptions —
+  [Explicit]. It is frozen: a test needing something new gets its own small
+  fixture entry rendered through `ProjectPage.astro` instead of an insertion
+  that would move the shared positions — [Implicit].
+- Its images are small line drawings in `tests/e2e/images`: the five of one
+  comparison set exceed the tiling size, positions 8 and 9 reuse two of those
+  tiled files (the tests rely on #8 being tiled), the other rasters are not
+  tiled, and an SVG stands for an image without responsive variants.
+  `tests/e2e/pages/images/[file].ts` serves the originals at `/e2e/images/` —
+  [Implicit]. Files are reused across positions where the tests do not tell
+  them apart, so a cold cache adds five pyramids and about ninety derivatives.
+- Tests of the work page and the transitions from it use the shipped projects,
+  picked by their position in the grid — [Implicit].
+
+The deployment build uses `astro.config.mjs` and the image script's default, so
+no test page, image or sitemap entry reaches the site.
 
 ---
 

@@ -28,7 +28,7 @@ npm run build        # production build -> dist/
 npm run preview      # serve the built dist/ locally
 ```
 
-`test:e2e` builds the production site, including responsive images, before
+`test:e2e` builds the site, including responsive images, into `dist-e2e/` before
 Playwright starts its preview server on `http://127.0.0.1:4322`, separate from
 Astro's default development port and outside Astro's preview-server lock, so it
 starts beside a running `npm run preview`. Cold image processing is therefore
@@ -37,11 +37,24 @@ during interaction tests. CI persists `node_modules/.astro` after that
 prebuild; the deployment build and later workflow runs reuse its
 content-addressed image cache.
 
-That prebuild sets `E2E_FIXTURES=1`, which adds the test-only pages
-`/e2e-carousels/` and `/e2e-single-image/` (`src/pages/[fixture].astro`) that
-the carousel tests run against. When running Playwright directly against your
-own build, build with `E2E_FIXTURES=1 npm run build`; a plain `npm run build`,
-like the deployment's, leaves them out.
+That prebuild uses `astro.config.e2e.mjs`, the site's config plus the test-only
+pages in `tests/e2e/pages/`, under `/e2e/`: `/e2e/carousels/`,
+`/e2e/single-image/` and `/e2e/project/`, which the carousel, lightbox and
+project-page tests run against, and `/e2e/images/`, the images in
+`tests/e2e/images`. It runs those images through the image pipeline with the
+content's uploads (see `pretest:e2e` in `package.json`). Playwright's preview server serves
+`dist-e2e/`, so `dist/` stays the plain build; the derivatives share
+`public/_responsive`, and the next plain `npm run images`, `dev` or `build`
+removes the test images' ones. When running Playwright directly, build with
+`npm run pretest:e2e` first.
+
+The lightbox tests address `/e2e/project/` images by lightbox position
+(`#image-N`, and `N / total` with `total` the spec's count of its images); the
+title of each titled image other than the cover ends in its position. That page
+is frozen: a test that needs something it lacks gets its own small fixture
+entry in `tests/e2e/pages/[fixture].astro`, rendered through `ProjectPage.astro`,
+rather than an image inserted into the shared one, which would move the
+positions every lightbox test relies on.
 
 ## Project layout
 
@@ -50,6 +63,7 @@ LICENSE                       MIT for the code; content stays all rights reserve
 flake.nix                     Node 24, Chromium + Firefox for Playwright, flock (Linux)
 .envrc                        automatic flake shell activation with direnv
 astro.config.mjs              site (for sitemap), trailing slashes, integrations; no base
+astro.config.e2e.mjs          the browser tests' build: astro.config.mjs + tests/e2e/pages
 vitest.config.ts              unit tests (src/, scripts/) on Astro's Vite config
 tsconfig.json                 extends astro/tsconfigs/strict
 .pages.yml                    Pages CMS schema (the browser editing UI)
@@ -69,7 +83,6 @@ src/
     work.astro                 project grid
     contact.astro              email, phone, per-day availability (from contact.md)
     projects/[...slug].astro   project detail page
-    [fixture].astro            test-only carousel pages, built with E2E_FIXTURES
   layouts/Base.astro           html shell, reveal + language scripts
   components/
     Nav.astro                  chrome (name from site.md)
@@ -79,6 +92,7 @@ src/
     Carousel.astro             home hero image/carousel; images from home.md by default
     Approaches.astro           vertical "how I work" list (items from home.md)
     ProjectCard.astro          grid card
+    ProjectPage.astro          a project's page: header, cover, blocks and lightbox
     ProjectBlocks.astro        ordered project text/gallery/image-set renderer
     Gallery.svelte             the ONLY hydrated island (page-level lightbox)
     LightboxCard.svelte        one card: its layers, blend and turn, front and back
@@ -100,6 +114,8 @@ scripts/
   image-cache.ts                content + recipe cache fingerprint
   generate-responsive-images.ts  builds referenced raster display sizes
 tests/e2e/                     browser-level interaction regressions
+  pages/                       test-only pages, added by astro.config.e2e.mjs
+  images/                      their images
 ```
 
 ---
@@ -286,6 +302,6 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
 - **Placeholders to replace before launch:** the `.svg` files in
   `public/uploads/`, the sample projects, and the domain (see above). Contact
   details are placeholders in `src/content/singletons/contact.md`
-  (`info@kalabkova.cz`, `+420 777 123 456`) and the owner name in `site.md` — all
-  editable via the CMS. Site-wide text (name, credential, email, phone, hours) now
-  comes from those singletons, not from hardcoded strings in components.
+  (`info@kalabkova.cz`, `+420 777 123 456`) — editable via the CMS. Site-wide
+  text (name, credential, email, phone, hours) now comes from those singletons,
+  not from hardcoded strings in components.

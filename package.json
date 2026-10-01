@@ -11,7 +11,7 @@
     "start": "npm run dev",
     "check": "astro check --minimumFailingSeverity hint && svelte-check --fail-on-warnings",
     "test": "vitest run",
-    "pretest:e2e": "E2E_FIXTURES=1 npm run build",
+    "pretest:e2e": "npm run images -- --content src/content --images tests/e2e/images=/e2e/images && astro build --config astro.config.e2e.mjs",
     "test:e2e": "playwright test",
     "test:all": "npm run check && npm run test && npm run test:e2e",
     "prebuild": "npm run images",

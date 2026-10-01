@@ -52,6 +52,19 @@ async function navigateWithTransition(
   throw new Error(`Three navigations to ${url} went without a view transition`);
 }
 
+/**
+ * A project card on the work page, the address of its project and the view
+ * transition name its cover shares with that page's.
+ */
+async function projectCard(page: Page, nth = 0) {
+  const card = page.locator('main section.grid > a').nth(nth);
+  const path = new URL((await card.getAttribute('href'))!, page.url()).pathname;
+  const cover = await card
+    .locator('.project-cover')
+    .evaluate((element) => getComputedStyle(element).viewTransitionName);
+  return { card, url: new RegExp(`${path}$`), cover };
+}
+
 test('work cards do not start a second entrance animation after navigation', async ({
   page,
 }) => {
@@ -60,7 +73,7 @@ test('work cards do not start a second entrance animation after navigation', asy
   await page.getByRole('link', { name: 'Work' }).click();
   await expect(page).toHaveURL(/\/work\/?$/);
 
-  const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
+  const { card: project } = await projectCard(page);
   await expect(project).toBeVisible();
   const frames = await project.evaluate(async (element) => {
     const values = [];
@@ -79,7 +92,7 @@ test('work cards do not start a second entrance animation after navigation', asy
 test('cover hover does not change the shared transition box', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/work/');
-  const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
+  const { card: project } = await projectCard(page);
   const transitionCover = project.locator('.project-cover');
   const image = project.locator('img');
   const before = await transitionCover.boundingBox();
@@ -95,13 +108,13 @@ test('project page cover hover does not change the shared transition box', async
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/projects/urban-study-kyjov/');
+  // tests/e2e/pages/[fixture].astro, which the e2e build adds.
+  await page.goto('/e2e/project/');
   const transitionBox = () =>
     page.evaluate(() => {
       const named = Array.from(document.querySelectorAll('*')).find(
         (element) =>
-          getComputedStyle(element).viewTransitionName ===
-          'cover-urban-study-kyjov',
+          getComputedStyle(element).viewTransitionName === 'cover-e2e-project',
       )!;
       const { width, height } = named.getBoundingClientRect();
       return { width: Math.round(width), height: Math.round(height) };
@@ -126,20 +139,15 @@ test('opening a project starts a cross-document view transition', async ({
     'The pinned Firefox does not support cross-document View Transitions',
   );
   await page.goto('/work/');
+  const { card, url } = await projectCard(page);
   // The page asks for a transition, which the browser may skip when busy.
-  await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, () =>
-    page.locator('a[href="/projects/urban-study-kyjov/"]').click(),
-  );
+  await navigateWithTransition(page, url, () => card.click());
 });
 
 test('non-square project cover uses the shared crop transition class', async ({
   page,
 }) => {
-  await page.goto('/work/');
-  const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
-  await project.click();
-  await expect(page).toHaveURL(/\/projects\/urban-study-kyjov\/$/);
-
+  await page.goto('/e2e/project/');
   const cover = page.locator('.project-cover');
   await expect(cover).toBeVisible();
   expect(
@@ -158,13 +166,14 @@ test('project covers morph one uncropped snapshot in both directions', async ({
     'The pinned Firefox does not support cross-document View Transitions',
   );
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.addInitScript(() => {
+  await page.goto('/work/');
+  const { card: project, url, cover } = await projectCard(page);
+  await page.addInitScript((cover) => {
     addEventListener('pagereveal', (event) => {
       const transition = (event as PageRevealEvent).viewTransition;
       if (!transition) return;
       void transition.ready.then(() => {
-        const pseudo = (part: string) =>
-          `::view-transition-${part}(cover-urban-study-kyjov)`;
+        const pseudo = (part: string) => `::view-transition-${part}(${cover})`;
         // A hidden snapshot generates no pseudo-element, so it has no animation.
         const animated = (part: string) =>
           document
@@ -191,15 +200,13 @@ test('project covers morph one uncropped snapshot in both directions', async ({
         opening?.play();
       });
     });
-  });
+  }, cover);
   const snapshots = () =>
     page.evaluate(() =>
       JSON.parse(sessionStorage.getItem('cover-snapshots') ?? 'null'),
     );
 
-  await page.goto('/work/');
-  const project = page.locator('a[href="/projects/urban-study-kyjov/"]');
-  await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, async () => {
+  await navigateWithTransition(page, url, async () => {
     await project.hover();
     await transitionsEnd(project.locator('img'));
     await project.click();
@@ -228,12 +235,19 @@ test('a keyboard-opened project starts from its own card, not the hovered one', 
     'The pinned Firefox does not support cross-document View Transitions',
   );
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.addInitScript(() => {
+  await page.goto('/work/');
+  test.skip(
+    (await page.locator('main section.grid > a').count()) < 2,
+    'It needs a second project to hover',
+  );
+  const opened = await projectCard(page);
+  const { card: hovered } = await projectCard(page, 1);
+  await page.addInitScript((cover) => {
     addEventListener('pagereveal', (event) => {
       const transition = (event as PageRevealEvent).viewTransition;
       if (!transition) return;
       void transition.ready.then(() => {
-        const pseudo = '::view-transition-new(cover-urban-study-kyjov)';
+        const pseudo = `::view-transition-new(${cover})`;
         const opening = document
           .getAnimations()
           .find(
@@ -250,14 +264,12 @@ test('a keyboard-opened project starts from its own card, not the hovered one', 
         opening.play();
       });
     });
-  });
+  }, opened.cover);
 
-  await page.goto('/work/');
-  const hovered = page.locator('a[href="/projects/exotarium-brno-zoo/"]');
-  await navigateWithTransition(page, /\/projects\/urban-study-kyjov\/$/, async () => {
+  await navigateWithTransition(page, opened.url, async () => {
     await hovered.hover();
     await transitionsEnd(hovered.locator('img'));
-    await page.locator('a[href="/projects/urban-study-kyjov/"]').focus();
+    await opened.card.focus();
     await page.keyboard.press('Enter');
   });
   await expect

@@ -106,8 +106,7 @@ Mostly a developer task; kept here so the owner knows what "done" looks like.
 4. Connect the repo at [app.pagescms.org](https://app.pagescms.org) so content
    editing works.
 5. Replace the placeholder content: the images in `public/uploads/`, the sample
-   projects, and your real details in **Contact** (email/phone/hours) and **Site
-   settings** (name).
+   projects, and your real details in **Contact** (email/phone/hours).
 
 After this, every saved edit (yours via the CMS, or the developer's in code)
 publishes automatically.
