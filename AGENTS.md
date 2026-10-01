@@ -67,5 +67,5 @@ Only then reconcile them.
 
 ## Verifying a change
 
-Run `bun run build` (via `nix develop`) before declaring a change done; the build
+Run `npm run build` (via `nix develop`) before declaring a change done; the build
 validates content against the schema. See MAINTAINERS.md for commands.

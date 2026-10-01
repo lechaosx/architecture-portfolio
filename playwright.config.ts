@@ -11,10 +11,12 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command:
-      'exec bun node_modules/astro/bin/astro.mjs preview --host 127.0.0.1 --port 4322',
+    // --ignore-lock keeps the server in the foreground, owned by Playwright,
+    // when Astro detects an AI agent, and lets it start beside another
+    // preview server of this project.
+    command: 'npm run preview -- --ignore-lock --host 127.0.0.1 --port 4322',
     url: 'http://127.0.0.1:4322',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
   projects: [

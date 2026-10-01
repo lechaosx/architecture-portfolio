@@ -117,9 +117,9 @@ publishes automatically.
 ## Running it locally (developers)
 
 ```sh
-nix develop      # provides bun
-bun install
-bun dev          # http://localhost:4321
+nix develop      # provides Node and npm
+npm install
+npm run dev      # http://localhost:4321
 ```
 
 Full developer documentation: [MAINTAINERS.md](MAINTAINERS.md).

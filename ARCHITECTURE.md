@@ -48,7 +48,7 @@ visitors still land in the right place.
 ### CI/CD: GitHub Actions → Pages — [Explicit]
 
 `.github/workflows/deploy.yml` runs static analysis, unit tests, and Chromium and
-Firefox interaction tests, builds with `withastro/action` (configured for bun),
+Firefox interaction tests, builds with `withastro/action` (with npm),
 and deploys via `actions/deploy-pages`; a push to `master` is the trigger. Pushes
 whose complete diff is confined to `src/content/**` and `public/uploads/**` skip
 the test steps but still build and deploy, keeping CMS edit cycles short while
@@ -74,33 +74,29 @@ Proposed as the best fit for an image-heavy, mostly-static portfolio: ships zero
 JS by default, supports partial hydration ("islands"), first-class Markdown
 content. The user accepted the recommended stack without pushback.
 
-`astro` is held to 7.0 patch releases from 7.0.9 (`~7.0.9`) — [Explicit].
-Before 7.0.7 the dev server added a socket `close` listener for every page or
-404 it rendered and never removed it, which surfaces as
-`MaxListenersExceededWarning` after ten requests on one connection. The range
-takes the latest 7.0 patch; moving to a newer minor is a separate upgrade.
-
 ### Language: TypeScript — [Explicit]
 
 Chosen from the offered options (over plain JavaScript). Uses Astro's `strict`
-tsconfig. `bun run check` runs Astro's project checker across Astro, Svelte,
+tsconfig. `npm run check` runs Astro's project checker across Astro, Svelte,
 TypeScript, and JavaScript sources and fails on errors, warnings, or hints. The
 tsconfig also checks JavaScript and reports unused or unreachable code so config
 files and scripts are held to the same zero-diagnostic rule. The content schema
 in `src/content.config.ts` is the main place types earn their keep — [Explicit].
 
-### Runtime / package manager: bun — [Explicit]
+### Runtime / package manager: Node and npm — [Explicit]
 
-The user named bun ("use bun instead of node") and delegated the final call;
-Agent confirmed it as a good fit. Used only at build/dev time — nothing bun-
-specific ships to production.
+The user chose Node and npm. Node 24, an LTS line, runs the TypeScript
+scripts directly by stripping their types; the image script
+therefore imports local modules with their `.ts` extensions. Unit tests run
+under Vitest. Used only at build/dev time — nothing runtime-specific ships to
+production.
 
 ### Dev environment: minimal Nix flake — [Explicit]
 
-`flake.nix` provides bun, the pinned Playwright browser package, and util-linux
-(for `flock`) for `x86_64-linux`. It sets only the browser path needed by the
-test runner and has no description. `.gitignore` was likewise trimmed on
-request.
+`flake.nix` provides Node 24 (with npm), the pinned Playwright browser package,
+and util-linux (for `flock`) for `x86_64-linux`. It sets only the browser path
+needed by the test runner and has no description. `.gitignore` was likewise
+trimmed on request.
 
 The dev server's file watcher ignores `.direnv` — [Explicit]. direnv links the
 flake's inputs, including the whole nixpkgs source tree, into
@@ -914,7 +910,7 @@ regenerate images renders only URLs of files that exist and never serves one
 half-written — [Implicit]. A page already open in the browser can still point
 at a removed derivative until it is reloaded.
 
-Runs are serialized — [Implicit]. `bun dev`, builds and browser tests all
+Runs are serialized — [Implicit]. `npm run dev`, builds and browser tests all
 start the script, and overlapping runs would remove each other's new output and
 cache entries. The `images` package script runs it under `flock` on
 `node_modules/.images.lock`, a kernel advisory lock: a later run blocks silently
