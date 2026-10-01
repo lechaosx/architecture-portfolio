@@ -1,119 +1,13 @@
 # Architect Portfolio
 
-A fast, clean portfolio website for an architect. Static, image-forward, and
-editable in the browser — no coding needed for day-to-day content.
+The portfolio website of Ing. arch. Tereza Kalábková, live at
+[kalabkova.cz](https://kalabkova.cz). Static, bilingual (Czech and English) and
+image-forward.
 
-Built with Astro + Svelte + Tailwind, hosted on GitHub Pages at a custom domain.
-Content is managed through [Pages CMS](https://pagescms.org).
+Astro with one Svelte island and Tailwind, in TypeScript on Node 24, hosted on
+GitHub Pages.
 
-- **Why it behaves the way it does:** [FEATURES.md](FEATURES.md)
-- **Working on the code?** [MAINTAINERS.md](MAINTAINERS.md) and
-  [ARCHITECTURE.md](ARCHITECTURE.md)
-
----
-
-## For the site owner
-
-### How do I edit content?
-
-You edit at **[app.pagescms.org](https://app.pagescms.org)** — a friendly editor
-in your browser. Nothing to install.
-
-1. Go to app.pagescms.org and sign in with GitHub.
-2. Open this project (a one-time access grant lets it read the repo).
-3. Edit any entry with simple forms — **Home page** (homepage images, your bio +
-   portrait, and your approach), **Projects**, **Contact**, or **Site settings**
-   (your name, credential, and search-engine description).
-4. Click save. The site rebuilds and updates on its own in a couple of minutes.
-
-**The site is bilingual (Czech + English).** Text fields come in pairs —
-"(Czech)" and "(English)" — so fill in both for anything you type (titles,
-descriptions, your bio, day names). Images, year, email and phone are shared, so
-there's only one of each.
-
-**Adding a project:** Projects → new → fill in title, year, location, upload a
-cover image, and assemble **Page content** from text, thumbnail-gallery, and
-full-width image-set blocks. Add both language versions to each text block;
-image titles and descriptions are optional. In the lightbox a title labels the
-image in the top-left corner, and a description sits on the back of the drawing,
-behind a button in the bottom-left corner. To compare aligned drawings,
-give each one the same **Comparison set** value and use its Czech and English
-image titles as the button names. Keep a set's images next to each other on the
-page: Previous/Next and swipes blend in place only when the neighbouring image
-belongs to the same set, and slide to it otherwise; the set's buttons always
-blend. The previews remain ordinary individual
-images; the set's buttons appear only in the lightbox. Set the
-**Filename**, then save. Keep the `.md` ending; the part before it
-becomes the project's web address (for example, `family-house.md` becomes
-`/projects/family-house/`). Changing the filename later changes that address, so
-existing links and bookmarks will stop working. Page content may be left empty.
-Upload the best original available; the site builds optimized responsive previews
-and zoom tiles without enlarging it, while the project lightbox keeps a direct
-link to the untouched original. Pages CMS requires both titles, the year, and a
-cover image before it will save a project.
-
-**Hiding a project:** turn on its **Draft** switch — it stays in the system but
-disappears from the public site until you turn it off.
-
-**Project order:** projects sort automatically — newest year first, then A–Z by
-title within the same year. Nothing to set.
-
-**Homepage images:** choose at least one image in the **Home page** entry. One
-image is displayed directly; two or more form the homepage carousel in the order
-you choose. Project images are never added automatically.
-
-### How do I change my name, email, phone, or hours?
-
-All editable in the CMS: your **name** and **credential** live in **Site
-settings**; your **email**, **phone**, and day-by-day **availability** live in
-**Contact**. Fixed section labels like "Work" and "Approach" live in the code —
-ask your developer to change those (see [MAINTAINERS.md](MAINTAINERS.md)).
-
-### What do visitors get?
-
-- The site in **their own language**: it shows Czech or English based on their
-  browser automatically, and a footer language button lets them change it by
-  hand (it shows the language it will switch to, and remembers their choice).
-  Sharing `yoursite/work/?lang=en` forces English for that link.
-- A home page that's your "about": a selected image or image carousel, your bio,
-  and your approach. (The images, bio, portrait, and approach are all editable
-  in the CMS.)
-- A **Work** page with your projects in a grid.
-- A page per project assembled from interleaved text, thumbnail galleries, and
-  full-width images or carousels. Every image opens into one full-screen gallery,
-  in the order it appears on the page, with the drawing filling the screen and
-  the controls in its corners. Visitors zoom with the wheel, a pinch, a double
-  click or tap, or the `+`/`-`/`0` keys. An image's title shows in the corner
-  and its description can be turned over to read on the back. Related drawings
-  blend into each other in place, keeping the inspected zoom and position,
-  whether visitors use the arrows, a swipe, or the set's buttons.
-  Each open image has a shareable `#image-N` address, and the browser Back
-  button closes it.
-- A **Contact** page with your email, phone, and when you're reachable.
-- Smooth transitions between pages and gentle fade-ins — all riding the normal
-  scrollbar (no janky scroll effects). Fast to load, works on phones.
-
----
-
-## Going live (one-time checklist)
-
-Mostly a developer task; kept here so the owner knows what "done" looks like.
-
-1. Push the code to a GitHub repository.
-2. Repo **Settings → Pages → Source = GitHub Actions**.
-3. The site serves from a custom **domain** (`public/CNAME`): add the same domain
-   under Settings → Pages, and point its DNS at GitHub Pages.
-4. Connect the repo at [app.pagescms.org](https://app.pagescms.org) so content
-   editing works.
-5. Replace the placeholder content: the images in `public/uploads/`, the sample
-   projects, and your real details in **Contact** (email/phone/hours).
-
-After this, every saved edit (yours via the CMS, or the developer's in code)
-publishes automatically.
-
----
-
-## Running it locally (developers)
+## Run it
 
 ```sh
 nix develop      # provides Node and npm
@@ -121,9 +15,34 @@ npm install
 npm run dev      # http://localhost:4321
 ```
 
-Full developer documentation: [MAINTAINERS.md](MAINTAINERS.md).
+Tests, build and other commands: [MAINTAINERS.md](MAINTAINERS.md).
 
----
+## Content
+
+Projects are Markdown files in `src/content/projects/`, the home, contact and
+site settings are in `src/content/singletons/`, and images in `public/uploads/`.
+
+The owner edits all of it through [Pages CMS](https://pagescms.org): the repo is
+connected at app.pagescms.org, which reads `.pages.yml` and commits straight to
+`master` as `pages-cms[bot]`, so pull before you push.
+
+## Deploys
+
+Every push to `master`, from the CMS or from code, runs
+`.github/workflows/deploy.yml`: tests, build, deploy to GitHub Pages. A push
+that only touches `src/content/` and `public/uploads/` skips the tests; the
+build still validates the content. Manual runs of the workflow always run the
+tests.
+
+Under **Settings → Pages** the source is GitHub Actions and the custom domain is
+the one in `public/CNAME`; its DNS points at GitHub Pages.
+
+## Docs
+
+- [MAINTAINERS.md](MAINTAINERS.md) — commands, file layout, common changes
+- [FEATURES.md](FEATURES.md) — product decisions
+- [ARCHITECTURE.md](ARCHITECTURE.md) — technical decisions
+- [AGENTS.md](AGENTS.md) — keeping the docs true, invariants to protect
 
 ## License
 

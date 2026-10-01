@@ -1,9 +1,7 @@
 # Features
 
 Why the site behaves the way it does — the _product_ decisions. For _technical_
-decisions (why the code is shaped this way) see [ARCHITECTURE.md](ARCHITECTURE.md).
-
-Each decision is tagged:
+decisions see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 - **[Explicit]** — the user asked for this by name, or chose it when offered.
 - **[Implicit]** — Agent proposed it and the user did not push back.
@@ -14,660 +12,286 @@ Each decision is tagged:
 
 ### An architect's portfolio — [Explicit]
 
-The site exists to showcase an architect's built work. Every other decision
-serves that: large imagery, quiet typography, minimal chrome.
+Showcases the work of Ing. arch. Tereza Kalábková: large imagery, quiet
+typography, minimal chrome.
 
 ### Fast and clean — [Explicit]
 
-The user's headline requirement. Concretely: static pages, near-zero JavaScript,
-lazy-loaded images, no bloat. Performance is a feature, not an afterthought.
+The headline requirement: static pages, near-zero JavaScript, lazy-loaded images.
 
-### Minimal, image-forward visual design — [Implicit]
+### Minimal, image-forward design — [Implicit]
 
-Generous whitespace, work shown in a simple grid, a strict black-and-white palette
-(see below). Agent chose this direction; the user did not specify an aesthetic
-beyond "clean". The site
-belongs to Ing. arch. Tereza Kalábková; the full name and credential are the nav
-wordmark — the name is set uppercase ("Ing. arch. TEREZA KALÁBKOVÁ") while the
-"Ing. arch." credential stays normal case so it reads cleanly — and also appear in
-the About bio and SEO description. Clicking the wordmark is how you get home
-(there is no Home menu item).
+Generous whitespace and a simple grid. The nav wordmark is the credentialed name
+("Ing. arch. TEREZA KALÁBKOVÁ", name uppercase, credential not) and is the way
+home; there is no Home menu item.
 
 ### Works on phones — [Implicit]
 
-The layout is responsive down to small phones. Concretely: the nav wordmark
-stacks the credential above the name on narrow screens (and drops to a smaller
-size with tighter letter-spacing) so it never crowds or overflows past the
-WORK/CONTACT links; the work grid steps 3 → 2 → 1 columns with gaps that shrink
-on smaller viewports (the airy desktop gutter would be too wide for a phone);
-section vertical padding tightens on small screens so there's less empty
-scrolling; and tap targets (nav links and footer controls) get more
-height on touch-sized screens. Everything sizes from one shared content width
-(`max-w-6xl`) with `px` gutters, so pages line up at every breakpoint. Off-screen
-carousel slides remain inside their horizontal scroller and never widen the page.
+Responsive down to small phones: the wordmark stacks, grids and gaps step down,
+touch targets grow. Every page shares one content width, so pages line up at
+every breakpoint.
 
-### Black-and-white visual language — [Explicit]
+### Black and white — [Explicit]
 
-White background, black text throughout; greys are allowed for secondary text
-(dates, locations, captions). Any colour comes from the project imagery and the
-architect's drawings, never from the UI chrome. This follows the design brief
-and the near-monochrome reference sites cited there (maaus.cz,
-storyarchitekti.cz).
+White background, black text, greys for secondary text. Colour comes only from
+the imagery, never the UI, following the design brief.
 
-### Nav links have three states — [Explicit]
+### Nav and controls: idle, outline on hover, inverted when current — [Explicit]
 
-The menu is just **Work** and **Contact** — there is no "Home" link, because the
-home page is reached by clicking the name wordmark. Each link has three states:
+The menu is just **Work** and **Contact**, uppercase with wide tracking. The
+outline-then-invert treatment is the site's interaction vocabulary, reused by
+carousel and lightbox controls. Inline text links keep an underline.
 
-- **Idle:** plain text, no highlight.
-- **Hover:** a black square (outline box) around the link.
-- **Current page / clicked:** inverted — white text in a solid black box.
+### Roboto throughout — [Explicit]
 
-Menu labels are set uppercase with wide tracking. (This supersedes the
-underline-based affordance in the original brief; the architect revised it to the
-none → box → invert scheme.)
+One typeface for the whole page, at the architect's request. DIN Pro, also on
+her list, has no free web licence.
 
-This is the site's shared interaction vocabulary — **outline box on hover,
-inverted (solid black) on press/selected** — and it is reused for other controls,
-notably the carousel arrows and dots, so interaction feels consistent everywhere.
-Plain text links (email, phone, footer) keep a simple underline instead, which
-reads better inline than a box.
+### Justified, hyphenated prose — [Explicit]
 
-### Typeface: Roboto throughout — [Explicit]
-
-The whole page is set in Roboto — the same font as the nav's WORK/CONTACT links —
-at the architect's request. Open Sans and DIN Pro were also listed as preferred
-fonts; Open Sans was the body font at first but was dropped when one typeface was
-requested everywhere, and DIN Pro is commercial with no free web licence, so it
-is not used (see ARCHITECTURE.md → "Self-hosted webfonts").
-
-### Justified, language-aware prose — [Explicit]
-
-Rich-text bodies and lightbox image descriptions are justified and use
-automatic hyphenation. Each Czech and English variant keeps its own `lang`
-attribute, allowing the browser to apply the corresponding language's
-word-breaking and hyphenation rules. Short interface labels, metadata, and image
-titles remain normally aligned.
+Rich-text bodies and image descriptions are justified with automatic
+hyphenation in the right language's rules. Labels, metadata and titles are not.
 
 ---
 
 ## Content & maintenance
 
-### The architect maintains content themselves — [Explicit]
+### The architect edits content in Pages CMS; the developer changes code — [Explicit]
 
-A non-technical person must be able to add/edit projects without touching code,
-Git, or Markdown. This is the core reason a CMS exists in the project at all.
+She edits in the browser at app.pagescms.org with forms and image upload, no
+code, Git or Markdown. Saving commits to `master` and the site redeploys.
+Structural and design changes are made in code on the same repo.
 
-### Most page content is editable in the CMS — [Explicit]
+### Most of the site is editable — [Explicit]
 
-The architect asked for as much of the site as possible to be editable in Pages
-CMS, with only the general scaffolding baked into code. Editable: projects, the
-home page (bio, portrait, homepage images, Approach items), the contact details,
-and a small set of Site settings (name, credential, SEO text) — the text among
-these is entered in **both languages** (see "Dual language" below). Baked in: page
-structure, navigation, and section labels ("Work", "About", "Approach",
-"Contact"), which are translated in code. The CMS entries mirror the pages —
-**Home**, **Projects**, **Contact**, and global **Site settings** — each backed by
-a file under `src/content/singletons/` (or the `projects` collection).
+Editable: projects, the home page (images, bio, portrait, Approach), contact
+details and Site settings (name, credential, SEO description). Baked into code:
+page structure, navigation and section labels. CMS entries mirror the pages:
+**Home page**, **Projects**, **Contact**, **Site settings**.
 
-The CMS requires what a page cannot do without — [Implicit]: the name in Site
-settings, the contact email, both About texts, and every field of an Approach
-item or an availability row. Anything else may stay empty, and an edit that
-leaves a page unrenderable stops the deploy at the build.
+### Required fields are what a page cannot do without — [Implicit]
 
-### Larger changes are made by the developer — [Explicit]
+The name, the contact email, both About texts, at least one home image and every
+field of an Approach item or availability row are required; everything else may
+be empty. An edit
+that would leave a page unrenderable fails the build and does not deploy.
 
-Structural/design changes are done in code by the developer, on the same repo.
-Content edits and code edits share one source of truth and don't conflict.
+### Projects: title, year, cover; everything else optional — [Explicit]
 
-### Browser-based editing via Pages CMS — [Explicit]
+The CMS refuses to save a project without both titles, a year and a cover, so
+it cannot commit content the build rejects. Location is optional — [Implicit].
+Content blocks are optional; a text block needs both languages, an image block
+at least one image.
 
-The architect edits at app.pagescms.org: friendly forms, drag-and-drop image
-upload, no server to run. Saving commits to `master` and the site redeploys.
+### Project URL is the editable filename — [Explicit]
 
-### Projects have title, year, and optional location — [Implicit]
-
-The fields exposed for each project. `location` is optional; `title` and `year`
-are required.
-
-### Incomplete projects cannot be saved — [Explicit]
-
-Pages CMS validates the same required project fields as the production build:
-both titles, year, and cover image. It blocks the save in the editor instead of
-committing content that would fail the deployment pipeline. Page blocks and both
-locations remain optional; text blocks require both language versions, and image
-blocks require at least one image.
-
-### Project URLs use an editable filename — [Explicit]
-
-Pages CMS shows the complete Markdown filename when creating and editing a
-project. The name before `.md` supplies the public URL segment, so renaming the
-file also changes the project URL and breaks old links and bookmarks.
+The filename before `.md` is the URL segment, so renaming a project breaks old
+links.
 
 ### Editable site settings — [Explicit]
 
-A small "Site settings" CMS entry holds the owner's name, credential (e.g. "Ing.
-arch."), and the SEO description (in both languages). These feed the nav wordmark,
-the footer copyright, the browser tab titles, and the default meta description,
-so they are changed in one place rather than being scattered through the code.
+Name, credential and SEO description in one CMS entry, feeding the wordmark,
+footer, tab titles and meta description.
 
-### Draft flag to hide unfinished projects — [Implicit]
+### Draft flag — [Implicit]
 
-A project marked `draft: true` is excluded from the site. Lets the architect
-stage work before publishing.
+`draft: true` hides a project from the site.
 
-### Projects sort newest-first, then alphabetically — [Explicit]
+### Projects sort newest year first, then by English title — [Explicit]
 
-Projects on the Work page sort by `year` descending (newest first), then by
-title A–Z as a tie-breaker within the same year — using the **English** title so
-the order is stable no matter which language the visitor is viewing. This is fully
-automatic — there is no manual "sort order" field to maintain (an earlier `order`
-number existed but was dropped when the architect asked for this
-year-then-alphabetical rule).
+Automatic, with no order field; the English title keeps the order the same in
+both languages.
 
 ### The home page is the About page — [Explicit]
 
-The root URL (`/`) follows the architect's wireframe: a gallery at the top, an
-About section under it (bio on the left, portrait on the right), then the Approach
-section — all aligned to one content width. The whole home page — homepage images,
-bio, portrait, and approach — is edited from a single **Home** CMS entry
-(`home.md`); there is no separate "About page" entry, since About is a section of
-Home, not its own page.
+Following the architect's wireframe: images at the top, then About (bio left,
+portrait right), then Approach. All of it is edited in the one **Home page**
+entry.
 
-### Home-page image or carousel — [Explicit]
+### Home image or carousel — [Explicit]
 
-The architect explicitly selects and orders at least one homepage image in the
-Home CMS entry; project images are never added automatically. One selected image
-is displayed directly at its natural aspect ratio. Two or more form a carousel
-with prev/next arrows and dot indicators, matching the architect's wireframe. It
-auto-advances (every 5s), pausing when the visitor hovers or focuses it, and does
-not auto-advance for visitors who prefer reduced motion. Preference changes take
-effect without reloading the page. Its arrow controls use the same size, symbols,
-and hover/press treatment as the project lightbox, while its native scrolling,
-cropped presentation, dots, and autoplay remain specific to the multi-image case.
-Controls drawn over an image keep a theme-independent high-contrast palette;
-changing the page theme never turns the carousel dots into dark page chrome. The
-selection itself is maintained in the Home CMS entry.
+The architect picks and orders at least one home image; project images are never
+added automatically. One image shows at its natural aspect ratio; two or more
+form a carousel with arrows and dots that auto-advances, pausing on hover or
+focus; with reduced motion it does not auto-advance. Controls over images keep a
+high-contrast palette in both themes.
 
-### Work page lists the projects — [Explicit]
+### Work page: a grid of square covers — [Explicit]
 
-Projects live on their own `/work` page, separate from the About home page. The
-layout is a **three-column** grid of **square** cover images, each with its title
-(and year/location) underneath. Hovering a card **enlarges the whole image** a
-little — the entire tile scales up, rather than the old zoom-within-a-fixed-frame.
-On narrower screens the grid steps down to two columns, then one — [Implicit].
+Three columns of square covers with title, year and location; hover enlarges the
+whole tile. Two and then one column on narrower screens — [Implicit].
 
-### "Approach" section on the home page — [Explicit]
+### Approach section — [Explicit]
 
-A section below the bio describing how the architect works, as a **vertical**
-stack of items (Place, Scale, Material, Thinking); each item's icon enlarges from
-its centre on hover — [Explicit]. The architect requested this space and
-preferred it laid out vertically rather than as the horizontal row on the
-reference site (maaus.cz), and without dividing lines between items. The items (label, text, and which of four line
-icons) are editable in the CMS (the Home entry) and can be added, removed, or
-reordered; the text ships as placeholder wording. The icon set
-(place/scale/material/thinking) is fixed in code — [Implicit].
+How the architect works, as a vertical list of items with no dividers, as she
+preferred; each icon enlarges from its centre on hover. The items (label, text
+and which icon) are added, removed and reordered in the CMS.
+
+The four icons themselves are fixed in code — [Implicit].
+
+### Contact page — [Explicit]
+
+Email, phone and a per-day "When to reach me" schedule (likely-to-answer times,
+"—" when unavailable), all editable. The email is also in the footer. No contact
+form: there is no backend to receive one.
 
 ---
 
 ## Language
 
-### Dual language, Czech + English — [Explicit]
+### Dual language (Czech + English) — [Explicit]
 
-The whole site is bilingual. Every visible piece of text exists in both Czech and
-English: the baked-in labels (nav, section headings, screen-reader controls) and
-all CMS content (projects, bio, approach, contact, SEO). The architect provides
-both languages for all editable content. Project cover images are decorative to
-assistive technology because their adjacent bilingual project title already
-names the card or page.
+Every visible string exists in both languages, CMS content and baked-in labels
+alike, including screen-reader labels. Project covers are decorative to
+assistive technology because the adjacent title already names them.
 
-### Manual switch, defaults to the visitor's browser — [Explicit]
+### Auto-detected, with a manual switch in the footer — [Explicit]
 
-On first visit the language is chosen automatically — a `?lang=cs`/`?lang=en` in
-the URL wins, then the visitor's previously saved choice, then their **browser
-language**, falling back to **English** if that's neither Czech nor English. A
-single language button lets them switch manually at any time; it shows the
-language it will switch _to_ (`CZ` while viewing English, `EN` while viewing
-Czech), and the choice is remembered for next time. The toggle lives in the
-**footer** (not the nav — the architect found it confusing there, and since the
-site already auto-detects language it's a fallback control, not a primary one).
-
-Switching is instant — no page reload — because both languages are already in the
-page and the switch just flips which one is shown. A specific language can also be
-linked directly with `?lang=en`, which is handy for sharing.
+The language comes from `?lang=` in the URL, else a saved choice, else the
+browser, else English. The footer button shows the language it switches _to_ and
+switches without a reload. It sits in the footer, not the nav, because with
+auto-detection it is a fallback, and in the nav it confused the architect.
 
 ---
 
 ## Interactivity & motion
 
-### Some interactivity and smoothness — [Explicit]
+### Alive and smooth, but no scroll hijacking — [Explicit]
 
-The user wanted the site to feel alive and smooth.
+Motion rides the native scrollbar and stays subtle.
 
-### No heavy animation, no scroll hijacking — [Explicit]
+### Page transitions — [Implicit]
 
-An explicit boundary: the user finds reimplemented/hijacked scrolling annoying.
-Motion must ride the native scrollbar and stay subtle.
+Where the browser supports cross-document View Transitions, pages crossfade and
+a project cover moves between its work card and its project page, changing crop
+on the way; elsewhere, ordinary navigation. The moving cover is one image,
+starting from the card's hover zoom — [Explicit].
 
-### Smooth page-to-page transitions — [Implicit]
+### Fade-in on scroll, as decoration only — [Implicit] / [Explicit]
 
-In browsers with cross-document View Transitions, navigating between pages
-crossfades instead of a hard reload. Project covers move between the work grid
-and their project page, progressively changing crop between the square card and
-the full image, including on the first uncached visit. Like the lightbox, the
-moving cover is a single full image cropped by its changing frame rather than a
-blend of the two crops, and it starts from the opened card's own hover zoom, if
-it has one — [Explicit].
-Other browsers use normal page navigation. Hover enlargement remains independent
-of the moving cover.
-Work cards skip the general fade-in-on-scroll effect so entering the Work page
-has one transition. Delivers "smoothness" without a heavy SPA.
-
-### Fade-in-on-scroll — [Implicit]
-
-Content eases in as it scrolls into view, using the real scrollbar (no
-hijacking). Honors the explicit motion boundary.
-
-The fade is decoration only — [Explicit]: the page looks and works the same
-without it. Without JavaScript everything is visible; content already on screen
-when a page loads is simply shown, with no late fade; and content starts to
-appear as soon as any part of it enters the viewport, so nothing on screen is
-ever left invisible.
-
-### Carousels never wait for their scrolling — [Explicit]
-
-The home carousel and project image-set carousels follow the lightbox's rule:
-every arrow, dot and auto-advance step is taken at once and counts from the
-image last moved to, however many come in a row, and the dots mark that image
-straight away. The strip slides after it, and a press while it is still sliding
-sends it on from where it is towards the new image. When the visitor swipes or
-scrolls the strip sideways themselves, the dots follow the strip and the arrows
-carry on from the image it rests on.
+Content eases in as it scrolls into view [Implicit]. The page looks and works
+the same without it [Explicit]: nothing hides without JavaScript, and nothing
+already on screen fades in late.
 
 ### Dark mode — [Explicit]
 
-The architect's brief floated inverting the page to white-on-black ("after
-clicking — the opposite"). It now ships as a proper dark mode: a charcoal
-background, softened off-white text, and matching greys replace the harsher pure
-black/white inversion, while **photos and drawings are left untouched** (an
-image-forward site must never invert its imagery). With no saved choice, the page
-follows the visitor's browser or system preference and responds when it changes.
-A **single toggle in the footer**, next to the language switch, flips the theme
-and becomes an explicit override; it shows the mode it will switch _to_ — a moon
-in light mode, a sun in dark mode — cross-fading as it flips. The choice is
-remembered for next time and carries across page navigations. Both footer toggles
-use the same square hit area. (An earlier attempt using a CSS
-`filter` invert was dropped because it inverted the photos too and fought the
-sticky nav and View Transitions.)
+Charcoal background and off-white text; photos and drawings are never inverted.
+Follows the system preference until the visitor uses the footer toggle (moon or
+sun, showing the mode it switches to), which is remembered.
 
-### Ordered project-page blocks — [Explicit]
+### Reduced motion — [Implicit]
 
-A project page is assembled from an ordered list of independent text, thumbnail
-gallery, and full-width image-set blocks. Text blocks carry required Czech and
-English rich text. They use a narrower single-column reading width below 1024
-px, then fill the project frame as two columns on wider screens. The cover,
-gallery blocks, and image sets use the full frame so project imagery aligns with
-the rest of the site. Gallery blocks display square thumbnails. An image set
-spans the project content width: one item is a standalone image, while multiple
-items form a manually controlled scroll-snap carousel with arrows and dots.
-Blocks can be reordered and repeated freely, so a full-width drawing can sit
-between two galleries without belonging to either one.
+With `prefers-reduced-motion` there are no fades, hover zooms, slides, blends
+or turns; changes happen at once or crossfade. The same input reaches the same
+states at the same moments.
 
-### Image lightbox / gallery — [Explicit]
+### Nothing waits for an animation — [Explicit]
 
-The cover and every image in every project block belong to one page-level,
-viewport-filling, keyboard-navigable lightbox (arrows, Esc), ordered as they
-appear on the page. Clicking any of those images opens its position in that
-sequence. The selected image expands into the lightbox and returns to its page
-position on close, changing crop as its aspect ratio changes and waiting for the
-enlarged preview before it animates. The overlay fades over the page and its
-header; the header remains in place beneath it. Image hover remains independent,
-including when the lightbox opens partway through the hover effect.
-Every occurrence of an image is its own lightbox position with its own title and
-description, including when the same upload is used more than once on a page —
-[Explicit].
-The lightbox shows the current image and total count, and its navigation controls
-use the same visual language as the home carousel without adopting autoplay,
-cropping, or dot indicators.
+Every input changes state at once, and animations chase it: pressing Next five
+times quickly lands five images on, in carousels and the lightbox alike, and the
+controls describe the new image straight away. A change mid-animation carries on
+from where things are on screen, and a drag grabs whatever is moving where it
+is; when a visitor swipes a carousel, its dots follow. Where the rule leaves
+room — [Implicit]:
 
-If the sticky header or viewport edge obscures a thumbnail, the lightbox uses
-only the overlay fade instead of lifting the hidden part into an image morph.
-Closing a zoomed image fades the overlay without morphing the manipulated image
-into its thumbnail. Zoomed content stays inside its outgoing slide when moving
-to another image.
+- A fast run of changes travels to the last image without showing or loading
+  the ones skipped.
+- A blend waits for its drawing to load rather than blending to black.
+- Opening and closing take input too: closing hands the page back at once, and
+  opening again turns the close around.
+- The address follows every change, rate-limited only during a held key.
 
-### The lightbox never waits for its own animations — [Explicit]
+---
 
-State changes the moment input arrives; the animations only chase it. Every
-change is taken at once — Previous/Next, the arrow keys, set buttons, swipes,
-Back and Forward, the description toggle and zooming — and the position, the
-set strip, the toggle and the address describe the image changed to straight
-away, however many changes come in a row: pressing Next five times quickly
-lands five images on. Nothing is ignored, queued or delayed because something
-is still moving, and with reduced motion the same input reaches the same
-states at the same moments. When a change arrives mid-animation, the motion
-carries on from where it is on screen towards the new target, without a jump
-or a restart: a slide, a blend between variants, a turn of the card, the zoom
-that goes with the turn and the phone's edge arrows all retarget this way. A
-drag that starts while something moves takes it over from where it is on
-screen: the strip, the blend or the turn stops under the finger instead of
-jumping to the finger's own position.
+## Project pages and the lightbox
 
-How that looks where the rule leaves room — [Implicit]:
+### Ordered blocks — [Explicit]
 
-- A card changed away from before it came into view is never shown: the strip
-  moves at most one card past what is on screen, so a fast run of presses
-  travels to the last image rather than racing through every one, and never
-  loads the skipped ones. The strip always travels the way the change goes,
-  across the end of the sequence too.
-- A variant blends in over whatever is on screen, even a blend still under
-  way, so a second change shows each image at most once and never passes
-  through one it skipped; changing back to an image still on screen blends
-  back to it.
-- Each move takes its share of a whole move's time, and never longer than a
-  whole one, a move sent back where it came from included.
-- Images load while state moves on: a blend waits for its drawing, so it never
-  blends to black, and on a phone the edge arrows wait with the card's turn;
-  an image changed away from before it loaded is not waited for. A tiled
-  drawing sharpens into its tiles once the card has come to rest on it on
-  screen.
-- Opening and closing take input too, in every browser. The lightbox opens at
-  once; only the card's move from its thumbnail waits for its drawing to load,
-  the thumbnail showing where it is meanwhile. While opening, every key, the
-  wheel, touch and clicks on the controls act at once, and the page behind
-  never scrolls; Escape (or ×, or Back) turns the opening back from where it is.
-  Closing hands the page back at once: while the lightbox fades out, the page
-  scrolls and takes clicks, and the thumbnail has focus. The card goes into the
-  current image's own thumbnail, following it as the page scrolls or resizes,
-  or fades where it is when it cannot. Opening the same image again meanwhile
-  (Enter on the thumbnail) turns the closing back from where it is; opening
-  another image meanwhile changes to it as the lightbox comes back in, the card
-  moving once its drawing has loaded.
-- The address follows every change at once; only a long run, such as a held
-  arrow key, writes it about ten times a second, since browsers stop taking
-  address changes that come faster. Closing writes any change still to come
-  first, so Forward reopens the last image.
+A project page is an ordered list of text, thumbnail-gallery and full-width
+image-set blocks, in any order and repeated freely. Text goes two-column on wide
+screens. A one-image set is a plain image; more form a manual carousel.
 
-### Full-screen lightbox with controls in the corners — [Explicit]
+### One lightbox per page, full-screen, controls in the corners — [Explicit]
 
-The drawing owns the whole screen: the lightbox is 90% black, so the page shows
-faintly around the card and behind the controls, it has no rows above or below
-the image, and every control is a separate box floating over it. The set strip
-sits top-left, × is always in the top-right corner, Previous/Next are centred on
-the left and right edges, the description toggle sits bottom-left, and the
-bottom-right corner holds a `[CZ]`/`[EN]` language switch and one `[3 / 17 ↗]`
-link that shows the position and opens the untouched original in a new tab. All
-controls are 40 px boxes with a solid black fill, the site's outline-on-hover
-and invert-on-press treatment, and the current or pressed option inverted to
-white. Every element that looks like a button is one. The language switch is the
-same toggle as the footer's, so the page underneath changes with it; the
-lightbox keeps its image, side, zoom, and pan.
+The cover and every image occurrence are one sequence in page order, each with
+its own title and description even when an upload repeats. The drawing fills the
+screen over a dark backdrop, with separate controls in the corners and arrows on
+the sides; the arrow keys change image too. At 100% nothing covers the image;
+zoomed, any part can be panned clear of the controls.
 
-At 100% the image fits between a top and a bottom control band, so nothing
-covers it, and it may use the full width under the edge arrows (on a phone a
-square drawing fills the width). The 100% view depends only on the image's
-aspect ratio, never on its title or description, so swipes and blends between
-variants keep their geometry. Zoomed, the image runs under the controls to the
-screen edges, and any part of it can be panned out from under every control.
-Zooming out below 100% is allowed until the image clears the edge arrows too.
+### Opening morphs from the thumbnail — [Explicit]
 
-### Addressable lightbox images — [Explicit]
+The clicked image grows into the lightbox and returns on close, unless the
+thumbnail is not fully in view or under the header, or the image is zoomed or
+turned, in which case it fades.
 
-Each open image has a position-based `#image-N` URL that can be copied or opened
-directly. Moving between images updates that address at once, without adding
-more history steps: Back closes the lightbox in one step, and Forward reopens
-its last image.
-A directly loaded image link also closes to its project page before Back leaves
-the page.
+### Addressable images — [Explicit]
 
-### Accessible lightbox modal — [Explicit]
+Each open image has a shareable `#image-N` address, by position, so reordering a
+project's images changes it. Moving between images adds no history steps: Back
+closes the lightbox, Forward reopens it, and a directly loaded `#image-N` link
+closes to the project page before Back leaves it.
 
-Opening the lightbox moves keyboard focus to its controls and keeps focus inside
-until it closes. Closing it restores focus to the image trigger that opened it
-without moving the page. It takes input while it animates open, as at any other
-time.
-Clicking the dark area around the image keeps the lightbox open; users close it
-with the dedicated close control, Escape, or browser Back.
-The overlay contains wheel, touch, and keyboard scrolling, while deliberate
-scrollbar movement is left in place when the lightbox closes. Its dialog,
-image, close, and navigation labels follow the selected site language. The
-controls never move with the image while it is panned, zoomed, or swiped. Tab
-cycles through every control and, while the description shows, its scrolling
-text. A visually hidden live status announces the position after every change.
+### Accessible modal — [Explicit]
 
-### High-detail architectural images — [Explicit]
+Focus moves in on open, cycles inside, and returns to the thumbnail on close
+without moving the page. Clicking the backdrop does not close it; ×, Escape and
+Back do. Labels follow the site language and a live status announces the
+position.
 
-Reduced views such as project cards, the home carousel, and gallery thumbnails
-use prefiltered responsive images instead of asking the browser to shrink the
-full multi-megapixel drawing in one step. This reduces resampling aliasing in
-fine plans and linework, including during thumbnail hover effects. Every cropped
-preview requests enough source width to fill its frame by height as well as
-width, including any hover enlargement, preventing landscape images from being
-upscaled after the browser selects a candidate. The project lightbox starts with
-a representation suited to its on-screen size and display density, updates that
-representation when browser zoom or screen density changes, and
-loads more detail as the visitor zooms. Drawings larger than 4096 px use 512 px
-deep-zoom tiles over a density-matched processed preview, so the
-browser requests only useful resolution levels and visible regions without
-showing dark gaps between arriving tiles or decoding the entire print-sized
-image. Reopening a tiled image after changing browser zoom refreshes its canvas
-at the new display density. Smaller images progress through processed full-image
-variants. Both paths stop at native image detail. The untouched original is not
-displayed automatically; it can be opened directly from the lightbox. The
-pipeline never enlarges an upload, and a processed full-image candidate is
-published only when it is smaller than the original.
-Transparent and PNG previews preserve lossless detail, while photographic
-previews use conservative high-quality compression. Camera orientation and web
-colour are normalized in previews without changing the uploaded original.
-Every tiled resolution level uses the same line-preserving Lanczos resampling
-as a full-image preview. Tile overlaps keep sampling and lossy-compression edges
-outside the visible tile boundaries.
+### Inspection: zoom, pan, swipe — [Explicit]
 
-### Lightbox inspection controls — [Explicit]
+Wheel and pinch zoom toward the pointer, up to native pixel detail; drag pans
+when zoomed and double-click or double-tap toggles zoom. At 100% a horizontal
+drag slides to the neighbouring image, snapping back if short. `+`/`-`/`0` zoom
+too, and a second finger turns a swipe into a pinch — [Implicit].
 
-Desktop visitors zoom toward the pointer with the mouse wheel and drag a zoomed
-image to inspect it. Touch visitors pinch around the point between their fingers
-and drag a zoomed image with one finger. At 100% and below, horizontal dragging
-over the drawing with either a finger or mouse navigates between page images
-(over the text it turns the card back instead; see "Optional image titles and
-descriptions"); moving to another
-card slides the strip with the finger, completed navigation slides on to the
-next image, and an incomplete gesture snaps back. Moving to a variant of the
-same card blends instead (see "Cards and their variants"). Buttons and arrow
-keys use the same short slide or blend. The controls follow a change of image
-at once — [Explicit]: from the moment it is made (a button, an arrow key, a set
-button, or a swipe released past the threshold) the position, the set strip's
-current image and the description toggle describe the image being changed to,
-while the old one is still sliding or blending away; a drag that is still held,
-or is released short, changes none of them. A control also takes a tap
-straight after a swipe. With reduced motion, swipes remain
-stationary and a completed gesture changes the image immediately. Previous,
-current, and next images form a continuous strip, so one image enters directly
-as the other leaves without exposing the dark background. Maximum zoom depends
-on the image and display density, ending when native image pixels reach display
-pixels.
+### High-detail drawings — [Explicit]
 
-Double-click or double-tap zooms in to 2.5× at that point (or to the maximum, if
-lower) and returns to 100% when zoomed. On the drawing side `+`/`=` and `-` zoom
-around the centre and `0` returns to 100% — [Implicit]. Zooming (wheel, keys,
-double-click) waits only while a drag at rest is moving between images, and a
-second finger on such a drag turns it into a pinch, the strip or blend easing
-back to rest as the pinch begins — [Implicit].
+Previews use prefiltered responsive images so fine linework does not alias. The
+lightbox loads more detail as the visitor zooms, and large drawings use
+deep-zoom tiles so only visible regions load. Uploads are never enlarged or
+altered; the original is one click away.
 
-Tiled and full-image previews use the same immediate gesture response. Zoomed
-inspection has no momentum or settling animation; at 100%, both previews move
-only with a live navigation gesture and then slide onward or snap back. Pyramid
-previews request the first resolution level at or above the display's
-physical-pixel requirement so their base view is not an upscaled lower level.
+### Comparison sets: variants of one card — [Explicit]
 
-### Cards and their variants: aligned-drawing comparison sets — [Explicit]
+Images sharing a comparison set stay ordinary images on the page; in the
+lightbox they are variants of one card, switched by a set strip of named
+buttons. Moving to a variant blends in place and keeps zoom and pan, so aligned
+plans can be compared, and a sideways drag towards it scrubs the blend. The
+strip stays one row and scrolls sideways — [Implicit].
 
-The architect can assign otherwise ordinary project images to a named comparison
-set and give each image a Czech and English title. Set membership does not
-change the project page: every preview remains an individual image in its
-existing gallery or image-set position.
+### Titles and descriptions; the card's back — [Explicit]
 
-In the lightbox, changing image changes cards, and the images of one comparison
-set are variants of one card. Previous/Next, the arrow keys, and swipes over the
-drawing walk the page order; when the neighbouring image belongs to the same set, the card blends
-into it and keeps the zoom and pan, so aligned plans can be compared without
-losing the inspected location. A neighbour outside the set is a different card:
-it slides in and the view resets, even if another member of the set lies further
-on.
+Optional bilingual title and description per image, shown only in the lightbox.
+The title shows in the top-left set strip: a titled image outside a set gets a
+strip of one, an image with neither title nor set gets none. A description lives
+on the card's back, reached with the bottom-left toggle, which turns the card
+over in 3D:
 
-Opening any member shows the whole set as the top-left set strip: one joined row
-of named buttons, the current image inverted. A button changes to that variant
-exactly as Previous/Next would, and may reach a member that is not a neighbour.
-The strip stays one row at every viewport width, scrolls sideways when it does
-not fit beside ×, and brings the current image into view, again after a
-language switch changes the labels — [Implicit]. Touch dragging and a
-mouse wheel over the strip both move it horizontally without scrolling the page.
-
-At 100% and below, a horizontal drag over the drawing towards a variant does not
-move the strip:
-it scrubs the blend by exactly the share of the screen width a slide would have
-moved, so dragging across the whole width shows the variant fully. Releasing
-past the swipe threshold completes the blend; releasing short blends back.
-Towards a different card the same drag moves the strip with the finger, and when
-zoomed a drag pans. A drag still held when the image changes another way (a key
-or a button) ends with that change. With reduced motion there is no scrub, and
-the change happens at once on release or click.
-
-The selected image continues to use the same responsive or tiled deep-zoom
-renderer as every other lightbox image. A set's zoom limit is the lowest native
-detail limit among its members, so every variant can display the retained view
-without being enlarged past its available pixels.
-
-### Optional image titles and descriptions — [Explicit]
-
-Each project-block image can have a short title and description in Czech and
-English. Both fields are optional and appear only in the lightbox, keeping page
-imagery uncluttered. A titled image outside a comparison set shows its title as
-a set strip of one; an image with neither title nor set shows no strip.
-
-Each image in the lightbox is a card with its drawing on the front and, when it
-has a description, the description on the back — [Explicit]. An icon-only toggle
-button in the bottom-left corner, named "Show description" and pressed while the
-text shows (text lines on the drawing side, an inverted picture on the text
-side), turns the current card over with a short 3D flip about the card's own
-vertical centre line. The back is a real card back — [Explicit]: in the
-drawing's shape and the page's own colours, following the site theme like paper
-(the light surface with dark text, or the dark surface with light text,
-switching live) — [Explicit], and exactly the drawing's size at 100% when the
-text fits there; a longer text grows the card, keeping its shape, just until the
-title and the justified, hyphenated column fit comfortably at the normal text
-size. The column keeps the project page's reading width, the card's padding
-(which grows with the card) and the screen's limits: it stays centred on the
-screen and clear of the side arrows, or of the page's side margins on phones,
-even when a wide card reaches past the screen edges. Throughout a turn, even
-from a zoomed or panned view and with a card larger than the screen, the two
-faces share one outline, which only the screen's edges cut, so nothing of the
-drawing shows while the back faces the viewer and nothing of the back while the
-drawing does. The see-through backdrop shows around the card, and the backdrop
-and controls stay black and white. On the text side the wheel scrolls the text
-and zoom keys do nothing.
-
-A card taller than the screen scrolls as a whole — [Explicit]: the text side is
-an ordinary scrolling page with the browser's own scrollbar, wheel, touch and
-keyboard scrolling, whose content is the card, so scrolling pans the card. It
-opens with its top edge visible below the controls and the backdrop above it,
-and ends with its bottom edge above the bottom controls; mid-way the card passes
-under the controls. The scrollbar belongs to the back — [Implicit]: it shows
-only while the back faces the viewer, never over the drawing.
-
-The flip is zoom-aware — [Explicit]. Turning to the text from a zoomed or panned
-drawing zooms and pans the card, in the same movement and timing as the turn, to
-the whole card at the top of its text; turning back returns to exactly the view
-the visitor left, zooming in as the card turns. The drawing's view is untouched
-while the text shows, so reading never moves it; a resize re-fits the card,
-keeps the reading position, and the drawing view returns within its new limits.
-
-Changing image by any route shows the new image drawing side up. From the text
-side, moving to a different card slides the card away still showing its text
-while the next drawing slides in, and nothing rotates. Moving to a variant of
-the same card (Previous/Next, the arrow keys, or a set button) turns the card
-back to its drawing side, zooming into the view the visitor left, while both
-faces blend over the whole turn: the front from the current drawing to the
-variant's, the back from the current text to the variant's text (or to nothing,
-if the variant has none; a variant without responsive variants has no back to
-blend in, so the current text stays until that variant is shown and its drawing
-has loaded). Edge-on, both faces are exactly halfway, and the card ends on the
-variant's drawing at that view, with the variant's text on its back. The card
-turns back the way the change travels: Next turns it as a leftward swipe
-would, Previous (and a set button towards an earlier image) as a rightward one —
-[Implicit]. The language switch keeps the current side.
-
-On the text side a sideways swipe only turns the card back to its drawing —
-[Explicit], whatever lies beside it (a variant, a different card, or nothing):
-it never moves the strip or changes image, and it works at any drawing zoom.
-The card turns with the finger by the share of the screen width it has moved
-(half the width is edge-on), and rotates the way the finger moves — [Explicit]:
-swiping left turns it leftwards, swiping right rightwards. Released past the
-swipe threshold the turn completes onto exactly the drawing view the visitor
-left, as the toggle's does; released short the card turns back to its text. The
-toggle's own turn keeps its direction. A mostly vertical drag scrolls the text,
-text selection stays native, and a drag never starts while text is selected. A
-mouse drag on the text selects it, so with a mouse the toggle turns the card —
-[Explicit].
-On phones the edge arrows step aside while the text shows, moving with the
-card's turn — [Explicit]: they slide out past the screen edges as the card turns
-to its text and back in as it turns to its drawing, in the same timing, and
-follow a swipe's live turn too (a change to a variant that is still loading
-keeps them aside with the card until the card can turn); while aside they
-cannot be focused or pressed.
-A reversed turn carries on the way it was turning, so the card never jumps to
-its mirror image. Moving from the text to a different card brings them back in
-the same timing as the next drawing slides in — [Implicit]. Images without a
-description have no toggle and no back. Closing while the text shows fades the
-lightbox without morphing it into the thumbnail, and reopening shows the
-drawing.
-
-### Project page content is optional — [Explicit]
-
-A project can contain only its required cover and no content blocks. Every image
-block contains at least one image; an image record with a title or description
-still requires its image.
-
-### Respects reduced-motion preferences — [Implicit]
-
-Users who set `prefers-reduced-motion` get no fade/transform animation, image
-hover zooms included. Changes to that preference apply immediately. Lightbox
-open/close transitions, live swipe movement, and blends between variants are
-also disabled (the change happens at once), and turning over to an image
-description becomes a short crossfade with the zoom changing at once. A swipe on
-the text does not turn the card with the finger; released past the threshold it
-crossfades to the drawing, and on phones the edge arrows fade aside and back
-with that crossfade instead of sliding — [Implicit]. The same input still
-reaches the same states at the same moments; only the motion between them is
-left out.
+- The back is paper in the page's theme, the drawing's shape and size, growing
+  only as far as its text needs — [Explicit]; a card taller than the screen
+  scrolls as a page — [Explicit], its scrollbar shown only on the back —
+  [Implicit].
+- The turn zooms out to the whole card and back to the exact view left —
+  [Explicit].
+- On the back, a sideways swipe only turns the card back, rotating the way the
+  finger moves — [Explicit]; a mouse selects text, so the mouse uses the toggle
+  — [Explicit]. Other turns go the way the change travels — [Implicit].
+- On phones the edge arrows slide aside while the text shows — [Explicit], and
+  return as the next card slides in — [Implicit].
+- Any change of image shows the new image drawing side up.
 
 ---
 
 ## Reach
 
-### Served from a custom domain at the root — [Explicit]
+### Custom domain at the root — [Explicit]
 
-The site is served from the architect's own custom domain at the root URL. The
-user initially wanted the GitHub Pages project URL to work too, but later gave
-up dual-URL support in favour of a single root deployment — the simpler setup.
-See ARCHITECTURE.md → "Hosting: custom domain at the root". (Once the domain is
-configured, GitHub still 301-redirects the `*.github.io/<repo>/` URL to it.)
+Served at the architect's own domain; the `*.github.io` URL redirects to it.
 
-### Basic SEO & sharing — [Implicit]
+### SEO and sharing — [Implicit]
 
-Per-page title/description, Open Graph tags, and a generated sitemap so pages
-index and share cleanly.
-Browser tab titles pair the page name with the credentialed owner name, separated
-by `|` — for example "Work | Ing. arch. Tereza Kalábková", or "Ing. arch. Tereza
-Kalábková | Architecture" on the home page — [Explicit].
-
-### Contact page — email, phone, and availability — [Explicit]
-
-A dedicated `/contact` page (same content width as the rest of the site, laid out
-in two columns like the About section) shows the email (mailto) and phone (tel
-link), plus a **per-day availability schedule** under the heading "When to reach
-me" — framed as likely-to-answer times, not formal "opening hours", with one row
-per day (hours, or "—" when unavailable). The email also appears in
-the global footer. All of it — email, phone, and the day-by-day availability — is
-editable in the CMS (the Contact entry). No contact form (no backend to process
-one, and it keeps things simple).
+Per-page title and description, Open Graph tags and a sitemap. Tab titles pair
+page and credentialed name with `|`, e.g. "Work | Ing. arch. Tereza Kalábková"
+— [Explicit].

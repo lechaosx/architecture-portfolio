@@ -7,8 +7,8 @@ to keep the documentation trustworthy.
 
 | File | Audience | Answers |
 |------|----------|---------|
-| [README.md](README.md) | Visitors + site owner | "How do I …?" (use the site, edit content, go live) |
-| [MAINTAINERS.md](MAINTAINERS.md) | Developer | "How do I …?" — same as README but for building/changing the code |
+| [README.md](README.md) | Developer | "What is this?" — the site, how to run it, where content lives, how it deploys |
+| [MAINTAINERS.md](MAINTAINERS.md) | Developer | "How do I …?" — commands, where things are, common changes, known gaps |
 | [FEATURES.md](FEATURES.md) | Anyone | "Why does it behave this way?" — product decisions |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Developer | "Why is the code shaped this way?" — technical decisions |
 
@@ -25,12 +25,16 @@ documentation to a later turn.**
 
 Before finishing any change, check whether it affects:
 
-- **Behavior a user would notice** → update FEATURES.md (and README.md if it
-  changes how the owner does something).
+- **Behavior a user would notice** → update FEATURES.md.
+- **How the site is run, edited or deployed** → update README.md.
 - **Code structure, tech, or a technical trade-off** → update ARCHITECTURE.md
   (and MAINTAINERS.md if it changes a dev workflow).
 - **A new decision** → add it to FEATURES/ARCHITECTURE with an
   [Explicit]/[Implicit] tag.
+
+Keep the docs skimmable: each decision is a heading with its tag and one to
+three sentences of what and why. Leave mechanisms, thresholds and edge cases to
+the code and the tests.
 
 ## Flag code↔docs skew — let the developer decide
 
