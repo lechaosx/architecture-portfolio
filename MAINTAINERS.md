@@ -10,47 +10,50 @@ this way), [FEATURES.md](FEATURES.md) (why it behaves this way).
 
 ## Prerequisites
 
-- [Nix](https://nixos.org) with flakes enabled (provides bun), **or** bun
-  installed directly.
+- [Nix](https://nixos.org) with flakes enabled (provides Node 24 and npm),
+  **or** Node 24 installed directly.
 
 ## Everyday commands
 
 ```sh
-nix develop          # shell with bun on PATH
+nix develop          # shell with Node and npm on PATH
 direnv allow         # alternatively, activate the flake shell automatically
-bun install          # install dependencies
-bun dev              # dev server at http://localhost:4321
-bun run check        # Astro, Svelte, TypeScript, and JavaScript diagnostics
-bun run test         # unit tests
-bun run test:e2e     # Chromium + Firefox interaction and animation regressions
-bun run test:all     # static analysis + unit + browser tests
-bun run build        # production build -> dist/
-bun run preview      # serve the built dist/ locally
+npm install          # install dependencies
+npm run dev          # dev server at http://localhost:4321
+npm run check        # Astro, Svelte, TypeScript, and JavaScript diagnostics
+npm run test         # unit tests (Vitest)
+npm run test:e2e     # Chromium + Firefox interaction and animation regressions
+npm run test:all     # static analysis + unit + browser tests
+npm run build        # production build -> dist/
+npm run preview      # serve the built dist/ locally
 ```
 
 `test:e2e` builds the production site, including responsive images, before
 Playwright starts its preview server on `http://127.0.0.1:4322`, separate from
-Astro's default development port. Cold image processing is therefore not counted
-against the server startup timeout, and routes are not compiled during interaction
-tests. CI persists `node_modules/.astro` after that prebuild; the
-deployment build and later workflow runs reuse its content-addressed image cache.
+Astro's default development port and outside Astro's preview-server lock, so it
+starts beside a running `npm run preview`. Cold image processing is therefore
+not counted against the server startup timeout, and routes are not compiled
+during interaction tests. CI persists `node_modules/.astro` after that
+prebuild; the deployment build and later workflow runs reuse its
+content-addressed image cache.
 
 That prebuild sets `E2E_FIXTURES=1`, which adds the test-only pages
 `/e2e-carousels/` and `/e2e-single-image/` (`src/pages/[fixture].astro`) that
 the carousel tests run against. When running Playwright directly against your
-own build, build with `E2E_FIXTURES=1 bun run build`; a plain `bun run build`,
+own build, build with `E2E_FIXTURES=1 npm run build`; a plain `npm run build`,
 like the deployment's, leaves them out.
 
 ## Project layout
 
 ```
-flake.nix                     bun, Playwright browsers, flock (x86_64-linux)
+flake.nix                     Node 24, Playwright browsers, flock (x86_64-linux)
 .envrc                        automatic flake shell activation with direnv
 astro.config.mjs              site (for sitemap) + integrations; no base
+vitest.config.ts              where unit tests live (src/, scripts/)
 svelte.config.js              Svelte preprocess
 tsconfig.json                 extends astro/tsconfigs/strict
 .pages.yml                    Pages CMS schema (the browser editing UI)
-.github/workflows/deploy.yml  test, build with bun, and deploy on push to master
+.github/workflows/deploy.yml  test, build with npm, and deploy on push to master
 
 src/
   images.ts                    responsive derivative URL/srcset contract
@@ -162,19 +165,20 @@ native-resolution representation when that is smaller than the original;
 otherwise the original is retained as the efficient fallback. Images whose
 longest side exceeds 4096 px also receive 512 px DZI tiles and use a lazily
 loaded OpenSeadragon canvas in the lightbox. Encoded files and pyramids are
-reused from `node_modules/.astro/images`; `bun run images` reports their generated
-and reused counts. It updates `public/_responsive` in place — writing only new
-or changed files and removing what the content no longer references — so it is
-safe to build or run tests while `bun dev` is serving. Only one run works at a
-time: `bun run images` holds `flock` on `node_modules/.images.lock`, and another
-run waits silently until it finishes. Widths above the source resolution are
-never generated. The pipeline auto-orients derivatives and normalizes them to
-sRGB. PNG and alpha-bearing inputs use lossless WebP; other raster inputs use
-high-quality lossy WebP. Pyramid levels are Lanczos-resized directly from the
-original rather than recursively reduced. Lossless tiles overlap by 1 px; lossy
-tiles overlap by 16 px so WebP boundary filtering does not reach their visible
-cores. The deploy workflow's Astro action persists the cache between CI runs.
-Cache loss only makes the next build slower—it does not change its output.
+reused from `node_modules/.astro/images`; `npm run images` reports their
+generated and reused counts. It updates `public/_responsive` in place — writing
+only new or changed files and removing what the content no longer references —
+so it is safe to build or run tests while `npm run dev` is serving. Only one
+run works at a time: `npm run images` holds `flock` on
+`node_modules/.images.lock`, and another run waits silently until it finishes.
+Widths above the source resolution are never generated. The pipeline
+auto-orients derivatives and normalizes them to sRGB. PNG and alpha-bearing
+inputs use lossless WebP; other raster inputs use high-quality lossy WebP.
+Pyramid levels are Lanczos-resized directly from the original rather than
+recursively reduced. Lossless tiles overlap by 1 px; lossy tiles overlap by
+16 px so WebP boundary filtering does not reach their visible cores. The deploy
+workflow's Astro action persists the cache between CI runs. Cache loss only
+makes the next build slower—it does not change its output.
 
 Uploads may keep spaces, accents, and `+` characters in their filenames. The
 manifest stores the original upload URL separately from its display fallback.
@@ -245,7 +249,7 @@ point is that the rest of the page ships no JS.
 1. Push to GitHub. Repo **Settings → Pages → Source = GitHub Actions**.
 2. The site serves from the custom domain in `public/CNAME`: add the same domain
    under Settings → Pages and point its DNS at GitHub Pages.
-3. Every push to `master` runs `.github/workflows/deploy.yml` (build with bun →
+3. Every push to `master` runs `.github/workflows/deploy.yml` (build with npm →
    deploy). Pushes limited to `src/content/` and `public/uploads/` skip unit and
    browser tests; the production build still validates and publishes the
    content. Mixed content/code pushes and manual workflow runs execute the full
@@ -261,10 +265,16 @@ or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md
 
 ## Known gaps / things to verify
 
-- **The flake's bun (1.3.13) never reports server sockets as closed**, so
-  `bun dev` holds every connection it has served until it restarts. Bun 1.4.0
-  fixes this; updating the flake input also changes the packaged Playwright
-  browsers, which must stay in step with the `@playwright/test` pin.
+- **`@playwright/test` is pinned to the flake's Playwright version.** Locally
+  its browsers come from the flake's `playwright-driver.browsers`, so after
+  `nix flake update`, set the pin to the output of
+  `nix eval --raw --inputs-from . nixpkgs#playwright-driver.version`. CI
+  installs the browsers that match the pin.
+- **`typescript` stays on 6.x** until `@astrojs/check` supports TypeScript 7:
+  its peer range (and `@astrojs/svelte`'s) ends at `^6.0.0`, and
+  `astro check` refuses TypeScript 7.
+- **`@types/node` stays on the major of the Node it runs on** (24), so the types
+  describe the runtime the scripts actually use.
 - **Pages CMS behavior is untested end-to-end** (it's hosted; needs the live
   repo). After connecting, create one test project through the UI and confirm the
   committed file matches the shape of

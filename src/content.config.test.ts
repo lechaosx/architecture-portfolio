@@ -1,10 +1,10 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { z } from 'astro/zod';
+import { parse } from 'yaml';
 
-mock.module('astro:content', () => ({
+vi.mock('astro:content', async () => ({
   defineCollection: <T>(collection: T) => collection,
-  z,
+  z: (await import('astro/zod')).z,
 }));
 
 const { collections } = await import('./content.config');
@@ -22,7 +22,7 @@ interface CmsField {
   blocks?: Array<{ name: string; fields?: CmsField[] }>;
 }
 
-const pagesConfig = Bun.YAML.parse(readFileSync('.pages.yml', 'utf8')) as {
+const pagesConfig = parse(readFileSync('.pages.yml', 'utf8')) as {
   content: Array<{
     name: string;
     fields?: CmsField[];

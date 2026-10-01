@@ -3280,9 +3280,10 @@ test('on a phone the edge arrows wait with the card for a variant still loading'
   await withDescription(page, hangar, '/uploads/02 GALERIE - Půdorys 1NP+.webp', 'A short note.');
   await gotoProject(page, '#image-5', hangar);
   await waitForLightbox(page);
-  // Below 100% the variant needs a file its neighbour preview did not load.
-  await page.keyboard.press('-');
-  await expect.poll(() => imageZoom(page)).toBeLessThan(1);
+  // Zoomed in, the variant needs a larger file than the page's thumbnails and
+  // its neighbour preview have loaded.
+  await page.keyboard.press('+');
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
   const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
   const toggle = page.getByRole('button', { name: 'Show description' });
   await toggle.click();

@@ -31,12 +31,15 @@ jobs:
               - '**'
               - '!src/content/**'
               - '!public/uploads/**'
-      - name: Set up Bun
+      - name: Set up Node
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
-        uses: oven-sh/setup-bun@v2
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
       - name: Install dependencies
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
-        run: bun install --frozen-lockfile
+        run: npm ci
       - name: Cache Astro build assets
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
         uses: actions/cache@v6
@@ -47,16 +50,16 @@ jobs:
             astro-cache-${{ runner.os }}-
       - name: Run static analysis
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
-        run: bun run check
+        run: npm run check
       - name: Run unit tests
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
-        run: bun run test
+        run: npm run test
       - name: Install browsers
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
-        run: bunx playwright install --with-deps chromium firefox
+        run: npx playwright install --with-deps chromium firefox
       - name: Run browser tests
         if: github.event_name == 'workflow_dispatch' || steps.changes.outputs.code == 'true'
-        run: bun run test:e2e
+        run: npm run test:e2e
 
   build:
     needs: test
@@ -68,8 +71,6 @@ jobs:
       # in astro.config.mjs. Nothing to configure here.
       - name: Build with Astro
         uses: withastro/action@v6
-        with:
-          package-manager: bun@latest
 
   deploy:
     needs: build

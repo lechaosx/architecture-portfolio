@@ -11,12 +11,12 @@ import {
 } from 'node:fs/promises';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import sharp from 'sharp';
-import { GENERATED_IMAGE_WIDTHS } from '../src/images';
+import { GENERATED_IMAGE_WIDTHS } from '../src/images.ts';
 import type {
   ImageManifest,
   ImageVariant,
   ResponsiveImage,
-} from '../src/images';
+} from '../src/images.ts';
 import {
   deepZoomLevels,
   deepZoomOverlap,
@@ -27,7 +27,7 @@ import {
   shouldPublishDerivative,
   staleOutputs,
   webpPolicy,
-} from './image-cache';
+} from './image-cache.ts';
 
 const sourceDirectory = resolve('public/uploads');
 const contentDirectory = resolve('src/content');
