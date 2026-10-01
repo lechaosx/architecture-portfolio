@@ -123,3 +123,12 @@ npm run dev      # http://localhost:4321
 ```
 
 Full developer documentation: [MAINTAINERS.md](MAINTAINERS.md).
+
+---
+
+## License
+
+The code is under the [MIT License](LICENSE). The content in `src/content/` and
+`public/uploads/` (texts, drawings, visualisations, photographs) is © Tereza
+Kalábková and the respective authors, all rights reserved, and is not covered by
+the MIT License.
