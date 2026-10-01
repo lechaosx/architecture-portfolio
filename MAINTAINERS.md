@@ -46,6 +46,7 @@ like the deployment's, leaves them out.
 ## Project layout
 
 ```
+LICENSE                       MIT for the code; content stays all rights reserved
 flake.nix                     Node 24, Chromium + Firefox for Playwright, flock (Linux)
 .envrc                        automatic flake shell activation with direnv
 astro.config.mjs              site (for sitemap), trailing slashes, integrations; no base
