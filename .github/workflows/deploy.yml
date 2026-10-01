@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - name: Check whether tests are needed
         if: github.event_name == 'push'
         id: changes
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       # The site is root-only on a custom domain (public/CNAME); site/SEO is set
       # in astro.config.mjs. Nothing to configure here.
       - name: Build with Astro
