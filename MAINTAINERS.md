@@ -1,307 +1,81 @@
 # Maintainers' guide
 
-For the **developer** working on this codebase. If you're the site owner just
-trying to edit content or go live, see [README.md](README.md) instead.
+How to build, test and change the code. Background: [ARCHITECTURE.md](ARCHITECTURE.md)
+(why the code is shaped this way), [FEATURES.md](FEATURES.md) (why it behaves
+this way).
 
-Background reading: [ARCHITECTURE.md](ARCHITECTURE.md) (why the code is shaped
-this way), [FEATURES.md](FEATURES.md) (why it behaves this way).
+## Commands
 
----
-
-## Prerequisites
-
-- [Nix](https://nixos.org) with flakes enabled (provides Node 24 and npm),
-  **or** Node 24 installed directly.
-
-## Everyday commands
+Needs [Nix](https://nixos.org) with flakes (or Node 24 directly).
 
 ```sh
-nix develop          # shell with Node and npm on PATH
-direnv allow         # alternatively, activate the flake shell automatically
-npm install          # install dependencies
+nix develop          # Node, npm, Playwright's Chromium + Firefox, flock
+direnv allow         # or activate the flake shell automatically
+npm install
 npm run dev          # dev server at http://localhost:4321
-npm run check        # Astro, Svelte, TypeScript, and JavaScript diagnostics
+npm run check        # Astro + Svelte diagnostics; any warning fails
 npm run test         # unit tests (Vitest)
-npm run test:e2e     # Chromium + Firefox interaction and animation regressions
-npm run test:all     # static analysis + unit + browser tests
+npm run test:e2e     # browser tests (Chromium + Firefox)
+npm run test:all     # check, unit and browser tests
 npm run build        # production build -> dist/
-npm run preview      # serve the built dist/ locally
+npm run preview      # serve dist/
+npm run images       # regenerate responsive images (dev and build run it)
 ```
 
-`test:e2e` builds the site, including responsive images, into `dist-e2e/` before
-Playwright starts its preview server on `http://127.0.0.1:4322`, separate from
-Astro's default development port and outside Astro's preview-server lock, so it
-starts beside a running `npm run preview`. Cold image processing is therefore
-not counted against the server startup timeout, and routes are not compiled
-during interaction tests. CI persists `node_modules/.astro` after that
-prebuild; the deployment build and later workflow runs reuse its
-content-addressed image cache.
+### Browser tests
 
-That prebuild uses `astro.config.e2e.mjs`, the site's config plus the test-only
-pages in `tests/e2e/pages/`, under `/e2e/`: `/e2e/carousels/`,
-`/e2e/single-image/` and `/e2e/project/`, which the carousel, lightbox and
-project-page tests run against, and `/e2e/images/`, the images in
-`tests/e2e/images`. It runs those images through the image pipeline with the
-content's uploads (see `pretest:e2e` in `package.json`). Playwright's preview server serves
-`dist-e2e/`, so `dist/` stays the plain build; the derivatives share
-`public/_responsive`, and the next plain `npm run images`, `dev` or `build`
-removes the test images' ones. When running Playwright directly, build with
-`npm run pretest:e2e` first.
+- `test:e2e` first builds `astro.config.e2e.mjs` into `dist-e2e/`, then serves it
+  on port 4322, so it runs beside `dev` and `preview`. To run Playwright
+  directly, run `npm run pretest:e2e` first.
+- Lightbox and carousel tests use test-only pages in `tests/e2e/pages/`, served
+  under `/e2e/`, with images in `tests/e2e/images/`. Home, work and contact
+  tests use the real content.
+- `/e2e/project/` is frozen: tests address its images by position (`#image-N`).
+  For a new case, add a fixture entry in `tests/e2e/pages/[fixture].astro`
+  instead of inserting images there.
 
-The lightbox tests address `/e2e/project/` images by lightbox position
-(`#image-N`, and `N / total` with `total` the spec's count of its images); the
-title of each titled image other than the cover ends in its position. That page
-is frozen: a test that needs something it lacks gets its own small fixture
-entry in `tests/e2e/pages/[fixture].astro`, rendered through `ProjectPage.astro`,
-rather than an image inserted into the shared one, which would move the
-positions every lightbox test relies on.
+## Where things are
 
-## Project layout
+| Path | What |
+|------|------|
+| `src/content/projects/*.md` | one file per project; the filename is the URL |
+| `src/content/singletons/` | `site.md`, `home.md`, `contact.md` |
+| `public/uploads/` | uploaded originals |
+| `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
+| `src/i18n.ts` | baked-in UI labels |
+| `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
+| `src/components/Gallery.svelte`, `Lightbox*.svelte`, `lightbox-*.ts`, `gallery.ts` | the project lightbox |
+| `src/components/Carousel.astro`, `ProjectBlocks.astro` | home and project carousels |
+| `scripts/generate-responsive-images.ts` | image pipeline → `public/_responsive/` (gitignored) |
+| `tests/e2e/` | browser tests and their pages |
+| `.github/workflows/deploy.yml` | test, build, deploy |
 
-```
-LICENSE                       MIT for the code; content stays all rights reserved
-flake.nix                     Node 24, Chromium + Firefox for Playwright, flock (Linux)
-.envrc                        automatic flake shell activation with direnv
-astro.config.mjs              site (for sitemap), trailing slashes, integrations; no base
-astro.config.e2e.mjs          the browser tests' build: astro.config.mjs + tests/e2e/pages
-vitest.config.ts              unit tests (src/, scripts/) on Astro's Vite config
-tsconfig.json                 extends astro/tsconfigs/strict
-.pages.yml                    Pages CMS schema (the browser editing UI)
-.github/workflows/deploy.yml  test, build with npm, and deploy on push to master
+## Common changes
 
-src/
-  images.ts                    responsive derivative URL/srcset contract
-  server-images.ts             reads the image manifest, again when it changes
-  site-title.ts                credential + owner name used in browser tab titles
-  content.config.ts           project and singleton schemas (Zod); bilingual fields
-  singletons.ts                reads the site, home and contact singletons
-  i18n.ts                      baked-in UI labels ({cs, en} dictionary)
-  content/projects/*.md        one file per project (text in _cs/_en frontmatter)
-  content/singletons/          CMS singletons: site.md, home.md, contact.md
-  pages/
-    index.astro                home: image/carousel + home.md (bio, portrait, approach)
-    work.astro                 project grid
-    contact.astro              email, phone, per-day availability (from contact.md)
-    projects/[...slug].astro   project detail page
-  layouts/Base.astro           html shell, reveal + language scripts
-  components/
-    Nav.astro                  chrome (name from site.md)
-    Footer.astro               chrome (email from contact.md) + language/theme toggles
-    T.astro                    renders both languages of a label/string (CSS hides one)
-    Prose.astro                renders both languages of a rich-text body (via marked)
-    Carousel.astro             home hero image/carousel; images from home.md by default
-    Approaches.astro           vertical "how I work" list (items from home.md)
-    ProjectCard.astro          grid card
-    ProjectPage.astro          a project's page: header, cover, blocks and lightbox
-    ProjectBlocks.astro        ordered project text/gallery/image-set renderer
-    Gallery.svelte             the ONLY hydrated island (page-level lightbox)
-    LightboxCard.svelte        one card: its layers, blend and turn, front and back
-    LightboxVerso.svelte       back of a lightbox image's card (its description)
-    LightboxTiles.svelte       OpenSeadragon tiled canvas for deep-zoom drawings
-    LightboxControls.svelte    lightbox corner controls and set strip
-    lightbox-gestures.ts       input → intents state machine (unit-tested)
-    lightbox-history.ts        #image-N history entry (unit-tested)
-    gallery.ts                 lightbox geometry, image-selection, motion and opening maths
-  styles/global.css            tailwind import, fonts, .reveal, .no-scrollbar, lang rule
+**Change the content shape.** Edit `src/content.config.ts` and `.pages.yml` in
+the same change; the content-schema test fails if their fields or required flags
+differ. Translatable fields come as `_cs`/`_en` pairs in both places.
 
-public/
-  uploads/                     original CMS image uploads
-  _responsive/                generated derivatives + manifest (gitignored)
-  favicon.svg
-  CNAME                        the custom domain (committed, copied to dist/)
+**Add UI text.** Add a key with both languages to `src/i18n.ts` and render it
+with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` or
+`<Prose cs={…} en={…} />`, never as a bare string.
 
-scripts/
-  image-cache.ts                content + recipe cache fingerprint
-  generate-responsive-images.ts  builds referenced raster display sizes
-tests/e2e/                     browser-level interaction regressions
-  pages/                       test-only pages, added by astro.config.e2e.mjs
-  images/                      their images
-```
+**Add a project by hand.** Copy an existing file in `src/content/projects/`, put
+images in `public/uploads/` and reference them as `/uploads/<file>`. The owner
+normally does this in the CMS.
 
----
+**Change the domain.** Edit `public/CNAME` and `site` in `astro.config.mjs`,
+then the domain under GitHub **Settings → Pages** and its DNS.
 
-## Common tasks
+**Add an island.** Keep it small and record why in ARCHITECTURE.md; the lightbox
+is the only hydrated component, and the rest is small vanilla scripts.
 
-### Add or edit a project
+## Known gaps
 
-Two ways, same result (a Markdown file in `src/content/projects/`):
-
-- **Via CMS** (how the architect does it): app.pagescms.org → Projects → new.
-- **By hand:** copy an existing file in `src/content/projects/`, edit the
-  frontmatter, drop images in `public/uploads/` and reference them as
-  `/uploads/<file>`.
-
-Frontmatter shape is defined in `src/content.config.ts`. The Markdown filename
-supplies the route under `/projects/`. Pages CMS exposes the complete filename;
-keep its `.md` extension when renaming it.
-
-Project pages are ordered block lists. Text is independent of image blocks;
-`image_set` displays one image directly or multiple images as a carousel:
-
-```yaml
-blocks:
-  - type: text
-    body_cs: Český text
-    body_en: English text
-  - type: gallery
-    images:
-      - image: /uploads/drawing.jpg
-        comparison_set: site-plan
-        title_cs: Původní stav
-        title_en: Existing condition
-      - image: /uploads/proposal.jpg
-        comparison_set: site-plan
-        title_cs: Návrh
-        title_en: Proposal
-  - type: image_set
-    images:
-      - image: /uploads/render-1.jpg
-        title_cs: České jméno
-        title_en: English title
-      - image: /uploads/render-2.jpg
-```
-
-The title and description fields (Czech and English) are optional; omit them to
-show only the enlarged image.
-A title labels the image in the lightbox's set strip; a description adds a
-button that turns the image over to show it.
-An optional language-neutral `comparison_set` groups records with the same exact
-value across any image blocks on that project. The existing bilingual titles
-name the set strip's buttons. Grouping is lightbox-only and does not change how
-each preview is rendered on the project page.
-The cover and every image block feed one lightbox in page order. Lightbox links
-use that position (`#image-1`, `#image-2`, …), so reordering blocks or images
-also changes those addresses. A repeated `image` path is a separate lightbox
-entry at each occurrence. The Gallery island uses `client:load`
-so a directly opened image address is handled as soon as the project loads.
-Raster uploads referenced by content are converted automatically before `dev`
-and `build`; do not commit `public/_responsive`. Reduced image surfaces use the
-generated variants. The lightbox chooses among them using its rendered size,
-display density, and zoom. The final full-image candidate is a processed
-native-resolution representation when that is smaller than the original;
-otherwise the original is retained as the efficient fallback. Images whose
-longest side exceeds 4096 px also receive 512 px DZI tiles and use a lazily
-loaded OpenSeadragon canvas in the lightbox. Encoded files and pyramids are
-reused from `node_modules/.astro/images`; `npm run images` reports their
-generated and reused counts. It updates `public/_responsive` in place — writing
-only new or changed files and removing what the content no longer references —
-so it is safe to build or run tests while `npm run dev` is serving. Only one
-run works at a time: `npm run images` holds `flock` on
-`node_modules/.images.lock`, and another run waits silently until it finishes.
-Widths above the source resolution are never generated. The pipeline
-auto-orients derivatives and normalizes them to sRGB. PNG and alpha-bearing
-inputs use lossless WebP; other raster inputs use high-quality lossy WebP.
-Pyramid levels are Lanczos-resized directly from the original rather than
-recursively reduced. Lossless tiles overlap by 1 px; lossy tiles overlap by
-16 px so WebP boundary filtering does not reach their visible cores. The deploy
-workflow's Astro action persists the cache between CI runs. Cache loss only
-makes the next build slower—it does not change its output.
-
-Uploads may keep spaces, accents, and `+` characters in their filenames. The
-manifest stores the original upload URL separately from its display fallback.
-For a `+` path, the build publishes the same source bytes at a hash-only display
-URL because Astro preview cannot serve that encoded path reliably; **Open
-original** still uses the untouched upload and its real filename.
-
-### Change the content schema — update BOTH places
-
-The content shape is declared **twice** and they must agree:
-
-1. `src/content.config.ts` — the Zod schemas (build-time validation).
-2. `.pages.yml` — the Pages CMS fields (the editing UI).
-
-If you add/rename/remove a field in one, do the same in the other in the **same
-change**. A mismatch means either the build fails (schema stricter than CMS) or
-the architect can't edit a field the site expects (CMS missing a field). This is
-the project's sharpest maintenance edge — see AGENTS.md. Pages CMS fields are
-optional unless `.pages.yml` sets `required: true`; the content-schema test fails
-unless both places declare the same fields, required in the same places, down to
-list rows and blocks.
-
-This double-declaration applies to the **`projects` collection** and to the
-**singletons** (`src/content/singletons/*.md`: site, home, contact), each the
-one entry of its own collection, which components read through
-`src/singletons.ts`.
-
-Translatable fields come in `_cs`/`_en` pairs — when you add one, add **both**
-halves in **both** schema places, and render them through `T.astro`/`Prose.astro`
-so the language switch works. Language-neutral fields (images, `year`, `email`,
-`phone`) stay single.
-
-### Add or change translated UI text (not CMS content)
-
-Baked-in labels (nav, section headings, "Back to work", etc.) live in
-`src/i18n.ts` as a `{ cs, en }` dictionary. Add a key with both languages, then
-render it with `<T k="yourKey" />` (or `<T as="h2" k="yourKey" class="…" />`).
-For a bilingual string that comes from content rather than the dictionary, pass
-explicit props: `<T cs={…} en={…} />`, or `<Prose cs={…} en={…} />` for rich text.
-The language machinery (detection, the footer language toggle, `<title>` sync) lives
-in `src/layouts/Base.astro`; how and why is in ARCHITECTURE.md →
-"Internationalization".
-
-### Change the domain
-
-The site serves from a single custom domain at the root. To change it, edit
-`public/CNAME` (one line, the bare domain) and update `site` in
-`astro.config.mjs` to the matching `https://…` origin (that value only feeds the
-sitemap). Then update the domain under GitHub **Settings → Pages** and its DNS.
-
-Internal links and assets are plain root-absolute paths (`/work/`,
-`/uploads/…`) — there is no `base` and no link helper, because the site is
-mounted at the root. Don't reintroduce a `base`/subpath deployment without also
-routing every link/asset through a base-aware helper; see ARCHITECTURE.md →
-"Hosting: custom domain at the root" for why root-only keeps the code simple.
-
-### Add another interactive island
-
-Create a `.svelte` component and mount it in an `.astro` file with a client
-directive (`client:visible`, `client:idle`, etc.). Keep islands small — the whole
-point is that the rest of the page ships no JS.
-
----
-
-## Deployment
-
-1. Push to GitHub. Repo **Settings → Pages → Source = GitHub Actions**.
-2. The site serves from the custom domain in `public/CNAME`: add the same domain
-   under Settings → Pages and point its DNS at GitHub Pages.
-3. Every push to `master` runs `.github/workflows/deploy.yml` (build with npm →
-   deploy). Pushes limited to `src/content/` and `public/uploads/` skip unit and
-   browser tests; the production build still validates and publishes the
-   content. Mixed content/code pushes and manual workflow runs execute the full
-   test suite. No manual step.
-
-## Content editing setup (Pages CMS)
-
-Connect the repo once at [app.pagescms.org](https://app.pagescms.org) (sign in
-with GitHub, grant the app access to the repo). It reads `.pages.yml`. No proxy
-or server — this is why Pages CMS was chosen over Sveltia. See ARCHITECTURE.md.
-
----
-
-## Known gaps / things to verify
-
-- **`@playwright/test` is pinned to the flake's Playwright version.** Locally
-  its browsers come from the flake's `playwright-driver.browsers`, so after
-  `nix flake update`, set the pin to the output of
-  `nix eval --raw --inputs-from . nixpkgs#playwright-driver.version`. CI
-  installs the browsers that match the pin.
-- **`typescript` stays on 6.x** until `@astrojs/check` supports TypeScript 7:
-  its peer range (and `@astrojs/svelte`'s and `svelte-check`'s) ends at
-  `^6.0.0`, and `astro check` refuses TypeScript 7.
-- **`@types/node` stays on the major of the Node it runs on** (24), so the types
-  describe the runtime the scripts actually use.
-- **Pages CMS behavior is untested end-to-end** (it's hosted; needs the live
-  repo). After connecting, create one test project through the UI and confirm the
-  committed file matches the shape of
-  `src/content/projects/urban-study-kyjov.md`. Confirm that text-block
-  `body_cs`/`body_en` fields are written into frontmatter as Markdown strings
-  (the file's own Markdown body stays empty — `Prose.astro` renders those fields
-  with `marked`, so the text must land in frontmatter, not the body).
-  If this is off, it's a small `.pages.yml` tweak.
-- **Placeholders to replace before launch:** the `.svg` files in
-  `public/uploads/`, the sample projects, and the domain (see above). Contact
-  details are placeholders in `src/content/singletons/contact.md`
-  (`info@kalabkova.cz`, `+420 777 123 456`) — editable via the CMS. Site-wide
-  text (name, credential, email, phone, hours) now comes from those singletons,
-  not from hardcoded strings in components.
+- **`@playwright/test` is pinned to the flake's Playwright.** After
+  `nix flake update`, set the pin to
+  `nix eval --raw --inputs-from . nixpkgs#playwright-driver.version`.
+- **`typescript` stays on 6.x** until `@astrojs/check` and `svelte-check`
+  accept TypeScript 7.
+- **`@types/node` stays on Node's major** (24), to describe the runtime the
+  scripts use.
