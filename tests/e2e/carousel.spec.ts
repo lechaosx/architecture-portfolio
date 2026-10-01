@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-// Built by the e2e build (E2E_FIXTURES) from src/pages/[fixture].astro.
-const fixture = '/e2e-carousels/';
+// tests/e2e/pages/[fixture].astro, which the e2e build adds.
+const fixture = '/e2e/carousels/';
 
 async function currentSlide(page: Page, dot = '[data-dot]') {
   return page.locator(dot).evaluateAll((dots) =>
@@ -46,13 +46,13 @@ test('carousels do not widen the page on mobile', async ({ page }) => {
 test('one selected home image renders as an image rather than a carousel', async ({
   page,
 }) => {
-  await page.goto('/e2e-single-image/');
+  await page.goto('/e2e/single-image/');
 
   const media = page.locator('[data-home-media]');
   await expect(media.locator('img')).toHaveCount(1);
   await expect(media.locator('img')).toHaveAttribute(
     'src',
-    '/uploads/placeholder-cover.svg',
+    '/e2e/images/placeholder-cover.svg',
   );
   const aspectRatios = await media.locator('img').evaluate((element) => {
     const image = element as HTMLImageElement;

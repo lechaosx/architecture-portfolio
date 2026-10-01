@@ -1,7 +1,10 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import sharp from 'sharp';
 
-const projectPath = '/projects/urban-study-kyjov/';
+// tests/e2e/pages/[fixture].astro, which the e2e build adds.
+const projectPath = '/e2e/project/';
+// How many images its lightbox shows.
+const total = 24;
 const phone = { viewport: { width: 390, height: 844 } };
 const touchPhone = { ...phone, hasTouch: true, isMobile: true };
 
@@ -16,9 +19,9 @@ function galleryImage(page: Page, position: number, label = 'Open image') {
  * Opens the project page, on `suffix` if given, with the page's clock faked
  * so a test can hold and step it.
  */
-async function gotoProject(page: Page, suffix = '', path = projectPath) {
+async function gotoProject(page: Page, suffix = '') {
   await installClock(page);
-  await page.goto(`${path}${suffix}`);
+  await page.goto(`${projectPath}${suffix}`);
   await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
 }
 
@@ -132,63 +135,6 @@ async function oneFinger(context: BrowserContext, page: Page) {
     });
 }
 
-/**
- * Serves `path` with test-only description text for the image uploaded as
- * `file`, by rewriting the gallery island's serialized props; `responsive:
- * false` also drops the image's responsive entry.
- */
-async function withDescription(
-  page: Page,
-  path: string,
-  file: string,
-  text: string | { en: string; cs: string },
-  { responsive = true } = {},
-) {
-  const { en, cs } = typeof text === 'string' ? { en: text, cs: text } : text;
-  const decode = (value: string) =>
-    value
-      .replaceAll('&quot;', '"')
-      .replaceAll('&#39;', "'")
-      .replaceAll('&lt;', '<')
-      .replaceAll('&gt;', '>')
-      .replaceAll('&amp;', '&');
-  const encode = (value: string) =>
-    value
-      .replaceAll('&', '&amp;')
-      .replaceAll('"', '&quot;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;');
-  await page.route(
-    (url) => decodeURIComponent(url.pathname) === decodeURIComponent(path),
-    async (route) => {
-      const response = await route.fetch();
-      const body = (await response.text()).replace(
-        /(<astro-island[^>]*? props=")([^"]*)"/,
-        (_, start: string, props: string) => {
-          const island = JSON.parse(decode(props));
-          const at = island.images[1].findIndex(
-            ([, item]: [number, { image: [number, string] }]) =>
-              item.image[1] === file,
-          );
-          const record = island.images[1][at][1];
-          record.description_en = [0, en];
-          record.description_cs = [0, cs];
-          // Astro serializes undefined as a bare [0].
-          if (!responsive) island.responsiveImages[1][at] = [0];
-          return `${start}${encode(JSON.stringify(island))}"`;
-        },
-      );
-      await route.fulfill({ response, body });
-    },
-  );
-}
-
-const LONG_TEXT = Array.from(
-  { length: 24 },
-  () =>
-    'The study follows how the square, the park and the stadium meet along the river, and where a new path could join them.',
-).join(' ');
-
 /** The card's box and its text column's. */
 function boxes(page: Page) {
   return page.evaluate(() => {
@@ -290,11 +236,11 @@ test('buttons and arrow keys navigate one addressable lightbox history entry', a
   const current = page
     .getByRole('navigation', { name: 'Images in this set' })
     .locator('[aria-current="true"]');
-  await expect(current).toHaveText('Cycling Transport Analysis');
+  await expect(current).toHaveText('Tiled variant 2');
 
   await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/#image-3$/);
-  await expect(current).toHaveText('Life at the city');
+  await expect(current).toHaveText('Tiled variant 3');
   await page.keyboard.press('ArrowLeft');
   await expect(page).toHaveURL(/#image-2$/);
   await page.getByRole('button', { name: 'Next image' }).click();
@@ -322,13 +268,13 @@ test('a directly linked image closes to its project before leaving the page', as
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
-test('separate Hangár galleries share a lightbox across the full-width drawing', async ({
+test('separate galleries share a lightbox across the full-width drawing', async ({
   page,
 }) => {
-  await page.goto('/projects/galerie-hangár/');
+  await page.goto(projectPath);
   await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
   const duplicateTriggers = page.locator(
-    'button[data-lightbox-index]:has(img[src="/uploads/Scene 16_4.webp"])',
+    'button[data-lightbox-index]:has(img[src="/e2e/images/cover.png"])',
   );
   await expect(duplicateTriggers).toHaveCount(2);
   const cover = duplicateTriggers.first();
@@ -366,12 +312,12 @@ test('separate Hangár galleries share a lightbox across the full-width drawing'
   );
   await expect(
     page.getByRole('dialog', { name: 'Image viewer' }).getByRole('status'),
-  ).toHaveText(`${fullWidthIndex + 1} / 27`);
+  ).toHaveText(`${fullWidthIndex + 1} / ${total}`);
 
   await page.getByRole('button', { name: 'Next image' }).click();
   await expect(page.getByRole('link', { name: 'Open original' })).toHaveAttribute(
     'href',
-    '/uploads/Image_2.webp',
+    '/e2e/images/square-1.png',
   );
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
@@ -596,26 +542,22 @@ test('comparison shortcuts preserve the inspected area without changing page pre
   page.on('response', (response) => {
     if (
       response.status() >= 400 &&
-      decodeURIComponent(response.url()).includes('GALERIE - Půdorys')
+      response.url().includes('/e2e/images/untiled-')
     ) {
       failedSetImages.push(response.url());
     }
   });
-  await page.goto('/projects/galerie-hang%C3%A1r/');
+  await page.goto(projectPath);
   await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
-  const groundFloorPreview = galleryImage(page, 5);
-  const basementPreview = galleryImage(page, 6);
-  const roofPreview = galleryImage(page, 7);
-  await expect(groundFloorPreview).toBeVisible();
-  await expect(basementPreview).toBeVisible();
-  await expect(roofPreview).toBeVisible();
+  const previews = [18, 19, 20].map((position) => galleryImage(page, position));
+  for (const preview of previews) await expect(preview).toBeVisible();
 
-  await groundFloorPreview.click();
+  await previews[0].click();
   await waitForLightbox(page);
   const comparison = page.getByRole('navigation', {
     name: 'Images in this set',
   });
-  await expect(comparison.getByRole('button', { name: 'Ground floor plan' })).toHaveAttribute(
+  await expect(comparison.getByRole('button', { name: 'Untiled variant 18' })).toHaveAttribute(
     'aria-current',
     'true',
   );
@@ -634,7 +576,7 @@ test('comparison shortcuts preserve the inspected area without changing page pre
     .locator('.lightbox-front > img')
     .evaluate((image: HTMLImageElement) => getComputedStyle(image).transform);
 
-  const blendState = await cardMoveAt(page, 90, () => comparison.getByRole('button', { name: 'Basement floor plan' }).click());
+  const blendState = await cardMoveAt(page, 90, () => comparison.getByRole('button', { name: 'Untiled variant 19' }).click());
   expect(blendState.front).toBeGreaterThan(0);
   expect(blendState.front).toBeLessThan(1);
   expect(blendState.stripX).toBe(0);
@@ -642,7 +584,7 @@ test('comparison shortcuts preserve the inspected area without changing page pre
     await page.locator('[aria-label="Images in this set"] button:disabled').count(),
   ).toBe(1);
   await page.clock.resume();
-  await expect(page).toHaveURL(/#image-6$/);
+  await expect(page).toHaveURL(/#image-19$/);
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
   await expect
@@ -656,11 +598,11 @@ test('comparison shortcuts preserve the inspected area without changing page pre
 
   // The next image is the set's last variant: it blends and keeps the view.
   await page.getByRole('button', { name: 'Next image' }).click();
-  await expect(page).toHaveURL(/#image-7$/);
+  await expect(page).toHaveURL(/#image-20$/);
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
   // After the set comes a different card: it slides in at rest.
   await page.getByRole('button', { name: 'Next image' }).click();
-  await expect(page).toHaveURL(/#image-8$/);
+  await expect(page).toHaveURL(/#image-21$/);
   expect(await imageZoom(page)).toBeCloseTo(1, 2);
   await expect(
     page.getByRole('navigation', { name: 'Images in this set' }),
@@ -674,9 +616,9 @@ test.describe(() => {
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/projects/galerie-hang%C3%A1r/');
+    await page.goto(projectPath);
     await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
-    await galleryImage(page, 6).click();
+    await galleryImage(page, 19).click();
     await waitForLightbox(page);
 
     const comparison = page.getByRole('navigation', {
@@ -685,7 +627,7 @@ test.describe(() => {
     const [closeBox, comparisonBox, buttonBox] = await Promise.all([
       page.getByRole('button', { name: 'Close' }).boundingBox(),
       comparison.boundingBox(),
-      comparison.getByRole('button', { name: 'Roof plan' }).boundingBox(),
+      comparison.getByRole('button', { name: 'Untiled variant 20' }).boundingBox(),
     ]);
     expect(buttonBox!.y).toBeCloseTo(closeBox!.y, 0);
     expect(buttonBox!.height).toBe(closeBox!.height);
@@ -829,10 +771,10 @@ test('the description is on the back of the drawing', async ({ page }) => {
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
   await flip.click();
 
-  const text = dialog.getByRole('region', { name: 'Life at the city' });
+  const text = dialog.getByRole('region', { name: 'Tiled variant 3' });
   await expect(text).toBeVisible();
   await expect(
-    text.getByRole('heading', { name: 'Life at the city' }),
+    text.getByRole('heading', { name: 'Tiled variant 3' }),
   ).toBeVisible();
   const paragraph = text.locator('p');
   await expect(paragraph).toHaveCSS('text-align', 'justify');
@@ -862,7 +804,7 @@ test('changing image always shows the drawing; the language switch keeps the sid
   await dialog.getByRole('button', { name: 'Switch to Czech' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
   await expect(
-    dialog.getByRole('region', { name: 'Život ve městě' }),
+    dialog.getByRole('region', { name: 'Dlaždicová varianta 3' }),
   ).toBeVisible();
   await expect(
     dialog.getByRole('button', { name: 'Zobrazit popis' }),
@@ -892,7 +834,7 @@ test('long text scrolls inside the back and the wheel never zooms the hidden dra
   await galleryImage(page, 3).click();
   await waitForLightbox(page);
   await page.getByRole('button', { name: 'Show description' }).click();
-  const text = page.getByRole('region', { name: 'Life at the city' });
+  const text = page.getByRole('region', { name: 'Tiled variant 3' });
   await text.hover();
   await page.mouse.wheel(0, 150);
   await expect.poll(() => text.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
@@ -922,7 +864,7 @@ test.describe(() => {
     await settled(page);
     const next = page.getByRole('button', { name: 'Next image', includeHidden: true });
     await expect(next).toBeHidden();
-    const text = page.getByRole('region', { name: 'Limitations of the Area' });
+    const text = page.getByRole('region', { name: 'Tiled variant 6' });
     const paragraph = (await text.locator('p').boundingBox())!;
     expect(Math.round(paragraph.width)).toBe(390 - 48);
 
@@ -1121,7 +1063,7 @@ test.describe(() => {
     context,
   }) => {
     const { drag } = await phoneOnText(context, page);
-    const text = page.getByRole('region', { name: 'Life at the city' });
+    const text = page.getByRole('region', { name: 'Tiled variant 3' });
     const scrollTop = () => text.evaluate((element) => element.scrollTop);
 
     // Mostly vertical: dx −60, dy −300.
@@ -1152,7 +1094,7 @@ test.describe(() => {
   }) => {
     const { drag } = await phoneOnText(context, page);
     await page
-      .getByRole('region', { name: 'Life at the city' })
+      .getByRole('region', { name: 'Tiled variant 3' })
       .locator('p')
       .evaluate((paragraph) => getSelection()!.selectAllChildren(paragraph));
     const moves = await drag([
@@ -1173,7 +1115,7 @@ test('Tab reaches the scrollable description', async ({ page }) => {
   await galleryImage(page, 3).click();
   await waitForLightbox(page);
   await page.getByRole('button', { name: 'Show description' }).click();
-  const text = page.getByRole('region', { name: 'Life at the city' });
+  const text = page.getByRole('region', { name: 'Tiled variant 3' });
   for (
     let step = 0;
     step < 12 && !(await text.evaluate((element) => element === document.activeElement));
@@ -1206,7 +1148,7 @@ test('without reduced motion the card turns over both ways', async ({ page }) =>
   await waitForLightbox(page);
   const flip = page.getByRole('button', { name: 'Show description' });
   const turning = async () => Math.abs(await sheetTurn(page)) < 0.99;
-  const text = page.getByRole('region', { name: 'Life at the city' });
+  const text = page.getByRole('region', { name: 'Tiled variant 3' });
 
   await holdTime(page);
   await flip.click();
@@ -1262,7 +1204,7 @@ test('Next from the description slides the card away without turning it', async 
   });
   expect(state.hash).toBe('#image-7');
   expect(state.leavingX).toBeLessThan(0);
-  expect(state.text).toBe('Limitations of the Area');
+  expect(state.text).toBe('Tiled variant 6');
   expect(state.textVisible).toBe(true);
   expect(state.leavingTurn).toBeCloseTo(-1, 3);
   expect(state.arrivingTurn).toBeCloseTo(1, 3);
@@ -1272,7 +1214,7 @@ test('Next from the description slides the card away without turning it', async 
   await settled(page);
   expect(await sheetTurn(page)).toBeCloseTo(1, 3);
   await expect(page.locator('[data-lightbox-sheet]')).toHaveCount(1);
-  await expect(page.getByRole('region', { name: 'Site Plan' })).toBeHidden();
+  await expect(page.getByRole('region', { name: 'Drawing 7' })).toBeHidden();
 });
 
 test('Next from the description to a variant turns back while blending both faces', async ({ page }) => {
@@ -1303,7 +1245,7 @@ test('Next from the description to a variant turns back while blending both face
   expect(await sheetTurn(page)).toBeCloseTo(1, 3);
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
   await flip.click();
-  await expect(page.getByRole('region', { name: 'Sports facilities' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Tiled variant 4' })).toBeVisible();
 });
 
 test('a set button from the description turns back while blending both faces', async ({ page }) => {
@@ -1321,7 +1263,7 @@ test('a set button from the description turns back while blending both faces', a
 
   const state = await cardMoveAt(page, 200, () => page
     .getByRole('navigation', { name: 'Images in this set' })
-    .getByRole('button', { name: 'Values of the Area' })
+    .getByRole('button', { name: 'Tiled variant 5' })
     .click());
   expect(state.hash).toBe('#image-5');
   expect(state.stripX).toBe(0);
@@ -1337,7 +1279,7 @@ test('a set button from the description turns back while blending both faces', a
   expect(await sheetTurn(page)).toBeCloseTo(1, 3);
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
   await flip.click();
-  await expect(page.getByRole('region', { name: 'Values of the Area' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Tiled variant 5' })).toBeVisible();
 });
 
 test('Next inside a set blends and keeps the view; leaving the set slides', async ({
@@ -1411,19 +1353,19 @@ for (const [route, start, change, expected] of [
     'Next to another card',
     6,
     (page: Page) => page.getByRole('button', { name: 'Next image' }).click(),
-    { position: '7 / 17', current: 'Site Plan', toggle: true },
+    { position: `7 / ${total}`, current: 'Drawing 7', toggle: true },
   ],
   [
     'the arrow key to a variant',
     3,
     (page: Page) => page.keyboard.press('ArrowRight'),
-    { position: '4 / 17', current: 'Sports facilities', toggle: true },
+    { position: `4 / ${total}`, current: 'Tiled variant 4', toggle: true },
   ],
   [
     'a set button',
     3,
-    (page: Page) => page.getByRole('button', { name: 'Values of the Area' }).click(),
-    { position: '5 / 17', current: 'Values of the Area', toggle: true },
+    (page: Page) => page.getByRole('button', { name: 'Tiled variant 5' }).click(),
+    { position: `5 / ${total}`, current: 'Tiled variant 5', toggle: true },
   ],
   [
     'a released swipe',
@@ -1434,7 +1376,7 @@ for (const [route, start, change, expected] of [
       await page.mouse.move(700, 400);
       await page.mouse.up();
     },
-    { position: '10 / 17', current: 'Site axonometry', toggle: false },
+    { position: `10 / ${total}`, current: 'Drawing 10', toggle: false },
   ],
 ] as const) {
   test(`the controls follow ${route} as soon as it is made`, async ({ page }) => {
@@ -1460,13 +1402,13 @@ test('a drag that has not changed image leaves the controls as they were', async
   await page.mouse.down();
   await page.mouse.move(700, 400);
   await expect(page.locator('.lightbox-front .lightbox-incoming')).toHaveCount(1);
-  await expect(position).toHaveText(/^\s*3 \/ 17/);
-  await expect(current).toHaveText('Life at the city');
+  await expect(position).toHaveText(new RegExp(`^\\s*3 / ${total}`));
+  await expect(current).toHaveText('Tiled variant 3');
   await page.mouse.move(880, 400);
   await page.mouse.up();
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  await expect(position).toHaveText(/^\s*3 \/ 17/);
-  await expect(current).toHaveText('Life at the city');
+  await expect(position).toHaveText(new RegExp(`^\\s*3 / ${total}`));
+  await expect(current).toHaveText('Tiled variant 3');
 
   // The strip moved towards another card.
   await page.goto(`${projectPath}#image-9`);
@@ -1477,8 +1419,8 @@ test('a drag that has not changed image leaves the controls as they were', async
   await expect
     .poll(async () => (await page.locator('.lightbox-slide-current').boundingBox())!.x)
     .toBeCloseTo(-200, 0);
-  await expect(position).toHaveText(/^\s*9 \/ 17/);
-  await expect(current).toHaveText('Urban Detail');
+  await expect(position).toHaveText(new RegExp(`^\\s*9 / ${total}`));
+  await expect(current).toHaveText('Drawing 9');
   await page.mouse.up();
 });
 
@@ -1573,7 +1515,7 @@ async function phoneReading(
   await waitForLightbox(page);
   const flip = page.getByRole('button', { name: 'Show description' });
   await flip.click();
-  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Tiled variant 3' })).toBeVisible();
   await settled(page);
   return { flip, touch: await oneFinger(context, page) };
 }
@@ -1715,7 +1657,7 @@ test.describe(() => {
     await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
     await expect(page).toHaveURL(/#image-3$/);
     await expect(flip).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Tiled variant 3' })).toBeVisible();
     await expect(next).toBeHidden();
   });
 
@@ -1781,7 +1723,7 @@ test.describe(() => {
     expect(await sheetTurn(page)).toBe(1);
     await page.clock.resume();
     await expect(flip).toHaveAttribute('aria-pressed', 'false');
-    await expect(page.getByRole('region', { name: 'Life at the city' })).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Tiled variant 3' })).toBeHidden();
     await expect(page).toHaveURL(/#image-3$/);
   });
 
@@ -1833,7 +1775,7 @@ test('a scrub towards a loading variant neither darkens the drawing nor complete
   // Below 100% the variant needs a smaller file than its neighbour preview.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/projects/galerie-hang%C3%A1r/#image-5');
+  await page.goto(`${projectPath}#image-18`);
   await waitForLightbox(page);
   await page.keyboard.press('-');
   await expect.poll(() => imageZoom(page)).toBeLessThan(1);
@@ -1876,7 +1818,7 @@ test('a scrub towards a loading variant neither darkens the drawing nor complete
   }
   await page.mouse.up();
   expect(await blackFrames).toBe(0);
-  await expect(page).toHaveURL(/#image-6$/);
+  await expect(page).toHaveURL(/#image-19$/);
 });
 
 test('a drag cannot redirect a blend that is already running', async ({
@@ -1966,13 +1908,7 @@ for (const viewport of [
     page,
   }) => {
     await page.setViewportSize(viewport);
-    await withDescription(
-      page,
-      projectPath,
-      '/uploads/03 SWOT - život v Kyjově.png',
-      'A short note.',
-    );
-    await gotoProject(page, '#image-3');
+    await gotoProject(page, '#image-18');
     await waitForLightbox(page);
     const front = (await page.locator('.lightbox-front > img').boundingBox())!;
     await page.getByRole('button', { name: 'Show description' }).click();
@@ -1988,13 +1924,11 @@ for (const viewport of [
     page,
   }) => {
     await page.setViewportSize(viewport);
-    const wide = '/uploads/Image25_000.webp'; // 2560 × 1440
-    await withDescription(page, projectPath, wide, LONG_TEXT);
-    await gotoProject(page, '#image-11');
+    await gotoProject(page, '#image-12'); // 1920 × 1080
     await waitForLightbox(page);
     await page.getByRole('button', { name: 'Show description' }).click();
     await settled(page);
-    const scroller = page.getByRole('region', { name: 'Visualization' });
+    const scroller = page.getByRole('region', { name: 'View 12' });
     const band = await page
       .getByRole('button', { name: 'Close' })
       .evaluate(
@@ -2004,7 +1938,7 @@ for (const viewport of [
       );
 
     let { card, article } = await boxes(page);
-    expect(card.width / card.height).toBeCloseTo(2560 / 1440, 2);
+    expect(card.width / card.height).toBeCloseTo(1920 / 1080, 2);
     expect(card.height).toBeGreaterThan(viewport.height);
     expect(card.width).toBeGreaterThan(viewport.width);
     expect(card.y).toBeCloseTo(band, 0);
@@ -2066,7 +2000,7 @@ test('flipping from a zoomed corner turns about the card and zooms out to the ca
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-3');
+  await gotoProject(page, '#image-4');
   await waitForLightbox(page);
   const rest = (await page.locator('.lightbox-front > img').boundingBox())!;
   await page.mouse.move(rest.x + 20, rest.y + 20);
@@ -2157,17 +2091,11 @@ test('a resize while reading resizes the card and keeps the reading position', a
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await withDescription(
-    page,
-    projectPath,
-    '/uploads/03 SWOT - život v Kyjově.png',
-    LONG_TEXT,
-  );
-  await gotoProject(page, '#image-3');
+  await gotoProject(page, '#image-8');
   await waitForLightbox(page);
   await page.getByRole('button', { name: 'Show description' }).click();
   await settled(page);
-  const text = page.getByRole('region', { name: 'Life at the city' });
+  const text = page.getByRole('region', { name: 'Drawing 8' });
   const position = () =>
     text.evaluate(
       (element) =>
@@ -2257,16 +2185,15 @@ for (const [turn, hash, rightwards] of [
   });
 }
 
-for (const [name, file, hash] of [
-  ['a wide drawing', '/uploads/Image25_000.webp', '#image-11'],
-  ['a square drawing', '/uploads/03 SWOT - život v Kyjově.png', '#image-3'],
+for (const [name, hash] of [
+  ['a wide drawing', '#image-12'],
+  ['a square drawing', '#image-8'],
 ] as const) {
   test(`mid-turn a card larger than the screen keeps its full outline (${name})`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await withDescription(page, projectPath, file, LONG_TEXT);
     await gotoProject(page, hash);
     await waitForLightbox(page);
     const frameAt = await pausedFlip(page);
@@ -2338,8 +2265,7 @@ test("with classic scrollbars the back's scrollbar shows only while the back fac
       viewport: { width: 1440, height: 900 },
       reducedMotion: 'no-preference',
     });
-    await withDescription(page, projectPath, '/uploads/Image25_000.webp', LONG_TEXT);
-    await gotoProject(page, '#image-11');
+    await gotoProject(page, '#image-12');
     await waitForLightbox(page);
     const scroller = page.locator('.lightbox-verso');
     const scrollbarShows = async () => {
@@ -2393,14 +2319,7 @@ test('an image without responsive variants still turns over to its description',
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await withDescription(
-    page,
-    projectPath,
-    '/uploads/03 SWOT - život v Kyjově.png',
-    'A short note.',
-    { responsive: false },
-  );
-  await gotoProject(page, '#image-3');
+  await gotoProject(page, '#image-17');
   await waitForLightbox(page);
   const drawing = page.locator('.lightbox-front > img');
   await expect(drawing).toHaveJSProperty('complete', true);
@@ -2436,7 +2355,7 @@ test('an image without responsive variants still turns over to its description',
   }
   await page.clock.resume();
   await settled(page);
-  await expect(page.getByRole('region', { name: 'Life at the city' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Vector 17' })).toBeVisible();
   const { card } = await boxes(page);
   expect(card.width).toBeCloseTo(rest.width, 0);
   expect(card.height).toBeCloseTo(rest.height, 0);
@@ -2450,13 +2369,7 @@ test('a web font that arrives while reading re-sizes the card', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await withDescription(
-    page,
-    projectPath,
-    '/uploads/03 SWOT - život v Kyjově.png',
-    LONG_TEXT,
-  );
-  await gotoProject(page, '#image-3');
+  await gotoProject(page, '#image-8');
   await waitForLightbox(page);
   await page.getByRole('button', { name: 'Show description' }).click();
   await settled(page);
@@ -2590,7 +2503,7 @@ for (const viewport of [
 }
 
 test('with reduced motion the zoom-aware flip is instant', async ({ page }) => {
-  await gotoProject(page, '#image-3');
+  await gotoProject(page, '#image-4');
   await waitForLightbox(page);
   await page.keyboard.press('+');
   await page.keyboard.press('+');
@@ -2610,13 +2523,7 @@ test('reading a long description leaves the drawing view and its tiles alone', a
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await withDescription(
-    page,
-    projectPath,
-    '/uploads/03 SWOT - život v Kyjově.png',
-    LONG_TEXT,
-  );
-  await gotoProject(page, '#image-3');
+  await gotoProject(page, '#image-8');
   await waitForLightbox(page);
   await page.locator('.openseadragon-canvas canvas').waitFor();
   await page.keyboard.press('+');
@@ -2634,7 +2541,7 @@ test('reading a long description leaves the drawing view and its tiles alone', a
   page.on('request', (request) => {
     if (request.url().includes('/image_files/')) tiles.push(request.url());
   });
-  const text = page.getByRole('region', { name: 'Life at the city' });
+  const text = page.getByRole('region', { name: 'Drawing 8' });
   await text.evaluate((element) => element.scrollTo(0, 600));
   expect((await boxes(page)).card.y).toBeLessThan(0);
   await page.waitForTimeout(500);
@@ -2703,7 +2610,7 @@ test('resizing while the description shows reflows the text and its arrows', asy
   await waitForLightbox(page);
   await page.getByRole('button', { name: 'Show description' }).click();
   const paragraph = page
-    .getByRole('region', { name: 'Life at the city' })
+    .getByRole('region', { name: 'Tiled variant 3' })
     .locator('p');
   const next = page.getByRole('button', { name: 'Next image' });
   await expect(next).toBeVisible();
@@ -2717,7 +2624,7 @@ test('resizing while the description shows reflows the text and its arrows', asy
   await page.setViewportSize({ width: 844, height: 390 });
   await expect(next).toBeVisible();
   const text = (await page
-    .getByRole('region', { name: 'Life at the city' })
+    .getByRole('region', { name: 'Tiled variant 3' })
     .locator('article')
     .boundingBox())!;
   const nextBox = (await next.boundingBox())!;
@@ -2855,10 +2762,10 @@ test('each of five quick presses changes image at once; Back then closes and For
   // A slide to the set, then blends through it.
   for (const position of [2, 3, 4, 5, 6]) {
     await page.keyboard.press('ArrowRight');
-    expect(await positions(page)).toEqual([`${position} / 17`, `${position} / 17`]);
+    expect(await positions(page)).toEqual([`${position} / ${total}`, `${position} / ${total}`]);
   }
   await expect(page).toHaveURL(/#image-6$/);
-  await expect(page.locator('[aria-current="true"]')).toHaveText('Limitations of the Area');
+  await expect(page.locator('[aria-current="true"]')).toHaveText('Tiled variant 6');
 
   await page.goBack();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
@@ -2866,7 +2773,7 @@ test('each of five quick presses changes image at once; Back then closes and For
   await page.goForward();
   await waitForLightbox(page);
   await expect(page).toHaveURL(/#image-6$/);
-  expect(await positions(page)).toEqual(['6 / 17', '6 / 17']);
+  expect(await positions(page)).toEqual([`6 / ${total}`, `6 / ${total}`]);
 });
 
 /**
@@ -2944,7 +2851,7 @@ test('a second change mid-slide carries the strip on from where it is, with no g
   await page.keyboard.press('ArrowRight');
   await strip.step(2);
   await page.keyboard.press('ArrowRight');
-  expect(await positions(page)).toEqual(['13 / 17', '13 / 17']);
+  expect(await positions(page)).toEqual([`13 / ${total}`, `13 / ${total}`]);
   await strip.step(20);
 
   const xs = strip.frames.map(({ x }) => x);
@@ -2959,7 +2866,7 @@ test('turning back mid-slide returns the strip from where it is, and Next at the
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-16');
+  await gotoProject(page, `#image-${total - 1}`);
   await waitForLightbox(page);
   let strip = await recording(page, () => stripNow(page));
   await page.keyboard.press('ArrowRight');
@@ -2967,7 +2874,7 @@ test('turning back mid-slide returns the strip from where it is, and Next at the
   while (strip.frames.at(-1)!.x > -0.02) await strip.step(1);
   const pressed = strip.frames.length - 1;
   await page.keyboard.press('ArrowLeft');
-  expect(await positions(page)).toEqual(['16 / 17', '16 / 17']);
+  expect(await positions(page)).toEqual([`${total - 1} / ${total}`, `${total - 1} / ${total}`]);
   await strip.step(20);
   let xs = strip.frames.map(({ x }) => x);
   expect(jumps(xs)).toEqual([]);
@@ -2984,7 +2891,7 @@ test('turning back mid-slide returns the strip from where it is, and Next at the
   strip = await recording(page, () => stripNow(page));
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');
-  expect(await positions(page)).toEqual(['1 / 17', '1 / 17']);
+  expect(await positions(page)).toEqual([`1 / ${total}`, `1 / ${total}`]);
   await strip.step(20);
   xs = strip.frames.map(({ x }) => x);
   for (const step of steps(xs)) expect(step).toBeLessThanOrEqual(0.001);
@@ -3023,8 +2930,8 @@ function blendAt(frames: Record<string, number>[]) {
 }
 
 for (const [route, second, expected] of [
-  ['on to another variant', 'ArrowRight', '5 / 17'],
-  ['back', 'ArrowLeft', '3 / 17'],
+  ['on to another variant', 'ArrowRight', `5 / ${total}`],
+  ['back', 'ArrowLeft', `3 / ${total}`],
 ] as const) {
   test(`a change mid-blend ${route} carries on from the mix on screen`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -3115,7 +3022,7 @@ test('a drag that starts mid-slide takes the strip from where it is', async ({ p
   expect(await stripX()).toBeCloseTo(grabbed - 10, 0);
   await page.mouse.up();
   await expect.poll(stripX).toBeCloseTo(0, 0);
-  expect(await positions(page)).toEqual(['12 / 17', '12 / 17']);
+  expect(await positions(page)).toEqual([`12 / ${total}`, `12 / ${total}`]);
 });
 
 test('a drag that starts mid-blend takes the blend from where it is', async ({ page }) => {
@@ -3142,7 +3049,7 @@ test('a drag that starts mid-blend takes the blend from where it is', async ({ p
   expect(await incoming()).toBeCloseTo(grabbed, 1);
   await page.mouse.up();
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  expect(await positions(page)).toEqual(['4 / 17', '4 / 17']);
+  expect(await positions(page)).toEqual([`4 / ${total}`, `4 / ${total}`]);
 });
 
 test.describe(() => {
@@ -3192,7 +3099,7 @@ test('an image still loading delays only its blend: state and further changes go
   // Below 100% a variant needs a smaller file than its neighbour preview.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page, '#image-5', '/projects/galerie-hang%C3%A1r/');
+  await gotoProject(page, '#image-18');
   await waitForLightbox(page);
   await page.keyboard.press('-');
   await expect.poll(() => imageZoom(page)).toBeLessThan(1);
@@ -3204,9 +3111,9 @@ test('an image still loading delays only its blend: state and further changes go
   });
   const blend = await recording(page, () => blendNow(page));
   await page.keyboard.press('ArrowRight');
-  expect(await positions(page)).toEqual(['6 / 27', '6 / 27']);
+  expect(await positions(page)).toEqual([`19 / ${total}`, `19 / ${total}`]);
   await page.keyboard.press('ArrowRight');
-  expect(await positions(page)).toEqual(['7 / 27', '7 / 27']);
+  expect(await positions(page)).toEqual([`20 / ${total}`, `20 / ${total}`]);
   await blend.step(20);
   await drawingsLoaded(page);
   await blend.step(20);
@@ -3220,7 +3127,7 @@ test('an image still loading delays only its blend: state and further changes go
   for (const shares of blend.frames) {
     expect(Object.values(shares).reduce((sum, share) => sum + share, 0)).toBeCloseTo(1, 3);
   }
-  await expect(page).toHaveURL(/#image-7$/);
+  await expect(page).toHaveURL(/#image-20$/);
 });
 
 test.describe(() => {
@@ -3230,9 +3137,7 @@ test.describe(() => {
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    const hangar = '/projects/galerie-hang%C3%A1r/';
-    await withDescription(page, hangar, '/uploads/02 GALERIE - Půdorys 1NP+.webp', 'A short note.');
-    await gotoProject(page, '#image-5', hangar);
+    await gotoProject(page, '#image-18');
     await waitForLightbox(page);
     // Zoomed in, the variant needs a larger file than the page's thumbnails and
     // its neighbour preview have loaded.
@@ -3250,7 +3155,7 @@ test.describe(() => {
       await route.continue();
     });
     await page.keyboard.press('ArrowRight');
-    expect(await positions(page)).toEqual(['6 / 27', '6 / 27']);
+    expect(await positions(page)).toEqual([`19 / ${total}`, `19 / ${total}`]);
     await page.clock.runFor(400);
     expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
     await expect(next).toBeHidden();
@@ -3345,7 +3250,7 @@ test('tiled viewers stay bounded through a fast run of changes', async ({ page }
   await page.locator('.openseadragon-canvas canvas').waitFor();
   const created = viewersCreatedMidMove(page, 1500);
   for (let press = 0; press < 7; press += 1) await page.keyboard.press('ArrowRight');
-  expect(await positions(page)).toEqual(['9 / 17', '9 / 17']);
+  expect(await positions(page)).toEqual([`9 / ${total}`, `9 / ${total}`]);
   const { midMove, most } = await created;
   expect(midMove).toBe(0);
   // The one sliding away, and the one it rests on.
@@ -3404,7 +3309,7 @@ test('the toggle tapped while a card slides in turns that card', async ({ page }
   const seen = turns.frames;
   expect(seen.some((turn) => turn > 0.1 && turn < 0.9)).toBe(true);
   expect(seen.at(-1)).toBe(1);
-  await expect(page.getByRole('region', { name: 'Site Plan' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Drawing 7' })).toBeVisible();
 });
 
 test('reduced motion reaches the same states at the same moments', async ({ browser }) => {
@@ -3422,7 +3327,7 @@ test('reduced motion reaches the same states at the same moments', async ({ brow
       () => page.keyboard.press('ArrowRight'),
       () => toggle.click(),
       () => page.keyboard.press('ArrowLeft'),
-      () => page.getByRole('button', { name: 'Cycling Transport Analysis' }).click(),
+      () => page.getByRole('button', { name: 'Tiled variant 2' }).click(),
       () => page.keyboard.press('ArrowLeft'),
       () => page.keyboard.press('ArrowLeft'),
     ]) {
@@ -3438,7 +3343,7 @@ test('reduced motion reaches the same states at the same moments', async ({ brow
         }),
       );
     }
-    await expect(page).toHaveURL(/#image-17$/);
+    await expect(page).toHaveURL(new RegExp(`#image-${total}$`));
     await page.close();
     return states;
   };
@@ -3552,7 +3457,7 @@ test('Back straight after quick presses, then Forward, reopens the last image', 
   await page.goForward();
   await waitForLightbox(page);
   await expect(page).toHaveURL(/#image-14$/);
-  expect(await positions(page)).toEqual(['14 / 17', '14 / 17']);
+  expect(await positions(page)).toEqual([`14 / ${total}`, `14 / ${total}`]);
 });
 
 test('opening, fast changes and turns log no page errors', async ({ page }) => {

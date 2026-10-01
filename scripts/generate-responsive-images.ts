@@ -10,6 +10,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
+import { parseArgs } from 'node:util';
 import sharp from 'sharp';
 import { GENERATED_IMAGE_WIDTHS } from '../src/images.ts';
 import type {
@@ -29,11 +30,24 @@ import {
   webpPolicy,
 } from './image-cache.ts';
 
+// The images to process: `--content <directory>`, the uploads its files refer
+// to, and `--images <directory>=<path>`, every raster in a directory, which
+// pages refer to at `<path>/<file>`. Without either, the uploads src/content
+// refers to.
+const { values } = parseArgs({
+  options: {
+    content: { type: 'string', multiple: true },
+    images: { type: 'string', multiple: true },
+  },
+});
+const sources =
+  values.content || values.images ? values : { content: ['src/content'] };
+
 const sourceDirectory = resolve('public/uploads');
-const contentDirectory = resolve('src/content');
 const outputDirectory = resolve('public/_responsive');
 const cacheDirectory = resolve('node_modules/.astro/images');
 const uploadReference = /\/uploads\/(.+?\.(?:avif|jpe?g|png|webp))/gi;
+const rasterFile = /\.(?:avif|jpe?g|png|webp)$/i;
 const recipe = {
   version: 2,
   widths: GENERATED_IMAGE_WIDTHS,
@@ -57,24 +71,38 @@ const deepZoomRecipe = {
   vips: sharp.versions.vips,
 };
 
+/** The raster images to process, by the path pages refer to them by, and their files. */
 async function referencedImages() {
-  const paths = new Set<string>();
+  const images = new Map<string, string>();
 
-  const entries = await readdir(contentDirectory, {
-    recursive: true,
-    withFileTypes: true,
-  });
-  for (const entry of entries) {
-    if (entry.isDirectory()) continue;
-    const contentPath = join(entry.parentPath, entry.name);
-    const content = await readFile(contentPath, 'utf8');
-    for (const match of content.matchAll(uploadReference)) {
-      const sourcePath = resolve(sourceDirectory, match[1]);
-      if (sourcePath.startsWith(`${sourceDirectory}${sep}`)) paths.add(sourcePath);
+  for (const contentDirectory of sources.content ?? []) {
+    const entries = await readdir(contentDirectory, {
+      recursive: true,
+      withFileTypes: true,
+    });
+    for (const entry of entries) {
+      if (entry.isDirectory()) continue;
+      const contentPath = join(entry.parentPath, entry.name);
+      const content = await readFile(contentPath, 'utf8');
+      for (const match of content.matchAll(uploadReference)) {
+        const sourcePath = resolve(sourceDirectory, match[1]);
+        if (!sourcePath.startsWith(`${sourceDirectory}${sep}`)) continue;
+        const relativePath = relative(sourceDirectory, sourcePath);
+        images.set(`/uploads/${relativePath.split(sep).join('/')}`, sourcePath);
+      }
     }
   }
 
-  return [...paths].sort();
+  for (const argument of sources.images ?? []) {
+    const [directory, path] = argument.split('=');
+    if (!directory || !path) throw new Error(`--images expects <directory>=<url path>, got ${argument}`);
+    for (const file of await readdir(directory)) {
+      if (!rasterFile.test(file)) continue;
+      images.set(`${path}/${file}`, resolve(directory, file));
+    }
+  }
+
+  return [...images].sort(([first], [second]) => (first < second ? -1 : 1));
 }
 
 const publishedFiles = new Set<string>();
@@ -100,8 +128,7 @@ let pyramidsGenerated = 0;
 let pyramidsReused = 0;
 const manifest: ImageManifest = { version: 3, images: {} };
 
-for (const sourcePath of await referencedImages()) {
-  const relativePath = relative(sourceDirectory, sourcePath);
+for (const [path, sourcePath] of await referencedImages()) {
   const source = await readFile(sourcePath);
   const sourceMetadata = await sharp(source, {
     limitInputPixels: false,
@@ -115,11 +142,11 @@ for (const sourcePath of await referencedImages()) {
     Boolean(sourceMetadata.hasAlpha),
   );
   const cacheKey = imageCacheKey(source, { ...recipe, output });
-  const originalUrl = `/uploads/${relativePath
-    .split(sep)
+  const originalUrl = path
+    .split('/')
     .map((segment) => encodeURIComponent(segment))
-    .join('/')}`;
-  const sourceExtension = extname(relativePath).slice(1).toLowerCase();
+    .join('/');
+  const sourceExtension = extname(sourcePath).slice(1).toLowerCase();
   const sourceUrl = displaySourceUrl(
     originalUrl,
     cacheKey,
@@ -287,7 +314,7 @@ for (const sourcePath of await referencedImages()) {
     };
   }
 
-  manifest.images[`/uploads/${relativePath.split(sep).join('/')}`] = {
+  manifest.images[path] = {
     originalUrl,
     source: {
       url: sourceUrl,

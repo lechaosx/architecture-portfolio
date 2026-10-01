@@ -1,7 +1,10 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import sharp from 'sharp';
 
-const projectPath = '/projects/urban-study-kyjov/';
+// tests/e2e/pages/[fixture].astro, which the e2e build adds.
+const projectPath = '/e2e/project/';
+// How many images its lightbox shows.
+const total = 24;
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -211,11 +214,11 @@ test('input while opening acts at once, and a wheel while closing scrolls the pa
   await holdTime(page);
   await thumbnail.click();
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('status')).toHaveText('11 / 17');
+  await expect(page.getByRole('status')).toHaveText(`11 / ${total}`);
   // Real pointer input, through the browser's own hit testing.
   const next = (await page.getByRole('button', { name: 'Next image' }).boundingBox())!;
   await page.mouse.click(next.x + next.width / 2, next.y + next.height / 2);
-  await expect(page.getByRole('status')).toHaveText('12 / 17');
+  await expect(page.getByRole('status')).toHaveText(`12 / ${total}`);
   await page.mouse.move(640, 450);
   await page.mouse.wheel(0, -1200);
   await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
@@ -261,7 +264,7 @@ test.describe(() => {
     await touch('touchStart', 300);
     for (const x of [250, 200, 150]) await touch('touchMove', x);
     await touch('touchEnd');
-    await expect(page.getByRole('status')).toHaveText('11 / 17');
+    await expect(page.getByRole('status')).toHaveText(`11 / ${total}`);
     expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
     await page.clock.resume();
     await waitForLightbox(page);
@@ -345,7 +348,7 @@ for (const [when, beforeClose] of [
     await waitForLightbox(page);
     await expect(page).toHaveURL(/#image-2$/);
     await page.keyboard.press('ArrowRight');
-    await expect(page.getByRole('status')).toHaveText('3 / 17');
+    await expect(page.getByRole('status')).toHaveText(`3 / ${total}`);
     await expect(page.locator('.openseadragon-canvas canvas')).toBeVisible();
   });
 }
@@ -361,7 +364,7 @@ test('a lightbox closed and opened again a frame later works as ever', async ({ 
   await page.keyboard.press('Enter');
   await waitForLightbox(page);
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('status')).toHaveText('11 / 17');
+  await expect(page.getByRole('status')).toHaveText(`11 / ${total}`);
   await expect(page).toHaveURL(/#image-11$/);
   await page.goBack();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
@@ -546,13 +549,13 @@ test('header remains in place beneath the lightbox, and the cover keeps its page
   const coverName = () =>
     page.locator('.project-cover').evaluate((cover) => getComputedStyle(cover).viewTransitionName);
   expect((await header.boundingBox())?.y).toBeCloseTo(0, 0);
-  expect(await coverName()).toBe('cover-urban-study-kyjov');
+  expect(await coverName()).toBe('cover-e2e-project');
 
   await holdTime(page);
   await galleryImage(page, 1).click();
   await page.clock.runFor(200);
   expect((await header.boundingBox())?.y).toBeCloseTo(0, 0);
-  expect(await coverName()).toBe('cover-urban-study-kyjov');
+  expect(await coverName()).toBe('cover-e2e-project');
   await page.clock.resume();
   await waitForLightbox(page);
   expect((await header.boundingBox())?.y).toBeCloseTo(0, 0);
@@ -560,7 +563,7 @@ test('header remains in place beneath the lightbox, and the cover keeps its page
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
   expect((await header.boundingBox())?.y).toBeCloseTo(0, 0);
-  expect(await coverName()).toBe('cover-urban-study-kyjov');
+  expect(await coverName()).toBe('cover-e2e-project');
 });
 
 test('an obscured thumbnail opens and closes the lightbox with a fade, the card at rest', async ({
@@ -721,7 +724,7 @@ test('the lightbox is full screen with controls in the corners', async ({
   page,
 }) => {
   await gotoProject(page);
-  await galleryImage(page, 3).click(); // "Life at the city", one of a set of five
+  await galleryImage(page, 3).click(); // one of a set of five
   await waitForLightbox(page);
   const viewport = page.viewportSize()!;
   const box = async (locator: Locator) => (await locator.boundingBox())!;
@@ -740,14 +743,14 @@ test('the lightbox is full screen with controls in the corners', async ({
   const set = dialog.getByRole('navigation', { name: 'Images in this set' });
   await expect(set.getByRole('button')).toHaveCount(5);
   await expect(
-    set.getByRole('button', { name: 'Life at the city' }),
+    set.getByRole('button', { name: 'Tiled variant 3' }),
   ).toHaveAttribute('aria-current', 'true');
   const setBox = await box(set);
   expect(setBox.x).toBeLessThan(20);
   expect(setBox.y).toBeLessThan(20);
 
   const original = await box(
-    dialog.getByRole('link', { name: 'Open original (3 of 17)' }),
+    dialog.getByRole('link', { name: `Open original (3 of ${total})` }),
   );
   expect(original.x + original.width).toBeGreaterThan(viewport.width - 20);
   expect(original.y + original.height).toBeGreaterThan(viewport.height - 20);
@@ -769,18 +772,18 @@ test('an image outside a set shows its title as a set of one', async ({
   page,
 }) => {
   await gotoProject(page);
-  await galleryImage(page, 11).click(); // a titled visualization outside any set
+  await galleryImage(page, 11).click(); // a titled image outside any set
   await waitForLightbox(page);
   const set = page.getByRole('navigation', { name: 'Images in this set' });
   await expect(set.getByRole('button')).toHaveCount(1);
-  await expect(set.getByRole('button')).toHaveText('Visualization');
+  await expect(set.getByRole('button')).toHaveText('View 11');
   await expect(set.getByRole('button')).toHaveAttribute('aria-current', 'true');
 });
 
 test('an image without a title or set shows no set strip', async ({ page }) => {
-  await page.goto('/projects/exotarium-brno-zoo/');
+  await page.goto(projectPath);
   await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
-  await galleryImage(page, 2).click();
+  await galleryImage(page, 21).click();
   await waitForLightbox(page);
   await expect(
     page.getByRole('navigation', { name: 'Images in this set' }),
@@ -790,7 +793,7 @@ test('an image without a title or set shows no set strip', async ({ page }) => {
 test('the rest view leaves the control bands clear and zoomed edges can leave the controls', async ({
   page,
 }) => {
-  await page.goto('/projects/galerie-hang%C3%A1r/#image-5'); // a set member below the tiling size
+  await page.goto(`${projectPath}#image-18`); // a set member below the tiling size
   await waitForLightbox(page);
   const image = page.locator('.lightbox-slide-current img');
   const set = (await page
@@ -929,7 +932,7 @@ test('resizing while zoomed keeps the image within its pan limits', async ({
 });
 
 for (const [route, change] of [
-  ['a set button', (page: Page) => page.getByRole('button', { name: 'Values of the Area' }).click()],
+  ['a set button', (page: Page) => page.getByRole('button', { name: 'Tiled variant 5' }).click()],
   ['Next inside the set', (page: Page) => page.getByRole('button', { name: 'Next image' }).click()],
 ] as const) {
   test(`controls stay above a zoomed drawing while ${route} blends it`, async ({ page }) => {
@@ -951,7 +954,7 @@ for (const [route, change] of [
 
     const dialog = page.getByRole('dialog', { name: 'Image viewer' });
     for (const control of [
-      dialog.getByRole('button', { name: 'Cycling Transport Analysis' }),
+      dialog.getByRole('button', { name: 'Tiled variant 2' }),
       dialog.getByRole('button', { name: 'Close' }),
       dialog.getByRole('link', { name: /^Open original/ }),
     ]) {
@@ -981,7 +984,7 @@ for (const [route, change] of [
 
 test('the page shows faintly through the backdrop around a card', async ({ page }) => {
   await gotoProject(page);
-  const thumbnail = galleryImage(page, 11); // a wide visualization
+  const thumbnail = galleryImage(page, 11); // a wide drawing
   await thumbnail.scrollIntoViewIfNeeded();
   // The sticky header, between the set strip and ×.
   const point = { x: 640, y: 30 };
@@ -1073,7 +1076,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     // The card has not left the thumbnail, which shows where it is.
     await expect(thumbnail).toHaveCSS('opacity', '1');
     await page.keyboard.press('ArrowRight');
-    await expect(page.getByRole('status')).toHaveText('11 / 17');
+    await expect(page.getByRole('status')).toHaveText(`11 / ${total}`);
     await page.getByRole('button', { name: 'Close' }).click();
     await page.clock.runFor(1000);
     await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
@@ -1181,7 +1184,7 @@ test('opened again on another image while it closes, the card waits for that dra
     expect(now.x).toBeCloseTo(waiting.x, 1);
     expect(now.width).toBeCloseTo(waiting.width, 1);
   }
-  await expect(page.getByRole('status')).toHaveText('3 / 17');
+  await expect(page.getByRole('status')).toHaveText(`3 / ${total}`);
   await page.clock.resume();
 });
 
