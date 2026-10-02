@@ -229,24 +229,66 @@ test('prose is justified and hyphenates according to its language', async ({
   ]);
 });
 
-test('project prose becomes two columns only on wide screens', async ({
+test('project prose fills the available width with comfortable columns', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/e2e/project/');
-  const prose = page.locator('article .prose[lang="en"]').first();
-  await expect(prose).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
 
-  const layout = () =>
-    prose.evaluate((element) => ({
-      columnCount: getComputedStyle(element).columnCount,
-      width: element.getBoundingClientRect().width,
-    }));
+  for (const lang of ['en', 'cs']) {
+    if (lang === 'cs') {
+      await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    }
+    const prose = page.locator(`article .prose[lang="${lang}"]`).first();
+    await expect(prose).toBeVisible();
 
-  expect(await layout()).toEqual({ columnCount: '2', width: 1104 });
+    for (const fontSize of [16, 20]) {
+      await page.evaluate((size) => {
+        document.documentElement.style.fontSize = `${size}px`;
+      }, fontSize);
+      const { comfortWidth, padding } = await prose.evaluate((element) => {
+        const measure = document.createElement('div');
+        measure.style.cssText = 'position:absolute; width:65ch; visibility:hidden';
+        element.append(measure);
+        const comfortWidth = measure.getBoundingClientRect().width;
+        measure.remove();
+        const article = getComputedStyle(element.closest('article')!);
+        return {
+          comfortWidth,
+          padding: parseFloat(article.paddingLeft) + parseFloat(article.paddingRight),
+        };
+      });
 
-  await page.setViewportSize({ width: 900, height: 900 });
-  expect(await layout()).toEqual({ columnCount: 'auto', width: 672 });
+      for (const [width, columns] of [
+        [900, 2],
+        [390, 1],
+        [Math.floor(comfortWidth + padding) - 1, 1],
+        [Math.ceil(comfortWidth + padding) + 1, 2],
+        [1023, 2],
+        [1024, 2],
+        [1280, 2],
+      ]) {
+        await page.setViewportSize({ width, height: 900 });
+        const cover = await page.locator('.project-cover').boundingBox();
+        const layout = await prose.evaluate((element) => {
+          const columns = Array.from(element.querySelector('p')!.getClientRects());
+          const box = element.getBoundingClientRect();
+          return {
+            left: box.left,
+            width: box.width,
+            columns: columns.length,
+            columnWidth: Math.max(...columns.map((column) => column.width)),
+          };
+        });
+
+        const context = `${lang}, font ${fontSize}, viewport ${width}`;
+        expect(layout.left, context).toBeCloseTo(cover!.x);
+        expect(layout.width, context).toBeCloseTo(cover!.width);
+        expect(layout.columnWidth, context).toBeLessThanOrEqual(comfortWidth);
+        expect(layout.columns, context).toBe(columns);
+      }
+    }
+  }
 });
 
 test('reduced motion exposes reveal content without animation', async ({ page }) => {

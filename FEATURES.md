@@ -208,8 +208,15 @@ room — [Implicit]:
 ### Ordered blocks — [Explicit]
 
 A project page is an ordered list of text, thumbnail-gallery and full-width
-image-set blocks, in any order and repeated freely. Text goes two-column on wide
-screens. A one-image set is a plain image; more form a manual carousel.
+image-set blocks, in any order and repeated freely. A one-image set is a plain
+image; more form a manual carousel.
+
+### Project text fills the width with comfortable columns — [Explicit]
+
+Text blocks fill the same available width as the images, splitting into balanced
+columns to keep lines comfortable to read. The font-relative width limit is
+informed by [Baymard's 50–75 character reading guidance](https://baymard.com/research-articles/line-length-readability)
+— [Implicit].
 
 ### One lightbox per page, full-screen, controls in the corners — [Explicit]
 
