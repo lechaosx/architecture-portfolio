@@ -227,6 +227,14 @@ the file body, so `Prose.astro` renders them with `marked`. `.prose` justifies
 and hyphenates, and each language's wrapper carries its `lang` so the browser
 picks the right dictionary — [Explicit].
 
+### Project text columns follow the container — [Implicit]
+
+The project article is a CSS query container: text splits into columns according
+to its available content width so it fills the page while respecting the reading
+width limit. The limit uses `ch` to follow the font's metrics and size; it is an
+approximation of character count for proportional text. Native CSS columns
+balance the text and reflow on resize without client-side JavaScript.
+
 ### Self-hosted Roboto via @fontsource — [Implicit]
 
 No third-party font request. One token, `--font-sans`, for everything.
