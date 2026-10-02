@@ -214,8 +214,10 @@ image; more form a manual carousel.
 ### Project text fills the width with comfortable columns — [Explicit]
 
 Text blocks fill the same available width as the images, splitting into balanced
-columns to keep lines comfortable to read. The font-relative width limit is
-informed by [Baymard's 50–75 character reading guidance](https://baymard.com/research-articles/line-length-readability)
+columns to keep lines comfortable to read. Columns appear only when each can
+retain a comfortable minimum width; intermediate widths allow longer single
+lines to preserve the full-width layout — [Implicit]. The minimum follows
+[Rutter's multiple-column reading guidance](https://webtypography.net/2.1.2)
 — [Implicit].
 
 ### One lightbox per page, full-screen, controls in the corners — [Explicit]

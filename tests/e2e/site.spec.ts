@@ -246,24 +246,27 @@ test('project prose fills the available width with comfortable columns', async (
       await page.evaluate((size) => {
         document.documentElement.style.fontSize = `${size}px`;
       }, fontSize);
-      const { comfortWidth, padding } = await prose.evaluate((element) => {
+      const { minimumColumnWidth, gap, padding } = await prose.evaluate((element) => {
         const measure = document.createElement('div');
-        measure.style.cssText = 'position:absolute; width:65ch; visibility:hidden';
+        measure.style.cssText = 'position:absolute; width:35ch; visibility:hidden';
         element.append(measure);
-        const comfortWidth = measure.getBoundingClientRect().width;
+        const minimumColumnWidth = measure.getBoundingClientRect().width;
         measure.remove();
         const article = getComputedStyle(element.closest('article')!);
         return {
-          comfortWidth,
+          minimumColumnWidth,
+          gap: parseFloat(getComputedStyle(element).columnGap),
           padding: parseFloat(article.paddingLeft) + parseFloat(article.paddingRight),
         };
       });
+      const splitWidth = 2 * minimumColumnWidth + gap + padding;
 
       for (const [width, columns] of [
-        [900, 2],
+        [900, 900 < splitWidth ? 1 : 2],
         [390, 1],
-        [Math.floor(comfortWidth + padding) - 1, 1],
-        [Math.ceil(comfortWidth + padding) + 1, 2],
+        [700, 1],
+        [Math.floor(splitWidth) - 2, 1],
+        [Math.ceil(splitWidth) + 2, 2],
         [1023, 2],
         [1024, 2],
         [1280, 2],
@@ -277,15 +280,17 @@ test('project prose fills the available width with comfortable columns', async (
             left: box.left,
             width: box.width,
             columns: columns.length,
-            columnWidth: Math.max(...columns.map((column) => column.width)),
+            columnWidth: Math.min(...columns.map((column) => column.width)),
           };
         });
 
         const context = `${lang}, font ${fontSize}, viewport ${width}`;
         expect(layout.left, context).toBeCloseTo(cover!.x);
         expect(layout.width, context).toBeCloseTo(cover!.width);
-        expect(layout.columnWidth, context).toBeLessThanOrEqual(comfortWidth);
         expect(layout.columns, context).toBe(columns);
+        if (layout.columns > 1) {
+          expect(layout.columnWidth, context).toBeGreaterThanOrEqual(minimumColumnWidth);
+        }
       }
     }
   }

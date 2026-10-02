@@ -229,11 +229,12 @@ picks the right dictionary — [Explicit].
 
 ### Project text columns follow the container — [Implicit]
 
-The project article is a CSS query container: text splits into columns according
-to its available content width so it fills the page while respecting the reading
-width limit. The limit uses `ch` to follow the font's metrics and size; it is an
-approximation of character count for proportional text. Native CSS columns
-balance the text and reflow on resize without client-side JavaScript.
+Native CSS columns balance project text across at most two columns, using a
+font-relative minimum width so a split never makes either column too narrow.
+The minimum uses `ch` to follow the font's metrics and size; it approximates
+character count for proportional text. Text fills the available width and
+reflows on resize without client-side JavaScript, allowing longer single lines
+until both columns fit.
 
 ### Self-hosted Roboto via @fontsource — [Implicit]
 
