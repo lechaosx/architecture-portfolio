@@ -34,6 +34,7 @@ const displayBlocks = blocks.map((block, blockIndex) =>
             index,
             responsive: responsiveImages[index],
             loading: index === 0 ? 'eager' : 'lazy',
+            decoding: index === 0 ? 'auto' : 'async',
             // Only an image at the top of the page morphs from the work card.
             morph: blockIndex === 0 && index === 0,
           } as const;
@@ -59,7 +60,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
       if (block.type === 'gallery') {
         return (
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {block.images.map(({ item, index, responsive, loading, morph }) => {
+            {block.images.map(({ item, index, responsive, loading, decoding, morph }) => {
               const aspectRatio = responsive
                 ? responsive.source.width / responsive.source.height
                 : 1;
@@ -97,7 +98,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
                     )}
                     alt=""
                     {loading}
-                    decoding="async"
+                    {decoding}
                     class="size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
                   />
                 </button>
@@ -108,7 +109,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
       }
 
       if (block.images.length === 1) {
-        const [{ item, index, responsive, loading, morph }] = block.images;
+        const [{ item, index, responsive, loading, decoding, morph }] = block.images;
         return (
           <button
             type="button"
@@ -132,7 +133,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
               height={responsive?.source.height}
               alt=""
               {loading}
-              decoding="async"
+              {decoding}
               class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-102"
             />
           </button>
@@ -145,7 +146,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
             data-project-carousel-track
             class="no-scrollbar flex aspect-video snap-x snap-mandatory overflow-x-auto"
           >
-            {block.images.map(({ item, index, responsive, loading, morph }) => (
+            {block.images.map(({ item, index, responsive, loading, decoding, morph }) => (
               <button
                 type="button"
                 data-lightbox-index={index}
@@ -169,7 +170,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
                   height={responsive?.source.height}
                   alt=""
                   {loading}
-                  decoding="async"
+                  {decoding}
                   class="size-full object-contain"
                 />
               </button>

@@ -18,7 +18,7 @@ const images = (p: Project) =>
     block.type === 'text' ? [] : block.images,
   );
 const grid = sorted.filter((p) => images(p).length > 0);
-const briefs = sorted.filter((p) => images(p).length === 0);
+const listed = sorted.filter((p) => images(p).length === 0);
 ---
 
 {
@@ -40,17 +40,17 @@ const briefs = sorted.filter((p) => images(p).length === 0);
 }
 
 {
-  briefs.length > 0 && (
+  listed.length > 0 && (
     <div class="mx-auto max-w-6xl px-6 pb-16 sm:pb-24">
       <hr class="border-neutral-200" />
       <ul class="mt-12 flex flex-col gap-8">
-        {briefs.map((p) => {
+        {listed.map((p) => {
           const href =
             p.data.blocks.length > 0 ? `/projects/${p.id}/` : undefined;
           const Row = href ? 'a' : 'div';
           return (
             <li>
-              <Row {href} class="group block max-w-prose">
+              <Row {href} class:list={['block max-w-prose', { group: href }]}>
                 <div class="flex items-baseline justify-between">
                   <T
                     as="h3"

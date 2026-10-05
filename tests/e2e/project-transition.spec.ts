@@ -193,7 +193,7 @@ test('no element is a morph target when the first block is text', async ({ page 
   expect(await page.locator('.project-cover').count()).toBe(0);
 });
 
-test('the first image of a page loads eagerly and the others lazily', async ({ page }) => {
+test('the first image of a page loads and decodes eagerly and the others lazily', async ({ page }) => {
   for (const path of ['/e2e/project/', '/e2e/text-first/']) {
     await page.goto(path);
     const loading = await page
@@ -201,6 +201,11 @@ test('the first image of a page loads eagerly and the others lazily', async ({ p
       .evaluateAll((images) => images.map((image) => image.getAttribute('loading')));
     expect(loading[0], path).not.toBe('lazy');
     expect(loading.slice(1).every((value) => value === 'lazy'), path).toBe(true);
+    const decoding = await page
+      .locator('article button[data-lightbox-index] img')
+      .evaluateAll((images) => images.map((image) => image.getAttribute('decoding')));
+    expect(decoding[0], path).not.toBe('async');
+    expect(decoding.slice(1).every((value) => value === 'async'), path).toBe(true);
   }
 });
 
