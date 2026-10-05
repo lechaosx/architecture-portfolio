@@ -64,17 +64,18 @@ Structural and design changes are made in code on the same repo.
 
 ### Most of the site is editable — [Explicit]
 
-Editable: projects, the home page (images, bio, portrait, Approach), contact
-details and Site settings (name, credential, SEO description). Baked into code:
-page structure, navigation and section labels. CMS entries mirror the pages:
-**Home page**, **Projects**, **Contact**, **Site settings**.
+Editable: projects, the home page (images, bio, portrait, services, where she
+works, education, awards, Approach), contact details and Site settings (name,
+credential, SEO description). Baked into code: page structure, navigation and
+section labels. CMS entries mirror the pages: **Home page**, **Projects**,
+**Contact**, **Site settings**.
 
 ### Required fields are what a page cannot do without — [Implicit]
 
 The name, the contact email, both About texts, at least one home image and every
-field of an Approach item or availability row are required; everything else may
-be empty. An edit
-that would leave a page unrenderable fails the build and does not deploy.
+field of an Approach item, home fact row or availability row are required;
+everything else may be empty. An edit that would leave a page unrenderable fails
+the build and does not deploy.
 
 ### Projects: title and year; everything else optional — [Explicit]
 
@@ -125,6 +126,13 @@ Following the architect's wireframe: images at the top, then About (bio left,
 portrait right), then Approach. All of it is edited in the one **Home page**
 entry.
 
+### Home facts under the bio — [Explicit]
+
+Services, where she works, education and awards follow the bio in that order,
+each under a small label: services as one run separated by middle dots,
+education and awards one entry per line, in the bio's tone. An empty field shows
+neither label nor entry, so with none filled About is just the bio and portrait.
+
 ### Home image or carousel — [Explicit]
 
 The architect picks and orders at least one home image; project images are never
@@ -174,10 +182,17 @@ assistive technology because the adjacent title already names them.
 
 ### Auto-detected, with a manual switch in the footer — [Explicit]
 
-The language comes from a saved choice, else the browser, else English. The
-footer button shows the language it switches _to_, switches without a reload and
-saves the choice. It sits in the footer, not the nav, because with
+For visitors, the language comes from a saved choice, else the browser, else
+English. The footer button shows the language it switches _to_, switches without
+a reload and saves the choice. It sits in the footer, not the nav, because with
 auto-detection it is a fallback, and in the nav it confused the architect.
+
+### Czech in the page as served — [Explicit]
+
+The raw HTML is Czech (language, tab title, description and sharing tags), so
+crawlers that read it, link previews and no-JS visitors get Czech, the source
+language the architect writes in. Crawlers that run scripts are detected like
+visitors.
 
 ---
 
@@ -333,3 +348,8 @@ Served at the architect's own domain; the `*.github.io` URL redirects to it.
 Per-page title and description, Open Graph tags and a sitemap. Tab titles pair
 page and credentialed name with `|`, e.g. "Work | Ing. arch. Tereza Kalábková"
 — [Explicit].
+
+### Home tab title says what she is — [Explicit]
+
+The home tab title is the credentialed name and her profession: "Ing. arch.
+Tereza Kalábková | Architektka" in Czech, "… | Architect" in English.

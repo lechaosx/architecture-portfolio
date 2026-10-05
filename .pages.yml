@@ -104,6 +104,32 @@ content:
               values: [place, scale, material, thinking]
       - { name: body_cs, label: About text (Czech), type: rich-text, required: true }
       - { name: body_en, label: About text (English), type: rich-text, required: true }
+      - name: services
+        label: Services
+        type: object
+        list: true
+        description: One service per row, named the way a client would ask for it.
+        fields:
+          - { name: name_cs, label: Service (Czech), type: string, required: true }
+          - { name: name_en, label: Service (English), type: string, required: true }
+      - { name: area_cs, label: Where I work (Czech), type: string, required: false, description: 'Name the city and region the way clients search, e.g. "Brno a Jihomoravský kraj".' }
+      - { name: area_en, label: Where I work (English), type: string, required: false, description: 'Name the city and region the way clients search, e.g. "Brno and South Moravia".' }
+      - name: education
+        label: Education
+        type: object
+        list: true
+        description: School, faculty, degree and year.
+        fields:
+          - { name: text_cs, label: Text (Czech), type: string, required: true }
+          - { name: text_en, label: Text (English), type: string, required: true }
+      - name: awards
+        label: Awards
+        type: object
+        list: true
+        description: Competition or award, the placement, the year.
+        fields:
+          - { name: text_cs, label: Text (Czech), type: string, required: true }
+          - { name: text_en, label: Text (English), type: string, required: true }
 
   - name: contact
     label: Contact

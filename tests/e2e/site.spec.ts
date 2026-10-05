@@ -2,6 +2,11 @@ import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { parse } from 'yaml';
 
+const site = parse(
+  readFileSync('src/content/singletons/site.md', 'utf8').split('---')[1],
+);
+const owner = [site.credential, site.name].filter(Boolean).join(' ');
+
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 });
@@ -47,7 +52,7 @@ test.describe(() => {
     await page.getByRole('button', { name: 'Přepnout do angličtiny' }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
-    await expect(page).toHaveTitle(/Architecture/);
+    await expect(page).toHaveTitle(`${owner} | Architect`);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
       /architect/i,
@@ -62,15 +67,44 @@ test.describe(() => {
   });
 });
 
+test.describe(() => {
+  test.use({ locale: 'en-US' });
+
+  test('an English browser gets English over the Czech static default', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
+    await expect(page).toHaveTitle(`${owner} | Architect`);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+      'content',
+      site.description_en,
+    );
+  });
+
+  test('the tab title is in the visitor language before deferred scripts run', async ({
+    page,
+  }) => {
+    // Parsing ends with readyState "interactive"; deferred and module scripts
+    // run only after it.
+    await page.addInitScript(() => {
+      document.addEventListener('readystatechange', () => {
+        if (document.readyState === 'interactive') {
+          Object.assign(window, { titleWhenParsed: document.title });
+        }
+      });
+    });
+    await page.goto('/');
+    expect(
+      await page.evaluate(() => (window as unknown as { titleWhenParsed: string }).titleWhenParsed),
+    ).toBe(`${owner} | Architect`);
+  });
+});
+
 test('tab titles name the page and the credentialed architect in both languages', async ({
   page,
 }) => {
-  const site = parse(
-    readFileSync('src/content/singletons/site.md', 'utf8').split('---')[1],
-  );
-  const owner = [site.credential, site.name].filter(Boolean).join(' ');
   const titles = [
-    ['/', `${owner} | Architecture`, `${owner} | Architektura`],
+    ['/', `${owner} | Architect`, `${owner} | Architektka`],
     ['/work/', `Work | ${owner}`, `Práce | ${owner}`],
     ['/contact/', `Contact | ${owner}`, `Kontakt | ${owner}`],
     // tests/e2e/pages/[fixture].astro, which the e2e build adds.
@@ -337,6 +371,20 @@ test('reduced motion keeps project images still on hover', async ({ page }) => {
 
 test.describe(() => {
   test.use({ javaScriptEnabled: false });
+
+  test('the static page is Czech, as crawlers and link previews read it', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
+    await expect(page.getByRole('heading', { name: 'O mně' })).toBeVisible();
+    await expect(page).toHaveTitle(`${owner} | Architektka`);
+    const meta = (selector: string) => page.locator(`meta[${selector}]`);
+    await expect(meta('name="description"')).toHaveAttribute('content', site.description_cs);
+    await expect(meta('property="og:title"')).toHaveAttribute('content', `${owner} | Architektka`);
+    await expect(meta('property="og:description"')).toHaveAttribute(
+      'content',
+      site.description_cs,
+    );
+  });
 
   test('reveal content is visible without JavaScript', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });

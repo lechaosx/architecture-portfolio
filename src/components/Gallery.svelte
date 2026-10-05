@@ -100,7 +100,7 @@
   // move began (`from`, at `cardAt` = `at`), and, closing, the frame it lands
   // on as it is now; `thumbnail` is the thumbnail it travels from or to.
   let morph = $state<{ from: Frame; at: number; landing?: Frame; thumbnail?: HTMLElement }>();
-  let lang = $state<Lang>('en');
+  let lang = $state<Lang>('cs');
   // The current image, which the controls, the status and the address
   // describe.
   let index = $state(0);

@@ -198,6 +198,39 @@ describe('project content schema', () => {
 });
 
 describe('home content schema', () => {
+  const homeSchema = staticSchema('home');
+  const home = { gallery: ['/uploads/cover.jpg'], body_cs: 'O mně', body_en: 'About me' };
+
+  test('reads services, area, education and awards, dropping empty CMS rows', () => {
+    const facts = {
+      services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
+      area_cs: 'Brno a Jihomoravský kraj',
+      area_en: 'Brno and South Moravia',
+      education: [{ text_cs: 'FA VUT Brno, Ing. arch. (2024)', text_en: 'FA BUT Brno, Ing. arch. (2024)' }],
+      awards: [{ text_cs: 'Soutěž, 1. místo, 2025', text_en: 'Competition, 1st place, 2025' }],
+    };
+    expect(
+      homeSchema.safeParse({
+        ...home,
+        ...facts,
+        services: [{}, ...facts.services],
+        education: [...facts.education, {}],
+      }),
+    ).toMatchObject({ success: true, data: facts });
+  });
+
+  test('leaves the facts empty when they are not filled', () => {
+    expect(homeSchema.safeParse(home)).toMatchObject({
+      success: true,
+      data: { services: [], education: [], awards: [] },
+    });
+  });
+
+  test.each(['services', 'education', 'awards'])('rejects a row of %s in only one language', (field) => {
+    const row = field === 'services' ? { name_cs: 'Interiéry' } : { text_cs: 'Jen česky' };
+    expect(homeSchema.safeParse({ ...home, [field]: [row] }).success).toBe(false);
+  });
+
   test('requires an explicit non-empty homepage image selection', () => {
     expect(homeEditorFields.find((field) => field.name === 'gallery')).toMatchObject({
       type: 'image',

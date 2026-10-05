@@ -13,14 +13,27 @@ const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" data-lang="en" data-theme="light">
+<html lang="cs" data-lang="cs" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <!-- Pick the language before first paint (saved > browser > en) so the
-         correct-language content shows without a flash. -->
+    <title>{title.cs}</title>
+    <meta name="page-title" data-cs={title.cs} data-en={title.en} />
+    <meta
+      name="description"
+      content={site.description_cs}
+      data-cs={site.description_cs}
+      data-en={site.description_en}
+    />
+    <meta property="og:title" content={title.cs} />
+    <meta property="og:description" content={site.description_cs} />
+    <meta property="og:type" content="website" />
+
+    <!-- Pick the language and its tab title before first paint (saved >
+         browser > en) so the correct-language content shows without a flash.
+         It reads the page-title meta, so that must come first. -->
     <script is:inline>
       {
         let saved = null;
@@ -32,6 +45,12 @@ const { title } = Astro.props;
         if (lang !== 'cs' && lang !== 'en') lang = 'en';
         document.documentElement.dataset.lang = lang;
         document.documentElement.lang = lang;
+        const title = /** @type {HTMLMetaElement | null} */ (
+          document.querySelector('meta[name="page-title"]')
+        );
+        if (title) {
+          document.title = title.dataset[lang] || title.dataset.cs || document.title;
+        }
       }
     </script>
 
@@ -93,18 +112,6 @@ const { title } = Astro.props;
         });
       }
     </script>
-
-    <title>{title.en}</title>
-    <meta name="page-title" data-cs={title.cs} data-en={title.en} />
-    <meta
-      name="description"
-      content={site.description_en}
-      data-cs={site.description_cs}
-      data-en={site.description_en}
-    />
-    <meta property="og:title" content={title.en} />
-    <meta property="og:description" content={site.description_en} />
-    <meta property="og:type" content="website" />
   </head>
   <body class="min-h-screen bg-white font-sans text-black antialiased">
     <Nav />
@@ -134,13 +141,13 @@ const { title } = Astro.props;
       }
 
       function applyLang() {
-        const lang = document.documentElement.dataset.lang || 'en';
+        const lang = document.documentElement.dataset.lang || 'cs';
         const title = document.querySelector<HTMLMetaElement>(
           'meta[name="page-title"]',
         );
         if (title) {
           document.title =
-            title.dataset[lang] || title.dataset.en || document.title;
+            title.dataset[lang] || title.dataset.cs || document.title;
         }
         const description = document.querySelector<HTMLMetaElement>(
           'meta[name="description"]',
