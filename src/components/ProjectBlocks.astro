@@ -15,49 +15,146 @@ import type { ResponsiveImage } from '../images';
 type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
 
 interface Props {
+  projectId: string;
   blocks: ProjectBlock[];
   responsiveImages: (ResponsiveImage | undefined)[];
 }
 
-const { blocks, responsiveImages } = Astro.props;
-let pageImageIndex = 1;
-const displayBlocks = blocks.map((block) =>
+const { projectId, blocks, responsiveImages } = Astro.props;
+let pageImageIndex = 0;
+const displayBlocks = blocks.map((block, blockIndex) =>
   block.type === 'text'
     ? block
     : {
         ...block,
         images: block.images.map((item) => {
           const index = pageImageIndex++;
-          return { item, index, responsive: responsiveImages[index] };
+          return {
+            item,
+            index,
+            responsive: responsiveImages[index],
+            loading: index === 0 ? 'eager' : 'lazy',
+            // Only an image at the top of the page morphs from the work card.
+            morph: blockIndex === 0 && index === 0,
+          } as const;
         }),
       },
 );
+const morphName = `view-transition-name: cover-${projectId}`;
 ---
 
-{
-  displayBlocks.map((block) => {
-    if (block.type === 'text') {
-      return (
-        <Prose
-          cs={block.body_cs}
-          en={block.body_en}
-          class="prose prose-neutral mt-12 max-w-none columns-[35ch_2] gap-12 dark:prose-invert"
-        />
-      );
-    }
+<div class="flex flex-col gap-12">
+  {
+    displayBlocks.map((block) => {
+      if (block.type === 'text') {
+        return (
+          <Prose
+            cs={block.body_cs}
+            en={block.body_en}
+            class="prose prose-neutral max-w-none columns-[35ch_2] gap-12 dark:prose-invert"
+          />
+        );
+      }
 
-    if (block.type === 'gallery') {
+      if (block.type === 'gallery') {
+        return (
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {block.images.map(({ item, index, responsive, loading, morph }) => {
+              const aspectRatio = responsive
+                ? responsive.source.width / responsive.source.height
+                : 1;
+              return (
+                <button
+                  type="button"
+                  data-lightbox-index={index}
+                  class:list={[
+                    'group aspect-square overflow-hidden bg-neutral-100',
+                    { 'project-cover': morph },
+                  ]}
+                  style={morph ? morphName : undefined}
+                >
+                  <T
+                    cs={`${ui.cs.openImage} ${index + 1}`}
+                    en={`${ui.en.openImage} ${index + 1}`}
+                    class="sr-only"
+                  />
+                  <img
+                    src={displayImageUrl(responsive, item.image)}
+                    srcset={responsiveSrcset(responsive, THUMBNAIL_WIDTHS)}
+                    sizes={coverSizes(
+                      aspectRatio,
+                      1,
+                      [
+                        { media: '(min-width: 1152px)', fixed: 360 },
+                        {
+                          media: '(min-width: 640px)',
+                          viewport: 100 / 3,
+                          gutter: 24,
+                        },
+                        { viewport: 50, gutter: 30 },
+                      ],
+                      1.05,
+                    )}
+                    alt=""
+                    {loading}
+                    decoding="async"
+                    class="size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        );
+      }
+
+      if (block.images.length === 1) {
+        const [{ item, index, responsive, loading, morph }] = block.images;
+        return (
+          <button
+            type="button"
+            data-lightbox-index={index}
+            class:list={[
+              'group block w-full overflow-hidden bg-neutral-100',
+              { 'project-cover': morph },
+            ]}
+            style={morph ? morphName : undefined}
+          >
+            <T
+              cs={`${ui.cs.openImage} ${index + 1}`}
+              en={`${ui.en.openImage} ${index + 1}`}
+              class="sr-only"
+            />
+            <img
+              src={displayImageUrl(responsive, item.image)}
+              srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
+              sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
+              width={responsive?.source.width}
+              height={responsive?.source.height}
+              alt=""
+              {loading}
+              decoding="async"
+              class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-102"
+            />
+          </button>
+        );
+      }
+
       return (
-        <div class="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {block.images.map(({ item, index, responsive }) => {
-            const aspectRatio = responsive
-              ? responsive.source.width / responsive.source.height
-              : 1;
-            return (
+        <div data-project-carousel class="relative bg-neutral-100">
+          <div
+            data-project-carousel-track
+            class="no-scrollbar flex aspect-video snap-x snap-mandatory overflow-x-auto"
+          >
+            {block.images.map(({ item, index, responsive, loading, morph }) => (
               <button
                 type="button"
                 data-lightbox-index={index}
-                class="group aspect-square overflow-hidden bg-neutral-100"
+                data-project-slide
+                class:list={[
+                  'relative size-full shrink-0 snap-start',
+                  { 'project-cover': morph },
+                ]}
+                style={morph ? morphName : undefined}
               >
                 <T
                   cs={`${ui.cs.openImage} ${index + 1}`}
@@ -66,146 +163,72 @@ const displayBlocks = blocks.map((block) =>
                 />
                 <img
                   src={displayImageUrl(responsive, item.image)}
-                  srcset={responsiveSrcset(responsive, THUMBNAIL_WIDTHS)}
-                  sizes={coverSizes(
-                    aspectRatio,
-                    1,
-                    [
-                      { media: '(min-width: 1152px)', fixed: 360 },
-                      {
-                        media: '(min-width: 640px)',
-                        viewport: 100 / 3,
-                        gutter: 24,
-                      },
-                      { viewport: 50, gutter: 30 },
-                    ],
-                    1.05,
-                  )}
+                  srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
+                  sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
+                  width={responsive?.source.width}
+                  height={responsive?.source.height}
                   alt=""
-                  loading="lazy"
+                  {loading}
                   decoding="async"
-                  class="size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
+                  class="size-full object-contain"
                 />
               </button>
-            );
-          })}
+            ))}
+          </div>
+          <button
+            type="button"
+            data-project-carousel-prev
+            class="media-navigation-button absolute top-1/2 left-3 -translate-y-1/2"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              class="size-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M15.5 5l-7 7 7 7" />
+            </svg>
+            <T k="previousImage" class="sr-only" />
+          </button>
+          <button
+            type="button"
+            data-project-carousel-next
+            class="media-navigation-button absolute top-1/2 right-3 -translate-y-1/2"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              class="size-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M8.5 5l7 7-7 7" />
+            </svg>
+            <T k="nextImage" class="sr-only" />
+          </button>
+          <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
+            {block.images.map((_, index) => (
+              <button
+                type="button"
+                data-project-dot
+                class="carousel-dot size-2.5 rounded-full"
+              >
+                <T
+                  cs={`${ui.cs.goToImage} ${index + 1}`}
+                  en={`${ui.en.goToImage} ${index + 1}`}
+                  class="sr-only"
+                />
+              </button>
+            ))}
+          </div>
         </div>
       );
-    }
-
-    if (block.images.length === 1) {
-      const [{ item, index, responsive }] = block.images;
-      return (
-        <button
-          type="button"
-          data-lightbox-index={index}
-          class="group mt-12 block w-full overflow-hidden bg-neutral-100"
-        >
-          <T
-            cs={`${ui.cs.openImage} ${index + 1}`}
-            en={`${ui.en.openImage} ${index + 1}`}
-            class="sr-only"
-          />
-          <img
-            src={displayImageUrl(responsive, item.image)}
-            srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
-            sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
-            width={responsive?.source.width}
-            height={responsive?.source.height}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-102"
-          />
-        </button>
-      );
-    }
-
-    return (
-      <div data-project-carousel class="relative mt-12 bg-neutral-100">
-        <div
-          data-project-carousel-track
-          class="no-scrollbar flex aspect-video snap-x snap-mandatory overflow-x-auto"
-        >
-          {block.images.map(({ item, index, responsive }) => (
-            <button
-              type="button"
-              data-lightbox-index={index}
-              data-project-slide
-              class="relative size-full shrink-0 snap-start"
-            >
-              <T
-                cs={`${ui.cs.openImage} ${index + 1}`}
-                en={`${ui.en.openImage} ${index + 1}`}
-                class="sr-only"
-              />
-              <img
-                src={displayImageUrl(responsive, item.image)}
-                srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
-                sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
-                width={responsive?.source.width}
-                height={responsive?.source.height}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                class="size-full object-contain"
-              />
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          data-project-carousel-prev
-          class="media-navigation-button absolute top-1/2 left-3 -translate-y-1/2"
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            class="size-5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M15.5 5l-7 7 7 7" />
-          </svg>
-          <T k="previousImage" class="sr-only" />
-        </button>
-        <button
-          type="button"
-          data-project-carousel-next
-          class="media-navigation-button absolute top-1/2 right-3 -translate-y-1/2"
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            class="size-5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M8.5 5l7 7-7 7" />
-          </svg>
-          <T k="nextImage" class="sr-only" />
-        </button>
-        <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-          {block.images.map((_, index) => (
-            <button
-              type="button"
-              data-project-dot
-              class="carousel-dot size-2.5 rounded-full"
-            >
-              <T
-                cs={`${ui.cs.goToImage} ${index + 1}`}
-                en={`${ui.en.goToImage} ${index + 1}`}
-                class="sr-only"
-              />
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  })
-}
+    })
+  }
+</div>
 
 <script>
   for (const root of document.querySelectorAll<HTMLElement>(

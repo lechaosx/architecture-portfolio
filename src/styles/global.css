@@ -42,8 +42,8 @@
   overflow: clip;
 }
 
-/* Only the project page's full-image snapshot is drawn: blending it with the
-   square card crop doubles the image's edges. */
+/* Only the project page's snapshot is drawn: blending it with the square card
+   crop doubles the image's edges. */
 html:active-view-transition-type(project-open)::view-transition-old(.project-cover),
 html:active-view-transition-type(project-close)::view-transition-new(.project-cover) {
   display: none;

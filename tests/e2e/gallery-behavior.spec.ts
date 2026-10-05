@@ -278,14 +278,9 @@ test('separate galleries share a lightbox across the full-width drawing', async 
   );
   await expect(duplicateTriggers).toHaveCount(2);
   const cover = duplicateTriggers.first();
-  const lastGalleryDrawing = page
-    .locator('article > div.mt-12.grid')
-    .first()
-    .locator('button')
-    .last();
-  const fullWidthDrawing = page
-    .locator('article > button.mt-12[data-lightbox-index]')
-    .last();
+  const lastGalleryDrawing = duplicateTriggers.last();
+  // The fixture's second full-width set, after the cover and its galleries.
+  const fullWidthDrawing = page.locator('button[data-lightbox-index="21"]');
   const [coverBox, galleryBox, fullWidthBox] = await Promise.all([
     cover.boundingBox(),
     lastGalleryDrawing.boundingBox(),

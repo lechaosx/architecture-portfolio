@@ -5,8 +5,10 @@ year: 2024
 location_cs: Česká republika, Brno
 location_en: Czech republic, Brno
 draft: false
-cover: /uploads/01 Situační výkres širších vztahů-2.png
 blocks:
+  - type: image_set
+    images:
+      - image: /uploads/01 Situační výkres širších vztahů-2.png
   - type: text
     body_cs: >-
       Návrh nového Exotária v brněnské zoologické zahradě pracuje s myšlenkou

@@ -157,6 +157,63 @@ test('non-square project cover uses the shared crop transition class', async ({
   expect(box.width / box.height).toBeGreaterThan(1.2);
 });
 
+/** The elements of the page that hold a project's morph name, and their first image's index. */
+function morphTargets(page: Page) {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll('article *'))
+      .filter((element) => getComputedStyle(element).viewTransitionName.startsWith('cover-'))
+      .map((element) => ({
+        name: getComputedStyle(element).viewTransitionName,
+        index: element.closest('[data-lightbox-index]')?.getAttribute('data-lightbox-index'),
+      })),
+  );
+}
+
+for (const fixture of ['project', 'gallery-first', 'set-first']) {
+  test(`the morph target is the first image of the ${fixture} fixture`, async ({ page }) => {
+    await page.goto(`/e2e/${fixture}/`);
+    expect(await morphTargets(page)).toEqual([{ name: `cover-e2e-${fixture}`, index: '0' }]);
+  });
+}
+
+test('the morph target of a leading multi-image set is as large as its track', async ({
+  page,
+}) => {
+  await page.goto('/e2e/set-first/');
+  const [slideBox, trackBox] = await Promise.all([
+    page.locator('.project-cover').boundingBox(),
+    page.locator('[data-project-carousel-track]').boundingBox(),
+  ]);
+  expect(slideBox).toEqual(trackBox);
+});
+
+test('no element is a morph target when the first block is text', async ({ page }) => {
+  await page.goto('/e2e/text-first/');
+  expect(await morphTargets(page)).toEqual([]);
+  expect(await page.locator('.project-cover').count()).toBe(0);
+});
+
+test('the first image of a page loads eagerly and the others lazily', async ({ page }) => {
+  for (const path of ['/e2e/project/', '/e2e/text-first/']) {
+    await page.goto(path);
+    const loading = await page
+      .locator('article button[data-lightbox-index] img')
+      .evaluateAll((images) => images.map((image) => image.getAttribute('loading')));
+    expect(loading[0], path).not.toBe('lazy');
+    expect(loading.slice(1).every((value) => value === 'lazy'), path).toBe(true);
+  }
+});
+
+test('the work card shows the first image of its project', async ({ page }) => {
+  await page.goto('/work/');
+  const { card } = await projectCard(page);
+  const cardSrc = await card.locator('img').getAttribute('src');
+  await card.click();
+  await expect(
+    page.locator('article [data-lightbox-index="0"] img'),
+  ).toHaveAttribute('src', cardSrc!);
+});
+
 test('project covers morph one uncropped snapshot in both directions', async ({
   browserName,
   page,

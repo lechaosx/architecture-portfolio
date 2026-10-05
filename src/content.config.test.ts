@@ -99,11 +99,16 @@ function rowShape(schema: z.ZodType): FieldShape[] | undefined {
   return undefined;
 }
 
+const imageSet = {
+  type: 'image_set',
+  images: [{ image: '/uploads/cover.jpg' }],
+};
+
 const project = {
   title_cs: 'Projekt',
   title_en: 'Project',
   year: 2026,
-  cover: '/uploads/cover.jpg',
+  blocks: [imageSet],
 };
 
 describe.each(['projects', 'site', 'home', 'contact'] as const)('%s schema', (name) => {
@@ -114,17 +119,23 @@ describe.each(['projects', 'site', 'home', 'contact'] as const)('%s schema', (na
 });
 
 describe('project content schema', () => {
-  test('allows a project with no content blocks', () => {
-    expect(projectSchema.safeParse(project)).toMatchObject({
-      success: true,
-      data: { blocks: [] },
-    });
+  test.each([
+    ['no content blocks', undefined],
+    ['only an empty CMS block row', [{}]],
+    ['only text', [{ type: 'text', body_cs: 'Popis', body_en: 'Description' }]],
+  ])('rejects a project with %s, saying it needs an image', (_, blocks) => {
+    const result = projectSchema.safeParse({ ...project, blocks });
+
+    expect(result.success).toBe(false);
+    expect(JSON.stringify(result.error?.issues)).toMatch(/image/i);
   });
 
   test('treats an empty CMS block row as no content', () => {
-    expect(projectSchema.safeParse({ ...project, blocks: [{}] })).toMatchObject({
+    expect(
+      projectSchema.safeParse({ ...project, blocks: [{}, imageSet] }),
+    ).toMatchObject({
       success: true,
-      data: { blocks: [] },
+      data: { blocks: [imageSet] },
     });
   });
 

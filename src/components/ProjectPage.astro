@@ -5,12 +5,6 @@ import Gallery from './Gallery.svelte';
 import ProjectBlocks from './ProjectBlocks.astro';
 import T from './T.astro';
 import { credentialedName } from '../site-title';
-import { ui } from '../i18n';
-import {
-  displayImageUrl,
-  LARGE_IMAGE_WIDTHS,
-  responsiveSrcset,
-} from '../images';
 import { getResponsiveImage } from '../server-images';
 
 interface Props {
@@ -21,14 +15,12 @@ const { project } = Astro.props;
 const d = project.data;
 
 const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
-const images = [
-  { image: d.cover },
-  ...d.blocks.flatMap((block) => (block.type === 'text' ? [] : block.images)),
-];
+const images = d.blocks.flatMap((block) =>
+  block.type === 'text' ? [] : block.images,
+);
 const responsiveImages = await Promise.all(
   images.map(({ image }) => getResponsiveImage(image)),
 );
-const responsiveCover = responsiveImages[0];
 ---
 
 <Base
@@ -57,29 +49,7 @@ const responsiveCover = responsiveImages[0];
       />
     </header>
 
-    <button
-      type="button"
-      data-lightbox-index={0}
-      class="project-cover group block w-full overflow-hidden bg-neutral-100"
-      style={`view-transition-name: cover-${project.id}`}
-    >
-      <T
-        cs={`${ui.cs.openImage} 1`}
-        en={`${ui.en.openImage} 1`}
-        class="sr-only"
-      />
-      <img
-        src={displayImageUrl(responsiveCover, d.cover)}
-        srcset={responsiveSrcset(responsiveCover, LARGE_IMAGE_WIDTHS)}
-        sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
-        width={responsiveCover?.source.width}
-        height={responsiveCover?.source.height}
-        alt=""
-        class="w-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-102"
-      />
-    </button>
-
-    <ProjectBlocks blocks={d.blocks} {responsiveImages} />
+    <ProjectBlocks projectId={project.id} blocks={d.blocks} {responsiveImages} />
     <Gallery {images} {responsiveImages} client:load />
   </article>
 </Base>

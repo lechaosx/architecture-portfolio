@@ -46,8 +46,8 @@ export function getStaticPaths() {
     location_en: 'Nowhere',
     location_cs: 'Nikde',
     draft: false,
-    cover: '/e2e/images/cover.png',
     blocks: [
+      { type: 'image_set', images: [item('cover.png')] },
       { type: 'text', body_en: text(6).en, body_cs: text(6).cs },
       {
         type: 'gallery',
@@ -88,7 +88,23 @@ export function getStaticPaths() {
     ],
   };
 
+  const projectWith = (id: string, blocks: typeof project.blocks) => ({
+    params: { fixture: id },
+    props: { project: { id: `e2e-${id}`, data: { ...project, blocks } } },
+  });
+
   return [
+    // A text block first, so the page's first image is not at its top.
+    projectWith('text-first', [
+      { type: 'text', body_en: text(2).en, body_cs: text(2).cs },
+      { type: 'image_set', images: [item('wide.png')] },
+    ]),
+    projectWith('set-first', [
+      { type: 'image_set', images: [item('wide.png'), item('cover.png')] },
+    ]),
+    projectWith('gallery-first', [
+      { type: 'gallery', images: [item('square-1.png'), item('square-2.png')] },
+    ]),
     { params: { fixture: 'carousels' }, props: { images } },
     { params: { fixture: 'single-image' }, props: { images: images.slice(0, 1) } },
     { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project } } },
@@ -107,6 +123,7 @@ const { images, project } = Astro.props;
       {images.length > 1 && (
         <div class="mx-auto max-w-6xl px-6 pb-16">
           <ProjectBlocks
+            projectId="e2e"
             blocks={[
               { type: 'image_set', images: images.map((image) => ({ image })) },
             ]}

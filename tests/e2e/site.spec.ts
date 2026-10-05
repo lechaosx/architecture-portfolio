@@ -320,9 +320,8 @@ test('reduced motion keeps project images still on hover', async ({ page }) => {
   const variants = {
     cover: page.locator('.project-cover'),
     'gallery thumbnail': page.locator('.grid > [data-lightbox-index]').first(),
-    'single-image set': page
-      .locator('article > [data-lightbox-index]:not(.project-cover)')
-      .first(),
+    // The fixture's second full-width set, after the cover and its galleries.
+    'single-image set': page.locator('button[data-lightbox-index="21"]'),
   };
 
   for (const button of Object.values(variants)) {
