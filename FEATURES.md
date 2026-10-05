@@ -109,7 +109,7 @@ links.
 ### Editable site settings — [Explicit]
 
 Name, credential and SEO description in one CMS entry, feeding the wordmark,
-footer, tab titles and meta description.
+footer, tab titles and the description of pages without their own.
 
 ### Draft flag — [Implicit]
 
@@ -189,10 +189,10 @@ auto-detection it is a fallback, and in the nav it confused the architect.
 
 ### Czech in the page as served — [Explicit]
 
-The raw HTML is Czech (language, tab title, description and sharing tags), so
-crawlers that read it, link previews and no-JS visitors get Czech, the source
-language the architect writes in. Crawlers that run scripts are detected like
-visitors.
+The raw HTML is Czech (language, tab title, description, image alt text and
+sharing tags), so crawlers that read it, link previews and no-JS visitors get
+Czech, the source language the architect writes in. Crawlers that run scripts
+are detected like visitors.
 
 ---
 
@@ -317,10 +317,12 @@ strip stays one row and scrolls sideways — [Implicit].
 ### Titles and descriptions; the card's back — [Explicit]
 
 Optional bilingual title and description per image, shown only in the lightbox.
-The title shows in the top-left set strip: a titled image outside a set gets a
-strip of one, an image with neither title nor set gets none. A description lives
-on the card's back, reached with the bottom-left toggle, which turns the card
-over in 3D:
+On the page, the title is also the image's alt text in the current language,
+and an untitled image has none — [Explicit]. Both are machine-readable in the
+structured data and `llms.txt` — [Implicit]. The title shows in the top-left
+set strip: a titled image outside a set gets a strip of one, an image with
+neither title nor set gets none. A description lives on the card's back, reached
+with the bottom-left toggle, which turns the card over in 3D:
 
 - The back is paper in the page's theme, the drawing's shape and size, growing
   only as far as its text needs — [Explicit]; a card taller than the screen
@@ -345,9 +347,32 @@ Served at the architect's own domain; the `*.github.io` URL redirects to it.
 
 ### SEO and sharing — [Implicit]
 
-Per-page title and description, Open Graph tags and a sitemap. Tab titles pair
-page and credentialed name with `|`, e.g. "Work | Ing. arch. Tereza Kalábková"
-— [Explicit].
+Per-page title, description and canonical address, Open Graph and Twitter tags,
+a sitemap, and a `robots.txt` that admits every crawler and names the sitemap.
+Tab titles pair page and credentialed name with `|`, e.g. "Work | Ing. arch.
+Tereza Kalábková" — [Explicit].
+
+### Project descriptions from the brief — [Implicit]
+
+A project page's description in search results and link previews is its brief,
+else the start of its first text block; other pages use the site's SEO
+description.
+
+### Share image: the first image — [Implicit]
+
+A project's link preview shows its cover, the home page's its first home image,
+as a JPEG about 1200px wide, the format every social site shows. Social sites
+do not show SVGs, so an SVG gives no preview image.
+
+### Facts for search engines and AI assistants — [Implicit]
+
+So that an assistant asked which architect to hire can quote her, every page
+carries structured data (schema.org) about the architect: name, credential,
+contact with where she works, services, education and awards; a project page
+adds its project, its cover and its titled or described images, each linked at
+the size the lightbox opens it at. `/llms.txt` gathers the same facts, her bio
+and every published project's texts and image captions in one Markdown file,
+Czech then English.
 
 ### Home tab title says what she is — [Explicit]
 

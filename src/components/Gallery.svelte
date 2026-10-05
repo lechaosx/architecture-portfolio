@@ -999,7 +999,7 @@
                     src={previewUrl(slide.image)}
                     width={responsiveImages[slide.image]?.source.width}
                     height={responsiveImages[slide.image]?.source.height}
-                    alt=""
+                    alt={imageText(images[slide.image], 'title', lang) ?? ''}
                     draggable="false"
                     decoding="async"
                     style:width={size ? `${size.width}px` : undefined}

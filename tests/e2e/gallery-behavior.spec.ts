@@ -8,10 +8,10 @@ const total = 24;
 const phone = { viewport: { width: 390, height: 844 } };
 const touchPhone = { ...phone, hasTouch: true, isMobile: true };
 
+// A titled image's button is also named by the image's title.
 function galleryImage(page: Page, position: number, label = 'Open image') {
   return page.getByRole('button', {
-    name: `${label} ${position}`,
-    exact: true,
+    name: new RegExp(`^${label} ${position}\\b`),
   });
 }
 
@@ -1359,7 +1359,7 @@ for (const [route, start, change, expected] of [
   [
     'a set button',
     3,
-    (page: Page) => page.getByRole('button', { name: 'Tiled variant 5' }).click(),
+    (page: Page) => page.getByRole('dialog').getByRole('button', { name: 'Tiled variant 5' }).click(),
     { position: `5 / ${total}`, current: 'Tiled variant 5', toggle: true },
   ],
   [
@@ -3322,7 +3322,7 @@ test('reduced motion reaches the same states at the same moments', async ({ brow
       () => page.keyboard.press('ArrowRight'),
       () => toggle.click(),
       () => page.keyboard.press('ArrowLeft'),
-      () => page.getByRole('button', { name: 'Tiled variant 2' }).click(),
+      () => page.getByRole('dialog').getByRole('button', { name: 'Tiled variant 2' }).click(),
       () => page.keyboard.press('ArrowLeft'),
       () => page.keyboard.press('ArrowLeft'),
     ]) {

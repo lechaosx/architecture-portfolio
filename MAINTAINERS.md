@@ -45,7 +45,9 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/i18n.ts` | baked-in UI labels |
-| `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
+| `src/layouts/Base.astro` | page shell and head metadata; language, theme and reveal scripts |
+| `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD and `/llms.txt`, built from content |
+| `src/pages/llms.txt.ts`, `src/pages/robots.txt.ts` | the `/llms.txt` and `/robots.txt` endpoints |
 | `src/components/Gallery.svelte`, `Lightbox*.svelte`, `lightbox-*.ts`, `gallery.ts` | the project lightbox |
 | `src/components/Carousel.astro`, `ProjectBlocks.astro` | home and project carousels |
 | `scripts/generate-responsive-images.ts` | image pipeline → `public/_responsive/` (gitignored) |

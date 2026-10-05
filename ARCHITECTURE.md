@@ -20,8 +20,9 @@ backend, which is also what keeps the site fast and cheap.
 
 One mount point, the root of the domain in `public/CNAME`. So there is no `base`
 and no link helper: internal links and assets are plain root-absolute paths.
-`site` in `astro.config.mjs` feeds only the sitemap. The `*.github.io/<repo>/`
-URL does not serve on its own, but GitHub redirects it to the domain.
+`site` in `astro.config.mjs` is the origin of every absolute URL the build
+writes. The `*.github.io/<repo>/` URL does not serve on its own, but GitHub
+redirects it to the domain.
 
 **Page URLs end in a slash** (`/work/`) — [Explicit]. GitHub Pages
 301-redirects the slashless form; `astro dev` and `astro preview` answer it with
@@ -58,6 +59,9 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
   `tests/e2e/images`, served at `/e2e/images/` — [Implicit].
 - The home facts tests render `HomeFacts.astro` with fixture data, filled,
   partly filled and empty — [Implicit].
+- Metadata, structured-data and alt-text tests use fixture project pages; the
+  `llms.txt` test checks it against the shipped projects and follows its links
+  — [Implicit].
 - Home, work-page and transition tests use the shipped content — [Implicit].
 
 ---
@@ -187,7 +191,7 @@ language with the lightbox but not its implementation.
 `ProjectBlocks.astro` renders the blocks on the server; each image button
 carries its page index so the single island treats every occurrence as its own
 slide. The first image of the page is the project's cover: the work card shows
-it and it is the only image that loads eagerly.
+it, it is the only image that loads eagerly, and it is the page's share image.
 
 ### Work page: one component for grid and list — [Implicit]
 
@@ -312,7 +316,39 @@ keeps them associated. Both block types share the shape.
 
 ### Sitemap — [Implicit]
 
-`@astrojs/sitemap`, using `site` for absolute URLs.
+`@astrojs/sitemap` writes `sitemap-index.xml`, using `site` for absolute URLs;
+`robots.txt` points crawlers to it.
+
+---
+
+## Search & machine-readable output
+
+### Page metadata flows into `Base.astro` — [Implicit]
+
+A page passes `Base` only what it knows about itself: a description, a share
+image, its Open Graph type and its structured-data nodes. `Base` falls back to
+the site description, derives the canonical address from `site` and the path,
+and adds the architect's node, so every page gets the same head.
+
+### Share images come from the responsive pipeline — [Implicit]
+
+The image script also writes each raster as a JPEG about 1200px wide, flattened
+onto white, because LinkedIn is reported to drop WebP previews.
+
+### JSON-LD from pure functions — [Implicit]
+
+Pure functions in `src/structured-data.ts` turn content into schema.org nodes,
+which `Base` inlines as one `@graph` per page. Text is plain Czech, because
+Google documents only plain-text values for these properties, not
+language-tagged ones. The area she works in sits on a `ContactPoint`, which,
+unlike `Person`, has `areaServed`, with email and phone on the `Person` too.
+
+### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
+
+`src/pages/llms.txt.ts` renders at build time through the pure
+`src/llms-txt.ts`, from the same content as the pages, so it cannot drift from
+them and needs no server. `src/pages/robots.txt.ts` builds the sitemap's URL
+from `site`, so the domain is written only in `site` and `public/CNAME`.
 
 ---
 
@@ -330,8 +366,14 @@ visitors get the source language; the inline script then picks the visitor's.
 ### Language picked by an inline script — [Implicit]
 
 An `is:inline` head script sets `data-lang` and the tab title before first
-paint; a module script in `Base.astro` wires the toggle and syncs `<title>` and
-the meta description.
+paint; a module script in `Base.astro` wires the toggle and syncs `<title>`, the
+meta description and image alt text.
+
+### Bilingual alt text: one attribute, swapped — [Implicit]
+
+An image cannot be doubled per language like text, so a project image ships its
+Czech title as `alt`, with both titles in `data-cs`/`data-en`, and the language
+script sets `alt` from them. The lightbox sets it from its own language state.
 
 ### Strings: `i18n.ts`, `T.astro`, `Prose.astro` — [Implicit]
 

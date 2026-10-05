@@ -112,8 +112,8 @@ content:
         fields:
           - { name: name_cs, label: Service (Czech), type: string, required: true }
           - { name: name_en, label: Service (English), type: string, required: true }
-      - { name: area_cs, label: Where I work (Czech), type: string, required: false, description: 'Name the city and region the way clients search, e.g. "Brno a Jihomoravský kraj".' }
-      - { name: area_en, label: Where I work (English), type: string, required: false, description: 'Name the city and region the way clients search, e.g. "Brno and South Moravia".' }
+      - { name: area_cs, label: Where I work (Czech), type: string, required: false, description: 'Your base city first, then where you take on projects, e.g. "Brno, projekty v Česku i v zahraničí".' }
+      - { name: area_en, label: Where I work (English), type: string, required: false, description: 'Your base city first, then where you take on projects, e.g. "Brno, projects in the Czech Republic and abroad".' }
       - name: education
         label: Education
         type: object

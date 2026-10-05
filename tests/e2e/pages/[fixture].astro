@@ -158,6 +158,15 @@ export function getStaticPaths() {
       brief_cs: 'Anotace stránky.\nDruhý řádek.',
     }),
     projectWith('text-only', [{ type: 'text', body_en: text(2).en, body_cs: text(2).cs }]),
+    projectWith('vector-only', [{ type: 'gallery', images: [item('vector.svg')] }]),
+    projectWith('náměstí', [{ type: 'text', body_en: text(1).en, body_cs: text(1).cs }]),
+    projectWith('titled-sets', [
+      { type: 'image_set', images: [item('wide.png', ['Plan', 'Půdorys'])] },
+      {
+        type: 'image_set',
+        images: [item('cover.png', ['Section', 'Řez']), item('wide.png')],
+      },
+    ]),
     // A text block first, so the page's first image is not at its top.
     projectWith('text-first', [
       { type: 'text', body_en: text(2).en, body_cs: text(2).cs },

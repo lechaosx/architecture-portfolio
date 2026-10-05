@@ -399,7 +399,7 @@
         src={source(layer.image, view)}
         width={card.width}
         height={card.height}
-        alt=""
+        alt={card.title ?? ''}
         draggable="false"
         style:width={card.size ? `${card.size.width}px` : undefined}
         style:height={card.size ? `${card.size.height}px` : undefined}

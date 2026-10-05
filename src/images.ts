@@ -16,6 +16,8 @@ export interface ResponsiveImage {
   originalUrl: string;
   source: ImageVariant;
   variants: ImageVariant[];
+  /** The JPEG link previews show, about 1200px wide. */
+  share: ImageVariant;
   deepZoom?: {
     url: string;
     width: number;
@@ -27,7 +29,7 @@ export interface ResponsiveImage {
 }
 
 export interface ImageManifest {
-  version: 3;
+  version: 4;
   images: Record<string, ResponsiveImage>;
 }
 
@@ -82,4 +84,21 @@ export function responsiveSrcset(
   variants.sort((first, second) => first.width - second.width);
 
   return variants.map((variant) => `${variant.url} ${variant.width}w`).join(', ');
+}
+
+/**
+ * What the lightbox loads at its 2560px limit: the narrowest derivative that
+ * wide (or the source's width), else the source, since derivatives not
+ * smaller than it are omitted. The original outside the manifest.
+ */
+export function largeImageUrl(
+  image: ResponsiveImage | undefined,
+  original: string,
+) {
+  if (!image) return original;
+  const width = Math.min(image.source.width, Math.max(...LARGE_IMAGE_WIDTHS));
+  return (
+    image.variants.find((variant) => variant.width >= width)?.url ??
+    image.source.url
+  );
 }

@@ -10,10 +10,10 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
 });
 
+// A titled image's button is also named by the image's title.
 function galleryImage(page: Page, position: number) {
   return page.getByRole('button', {
-    name: `Open image ${position}`,
-    exact: true,
+    name: new RegExp(`^Open image ${position}\\b`),
   });
 }
 
@@ -525,7 +525,7 @@ test('hash history does not restore scroll or move the page cover', async ({
 test('lightbox reports its position and wraps at either end', async ({ page }) => {
   await gotoProject(page);
   const imageCount = await page
-    .getByRole('button', { name: /^Open image \d+$/ })
+    .getByRole('button', { name: /^Open image \d+\b/ })
     .count();
   await galleryImage(page, 1).click();
   await waitForLightbox(page);
@@ -932,7 +932,7 @@ test('resizing while zoomed keeps the image within its pan limits', async ({
 });
 
 for (const [route, change] of [
-  ['a set button', (page: Page) => page.getByRole('button', { name: 'Tiled variant 5' }).click()],
+  ['a set button', (page: Page) => page.getByRole('dialog').getByRole('button', { name: 'Tiled variant 5' }).click()],
   ['Next inside the set', (page: Page) => page.getByRole('button', { name: 'Next image' }).click()],
 ] as const) {
   test(`controls stay above a zoomed drawing while ${route} blends it`, async ({ page }) => {

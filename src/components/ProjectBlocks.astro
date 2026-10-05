@@ -2,6 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 import Prose from './Prose.astro';
 import T from './T.astro';
+import { imageText } from './gallery';
 import { ui } from '../i18n';
 import {
   coverSizes,
@@ -33,6 +34,12 @@ const displayBlocks = blocks.map((block, blockIndex) =>
             item,
             index,
             responsive: responsiveImages[index],
+            // The alt text: Czech as served, then set from data-cs/data-en
+            // by the language script in Base.astro.
+            title: {
+              cs: imageText(item, 'title', 'cs'),
+              en: imageText(item, 'title', 'en'),
+            },
             loading: index === 0 ? 'eager' : 'lazy',
             decoding: index === 0 ? 'auto' : 'async',
             // Only an image at the top of the page morphs from the work card.
@@ -60,7 +67,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
       if (block.type === 'gallery') {
         return (
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {block.images.map(({ item, index, responsive, loading, decoding, morph }) => {
+            {block.images.map(({ item, index, responsive, title, loading, decoding, morph }) => {
               const aspectRatio = responsive
                 ? responsive.source.width / responsive.source.height
                 : 1;
@@ -96,7 +103,9 @@ const morphName = `view-transition-name: cover-${projectId}`;
                       ],
                       1.05,
                     )}
-                    alt=""
+                    alt={title.cs ?? ''}
+                    data-cs={title.cs}
+                    data-en={title.en}
                     {loading}
                     {decoding}
                     class="size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
@@ -109,7 +118,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
       }
 
       if (block.images.length === 1) {
-        const [{ item, index, responsive, loading, decoding, morph }] = block.images;
+        const [{ item, index, responsive, title, loading, decoding, morph }] = block.images;
         return (
           <button
             type="button"
@@ -131,7 +140,9 @@ const morphName = `view-transition-name: cover-${projectId}`;
               sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
               width={responsive?.source.width}
               height={responsive?.source.height}
-              alt=""
+              alt={title.cs ?? ''}
+              data-cs={title.cs}
+              data-en={title.en}
               {loading}
               {decoding}
               class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-102"
@@ -146,7 +157,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
             data-project-carousel-track
             class="no-scrollbar flex aspect-video snap-x snap-mandatory overflow-x-auto"
           >
-            {block.images.map(({ item, index, responsive, loading, decoding, morph }) => (
+            {block.images.map(({ item, index, responsive, title, loading, decoding, morph }) => (
               <button
                 type="button"
                 data-lightbox-index={index}
@@ -168,7 +179,9 @@ const morphName = `view-transition-name: cover-${projectId}`;
                   sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
                   width={responsive?.source.width}
                   height={responsive?.source.height}
-                  alt=""
+                  alt={title.cs ?? ''}
+                  data-cs={title.cs}
+                  data-en={title.en}
                   {loading}
                   {decoding}
                   class="size-full object-contain"
