@@ -28,8 +28,9 @@ npm run images       # regenerate responsive images (dev and build run it)
   on port 4322, so it runs beside `dev` and `preview`. To run Playwright
   directly, run `npm run pretest:e2e` first.
 - Lightbox and carousel tests use test-only pages in `tests/e2e/pages/`, served
-  under `/e2e/`, with images in `tests/e2e/images/`. Home, work and contact
-  tests use the real content.
+  under `/e2e/`, with images in `tests/e2e/images/`. The work list and the brief
+  and text-only project pages are tested through fixture projects; other home,
+  work and contact tests use the real content.
 - `/e2e/project/` is frozen: tests address its images by position (`#image-N`).
   For a new case, add a fixture entry in `tests/e2e/pages/[fixture].astro`
   instead of inserting images there.

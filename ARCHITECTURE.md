@@ -187,6 +187,11 @@ carries its page index so the single island treats every occurrence as its own
 slide. The first image of the page is the project's cover: the work card shows
 it and it is the only image that loads eagerly.
 
+### Work page: one component for grid and list — [Implicit]
+
+`WorkProjects.astro` sorts the projects and renders the grid and the list; it is
+a component so the e2e fixtures can render it with their own projects.
+
 ### Page transitions: native View Transitions — [Implicit]
 
 `@view-transition { navigation: auto; }`, with no client router. The name

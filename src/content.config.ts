@@ -36,6 +36,8 @@ const projects = defineCollection({
     year: z.number(),
     location_cs: z.string().optional(),
     location_en: z.string().optional(),
+    brief_cs: z.string().optional(),
+    brief_en: z.string().optional(),
     draft: z.boolean().default(false),
     blocks: z.preprocess(
       withoutEmptyCmsRows,
@@ -57,10 +59,7 @@ const projects = defineCollection({
             }),
           ]),
         )
-        .default([])
-        .refine((blocks) => blocks.some((block) => block.type !== 'text'), {
-          error: 'A project needs at least one image in its content blocks',
-        }),
+        .default([]),
     ),
   }),
 });
