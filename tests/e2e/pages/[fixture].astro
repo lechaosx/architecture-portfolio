@@ -7,6 +7,7 @@ import Base from '../../../src/layouts/Base.astro';
 import Carousel from '../../../src/components/Carousel.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
 import ProjectPage from '../../../src/components/ProjectPage.astro';
+import WorkProjects from '../../../src/components/WorkProjects.astro';
 
 export function getStaticPaths() {
   const images = [
@@ -88,12 +89,50 @@ export function getStaticPaths() {
     ],
   };
 
-  const projectWith = (id: string, blocks: typeof project.blocks) => ({
+  const projectWith = (id: string, blocks: typeof project.blocks, more = {}) => ({
     params: { fixture: id },
-    props: { project: { id: `e2e-${id}`, data: { ...project, blocks } } },
+    props: { project: { id: `e2e-${id}`, data: { ...project, blocks, ...more } } },
   });
 
+  const listed = (id: string, data: Partial<typeof project>) => ({
+    id: `e2e-${id}`,
+    data: { ...project, ...data },
+  });
+  const gridProject = listed('grid', {
+    title_en: 'Grid project',
+    year: 2026,
+    blocks: [{ type: 'image_set', images: [item('wide.png')] }],
+  });
+  // Out of order, so the list's sort shows.
+  const briefProjects = [
+    listed('old', { title_en: 'Old brief', year: 2020, blocks: [] }),
+    listed('text-only', {
+      title_en: 'Beta text',
+      year: 2025,
+      blocks: [{ type: 'text', body_en: text(1).en, body_cs: text(1).cs }],
+      brief_en: 'A text project.',
+      brief_cs: 'Textový projekt.',
+    }),
+    gridProject,
+    listed('alpha', {
+      title_en: 'Alpha brief',
+      year: 2025,
+      blocks: [],
+      location_en: 'Prague',
+      brief_en: 'First line\nSecond line',
+      brief_cs: 'První řádek\nDruhý řádek',
+    }),
+  ];
+
   return [
+    { params: { fixture: 'work' }, props: { projects: briefProjects } },
+    { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
+    { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
+    projectWith('brief', project.blocks.slice(0, 1), {
+      brief_en: 'A brief for the page.\nSecond line.',
+      brief_cs: 'Anotace stránky.\nDruhý řádek.',
+    }),
+    projectWith('text-only', [{ type: 'text', body_en: text(2).en, body_cs: text(2).cs }]),
     // A text block first, so the page's first image is not at its top.
     projectWith('text-first', [
       { type: 'text', body_en: text(2).en, body_cs: text(2).cs },
@@ -111,12 +150,16 @@ export function getStaticPaths() {
   ];
 }
 
-const { images, project } = Astro.props;
+const { images, project, projects } = Astro.props;
 ---
 
 {
   project ? (
     <ProjectPage {project} />
+  ) : projects ? (
+    <Base title={{ cs: 'E2E', en: 'E2E' }}>
+      <WorkProjects {projects} />
+    </Base>
   ) : (
     <Base title={{ cs: 'E2E', en: 'E2E' }}>
       <Carousel {images} />

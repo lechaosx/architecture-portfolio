@@ -123,11 +123,14 @@ describe('project content schema', () => {
     ['no content blocks', undefined],
     ['only an empty CMS block row', [{}]],
     ['only text', [{ type: 'text', body_cs: 'Popis', body_en: 'Description' }]],
-  ])('rejects a project with %s, saying it needs an image', (_, blocks) => {
-    const result = projectSchema.safeParse({ ...project, blocks });
+  ])('accepts a project with %s', (_, blocks) => {
+    expect(projectSchema.safeParse({ ...project, blocks }).success).toBe(true);
+  });
 
-    expect(result.success).toBe(false);
-    expect(JSON.stringify(result.error?.issues)).toMatch(/image/i);
+  test('accepts a brief in both languages', () => {
+    expect(
+      projectSchema.safeParse({ ...project, brief_cs: 'Stručně', brief_en: 'Briefly' }),
+    ).toMatchObject({ success: true, data: { brief_cs: 'Stručně', brief_en: 'Briefly' } });
   });
 
   test('treats an empty CMS block row as no content', () => {

@@ -47,9 +47,19 @@ const responsiveImages = await Promise.all(
         en={meta(d.location_en)}
         class="mt-2 text-neutral-500"
       />
+      {
+        (d.brief_cs || d.brief_en) && (
+          <T
+            as="p"
+            cs={d.brief_cs}
+            en={d.brief_en}
+            class="mt-4 max-w-prose whitespace-pre-line"
+          />
+        )
+      }
     </header>
 
     <ProjectBlocks projectId={project.id} blocks={d.blocks} {responsiveImages} />
-    <Gallery {images} {responsiveImages} client:load />
+    {images.length > 0 && <Gallery {images} {responsiveImages} client:load />}
   </article>
 </Base>

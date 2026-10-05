@@ -1,0 +1,86 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ProjectCard from './ProjectCard.astro';
+import T from './T.astro';
+
+type Project = Pick<CollectionEntry<'projects'>, 'id' | 'data'>;
+
+interface Props {
+  projects: Project[];
+}
+
+const sorted = [...Astro.props.projects].sort(
+  (a, b) =>
+    b.data.year - a.data.year || a.data.title_en.localeCompare(b.data.title_en),
+);
+const images = (p: Project) =>
+  p.data.blocks.flatMap((block) =>
+    block.type === 'text' ? [] : block.images,
+  );
+const grid = sorted.filter((p) => images(p).length > 0);
+const briefs = sorted.filter((p) => images(p).length === 0);
+---
+
+{
+  grid.length > 0 && (
+    <section class="mx-auto grid max-w-6xl grid-cols-1 gap-x-8 gap-y-12 px-6 pb-16 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-20 sm:pb-24 lg:grid-cols-3 lg:gap-x-32">
+      {grid.map((p) => (
+        <ProjectCard
+          slug={p.id}
+          titleCs={p.data.title_cs}
+          titleEn={p.data.title_en}
+          year={p.data.year}
+          locationCs={p.data.location_cs}
+          locationEn={p.data.location_en}
+          cover={images(p)[0].image}
+        />
+      ))}
+    </section>
+  )
+}
+
+{
+  briefs.length > 0 && (
+    <div class="mx-auto max-w-6xl px-6 pb-16 sm:pb-24">
+      <hr class="border-neutral-200" />
+      <ul class="mt-12 flex flex-col gap-8">
+        {briefs.map((p) => {
+          const href =
+            p.data.blocks.length > 0 ? `/projects/${p.id}/` : undefined;
+          const Row = href ? 'a' : 'div';
+          return (
+            <li>
+              <Row {href} class="group block max-w-prose">
+                <div class="flex items-baseline justify-between">
+                  <T
+                    as="h3"
+                    cs={p.data.title_cs}
+                    en={p.data.title_en}
+                    class="text-base font-medium group-hover:underline group-focus-visible:underline"
+                  />
+                  <span class="text-sm text-neutral-500">{p.data.year}</span>
+                </div>
+                {(p.data.location_cs || p.data.location_en) && (
+                  <T
+                    as="p"
+                    cs={p.data.location_cs}
+                    en={p.data.location_en}
+                    class="text-sm text-neutral-500"
+                  />
+                )}
+                {(p.data.brief_cs || p.data.brief_en) && (
+                  <T
+                    as="p"
+                    cs={p.data.brief_cs}
+                    en={p.data.brief_en}
+                    class="mt-2 text-sm whitespace-pre-line"
+                  />
+                )}
+              </Row>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  )
+}

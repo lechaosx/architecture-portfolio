@@ -30,12 +30,14 @@ content:
       - { name: year, label: Year, type: number, required: true }
       - { name: location_cs, label: Location (Czech), type: string, required: false }
       - { name: location_en, label: Location (English), type: string, required: false }
+      - { name: brief_cs, label: Brief (Czech), type: text, required: false }
+      - { name: brief_en, label: Brief (English), type: text, required: false }
       - { name: draft, label: Draft (hide from site), type: boolean, default: false }
       - name: blocks
         label: Page content
         type: block
         list: true
-        required: true
+        required: false
         blockKey: type
         blocks:
           - name: text
