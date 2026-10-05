@@ -60,11 +60,10 @@ blocks:
       training opportunities.
 
 
-      Equally important is the transformation of the municipal park from a primarily
-      transitional green space into a **recreational and social destination**. A new
+      Equally important is the transformation of the municipal park from a green space
+      people mainly pass through into a **recreational and social destination**. A new
       amphitheatre, gathering space, public barbecue area, pavilion and a new
-      meander of the Kyjovka River create opportunities for people to meet, relax
-      and spend time outdoors. A children’s playground forms a natural spatial
+      meander of the Kyjovka River are created here. A children’s playground forms a natural spatial
       filter between the park and the sports grounds, while the bistro, cycling
       facilities and other amenities encourage use by athletes, local residents and
       visitors alike.
@@ -77,8 +76,8 @@ blocks:
     images:
       - image: /uploads/04 SWOT - cyklostezky.png
         comparison_set: kyjov-analyses
-        title_cs: Analýza cyklo dopravy
-        title_en: Cycling Transport Analysis
+        title_cs: Analýza cyklodopravy
+        title_en: Cycling analysis
         description_cs: Analýza cyklodopravy se zaměřuje na hlavní cyklistické trasy
           procházející Kyjovem, jejich směrování a návaznost na okolní krajinu.
           Město se nachází na průsečíku tří významných tras – EuroVelo 4 – Trasy
@@ -109,11 +108,11 @@ blocks:
       - image: /uploads/03 SWOT - život v Kyjově.png
         comparison_set: kyjov-analyses
         title_cs: Život ve městě
-        title_en: Life at the city
+        title_en: Life in the town
         description_cs: "Analýza života v Kyjově sleduje aktivity, které nejvýrazněji
           formují společenský život města, a místa, kde se koncentrují. Významnou
-          roli zde hraje především sport – zejména fotbal a basketbal, který
-          doplňuje silná kulturní scéna zastoupená hudbou, tancem, výstavami, trhy,
+          roli zde hraje především sport, zejména fotbal a basketbal;
+          doplňuje jej silná kulturní scéna zastoupená hudbou, tancem, výstavami, trhy,
           divadlem či filmem. Jednotlivá centra těchto aktivit vytvářejí síť
           prostupující městem: 1. Vlastivědné muzeum Kyjov, 2. Městský úřad, 3. Dům
           kultury, 4. Městský stadion, 5. Masarykovo náměstí, 6. Letní kino –
@@ -121,7 +120,7 @@ blocks:
           Městský park, 10. Kino Panorama, 11. Aquapark, 12. Městská knihovna, 13.
           Kyjovský pivovar a 14. Základní umělecká škola. Mapa zároveň ukazuje
           výraznou koncentraci kulturního a sportovního života právě v okolí
-          řešeného území. To zahrnuje městský stadion a přímo navazuje na park i
+          řešeného území. Řešené území zahrnuje městský stadion a přímo navazuje na park i
           další veřejná a rekreační místa. Z analýzy tak vyplývá, že sport je jedním
           z důležitých hybatelů života a identity Kyjova a zaslouží si kvalitní,
           reprezentativní a otevřený prostor pro svůj další rozvoj."
@@ -154,7 +153,7 @@ blocks:
           Porovnání současné nabídky s intenzitou sportovního života ve městě
           ukazuje, které aktivity mají dostatečné zastoupení a které je naopak
           vhodné posílit či doplnit. Další sportovní zázemí poskytují Sokol Kyjov a
-          Dům dětí a mládeže. Analýza zároveň poukazuje, že některé sporty v řešeném
+          Dům dětí a mládeže. Analýza zároveň poukazuje na sporty, které v řešeném
           území dnes chybí a jejichž začlenění by mohlo rozšířit nabídku aktivit,
           oslovit nové skupiny uživatelů a zvýšit celkovou atraktivitu sportovního
           areálu.
@@ -175,7 +174,7 @@ blocks:
       - image: /uploads/01 Problémová mapa +.png
         comparison_set: kyjov-analyses
         title_cs: Hodnoty území
-        title_en: Values of the Area
+        title_en: Values of the area
         description_cs: Analýza vymezuje hlavní hodnoty a existující potenciály města,
           na které může návrh přímo navázat. Mezi nejvýznamnější patří veřejná
           prostranství – Masarykovo náměstí, Seifertovo náměstí a park při ulici
@@ -205,7 +204,7 @@ blocks:
       - image: /uploads/02 Problémová mapa -.png
         comparison_set: kyjov-analyses
         title_cs: Limity území
-        title_en: Limitations of the Area
+        title_en: Limitations of the area
         description_cs: Analýza identifikuje hlavní prostorové a provozní nedostatky
           území a jeho okolí. Zásadním problémem je především vizuální i fyzická
           uzavřenost sportovního areálu, který není dostatečně propojen s okolní
@@ -215,7 +214,7 @@ blocks:
           chybějí zde pobytová místa, možnosti setkávání i důvody k delšímu
           zastavení. Negativně se uplatňují také vizuální vazby na průmyslové
           výškové objekty, které narušují některé hodnotné pohledové osy města.
-          Další ztrátou je zaniklý amfiteátr a tenisové kurty. Přestože je prostor
+          Dalšími ztrátami jsou zaniklý amfiteátr a tenisové kurty. Přestože je prostor
           amfiteátru řešen novou studií, jeho okolí je navrženo také pro bydlení,
           což může do budoucna vytvářet konflikt mezi obytnou funkcí a hlukově
           náročnějšími kulturními aktivitami, jako jsou letní kina či folklorní
@@ -228,19 +227,19 @@ blocks:
           The adjacent municipal park functions mainly as a green passage, lacking
           places to gather, rest or spend longer periods of time. The character of
           the area is also negatively affected by views towards industrial high-rise
-          structures, which disrupt several otherwise valuable visual axes. Another
-          loss is the former amphitheatre and tennis courts. Although the
+          structures, which disrupt several otherwise valuable visual axes. The area
+          has also lost its amphitheatre and tennis courts. Although the
           amphitheatre is being addressed by a new development study, the proposed
           residential buildings nearby may create future conflicts between housing
           and noise-intensive cultural activities, including open-air cinema and
           traditional folklore events.
       - image: /uploads/03 Situace areálu.png
         title_cs: Půdorys areálu
-        title_en: Site Plan
+        title_en: Site plan
         description_cs: Půdorys areálu představuje nové funkční členění území a jeho
           propojení s městským parkem. Do parku je vložen nový amfiteátr, který
-          posiluje jeho pobytovou a kulturní funkci. Sportovní nabídku rozšiřuje
-          multifunkční hřiště umožňující také tenis, venkovní squash, workoutové a
+          posiluje jeho pobytovou a kulturní funkci. Sportovní nabídku rozšiřují
+          multifunkční hřiště umožňující také tenis, venkovní squash a workoutové a
           parkourové hřiště. Významným prvkem je nová tribuna s odpovídajícím
           provozním zázemím, přesunutá na opačnou stranu oválu oproti původní
           nevyhovující tribuně. Za ní je využito přirozeně stoupajícího terénu k
@@ -257,16 +256,16 @@ blocks:
           accommodating tennis, an outdoor squash court, a workout area and a
           parkour playground. A key element is the new grandstand with improved
           supporting facilities, relocated to the opposite side of the running
-          track. Behind it, the naturally rising terrain is used to create a
+          track from the original, inadequate grandstand. Behind it, the naturally rising terrain is used to create a
           landscaped mound with an uphill running route, expanding training
           opportunities and attracting new users. The relocation of the grandstand
           also frees up space for the new parkour area. Between the sports complex
           and the park, a children’s playground acts as a spatial filter, visually
-          and functionally connecting the two areas while maintaining a subtle
+          and functionally connecting the two areas while keeping a clear
           boundary between them.
       - image: /uploads/04 Půdorys park.png
         title_cs: Půdorys parku
-        title_en: Park Plan
+        title_en: Park plan
         description_cs: Návrh proměňuje park z převážně průchozí zelené plochy v
           plnohodnotný pobytový a společenský prostor. Stávající síť cest je
           doplněna o místa, která vytvářejí důvody k zastavení a podporují různorodé
@@ -275,11 +274,11 @@ blocks:
           aktivity. Park dále doplňuje amfiteátr, veřejná grilovací místa a altán,
           které rozšiřují možnosti trávení volného času. Významným přírodním prvkem
           návrhu je nový meandr řeky Kyjovky, který řeku více zapojuje do struktury
-          parku a posiluje jeho rekreační a krajinný charakter. Park se tak stává
-          místem, kterým se pouze neprochází, ale prostorem pro setkávání, odpočinek
-          a trávení času, propojeným s navazujícím sportovním areálem.
-        description_en: The proposal transforms the park from a primarily transitional
-          green space into a fully functional recreational and social space. The
+          parku a posiluje jeho rekreační a krajinný charakter. Park tak přestává
+          být jen místem, kterým se prochází, a stává se prostorem pro setkávání,
+          odpočinek a trávení času, propojeným s navazujícím sportovním areálem.
+        description_en: The proposal transforms the park from a green space people
+          mainly pass through into a fully functional recreational and social space. The
           existing path network is complemented by new places that encourage
           visitors to stop, meet and spend time in the park. A new gathering space
           forms its central social point, providing a place for meetings, relaxation
@@ -292,12 +291,12 @@ blocks:
           relaxation and leisure, directly connected to the adjacent sports complex.
       - image: /uploads/07 Urbanistický detail + ŘEZ.png
         title_cs: Urbanistický detail
-        title_en: Urban Detail
+        title_en: Urban detail
         description_cs: Urbanistický detail představuje řešení hlavního vstupního
           prostoru sportovního areálu, jeho materiálové členění, mobiliář a
           návaznost jednotlivých funkcí. Kombinace zpevněných a polopropustných
           povrchů vymezuje hlavní pěší trasy a pobytové plochy, které jsou doplněny
-          zelení, venkovním mobiliářem a stojany na kola. Součástí areálu vzniká
+          zelení, venkovním mobiliářem a stojany na kola. V areálu vzniká
           nové fitness centrum, zatímco stávající kuželkárna je zachována a doplněna
           bistrem sloužícím návštěvníkům areálu, místním obyvatelům i turistům.
           Bistro se prostřednictvím venkovní zahrádky otevírá přímo do veřejného
@@ -312,8 +311,8 @@ blocks:
           surfaces defines the main pedestrian routes and public spaces,
           complemented by greenery, seating and bicycle stands. A new fitness centre
           is introduced within the complex, while the existing bowling facility is
-          retained and complemented by a bistro serving athletes, local residents,
-          visitors and cyclists. The bistro opens directly into the public space
+          retained and complemented by a bistro serving visitors to the complex,
+          local residents and tourists. The bistro opens directly into the public space
           through an outdoor seating area, creating a connection between the sports
           facilities and the adjacent children’s playground. The entrance area thus
           becomes not only a point of access but also a place for meeting and
@@ -322,25 +321,25 @@ blocks:
           complementing the spatial arrangement shown in the plan.
       - image: /uploads/09 AXO 1.webp
         title_cs: Axonometrie areálu
-        title_en: Site axonometry
+        title_en: Axonometric view of the site
       - image: /uploads/Image25_000.webp
         title_cs: Vizualizace
-        title_en: Visualization
+        title_en: Visualisation
       - image: /uploads/Image6_000.webp
         title_cs: Vizualizace
-        title_en: Visualization
+        title_en: Visualisation
       - image: /uploads/Image3.webp
         title_cs: Vizualizace
-        title_en: Visualization
+        title_en: Visualisation
       - image: /uploads/Image2.webp
         title_cs: Vizualizace
-        title_en: Visualization
+        title_en: Visualisation
       - image: /uploads/Image23_000.webp
         title_cs: Vizualizace
-        title_en: Visualization
+        title_en: Visualisation
       - image: /uploads/Image21_000.webp
         title_cs: Vizualizace
-        title_en: Visualization
+        title_en: Visualisation
       - image: /uploads/IMG_20250515_134436.jpg
         title_cs: Model
         title_en: Model
