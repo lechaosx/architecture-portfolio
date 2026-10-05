@@ -5,12 +5,12 @@ gallery:
 approaches:
   - label_cs: Místo
     label_en: Place
-    text_cs: Každé místo má svůj rytmus a paměť. Než začnu kreslit, naslouchám — aby to, co přidávám, patřilo tam, kde stojí.
+    text_cs: Každé místo má svůj rytmus a paměť. Než začnu kreslit, naslouchám – aby to, co přidávám, patřilo tam, kde stojí.
     text_en: Every site has its own rhythm and memory. I listen before I draw, so that what I add belongs to where it stands.
     icon: place
   - label_cs: Měřítko
     label_en: Scale
-    text_cs: Od kliky u dveří po panorama města — hledám míru, která je přirozená lidem, kteří s ní budou žít.
+    text_cs: Od kliky u dveří po panorama města – hledám míru, která je přirozená lidem, kteří s ní budou žít.
     text_en: From the door handle to the skyline — I look for the measure that feels natural to the people who will live with it.
     icon: scale
   - label_cs: Materiál

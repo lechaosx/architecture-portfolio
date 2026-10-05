@@ -12,21 +12,21 @@ blocks:
   - type: text
     body_cs: >-
       Návrh nového Exotária v brněnské zoologické zahradě pracuje s myšlenkou
-      propojení architektury, přírody a environmentálního vzdělávání. Stávající
+      **propojení architektury, přírody a environmentálního vzdělávání**. Stávající
       areál nahrazuje soubor čtyř vzájemně propojených objektů – pavilon exotického
       ptactva, pavilon akvárií, návštěvnické občerstvení a provozní zázemí
       zaměstnanců.
 
 
-      Pavilon ptactva je koncipován jako otevřený průchozí prostor, ve kterém se
+      Pavilon ptactva je koncipován jako **otevřený průchozí prostor**, ve kterém se
       návštěvník dostává do přímého kontaktu s ptáky v prostředí blízkém jejich
       přirozeným podmínkám. Akvarijní pavilon je naopak částečně zapuštěn do terénu
       a kromě samotné expozice nabízí prostor pro přednášky, projekce a další
       vzdělávací aktivity.
 
 
-      Výrazným prvkem návrhu je objekt občerstvení s vegetačním pláštěm propojeným
-      se systémem hospodaření s vodou. Vegetace se stává součástí architektury,
+      Výrazným prvkem návrhu je objekt občerstvení s **vegetačním pláštěm propojeným
+      se systémem hospodaření s vodou**. Vegetace se stává součástí architektury,
       podporuje místní mikroklima a vytváří prostředí pro další druhy organismů.
       Krajinářské řešení celého areálu navazuje na charakter zoologické zahrady a
       využívá převážně místní druhy rostlin.
@@ -52,7 +52,6 @@ blocks:
       follows the character of the zoo and primarily uses native plant species.
   - type: gallery
     images:
-      - image: /uploads/01 Situační výkres širších vztahů-1.png
       - image: /uploads/02 Situace místa stavby-1.png
       - image: /uploads/03 Půdorys 1.NP-1.png
       - image: /uploads/04 Půdorys 1.S-1.png
