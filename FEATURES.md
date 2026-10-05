@@ -76,12 +76,25 @@ field of an Approach item or availability row are required; everything else may
 be empty. An edit
 that would leave a page unrenderable fails the build and does not deploy.
 
-### Projects: title, year, cover; everything else optional — [Explicit]
+### Projects: title, year, and content; everything else optional — [Explicit]
 
-The CMS refuses to save a project without both titles, a year and a cover, so
-it cannot commit content the build rejects. Location is optional — [Implicit].
-Content blocks are optional; a text block needs both languages, an image block
-at least one image.
+The CMS refuses to save a project without both titles, a year and at least one
+content block, so it cannot commit most content the build rejects. Location is
+optional — [Implicit]. A text block needs both languages, an image block at
+least one image.
+
+### A project needs an image — [Implicit]
+
+The build rejects a project whose blocks hold no image, since its cover is its
+first image. The CMS cannot check this, so a text-only project saves there and
+fails the build without deploying.
+
+### The cover is the first image in the project — [Explicit]
+
+There is no separate cover field: a project's cover is its first image in page
+order, across gallery and full-width image-set blocks. The project page is the
+header and then the blocks in the architect's order, the first block under the
+same gap whatever its type, and its first image loads eagerly — [Implicit].
 
 ### Project URL is the editable filename — [Explicit]
 
@@ -118,8 +131,9 @@ high-contrast palette in both themes.
 
 ### Work page: a grid of square covers — [Explicit]
 
-Three columns of square covers with title, year and location; hover enlarges the
-whole tile. Two and then one column on narrower screens — [Implicit].
+Three columns of each project's first image as a square crop, with title, year
+and location; hover enlarges the whole tile. Two and then one column on narrower
+screens — [Implicit].
 
 ### Approach section — [Explicit]
 
@@ -163,9 +177,11 @@ Motion rides the native scrollbar and stays subtle.
 ### Page transitions — [Implicit]
 
 Where the browser supports cross-document View Transitions, pages crossfade and
-a project cover moves between its work card and its project page, changing crop
-on the way; elsewhere, ordinary navigation. The moving cover is one image,
-starting from the card's hover zoom — [Explicit].
+a project's first image moves between its work card and its project page,
+changing crop on the way; elsewhere, ordinary navigation. The moving image is
+one image, starting from the card's hover zoom — [Explicit]. It moves only when
+the first block is an image block, so the image is at the top of the page; when
+the first block is text, the pages just crossfade — [Implicit].
 
 ### Fade-in on scroll, as decoration only — [Implicit] / [Explicit]
 
@@ -222,7 +238,7 @@ lines to preserve the full-width layout — [Implicit]. The minimum follows
 
 ### One lightbox per page, full-screen, controls in the corners — [Explicit]
 
-The cover and every image occurrence are one sequence in page order, each with
+Every image occurrence is one sequence in page order, each with
 its own title and description even when an upload repeats. The drawing fills the
 screen over a dark backdrop, with separate controls in the corners and arrows on
 the sides; the arrow keys change image too. At 100% nothing covers the image;

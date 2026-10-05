@@ -31,12 +31,11 @@ content:
       - { name: location_cs, label: Location (Czech), type: string, required: false }
       - { name: location_en, label: Location (English), type: string, required: false }
       - { name: draft, label: Draft (hide from site), type: boolean, default: false }
-      - { name: cover, label: Cover image, type: image, required: true }
       - name: blocks
         label: Page content
         type: block
         list: true
-        required: false
+        required: true
         blockKey: type
         blocks:
           - name: text

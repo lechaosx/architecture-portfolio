@@ -5,8 +5,10 @@ year: 2026
 location_cs: Brno, Medlánky
 location_en: Brno, Medlánky
 draft: false
-cover: /uploads/Scene 16_4.webp
 blocks:
+  - type: image_set
+    images:
+      - image: /uploads/Scene 16_4.webp
   - type: text
     body_cs: >-
       Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras congue

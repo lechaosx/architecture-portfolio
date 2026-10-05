@@ -96,7 +96,7 @@ Pages are static; only components that must run in the browser hydrate
 [Implicit], written in Svelte [Explicit]. The only island is the project
 lightbox, `Gallery.svelte`, loaded `client:load` so a pasted `#image-N` opens at
 once [Implicit]. Everything else is a few small vanilla scripts: reveal, the
-carousels, the language and theme switches, the cover-transition tagging.
+carousels, the language and theme switches, the project-transition tagging.
 
 ### Lightbox structure — [Explicit] (seams [Implicit])
 
@@ -184,15 +184,17 @@ language with the lightbox but not its implementation.
 
 `ProjectBlocks.astro` renders the blocks on the server; each image button
 carries its page index so the single island treats every occurrence as its own
-slide.
+slide. The first image of the page is the project's cover: the work card shows
+it and it is the only image that loads eagerly.
 
 ### Page transitions: native View Transitions — [Implicit]
 
-`@view-transition { navigation: auto; }`, with no client router. The cover's
-transition name sits on a wrapper so it does not compete with the inner image's
-hover scale, and an inline `pagereveal` script tags each navigation and carries
-the card's hover scale across. One snapshot is drawn, because blending two crops
-doubles the edges.
+`@view-transition { navigation: auto; }`, with no client router. The name
+`cover-<id>` sits on the wrapper holding the first image (for a multi-image set,
+its first slide), so it does not compete with the inner image's hover scale. It
+is set only when the first block is an image block. An inline `pagereveal` script tags
+each navigation and carries the card's hover scale across. One snapshot is
+drawn, because blending two crops doubles the edges.
 
 ### Reveal on scroll: IntersectionObserver — [Implicit]
 

@@ -14,6 +14,7 @@ const withoutEmptyCmsRows = (value: unknown) =>
     : value;
 
 const projectImage = z.object({
+  // Image paths live under /public (served from root), so plain strings.
   image: z.string(),
   comparison_set: z.string().optional(),
   title_cs: z.string().optional(),
@@ -36,8 +37,6 @@ const projects = defineCollection({
     location_cs: z.string().optional(),
     location_en: z.string().optional(),
     draft: z.boolean().default(false),
-    // Image paths live under /public (served from root), so plain strings.
-    cover: z.string(),
     blocks: z.preprocess(
       withoutEmptyCmsRows,
       z
@@ -58,7 +57,10 @@ const projects = defineCollection({
             }),
           ]),
         )
-        .default([]),
+        .default([])
+        .refine((blocks) => blocks.some((block) => block.type !== 'text'), {
+          error: 'A project needs at least one image in its content blocks',
+        }),
     ),
   }),
 });

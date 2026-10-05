@@ -33,7 +33,11 @@ const projects = (
           year={p.data.year}
           locationCs={p.data.location_cs}
           locationEn={p.data.location_en}
-          cover={p.data.cover}
+          cover={
+            p.data.blocks.flatMap((block) =>
+              block.type === 'text' ? [] : block.images,
+            )[0].image
+          }
         />
       ))
     }

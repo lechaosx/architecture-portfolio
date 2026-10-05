@@ -5,8 +5,10 @@ year: 2025
 location_cs: Kyjov, Česká republika
 location_en: Kyjov, Czech Republic
 draft: false
-cover: /uploads/09 AXO 5.webp
 blocks:
+  - type: image_set
+    images:
+      - image: /uploads/09 AXO 5.webp
   - type: text
     body_cs: >-
       Projekt se zabývá **revitalizací sportovního areálu a navazujícího městského
