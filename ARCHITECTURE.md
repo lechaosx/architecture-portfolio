@@ -62,7 +62,9 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
 - Metadata, structured-data and alt-text tests use fixture project pages; the
   `llms.txt` test checks it against the shipped projects and follows its links
   — [Implicit].
-- Home, work-page and transition tests use the shipped content — [Implicit].
+- The work list and the brief and text-only project pages are tested through
+  fixture projects; other home, work-page and transition tests use the shipped
+  content — [Implicit].
 
 ---
 
