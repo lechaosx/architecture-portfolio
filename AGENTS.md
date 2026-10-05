@@ -51,10 +51,11 @@ Only then reconcile them.
   ARCHITECTURE.md → "Two sources of truth for content shape".
 - **Root-only hosting on a custom domain.** The site is mounted at the root, so
   internal links/assets are plain root-absolute paths (`/work/`, `/uploads/…`) —
-  there is no `base` and no link helper. The domain lives in `public/CNAME`;
-  `site` in `astro.config.mjs` (canonical origin) feeds only the sitemap. Don't
-  add a `base`/subpath deployment without routing every link/asset through a
-  base-aware helper. See ARCHITECTURE.md → "Hosting: custom domain at the root".
+  there is no `base` and no link helper. The domain lives in `public/CNAME`
+  and `site` in `astro.config.mjs`, the origin of every absolute URL the build
+  writes. Don't add a `base`/subpath deployment without routing every
+  link/asset through a base-aware helper. See ARCHITECTURE.md → "Hosting:
+  custom domain at the root".
 - **Islands stay minimal:** hydrated Svelte components should be the exception.
   Adding broad client-side JS contradicts the explicit "fast and clean" goal —
   if it's needed, record it as a decision in ARCHITECTURE.md.

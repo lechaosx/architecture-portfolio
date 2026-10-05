@@ -362,6 +362,13 @@ describe('lightbox image selection', () => {
       bytes: width * 100,
       format: 'webp',
     })),
+    share: {
+      url: '/_responsive/project-share/share.jpg',
+      width: 1200,
+      height: 900,
+      bytes: 120_000,
+      format: 'jpeg',
+    },
   };
 
   test('chooses the smallest preview that covers the rendered pixels', () => {

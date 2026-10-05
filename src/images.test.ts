@@ -3,6 +3,7 @@ import {
   coverSizes,
   displayImageUrl,
   responsiveSrcset,
+  largeImageUrl,
   type ResponsiveImage,
 } from './images';
 
@@ -38,6 +39,13 @@ const plan: ResponsiveImage = {
       format: 'webp',
     },
   ],
+  share: {
+    url: '/_responsive/share-hash/share.jpg',
+    width: 1000,
+    height: 800,
+    bytes: 200,
+    format: 'jpeg',
+  },
 };
 
 describe('displayImageUrl', () => {
@@ -105,5 +113,33 @@ describe('coverSizes', () => {
     expect(
       coverSizes(4 / 3, 1, [{ fixed: 283 }, { viewport: 100, gutter: 48 }], 1.03),
     ).toBe('388.6533px, calc(137.3333vw - 65.92px)');
+  });
+});
+
+describe('largeImageUrl', () => {
+  const variant = (width: number) => ({
+    ...plan.variants[0],
+    url: `/_responsive/hash/${width}.webp`,
+    width,
+  });
+  const drawing = (widths: number[]): ResponsiveImage => ({
+    ...plan,
+    source: { ...plan.source, url: '/uploads/drawing.png', width: 4000 },
+    variants: widths.map(variant),
+  });
+
+  test('is the derivative the lightbox loads at its 2560 pixel limit', () => {
+    expect(largeImageUrl(drawing([1280, 1920, 2560, 4000]), '/uploads/drawing.png')).toBe(
+      '/_responsive/hash/2560.webp',
+    );
+    expect(largeImageUrl(plan, '/uploads/plan.png')).toBe('/_responsive/hash/1000.webp');
+  });
+
+  test('is the source when the larger derivatives were omitted as not smaller than it', () => {
+    expect(largeImageUrl(drawing([640, 1280]), '/uploads/drawing.png')).toBe('/uploads/drawing.png');
+  });
+
+  test('is the original for an image outside the manifest, such as an SVG', () => {
+    expect(largeImageUrl(undefined, '/uploads/plan.svg')).toBe('/uploads/plan.svg');
   });
 });

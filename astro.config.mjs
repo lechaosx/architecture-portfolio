@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // The site is served from the root of a single custom domain, so there is no
 // `base` to configure and internal links are plain root-absolute paths.
-// `site` is the canonical origin — its only consumer is the sitemap (SEO).
+// `site` is the canonical origin of every absolute URL the build writes.
 // The custom domain is committed as public/CNAME.
 export default defineConfig({
   site: 'https://kalabkova.cz',

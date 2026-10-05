@@ -10,10 +10,13 @@ import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { getResponsiveImage } from '../server-images';
 import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
+import { profilePage, webSite } from '../structured-data';
 
 const responsivePortrait = home.portrait
   ? await getResponsiveImage(home.portrait)
   : undefined;
+const image = (await getResponsiveImage(home.gallery[0]))?.share;
+const site = new URL('/', Astro.site);
 ---
 
 <Base
@@ -21,6 +24,8 @@ const responsivePortrait = home.portrait
     cs: `${credentialedName} | ${ui.cs.tagline}`,
     en: `${credentialedName} | ${ui.en.tagline}`,
   }}
+  {image}
+  graph={[webSite({ site, name: credentialedName }), profilePage({ site })]}
 >
   <Carousel />
 

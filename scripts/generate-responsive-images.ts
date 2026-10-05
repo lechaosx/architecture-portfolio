@@ -57,6 +57,19 @@ const recipe = {
   sharp: sharp.versions.sharp,
   vips: sharp.versions.vips,
 };
+// Link previews: LinkedIn is reported to drop WebP, so a JPEG, flattened onto
+// white because JPEG has no transparency.
+const shareRecipe = {
+  version: 1,
+  width: 1200,
+  gamma: 2.2,
+  kernel: sharp.kernel.lanczos3,
+  background: '#ffffff',
+  quality: 85,
+  format: 'jpeg',
+  sharp: sharp.versions.sharp,
+  vips: sharp.versions.vips,
+};
 const deepZoomRecipe = {
   version: 2,
   minimumLongestSide: 4096,
@@ -124,9 +137,11 @@ async function publish(outputPath: string, contents: Buffer) {
 let generated = 0;
 let reused = 0;
 let omitted = 0;
+let sharesGenerated = 0;
+let sharesReused = 0;
 let pyramidsGenerated = 0;
 let pyramidsReused = 0;
-const manifest: ImageManifest = { version: 3, images: {} };
+const manifest: ImageManifest = { version: 4, images: {} };
 
 for (const [path, sourcePath] of await referencedImages()) {
   const source = await readFile(sourcePath);
@@ -215,6 +230,39 @@ for (const [path, sourcePath] of await referencedImages()) {
     await publish(outputPath, await readFile(cachePath));
     variants.push(variant);
   }
+
+  const shareCacheKey = imageCacheKey(source, shareRecipe);
+  const shareCachePath = join(cacheDirectory, shareCacheKey, 'share.jpg');
+  try {
+    await stat(shareCachePath);
+    sharesReused += 1;
+  } catch {
+    await mkdir(dirname(shareCachePath), { recursive: true });
+    // Renamed into place once complete, because reuse checks only that it exists.
+    const temporaryCachePath = `${shareCachePath}.tmp`;
+    await sharp(source, { limitInputPixels: false })
+      .autoOrient()
+      .gamma(shareRecipe.gamma)
+      .resize({
+        width: Math.min(shareRecipe.width, sourceDimensions.width),
+        kernel: shareRecipe.kernel,
+      })
+      .flatten({ background: shareRecipe.background })
+      .jpeg({ quality: shareRecipe.quality, mozjpeg: true })
+      .toFile(temporaryCachePath);
+    await rename(temporaryCachePath, shareCachePath);
+    sharesGenerated += 1;
+  }
+  const shareFile = await readFile(shareCachePath);
+  const shareMetadata = await sharp(shareFile).metadata();
+  await publish(join(outputDirectory, shareCacheKey, 'share.jpg'), shareFile);
+  const share: ImageVariant = {
+    url: `/_responsive/${shareCacheKey}/share.jpg`,
+    width: shareMetadata.width,
+    height: shareMetadata.height,
+    bytes: shareFile.byteLength,
+    format: shareMetadata.format,
+  };
 
   let deepZoom: ResponsiveImage['deepZoom'];
   if (
@@ -324,6 +372,7 @@ for (const [path, sourcePath] of await referencedImages()) {
       format: sourceMetadata.format,
     },
     variants,
+    share,
     deepZoom,
   };
 }
@@ -346,6 +395,9 @@ for (const entry of staleOutputs(
 
 console.log(
   `Responsive images: ${generated} generated, ${reused} reused, ${omitted} omitted because they were not smaller than their sources.`,
+);
+console.log(
+  `Share images: ${sharesGenerated} generated, ${sharesReused} reused.`,
 );
 console.log(
   `Deep zoom pyramids: ${pyramidsGenerated} generated, ${pyramidsReused} reused.`,
