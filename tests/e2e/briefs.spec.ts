@@ -87,6 +87,10 @@ test('hovering a linked row underlines its title, and an unlinked row has no lin
   await rows.nth(1).locator('a').hover();
   expect(await underline()).toBe('underline');
   await expect(rows.nth(0).getByRole('link')).toHaveCount(0);
+
+  const unlinkedTitle = rows.nth(0).getByRole('heading', { name: 'Alpha brief' });
+  await unlinkedTitle.hover();
+  expect(await unlinkedTitle.evaluate((element) => getComputedStyle(element).textDecorationLine)).toBe('none');
 });
 
 test('no grid renders when no project has an image', async ({ page }) => {
