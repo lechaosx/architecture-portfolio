@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Carousel from '../components/Carousel.astro';
 import Approaches from '../components/Approaches.astro';
+import HomeFacts from '../components/HomeFacts.astro';
 import T from '../components/T.astro';
 import Prose from '../components/Prose.astro';
 import { home } from '../singletons';
@@ -32,6 +33,7 @@ const responsivePortrait = home.portrait
           en={home.body_en}
           class="prose prose-neutral mt-6 max-w-none dark:prose-invert"
         />
+        <HomeFacts {home} />
       </div>
       {
         home.portrait && (

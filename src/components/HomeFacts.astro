@@ -1,0 +1,68 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import T from './T.astro';
+
+interface Props {
+  home: Pick<
+    CollectionEntry<'home'>['data'],
+    'services' | 'area_cs' | 'area_en' | 'education' | 'awards'
+  >;
+}
+
+const { services, area_cs, area_en, education, awards } = Astro.props.home;
+const hasArea = Boolean(area_cs || area_en);
+const label = 'text-sm tracking-widest uppercase';
+// The tone of the prose bio above, in both themes.
+const entries = 'mt-3 text-neutral-700';
+---
+
+{
+  (services.length > 0 || hasArea || education.length > 0 || awards.length > 0) && (
+    <div class="mt-12 flex flex-col gap-8">
+      {services.length > 0 && (
+        <div>
+          <T as="h3" k="services" class={label} />
+          <ul class={entries}>
+            {services.map((service, index) => (
+              <li class="inline">
+                <T cs={service.name_cs} en={service.name_en} />
+                {/* The non-breaking space keeps each dot at the end of its line. */}
+                {index < services.length - 1 && <span aria-hidden="true">&nbsp;· </span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {hasArea && (
+        <div>
+          <T as="h3" k="area" class={label} />
+          <T as="p" cs={area_cs} en={area_en} class={entries} />
+        </div>
+      )}
+      {education.length > 0 && (
+        <div>
+          <T as="h3" k="education" class={label} />
+          <ul class={entries}>
+            {education.map((entry) => (
+              <li>
+                <T cs={entry.text_cs} en={entry.text_en} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {awards.length > 0 && (
+        <div>
+          <T as="h3" k="awards" class={label} />
+          <ul class={entries}>
+            {awards.map((entry) => (
+              <li>
+                <T cs={entry.text_cs} en={entry.text_en} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -5,6 +5,7 @@
 import type { CollectionEntry } from 'astro:content';
 import Base from '../../../src/layouts/Base.astro';
 import Carousel from '../../../src/components/Carousel.astro';
+import HomeFacts from '../../../src/components/HomeFacts.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
 import ProjectPage from '../../../src/components/ProjectPage.astro';
 import WorkProjects from '../../../src/components/WorkProjects.astro';
@@ -124,7 +125,31 @@ export function getStaticPaths() {
     }),
   ];
 
+  const noFacts = { services: [], education: [], awards: [] };
+  const facts = {
+    services: [
+      { name_en: 'Family houses', name_cs: 'Rodinné domy' },
+      { name_en: 'Renovations', name_cs: 'Rekonstrukce' },
+      { name_en: 'Interiors', name_cs: 'Interiéry' },
+    ],
+    area_en: 'Brno and South Moravia',
+    area_cs: 'Brno a Jihomoravský kraj',
+    education: [
+      { text_en: 'FA BUT Brno, Ing. arch. (2024)', text_cs: 'FA VUT Brno, Ing. arch. (2024)' },
+      { text_en: 'Doctoral study, FA BUT Brno (2027)', text_cs: 'Doktorské studium, FA VUT Brno (2027)' },
+    ],
+    awards: [
+      { text_en: 'Young architect, 2nd place (2025)', text_cs: 'Mladý architekt, 2. místo (2025)' },
+    ],
+  };
+
   return [
+    { params: { fixture: 'home-facts' }, props: { facts } },
+    {
+      params: { fixture: 'home-facts-area' },
+      props: { facts: { ...noFacts, area_en: facts.area_en, area_cs: facts.area_cs } },
+    },
+    { params: { fixture: 'home-facts-empty' }, props: { facts: noFacts } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
@@ -150,12 +175,16 @@ export function getStaticPaths() {
   ];
 }
 
-const { images, project, projects } = Astro.props;
+const { facts, images, project, projects } = Astro.props;
 ---
 
 {
   project ? (
     <ProjectPage {project} />
+  ) : facts ? (
+    <Base title={{ cs: 'E2E', en: 'E2E' }}>
+      <HomeFacts home={facts} />
+    </Base>
   ) : projects ? (
     <Base title={{ cs: 'E2E', en: 'E2E' }}>
       <WorkProjects {projects} />

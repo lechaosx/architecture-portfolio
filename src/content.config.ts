@@ -99,6 +99,26 @@ const home = defineCollection({
     ),
     body_cs: z.string(),
     body_en: z.string(),
+    services: z.preprocess(
+      withoutEmptyCmsRows,
+      z
+        .array(z.object({ name_cs: z.string(), name_en: z.string() }))
+        .default([]),
+    ),
+    area_cs: z.string().optional(),
+    area_en: z.string().optional(),
+    education: z.preprocess(
+      withoutEmptyCmsRows,
+      z
+        .array(z.object({ text_cs: z.string(), text_en: z.string() }))
+        .default([]),
+    ),
+    awards: z.preprocess(
+      withoutEmptyCmsRows,
+      z
+        .array(z.object({ text_cs: z.string(), text_en: z.string() }))
+        .default([]),
+    ),
   }),
 });
 

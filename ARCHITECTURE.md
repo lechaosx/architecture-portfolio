@@ -56,6 +56,8 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
   comparison sets and descriptions [Explicit], so it is frozen and a new case
   gets its own fixture entry [Implicit]. Its images are small line drawings in
   `tests/e2e/images`, served at `/e2e/images/` — [Implicit].
+- The home facts tests render `HomeFacts.astro` with fixture data, filled,
+  partly filled and empty — [Implicit].
 - Home, work-page and transition tests use the shipped content — [Implicit].
 
 ---
@@ -192,6 +194,12 @@ it and it is the only image that loads eagerly.
 `WorkProjects.astro` sorts the projects and renders the grid and the list; it is
 a component so the e2e fixtures can render it with their own projects.
 
+### Home facts: a component — [Implicit]
+
+`HomeFacts.astro` renders services, area, education and awards from the home
+entry's fields; it is a component so the e2e fixtures can render it with their
+own data.
+
 ### Page transitions: native View Transitions — [Implicit]
 
 `@view-transition { navigation: auto; }`, with no client router. The name
@@ -315,12 +323,15 @@ keeps them associated. Both block types share the shape.
 No `/cs` or `/en` routes: that keeps root-only hosting and lets a static host
 default to the browser's language with no server. Every page renders both;
 `html[data-lang]` hides the other. Switching is instant and search engines see
-both. `<html>` ships `data-lang="en"` for no-JS.
+both. `<html>` ships `data-lang="cs"` with the Czech title, description and
+Open Graph tags, so crawlers that read the raw HTML, link previews and no-JS
+visitors get the source language; the inline script then picks the visitor's.
 
 ### Language picked by an inline script — [Implicit]
 
-An `is:inline` head script sets `data-lang` before first paint; a module script
-in `Base.astro` wires the toggle and syncs `<title>` and the meta description.
+An `is:inline` head script sets `data-lang` and the tab title before first
+paint; a module script in `Base.astro` wires the toggle and syncs `<title>` and
+the meta description.
 
 ### Strings: `i18n.ts`, `T.astro`, `Prose.astro` — [Implicit]
 
