@@ -6,5 +6,6 @@ function data<T>(entry: { data: T } | undefined, name: string) {
 }
 
 export const site = data(await getEntry('site', 'site'), 'site');
+export const landing = data(await getEntry('landing', 'landing'), 'landing');
 export const about = data(await getEntry('about', 'about'), 'about');
 export const contact = data(await getEntry('contact', 'contact'), 'contact');

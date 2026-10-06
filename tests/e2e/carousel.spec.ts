@@ -2,9 +2,9 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 // tests/e2e/pages/[fixture].astro, which the e2e build adds.
 const fixture = '/e2e/carousel/';
-const carousel = '[data-project-carousel]';
-const track = '[data-project-carousel-track]';
-const dot = '[data-project-dot]';
+const carousel = '[data-carousel]';
+const track = '[data-carousel-track]';
+const dot = '[data-carousel-dot]';
 
 async function currentSlide(page: Page) {
   return page.locator(dot).evaluateAll((dots) =>
@@ -22,16 +22,106 @@ const parts = (page: Page) => {
   };
 };
 
-test('the carousel does not widen the page on mobile', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(fixture);
-  await expect(page.locator(carousel)).toHaveCount(1);
+// The project image set and the landing page's hero are one carousel.
+for (const path of [fixture, '/e2e/landing/']) {
+  test(`the carousel does not widen the page on mobile at ${path}`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(path);
+    await expect(page.locator(carousel)).toHaveCount(1);
 
-  const overflow = await page.evaluate(() => ({
-    pageWidth: document.documentElement.scrollWidth,
-    viewportWidth: document.documentElement.clientWidth,
-  }));
-  expect(overflow.pageWidth).toBeLessThanOrEqual(overflow.viewportWidth);
+    const overflow = await page.evaluate(() => ({
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    }));
+    expect(overflow.pageWidth).toBeLessThanOrEqual(overflow.viewportWidth);
+  });
+}
+
+test('one landing image shows at its natural ratio, not as a carousel', async ({ page }) => {
+  await page.goto('/e2e/landing-single/');
+  const hero = page.locator('main img').first();
+  await expect(hero).toHaveAttribute('src', '/e2e/images/placeholder-cover.svg');
+  const aspectRatios = await hero.evaluate((element) => {
+    const image = element as HTMLImageElement;
+    return {
+      natural: image.naturalWidth / image.naturalHeight,
+      rendered: image.clientWidth / image.clientHeight,
+    };
+  });
+  expect(aspectRatios.rendered).toBeCloseTo(aspectRatios.natural, 2);
+  await expect(page.locator(carousel)).toHaveCount(0);
+});
+
+// Resolves once the page's own listeners have seen the change, so that a
+// following clock jump cannot run ahead of it.
+async function changeReducedMotion(page: Page, reducedMotion: 'reduce' | 'no-preference') {
+  const changed = page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        matchMedia('(prefers-reduced-motion: reduce)').addEventListener(
+          'change',
+          resolve,
+          { once: true },
+        ),
+      ),
+  );
+  await page.emulateMedia({ reducedMotion });
+  await changed;
+}
+
+test('the landing carousel auto-advances, pausing while hovered or focused', async ({
+  browserName,
+  page,
+}) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Playwright Clock does not advance Firefox smooth scrolling',
+  );
+  await page.clock.install();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/e2e/landing/');
+  const { next } = parts(page);
+  await expect.poll(() => currentSlide(page)).toBe(0);
+
+  await page.locator(carousel).hover();
+  await page.clock.fastForward(10_000);
+  await expect.poll(() => currentSlide(page)).toBe(0);
+
+  await page.mouse.move(0, 0);
+  await page.clock.fastForward(5_000);
+  await page.clock.runFor(1_000);
+  await expect.poll(() => currentSlide(page)).toBe(1);
+
+  await next.focus();
+  await page.clock.fastForward(10_000);
+  await expect.poll(() => currentSlide(page)).toBe(1);
+
+  await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+  await changeReducedMotion(page, 'reduce');
+  await page.clock.fastForward(10_000);
+  await expect.poll(() => currentSlide(page)).toBe(1);
+
+  await changeReducedMotion(page, 'no-preference');
+  await page.clock.fastForward(5_000);
+  await page.clock.runFor(1_000);
+  await expect.poll(() => currentSlide(page)).toBe(2);
+});
+
+test('the landing carousel does not auto-advance with reduced motion', async ({ page }) => {
+  await page.clock.install();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/e2e/landing/');
+  await expect.poll(() => currentSlide(page)).toBe(0);
+  await page.clock.fastForward(20_000);
+  await expect.poll(() => currentSlide(page)).toBe(0);
+});
+
+test('a project image set does not auto-advance', async ({ page }) => {
+  await page.clock.install();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto(fixture);
+  await page.clock.fastForward(20_000);
+  await expect.poll(() => currentSlide(page)).toBe(0);
 });
 
 test('arrows and dots navigate and wrap', async ({ page }) => {

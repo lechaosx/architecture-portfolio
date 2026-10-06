@@ -35,7 +35,7 @@ test('carousel overlay controls keep their colors across page themes', async ({
   await page.goto('/e2e/carousel/');
 
   const overlayColors = () =>
-    page.locator('[data-project-carousel]').evaluate((carousel) => {
+    page.locator('[data-carousel]').evaluate((carousel) => {
       const colors = (selector: string) => {
         const style = getComputedStyle(carousel.querySelector(selector)!);
         return {
@@ -45,9 +45,9 @@ test('carousel overlay controls keep their colors across page themes', async ({
         };
       };
       return {
-        arrow: colors('[data-project-carousel-next]'),
-        dot: colors('[data-project-dot]:not([aria-current="true"])'),
-        currentDot: colors('[data-project-dot][aria-current="true"]'),
+        arrow: colors('[data-carousel-next]'),
+        dot: colors('[data-carousel-dot]:not([aria-current="true"])'),
+        currentDot: colors('[data-carousel-dot][aria-current="true"]'),
       };
     });
 

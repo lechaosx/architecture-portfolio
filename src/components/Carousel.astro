@@ -1,0 +1,158 @@
+---
+import T from './T.astro';
+import { ui } from '../i18n';
+
+// A native scroll-snap strip of two or more slides, enhanced with arrows and
+// dots. The default slot is a function rendering one slide element per item,
+// so the dots here and the script's slide count are the same items.
+interface Props {
+  items: unknown[];
+  /** Advances every few seconds, pausing on hover and focus. */
+  autoAdvance?: boolean;
+}
+
+const { items, autoAdvance = false } = Astro.props;
+const slides = await Promise.all(
+  items.map((item, index) => Astro.slots.render('default', [item, index])),
+);
+---
+
+<div data-carousel data-auto-advance={autoAdvance || undefined} class="relative bg-neutral-100">
+  <div
+    data-carousel-track
+    class="no-scrollbar flex aspect-video snap-x snap-mandatory overflow-x-auto *:relative *:size-full *:shrink-0 *:snap-start"
+  >
+    {slides.map((slide) => <Fragment set:html={slide} />)}
+  </div>
+  <button
+    type="button"
+    data-carousel-prev
+    class="media-navigation-button absolute top-1/2 left-3 -translate-y-1/2"
+  >
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      class="size-5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    >
+      <path d="M15.5 5l-7 7 7 7" />
+    </svg>
+    <T k="previousImage" class="sr-only" />
+  </button>
+  <button
+    type="button"
+    data-carousel-next
+    class="media-navigation-button absolute top-1/2 right-3 -translate-y-1/2"
+  >
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      class="size-5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    >
+      <path d="M8.5 5l7 7-7 7" />
+    </svg>
+    <T k="nextImage" class="sr-only" />
+  </button>
+  <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
+    {
+      slides.map((_, index) => (
+        <button
+          type="button"
+          data-carousel-dot
+          class="carousel-dot size-2.5 cursor-pointer rounded-full"
+        >
+          <T
+            cs={`${ui.cs.goToImage} ${index + 1}`}
+            en={`${ui.en.goToImage} ${index + 1}`}
+            class="sr-only"
+          />
+        </button>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-carousel]')) {
+    const track = root.querySelector<HTMLElement>('[data-carousel-track]');
+    if (!track) continue;
+    const count = track.children.length;
+    const dots = Array.from(
+      root.querySelectorAll<HTMLElement>('[data-carousel-dot]'),
+    );
+    // The current slide is state; the smooth scroll only chases it. Only the
+    // visitor's own scrolling of the track moves it from the scroll position.
+    let current = 0;
+    let visitorScrolling = false;
+    const sync = () => {
+      dots.forEach((dot, index) =>
+        dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
+      );
+    };
+    const goTo = (index: number) => {
+      current = ((index % count) + count) % count;
+      visitorScrolling = false;
+      sync();
+      track.scrollTo({
+        left: current * track.clientWidth,
+        behavior: reducedMotion.matches ? 'auto' : 'smooth',
+      });
+    };
+
+    root
+      .querySelector('[data-carousel-prev]')
+      ?.addEventListener('click', () => goTo(current - 1));
+    root
+      .querySelector('[data-carousel-next]')
+      ?.addEventListener('click', () => goTo(current + 1));
+    dots.forEach((dot, index) =>
+      dot.addEventListener('click', () => goTo(index)),
+    );
+    for (const event of ['pointerdown', 'keydown', 'focusin']) {
+      track.addEventListener(event, () => (visitorScrolling = true), {
+        passive: true,
+      });
+    }
+    // A vertical wheel over the track scrolls the page, not the track.
+    track.addEventListener(
+      'wheel',
+      (event) => {
+        if (event.deltaX || event.shiftKey) visitorScrolling = true;
+      },
+      { passive: true },
+    );
+    track.addEventListener(
+      'scroll',
+      () => {
+        if (!visitorScrolling) return;
+        current = Math.round(track.scrollLeft / track.clientWidth);
+        sync();
+      },
+      { passive: true },
+    );
+    sync();
+
+    if (root.dataset.autoAdvance === undefined) continue;
+    let timer: number | undefined;
+    const syncTimer = () => {
+      if (reducedMotion.matches || root.matches(':hover, :focus-within')) {
+        clearInterval(timer);
+        timer = undefined;
+      } else if (timer === undefined) {
+        timer = window.setInterval(() => goTo(current + 1), 5000);
+      }
+    };
+    for (const event of ['pointerenter', 'pointerleave', 'focusin', 'focusout']) {
+      root.addEventListener(event, syncTimer);
+    }
+    reducedMotion.addEventListener('change', syncTimer);
+    syncTimer();
+  }
+</script>

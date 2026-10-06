@@ -76,6 +76,13 @@ content:
                   - { name: description_cs, label: Image description (Czech), type: text, required: false }
                   - { name: description_en, label: Image description (English), type: text, required: false }
 
+  - name: landing
+    label: Landing page
+    type: file
+    path: src/content/singletons/landing.md
+    fields:
+      - { name: images, label: Images, type: image, list: true, required: false, description: 'Shown at the top of the landing page in this order: one image as it is, two or more as a slideshow. Leave empty to start the page with the intro.' }
+
   - name: about
     label: About page
     type: file
@@ -196,5 +203,5 @@ content:
     fields:
       - { name: name, label: Name, type: string, required: true }
       - { name: credential, label: Credential (e.g. Ing. arch.), type: string }
-      - { name: description_cs, label: SEO description (Czech), type: text, description: Also the intro line under the Work heading. }
-      - { name: description_en, label: SEO description (English), type: text, description: Also the intro line under the Work heading. }
+      - { name: description_cs, label: Landing intro and search description (Czech), type: text, required: true, description: 'The large sentence that opens the landing page, also the text search engines and link previews show for pages without their own. One or two sentences.' }
+      - { name: description_en, label: Landing intro and search description (English), type: text, required: true, description: 'The large sentence that opens the landing page, also the text search engines and link previews show for pages without their own. One or two sentences.' }

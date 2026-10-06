@@ -57,7 +57,7 @@ async function navigateWithTransition(
  * transition name its cover shares with that page's.
  */
 async function projectCard(page: Page, nth = 0) {
-  const card = page.locator('main section.grid > a').nth(nth);
+  const card = page.locator('main .grid > a').nth(nth);
   const path = new URL((await card.getAttribute('href'))!, page.url()).pathname;
   const cover = await card
     .locator('.project-cover')
@@ -182,7 +182,7 @@ test('the morph target of a leading multi-image set is as large as its track', a
   await page.goto('/e2e/set-first/');
   const [slideBox, trackBox] = await Promise.all([
     page.locator('.project-cover').boundingBox(),
-    page.locator('[data-project-carousel-track]').boundingBox(),
+    page.locator('[data-carousel-track]').boundingBox(),
   ]);
   expect(slideBox).toEqual(trackBox);
 });
@@ -219,74 +219,83 @@ test('the work card shows the first image of its project', async ({ page }) => {
   ).toHaveAttribute('src', cardSrc!);
 });
 
-test('project covers morph one uncropped snapshot in both directions', async ({
-  browserName,
-  page,
-}) => {
-  test.skip(
-    browserName === 'firefox',
-    'The pinned Firefox does not support cross-document View Transitions',
-  );
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/work/');
-  const { card: project, url, cover } = await projectCard(page);
-  await page.addInitScript((cover) => {
-    addEventListener('pagereveal', (event) => {
-      const transition = (event as PageRevealEvent).viewTransition;
-      if (!transition) return;
-      void transition.ready.then(() => {
-        const pseudo = (part: string) => `::view-transition-${part}(${cover})`;
-        // A hidden snapshot generates no pseudo-element, so it has no animation.
-        const animated = (part: string) =>
-          document
-            .getAnimations()
-            .filter(
-              (animation) =>
-                (animation.effect as KeyframeEffect).pseudoElement ===
-                pseudo(part),
-            );
-        const opening = animated('new')[0];
-        opening?.pause();
-        if (opening) opening.currentTime = 0;
-        const style = (part: string) =>
-          getComputedStyle(document.documentElement, pseudo(part));
-        sessionStorage.setItem(
-          'cover-snapshots',
-          JSON.stringify({
-            oldAnimated: animated('old').length > 0,
-            oldAnimation: style('old').animationName,
-            newAnimated: animated('new').length > 0,
-            newScale: Number(style('new').scale) || 1,
-          }),
-        );
-        opening?.play();
-      });
-    });
-  }, cover);
-  const snapshots = () =>
-    page.evaluate(() =>
-      JSON.parse(sessionStorage.getItem('cover-snapshots') ?? 'null'),
+// The work page's cards return through the project page's back link, the
+// landing page's through the wordmark.
+for (const { path, home, back } of [
+  {
+    path: '/work/',
+    home: /\/work\/?$/,
+    back: (page: Page) => page.getByRole('link', { name: 'Back to work' }),
+  },
+  { path: '/', home: /:\d+\/$/, back: (page: Page) => page.locator('header nav > a') },
+]) {
+  test(`project covers morph one uncropped snapshot in both directions from ${path}`, async ({
+    browserName,
+    page,
+  }) => {
+    test.skip(
+      browserName === 'firefox',
+      'The pinned Firefox does not support cross-document View Transitions',
     );
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(path);
+    const { card: project, url, cover } = await projectCard(page);
+    await page.addInitScript((cover) => {
+      addEventListener('pagereveal', (event) => {
+        const transition = (event as PageRevealEvent).viewTransition;
+        if (!transition) return;
+        void transition.ready.then(() => {
+          const pseudo = (part: string) => `::view-transition-${part}(${cover})`;
+          // A hidden snapshot generates no pseudo-element, so it has no animation.
+          const animated = (part: string) =>
+            document
+              .getAnimations()
+              .filter(
+                (animation) =>
+                  (animation.effect as KeyframeEffect).pseudoElement ===
+                  pseudo(part),
+              );
+          const opening = animated('new')[0];
+          opening?.pause();
+          if (opening) opening.currentTime = 0;
+          const style = (part: string) =>
+            getComputedStyle(document.documentElement, pseudo(part));
+          sessionStorage.setItem(
+            'cover-snapshots',
+            JSON.stringify({
+              oldAnimated: animated('old').length > 0,
+              oldAnimation: style('old').animationName,
+              newAnimated: animated('new').length > 0,
+              newScale: Number(style('new').scale) || 1,
+            }),
+          );
+          opening?.play();
+        });
+      });
+    }, cover);
+    const snapshots = () =>
+      page.evaluate(() =>
+        JSON.parse(sessionStorage.getItem('cover-snapshots') ?? 'null'),
+      );
 
-  await navigateWithTransition(page, url, async () => {
-    await project.hover();
-    await transitionsEnd(project.locator('img'));
-    await project.click();
+    await navigateWithTransition(page, url, async () => {
+      await project.hover();
+      await transitionsEnd(project.locator('img'));
+      await project.click();
+    });
+    await expect
+      .poll(snapshots)
+      .toMatchObject({ oldAnimated: false, newAnimated: true });
+    expect((await snapshots()).newScale).toBeCloseTo(1.03, 2);
+
+    await page.evaluate(() => sessionStorage.removeItem('cover-snapshots'));
+    await navigateWithTransition(page, home, () => back(page).click());
+    // The retained project snapshot holds still while its box shrinks to the card.
+    await expect
+      .poll(snapshots)
+      .toMatchObject({ oldAnimation: 'none', newAnimated: false });
   });
-  await expect
-    .poll(snapshots)
-    .toMatchObject({ oldAnimated: false, newAnimated: true });
-  expect((await snapshots()).newScale).toBeCloseTo(1.03, 2);
-
-  await page.evaluate(() => sessionStorage.removeItem('cover-snapshots'));
-  await navigateWithTransition(page, /\/work\/?$/, () =>
-    page.getByRole('link', { name: 'Back to work' }).click(),
-  );
-  // The retained project snapshot holds still while its box shrinks to the card.
-  await expect
-    .poll(snapshots)
-    .toMatchObject({ oldAnimation: 'none', newAnimated: false });
-});
+}
 
 test('a keyboard-opened project starts from its own card, not the hovered one', async ({
   browserName,
@@ -299,7 +308,7 @@ test('a keyboard-opened project starts from its own card, not the hovered one', 
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/work/');
   test.skip(
-    (await page.locator('main section.grid > a').count()) < 2,
+    (await page.locator('main .grid > a').count()) < 2,
     'It needs a second project to hover',
   );
   const opened = await projectCard(page);

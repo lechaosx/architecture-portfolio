@@ -7,13 +7,17 @@ import T from './T.astro';
 const year = new Date().getFullYear();
 const { email, phone, hours_cs, hours_en } = contact;
 const item = 'flex items-center gap-2 whitespace-nowrap';
-const icon = 'size-4 shrink-0 text-neutral-500';
+const icon = 'size-3.5 shrink-0 text-neutral-500';
 const link = 'underline underline-offset-4 hover:decoration-dotted';
 ---
 
-<footer class="border-t border-black">
-  <div class="mx-auto max-w-6xl px-6 pt-8 pb-4 sm:pt-10 sm:pb-6">
-    <ul class="flex flex-col gap-2 text-neutral-700 sm:flex-row sm:flex-wrap sm:gap-x-10">
+{/* Contacts come first in the source and on phones; from lg one row reads
+    ©, contacts, switches. */}
+<footer class="border-t border-black text-sm text-neutral-600">
+  <div
+    class="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-y-4 px-6 py-6 lg:grid-cols-[repeat(3,auto)] lg:justify-between lg:gap-x-12"
+  >
+    <ul class="col-span-2 flex flex-wrap gap-x-6 gap-y-2 lg:col-span-1 lg:col-start-2 lg:row-start-1">
       <li class={item}>
         <ContactIcon icon="email" class={icon} />
         <a href={`mailto:${email}`} class={link}>{email}</a>
@@ -32,58 +36,56 @@ const link = 'underline underline-offset-4 hover:decoration-dotted';
       )}
     </ul>
 
-    <div class="mt-6 flex items-center justify-between gap-4 text-sm text-neutral-500 sm:mt-8">
-      <p>© {year} {site.name}</p>
+    <p class="lg:col-start-1 lg:row-start-1">© {year} {site.name}</p>
 
-      {/* Pulled out by the buttons' inner space, so the switches end on the page edge. */}
-      <div class="-mr-2 flex items-center gap-3">
-        <button
-          type="button"
-          data-theme-toggle
-          class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
-        >
-          <span class="relative block size-4">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="theme-icon-sun absolute inset-0 size-4"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-            </svg>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="theme-icon-moon absolute inset-0 size-4"
-              aria-hidden="true"
-            >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-            </svg>
-          </span>
-          <T k="switchTheme" class="sr-only" />
-        </button>
+    {/* Pulled out by the buttons' inner space, so the switches end on the page edge. */}
+    <div class="-mr-2 flex items-center gap-3 lg:col-start-3 lg:row-start-1">
+      <button
+        type="button"
+        data-theme-toggle
+        class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
+      >
+        <span class="relative block size-4">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="theme-icon-sun absolute inset-0 size-4"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+          </svg>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="theme-icon-moon absolute inset-0 size-4"
+            aria-hidden="true"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+          </svg>
+        </span>
+        <T k="switchTheme" class="sr-only" />
+      </button>
 
-        <button
-          type="button"
-          data-lang-toggle
-          class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
-        >
-          <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
-            <span class="language-option-cs absolute inset-0" aria-hidden="true">CZ</span>
-            <span class="language-option-en absolute inset-0" aria-hidden="true">EN</span>
-          </span>
-          <T k="switchLanguage" class="sr-only" />
-        </button>
-      </div>
+      <button
+        type="button"
+        data-lang-toggle
+        class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
+      >
+        <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
+          <span class="language-option-cs absolute inset-0" aria-hidden="true">CZ</span>
+          <span class="language-option-en absolute inset-0" aria-hidden="true">EN</span>
+        </span>
+        <T k="switchLanguage" class="sr-only" />
+      </button>
     </div>
   </div>
 </footer>

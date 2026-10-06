@@ -1,0 +1,10 @@
+---
+import T from './T.astro';
+import type { UiKey } from '../i18n';
+
+interface Props {
+  k: UiKey;
+}
+---
+
+<T as="h2" k={Astro.props.k} class="mb-6 border-b border-black pb-2 text-sm tracking-widest uppercase" />
