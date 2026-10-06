@@ -4,8 +4,7 @@
 // tests/e2e/images, served by images/[file].ts.
 import type { CollectionEntry } from 'astro:content';
 import Base from '../../../src/layouts/Base.astro';
-import Carousel from '../../../src/components/Carousel.astro';
-import HomeFacts from '../../../src/components/HomeFacts.astro';
+import AboutPage from '../../../src/components/AboutPage.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
 import ProjectPage from '../../../src/components/ProjectPage.astro';
 import WorkProjects from '../../../src/components/WorkProjects.astro';
@@ -125,31 +124,81 @@ export function getStaticPaths() {
     }),
   ];
 
-  const noFacts = { services: [], education: [], awards: [] };
-  const facts = {
-    services: [
-      { name_en: 'Family houses', name_cs: 'Rodinné domy' },
-      { name_en: 'Renovations', name_cs: 'Rekonstrukce' },
-      { name_en: 'Interiors', name_cs: 'Interiéry' },
+  const tag = (en: string, cs = en) => ({ name_en: en, name_cs: cs });
+  // Pages CMS writes one typed line break as a single newline, two as a blank line.
+  const approach = {
+    label_en: 'Place',
+    label_cs: 'Místo',
+    text_en: 'First paragraph.\n\nSecond paragraph.',
+    text_cs: 'První odstavec.\nDruhý odstavec.',
+  };
+  const about: CollectionEntry<'about'>['data'] = {
+    portrait: '/e2e/images/square-1.png',
+    body_en: text(2).en,
+    body_cs: text(2).cs,
+    approaches: (['place', 'scale', 'material', 'thinking'] as const).map((icon) => ({ ...approach, icon })),
+    experience: [
+      {
+        place_en: 'Studio A, Brno',
+        place_cs: 'Ateliér A, Brno',
+        department_en: 'Housing team',
+        department_cs: 'Tým bydlení',
+        years: '2024–',
+        title_en: 'Architect',
+        title_cs: 'Architektka',
+        description_en: `${text(2).en}\n\nPermit drawings.`,
+        description_cs: `${text(2).cs}\nVýkresy k povolení.`,
+        tags: [tag('BIM'), tag('Studies', 'Studie'), tag('Building permits', 'Stavební povolení')],
+      },
+      {
+        place_en: 'Studio B, Prague',
+        place_cs: 'Ateliér B, Praha',
+        years: '2022–2024',
+        title_en: 'Intern',
+        title_cs: 'Stážistka',
+        tags: [],
+      },
     ],
-    area_en: 'Brno and South Moravia',
-    area_cs: 'Brno a Jihomoravský kraj',
+    services: [tag('Family houses', 'Rodinné domy'), tag('Renovations', 'Rekonstrukce'), tag('Interiors', 'Interiéry')],
     education: [
-      { text_en: 'FA BUT Brno, Ing. arch. (2024)', text_cs: 'FA VUT Brno, Ing. arch. (2024)' },
-      { text_en: 'Doctoral study, FA BUT Brno (2027)', text_cs: 'Doktorské studium, FA VUT Brno (2027)' },
+      {
+        place_en: 'Faculty of Civil Engineering, Brno University of Technology',
+        place_cs: 'Fakulta stavební VUT v Brně',
+        department_en: 'Institute of Architecture',
+        department_cs: 'Ústav architektury',
+        years: '2024–2026',
+        title_en: 'Architecture and Urban Development',
+        title_cs: 'Architektura a rozvoj sídel',
+        tags: [],
+      },
     ],
     awards: [
-      { text_en: 'Young architect, 2nd place (2025)', text_cs: 'Mladý architekt, 2. místo (2025)' },
+      {
+        place_en: 'Young architect',
+        place_cs: 'Mladý architekt',
+        title_en: '2nd place',
+        title_cs: '2. místo',
+        description_en: sentence.en,
+        description_cs: sentence.cs,
+        tags: [tag('Urbanism', 'Urbanismus')],
+      },
     ],
   };
+  const contact = {
+    email: 'jana@example.cz',
+    phone: '+420 777 000 000',
+    location_en: 'Brno',
+    location_cs: 'Brno',
+    hours_en: 'Mon–Fri 9–17',
+    hours_cs: 'Po–Pá 9–17',
+  };
+  // Nothing optional filled, but the location in Czech only.
+  const bareAbout = { ...about, portrait: undefined, approaches: [], experience: [], services: [], education: [], awards: [] };
+  const bareContact = { email: contact.email, location_cs: 'Brno' };
 
   return [
-    { params: { fixture: 'home-facts' }, props: { facts } },
-    {
-      params: { fixture: 'home-facts-area' },
-      props: { facts: { ...noFacts, area_en: facts.area_en, area_cs: facts.area_cs } },
-    },
-    { params: { fixture: 'home-facts-empty' }, props: { facts: noFacts } },
+    { params: { fixture: 'about' }, props: { about, contact } },
+    { params: { fixture: 'about-bare' }, props: { about: bareAbout, contact: bareContact } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
@@ -178,40 +227,34 @@ export function getStaticPaths() {
     projectWith('gallery-first', [
       { type: 'gallery', images: [item('square-1.png'), item('square-2.png')] },
     ]),
-    { params: { fixture: 'carousels' }, props: { images } },
-    { params: { fixture: 'single-image' }, props: { images: images.slice(0, 1) } },
+    { params: { fixture: 'carousel' }, props: { images } },
     { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project } } },
   ];
 }
 
-const { facts, images, project, projects } = Astro.props;
+const { about, contact, images, project, projects } = Astro.props;
 ---
 
 {
   project ? (
     <ProjectPage {project} />
-  ) : facts ? (
-    <Base title={{ cs: 'E2E', en: 'E2E' }}>
-      <HomeFacts home={facts} />
-    </Base>
+  ) : about ? (
+    <AboutPage {about} {contact} />
   ) : projects ? (
     <Base title={{ cs: 'E2E', en: 'E2E' }}>
       <WorkProjects {projects} />
     </Base>
   ) : (
     <Base title={{ cs: 'E2E', en: 'E2E' }}>
-      <Carousel {images} />
-      {images.length > 1 && (
-        <div class="mx-auto max-w-6xl px-6 pb-16">
-          <ProjectBlocks
-            projectId="e2e"
-            blocks={[
-              { type: 'image_set', images: images.map((image) => ({ image })) },
-            ]}
-            responsiveImages={[]}
-          />
-        </div>
-      )}
+      <div class="mx-auto max-w-6xl px-6 pb-16">
+        <ProjectBlocks
+          projectId="e2e"
+          blocks={[
+            { type: 'image_set', images: images.map((image) => ({ image })) },
+          ]}
+          responsiveImages={[]}
+        />
+      </div>
     </Base>
   )
 }

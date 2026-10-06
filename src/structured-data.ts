@@ -7,12 +7,20 @@ import { largeImageUrl, type ResponsiveImage } from './images';
 // plain strings, the value type Google documents for these properties.
 
 type Node = Record<string, unknown>;
-type Data<Collection extends 'site' | 'home' | 'contact' | 'projects'> =
+type Data<Collection extends 'site' | 'about' | 'contact' | 'projects'> =
   CollectionEntry<Collection>['data'];
 
 const text = (value?: string) => value?.trim() || undefined;
 const texts = (values: (string | undefined)[]) =>
   values.flatMap((value) => text(value) ?? []);
+type TimelineRow = Data<'about'>['education'][number];
+/** The row's filled parts in the given order, then its years in brackets. */
+const timelineNames = (rows: TimelineRow[], parts: (row: TimelineRow) => (string | undefined)[]) =>
+  rows.flatMap((row) => {
+    const name = texts(parts(row)).join(', ');
+    const years = text(row.years);
+    return name ? [years ? `${name} (${years})` : name] : [];
+  });
 
 /** Leaves out the fields the content left empty. */
 const compact = (node: Node) =>
@@ -30,16 +38,17 @@ const personId = (site: URL) => absolute('/#person', site);
 export function person({
   site,
   owner,
-  home,
+  about,
   contact,
   portrait,
 }: {
   site: URL;
   owner: Pick<Data<'site'>, 'name' | 'credential'>;
-  home: Pick<Data<'home'>, 'area_cs' | 'services' | 'education' | 'awards'>;
-  contact: Pick<Data<'contact'>, 'email' | 'phone'>;
+  about: Pick<Data<'about'>, 'services' | 'education' | 'awards'>;
+  contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location_cs'>;
   portrait?: string;
 }) {
+  const location = text(contact.location_cs);
   return compact({
     '@type': 'Person',
     '@id': personId(site),
@@ -50,24 +59,18 @@ export function person({
     email: contact.email,
     telephone: text(contact.phone),
     image: portrait && absolute(portrait, site),
-    // schema.org's Person has no areaServed; a ContactPoint does.
-    contactPoint: compact({
-      '@type': 'ContactPoint',
-      email: contact.email,
-      telephone: text(contact.phone),
-      areaServed: text(home.area_cs),
-      availableLanguage: ['cs', 'en'],
-    }),
-    makesOffer: texts(home.services.map((service) => service.name_cs)).map(
+    workLocation: location && { '@type': 'Place', name: location },
+    makesOffer: texts(about.services.map((service) => service.name_cs)).map(
       (name) => ({
         '@type': 'Offer',
         itemOffered: { '@type': 'Service', name },
       }),
     ),
-    hasCredential: texts(home.education.map((entry) => entry.text_cs)).map(
-      (name) => ({ '@type': 'EducationalOccupationalCredential', name }),
-    ),
-    award: texts(home.awards.map((entry) => entry.text_cs)),
+    hasCredential: timelineNames(about.education, (row) => [row.title_cs, row.place_cs]).map((name) => ({
+      '@type': 'EducationalOccupationalCredential',
+      name,
+    })),
+    award: timelineNames(about.awards, (row) => [row.place_cs, row.title_cs]),
     knowsLanguage: ['cs', 'en'],
   });
 }
@@ -82,10 +85,10 @@ export function webSite({ site, name }: { site: URL; name: string }) {
   };
 }
 
-export function profilePage({ site }: { site: URL }) {
+export function profilePage({ site, url }: { site: URL; url: string }) {
   return {
     '@type': 'ProfilePage',
-    url: absolute('/', site),
+    url,
     mainEntity: { '@id': personId(site) },
   };
 }

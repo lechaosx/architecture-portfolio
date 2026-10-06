@@ -29,9 +29,9 @@ npm run images       # regenerate responsive images (dev and build run it)
   directly, run `npm run pretest:e2e` first.
 - Lightbox and carousel tests use test-only pages in `tests/e2e/pages/`, served
   under `/e2e/`, with images in `tests/e2e/images/`. The work list and the brief
-  and text-only project pages are tested through fixture projects, the home
-  facts through fixture data; other home, work and contact tests use the real
-  content.
+  and text-only project pages are tested through fixture projects, the About
+  page through fixture data; other About, work and footer tests use
+  the real content.
 - `/e2e/project/` is frozen: tests address its images by position (`#image-N`).
   For a new case, add a fixture entry in `tests/e2e/pages/[fixture].astro`
   instead of inserting images there.
@@ -41,15 +41,18 @@ npm run images       # regenerate responsive images (dev and build run it)
 | Path | What |
 |------|------|
 | `src/content/projects/*.md` | one file per project; the filename is the URL |
-| `src/content/singletons/` | `site.md`, `home.md`, `contact.md` |
+| `src/content/singletons/` | `site.md`, `about.md`, `contact.md` (the contacts in the footer and on About) |
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/i18n.ts` | baked-in UI labels |
-| `src/layouts/Base.astro` | page shell and head metadata; language, theme and reveal scripts |
+| `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
+| `src/components/PageMeta.astro` | head metadata, shared by `Base` and the forwarding page |
+| `src/pages/index.astro`, `src/work-page.ts` | the forwarding page at `/` and the work-page head it shares |
 | `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD and `/llms.txt`, built from content |
 | `src/pages/llms.txt.ts`, `src/pages/robots.txt.ts` | the `/llms.txt` and `/robots.txt` endpoints |
 | `src/components/Gallery.svelte`, `Lightbox*.svelte`, `lightbox-*.ts`, `gallery.ts` | the project lightbox |
-| `src/components/Carousel.astro`, `ProjectBlocks.astro` | home and project carousels |
+| `src/components/AboutPage.astro` | the About page, also rendered by the e2e fixtures |
+| `src/components/ProjectBlocks.astro` | project blocks and their carousel |
 | `scripts/generate-responsive-images.ts` | image pipeline → `public/_responsive/` (gitignored) |
 | `tests/e2e/` | browser tests and their pages |
 | `.github/workflows/deploy.yml` | test, build, deploy |

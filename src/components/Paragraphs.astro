@@ -1,0 +1,29 @@
+---
+// Plain text with the author's paragraphs, one element per language like
+// T.astro. Pages CMS writes one typed line break as a single newline and two as
+// a blank line; the architect starts a paragraph with either.
+interface Props {
+  cs?: string;
+  en?: string;
+  class: string;
+}
+
+const { cs, en, class: cls } = Astro.props;
+const languages = [
+  { lang: 'cs', text: cs?.trim() },
+  { lang: 'en', text: en?.trim() },
+];
+---
+
+{
+  languages.map(
+    ({ lang, text }) =>
+      text && (
+        <div {lang} class={cls}>
+          {text.split(/\s*\n\s*/).map((paragraph) => (
+            <p>{paragraph}</p>
+          ))}
+        </div>
+      ),
+  )
+}

@@ -26,9 +26,6 @@ const projectsEditor = pagesConfig.content.find(
 );
 if (!projectsEditor?.fields) throw new TypeError('Expected a projects editor');
 const projectEditorFields = projectsEditor.fields;
-const homeEditor = pagesConfig.content.find((entry) => entry.name === 'home');
-if (!homeEditor?.fields) throw new TypeError('Expected a home editor');
-const homeEditorFields = homeEditor.fields;
 
 function staticSchema(name: keyof typeof collections) {
   const schema = collections[name].schema;
@@ -111,7 +108,7 @@ const project = {
   blocks: [imageSet],
 };
 
-describe.each(['projects', 'site', 'home', 'contact'] as const)('%s schema', (name) => {
+describe.each(['projects', 'site', 'about', 'contact'] as const)('%s schema', (name) => {
   test('declares the same fields as Pages CMS, required in the same places', () => {
     const editor = pagesConfig.content.find((entry) => entry.name === name);
     expect(editorShape(editor?.fields ?? [])).toEqual(rowShape(staticSchema(name)));
@@ -197,50 +194,81 @@ describe('project content schema', () => {
   });
 });
 
-describe('home content schema', () => {
-  const homeSchema = staticSchema('home');
-  const home = { gallery: ['/uploads/cover.jpg'], body_cs: 'O mně', body_en: 'About me' };
+describe('about content schema', () => {
+  const aboutSchema = staticSchema('about');
+  const about = { body_cs: 'O mně', body_en: 'About me' };
 
-  test('reads services, area, education and awards, dropping empty CMS rows', () => {
+  const row = {
+    place_cs: 'Fakulta stavební VUT v Brně',
+    place_en: 'Faculty of Civil Engineering, Brno University of Technology',
+    department_cs: 'Ústav architektury',
+    department_en: 'Institute of Architecture',
+    years: '2024–2026',
+    title_cs: 'Architektura a rozvoj sídel',
+    title_en: 'Architecture and Urban Development',
+    description_cs: 'Diplomová práce.',
+    description_en: 'Diploma thesis.',
+    tags: [{ name_cs: 'Urbanismus', name_en: 'Urbanism' }],
+  };
+  const bare = { place_cs: 'Ateliér', place_en: 'Studio', title_cs: 'Stáž', title_en: 'Internship' };
+
+  test('reads timeline rows and services, dropping empty CMS rows', () => {
     const facts = {
+      experience: [bare],
       services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
-      area_cs: 'Brno a Jihomoravský kraj',
-      area_en: 'Brno and South Moravia',
-      education: [{ text_cs: 'FA VUT Brno, Ing. arch. (2024)', text_en: 'FA BUT Brno, Ing. arch. (2024)' }],
-      awards: [{ text_cs: 'Soutěž, 1. místo, 2025', text_en: 'Competition, 1st place, 2025' }],
+      education: [row],
+      awards: [{ ...bare, years: '2025' }],
     };
     expect(
-      homeSchema.safeParse({
-        ...home,
+      aboutSchema.safeParse({
+        ...about,
         ...facts,
+        experience: [{}, ...facts.experience],
         services: [{}, ...facts.services],
-        education: [...facts.education, {}],
+        education: [{ ...row, tags: [{}, ...row.tags] }, {}],
       }),
-    ).toMatchObject({ success: true, data: facts });
+    ).toMatchObject({ success: true, data: { ...facts, experience: [{ ...bare, tags: [] }] } });
   });
 
   test('leaves the facts empty when they are not filled', () => {
-    expect(homeSchema.safeParse(home)).toMatchObject({
+    expect(aboutSchema.safeParse(about)).toMatchObject({
       success: true,
-      data: { services: [], education: [], awards: [] },
+      data: { experience: [], services: [], education: [], awards: [] },
     });
   });
 
-  test.each(['services', 'education', 'awards'])('rejects a row of %s in only one language', (field) => {
-    const row = field === 'services' ? { name_cs: 'Interiéry' } : { text_cs: 'Jen česky' };
-    expect(homeSchema.safeParse({ ...home, [field]: [row] }).success).toBe(false);
-  });
+  test.each(['experience', 'education', 'awards'])(
+    'rejects a %s row without its place or title in both languages',
+    (field) => {
+      for (const missing of ['place_cs', 'place_en', 'title_cs', 'title_en']) {
+        const { [missing as keyof typeof bare]: _, ...partial } = bare;
+        expect(aboutSchema.safeParse({ ...about, [field]: [partial] }).success, missing).toBe(false);
+      }
+    },
+  );
 
-  test('requires an explicit non-empty homepage image selection', () => {
-    expect(homeEditorFields.find((field) => field.name === 'gallery')).toMatchObject({
-      type: 'image',
-      required: true,
-      list: { min: 1 },
-    });
+  test.each([
+    ['services', { name_cs: 'Interiéry' }],
+    ['tags', { name_cs: 'BIM' }],
+  ])('rejects %s in only one language', (field, badge) => {
+    const value = field === 'services' ? { services: [badge] } : { awards: [{ ...bare, tags: [badge] }] };
+    expect(aboutSchema.safeParse({ ...about, ...value }).success).toBe(false);
   });
 });
 
-test.each(['site', 'home', 'contact'] as const)('the committed %s singleton is valid', (name) => {
+test('contact reads where she is and when she is reachable, one line per language', () => {
+  const lines = {
+    location_cs: 'Brno',
+    location_en: 'Brno',
+    hours_cs: 'Po–Pá 10–15',
+    hours_en: 'Mon–Fri 10–15',
+  };
+  expect(
+    staticSchema('contact').safeParse({ email: 'jana@example.cz', ...lines }),
+  ).toMatchObject({ success: true, data: lines });
+});
+
+test.each(['site', 'about', 'contact'] as const)('the committed %s singleton is valid', (name) => {
   const content = frontmatter(`src/content/singletons/${name}.md`);
   expect(staticSchema(name).safeParse(content).success).toBe(true);
 });

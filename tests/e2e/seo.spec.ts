@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { parse } from 'yaml';
+import type { ImageManifest } from '../../src/images';
 
 const frontmatter = (path: string) => parse(readFileSync(path, 'utf8').split('---')[1]);
 const site = frontmatter('src/content/singletons/site.md');
@@ -19,6 +20,32 @@ async function graph(page: Page) {
 
 const node = (nodes: Record<string, unknown>[], type: string) =>
   nodes.find((item) => item['@type'] === type);
+
+/** A page's head and body as served, read without following its refresh. */
+async function served(page: Page, request: APIRequestContext, path: string) {
+  const html = await (await request.get(path)).text();
+  return page.evaluate((html) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return {
+      title: doc.title,
+      canonical: doc.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+      refresh: doc.querySelector('meta[http-equiv="refresh"]')?.getAttribute('content'),
+      meta: Array.from(
+        doc.querySelectorAll(
+          'meta[name="description"], meta[property^="og:"], meta[name^="twitter:"]',
+        ),
+        (meta) => [
+          meta.getAttribute('name') ?? meta.getAttribute('property'),
+          meta.getAttribute('content'),
+        ],
+      ),
+      body: Array.from(doc.body.children, (child) => ({
+        tag: child.tagName,
+        href: child.getAttribute('href'),
+      })),
+    };
+  }, html);
+}
 
 test.describe(() => {
   test.use({ javaScriptEnabled: false });
@@ -61,9 +88,8 @@ test.describe(() => {
 
   test('every page names its canonical address and the site', async ({ page }) => {
     for (const [path, type] of [
-      ['/', 'website'],
       ['/work/', 'website'],
-      ['/contact/', 'website'],
+      ['/about/', 'website'],
       ['/e2e/brief/', 'article'],
     ]) {
       await page.goto(path);
@@ -85,7 +111,7 @@ test.describe(() => {
   });
 
   test('every page describes the architect as structured data', async ({ page }) => {
-    for (const path of ['/', '/work/', '/contact/', '/e2e/project/']) {
+    for (const path of ['/work/', '/about/', '/e2e/project/']) {
       await page.goto(path);
       expect(node(await graph(page), 'Person')).toMatchObject({
         '@id': `${origin}/#person`,
@@ -96,13 +122,53 @@ test.describe(() => {
     }
   });
 
-  test('the home page is the website and the architect’s profile', async ({ page }) => {
-    await page.goto('/');
-    const nodes = await graph(page);
-    expect(node(nodes, 'WebSite')).toMatchObject({ name: owner, url: `${origin}/` });
-    expect(node(nodes, 'ProfilePage')).toMatchObject({
+  test('the work page is the website and shares its first cover', async ({ page }) => {
+    await page.goto('/work/');
+    expect(node(await graph(page), 'WebSite')).toMatchObject({ name: owner, url: `${origin}/` });
+    const image = await meta(page, 'property="og:image"').getAttribute('content');
+    expect(image).toMatch(new RegExp(`^${origin}/.+\\.jpg$`));
+    expect((await page.request.get(new URL(image!).pathname)).ok()).toBe(true);
+    // The image manifest names each upload's derivatives: the share JPEG must
+    // come from the same upload as the first card's thumbnails.
+    const { images } = (await (
+      await page.request.get('/_responsive/manifest.json')
+    ).json()) as ImageManifest;
+    const shared = Object.values(images).find(
+      (entry) => entry.share?.url === new URL(image!).pathname,
+    );
+    const card = await page.locator('main section.grid > a img').first().getAttribute('srcset');
+    expect(shared?.variants.map((variant) => variant.url)).toContain(card!.split(' ')[0]);
+  });
+
+  test('the about page is the architect’s profile', async ({ page }) => {
+    await page.goto('/about/');
+    expect(node(await graph(page), 'ProfilePage')).toMatchObject({
+      url: `${origin}/about/`,
       mainEntity: { '@id': `${origin}/#person` },
     });
+  });
+
+  test('the bare domain previews as the work page and forwards to it', async ({
+    page,
+    request,
+  }) => {
+    const [forwarding, work] = await Promise.all([
+      served(page, request, '/'),
+      served(page, request, '/work/'),
+    ]);
+    expect(forwarding.refresh).toBe('0; url=/work/');
+    expect(forwarding.body).toEqual([{ tag: 'A', href: '/work/' }]);
+    expect({ ...forwarding, refresh: undefined, body: undefined }).toEqual({
+      ...work,
+      refresh: undefined,
+      body: undefined,
+    });
+    expect(work.canonical).toBe(`${origin}/work/`);
+  });
+
+  test('the not-found page is kept out of search', async ({ page }) => {
+    await page.goto('/404.html');
+    await expect(meta(page, 'name="robots"')).toHaveAttribute('content', 'noindex');
   });
 
   test('a project page is a creative work by the architect, with its described images', async ({
@@ -133,6 +199,16 @@ test.describe(() => {
     for (const image of images.slice(1)) expect(image.name ?? image.caption).toBeTruthy();
   });
 
+});
+
+test('the sitemap lists the pages but not the forwarding or not-found page', async ({
+  request,
+}) => {
+  const sitemap = await (await request.get('/sitemap-0.xml')).text();
+  for (const path of ['/work/', '/about/']) expect(sitemap).toContain(`<loc>${origin}${path}</loc>`);
+  for (const path of ['/', '/404/', '/404.html']) {
+    expect(sitemap).not.toContain(`<loc>${origin}${path}</loc>`);
+  }
 });
 
 test('robots.txt allows crawling and names the sitemap', async ({ request }) => {

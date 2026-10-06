@@ -4,7 +4,7 @@ test('follows live system color-scheme changes without a saved choice', async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/');
+  await page.goto('/work/');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
   await page.emulateMedia({ colorScheme: 'light' });
@@ -13,7 +13,7 @@ test('follows live system color-scheme changes without a saved choice', async ({
 
 test('an explicit theme choice overrides later system changes', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/');
+  await page.goto('/work/');
   await page.getByRole('button', { name: 'Toggle theme' }).click();
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
@@ -32,10 +32,10 @@ test('carousel overlay controls keep their colors across page themes', async ({
 }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   // tests/e2e/pages/[fixture].astro, which the e2e build adds.
-  await page.goto('/e2e/carousels/');
+  await page.goto('/e2e/carousel/');
 
   const overlayColors = () =>
-    page.locator('[data-carousel]').evaluate((carousel) => {
+    page.locator('[data-project-carousel]').evaluate((carousel) => {
       const colors = (selector: string) => {
         const style = getComputedStyle(carousel.querySelector(selector)!);
         return {
@@ -45,9 +45,9 @@ test('carousel overlay controls keep their colors across page themes', async ({
         };
       };
       return {
-        arrow: colors('[data-carousel-next]'),
-        dot: colors('[data-dot]:not([aria-current="true"])'),
-        currentDot: colors('[data-dot][aria-current="true"]'),
+        arrow: colors('[data-project-carousel-next]'),
+        dot: colors('[data-project-dot]:not([aria-current="true"])'),
+        currentDot: colors('[data-project-dot][aria-current="true"]'),
       };
     });
 

@@ -50,21 +50,21 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
   arguments; only the test build passes the latter — [Explicit] (form
   [Implicit]). Both share `public/_responsive`: keys cannot collide, and the
   plain build's run removes the test images' derivatives — [Implicit].
-- The carousel pages render the carousel components with test-owned SVGs —
+- The carousel page renders a project image-set carousel with test-owned SVGs —
   [Implicit].
 - `/e2e/project/` renders through `ProjectPage.astro`, from data typed against
   the projects collection. The tests rely on its images' positions, titles,
   comparison sets and descriptions [Explicit], so it is frozen and a new case
   gets its own fixture entry [Implicit]. Its images are small line drawings in
   `tests/e2e/images`, served at `/e2e/images/` — [Implicit].
-- The home facts tests render `HomeFacts.astro` with fixture data, filled,
-  partly filled and empty — [Implicit].
+- The About tests render `AboutPage.astro` with fixture data, everything filled
+  and nothing optional filled — [Implicit].
 - Metadata, structured-data and alt-text tests use fixture project pages; the
   `llms.txt` test checks it against the shipped projects and follows its links
   — [Implicit].
 - The work list and the brief and text-only project pages are tested through
-  fixture projects; other home, work-page and transition tests use the shipped
-  content — [Implicit].
+  fixture projects; other About, work-page, footer and transition tests use the
+  shipped content — [Implicit].
 
 ---
 
@@ -104,7 +104,8 @@ Pages are static; only components that must run in the browser hydrate
 [Implicit], written in Svelte [Explicit]. The only island is the project
 lightbox, `Gallery.svelte`, loaded `client:load` so a pasted `#image-N` opens at
 once [Implicit]. Everything else is a few small vanilla scripts: reveal, the
-carousels, the language and theme switches, the project-transition tagging.
+project carousel, the language and theme switches, the project-transition
+tagging.
 
 ### Lightbox structure — [Explicit] (seams [Implicit])
 
@@ -143,7 +144,7 @@ address) changes the moment input arrives; each visual is one number a Svelte
 - The phone's edge arrows are derived from the turns on screen, not tweened
   separately, so they stay in step by construction.
 
-The carousels keep a slide index instead of reading it from a mid-scroll
+The project carousel keeps a slide index instead of reading it from a mid-scroll
 position, which would drop a quick second press. Page View Transitions are the
 one accepted exception — [Explicit]: the browser holds input during them.
 
@@ -181,12 +182,11 @@ constraints and auto-resize are off, so it only follows the lightbox's view.
   pending Back, because Chromium and Firefox disagree on a push made during one.
   Scroll restoration is manual while the entry is active.
 
-### Carousels: scroll-snap plus a small script — [Implicit]
+### Project carousel: scroll-snap plus a small script — [Implicit]
 
-Native horizontal scroll-snap with arrows, dots and (home only) auto-advance;
-no island. It scrolls its own container, not the page. The home and project
-carousels keep separate scripts — [Implicit]. They share the interaction
-language with the lightbox but not its implementation.
+Native horizontal scroll-snap with arrows and dots; no island. It scrolls its
+own container, not the page. It shares the interaction language with the
+lightbox but not its implementation.
 
 ### Project blocks render in Astro — [Explicit]
 
@@ -198,13 +198,26 @@ it, it is the only image that loads eagerly, and it is the page's share image.
 ### Work page: one component for grid and list — [Implicit]
 
 `WorkProjects.astro` sorts the projects and renders the grid and the list; it is
-a component so the e2e fixtures can render it with their own projects.
+a component so the e2e fixtures can render it with their own projects. Project
+titles in both are `h2`s, directly under the page's `h1`. The order
+(`newestFirst`) and a project's cover (`projectCover`) live in `src/projects.ts`,
+so the work page's share image is always its first card's cover; `llms.txt`
+uses the same order.
 
-### Home facts: a component — [Implicit]
+### About page: one component — [Implicit]
 
-`HomeFacts.astro` renders services, area, education and awards from the home
-entry's fields; it is a component so the e2e fixtures can render it with their
-own data.
+`AboutPage.astro` renders the whole page from the about and contact data passed
+in, as `ProjectPage.astro` does for a project, so the e2e fixtures can render it
+with their own; `ApproachIcon.astro` holds the four Approach icons and
+`ContactIcon.astro` the contact icons the About page and the footer share. The
+`h1` comes first in the grid and the side bar is placed beside it from `lg`, so
+the heading order runs `h1`, then the `h2` sections, then the `h3` entries at
+every width. A timeline's line and square marker are decorative spans
+positioned on the boundary between an entry's cells, so the cells can be placed
+freely (an entry's tags come last on phones and under its years from `sm`). A
+contact line filled in one language carries that `lang` (`onlyIn` in
+`i18n.ts`, used by About and the footer), so the language CSS hides it in the
+other.
 
 ### Page transitions: native View Transitions — [Implicit]
 
@@ -280,7 +293,7 @@ no-JS.
 
 ### Content collections; singletons as one-entry collections — [Implicit] / [Explicit]
 
-`src/content.config.ts` validates projects and the site, home and contact
+`src/content.config.ts` validates projects and the site, about and contact
 singletons [Explicit] with Zod, so a CMS edit the pages cannot render fails the
 build. A field is required only when a page needs it; optional lists default to
 empty — [Implicit]. Markdown file bodies are unused: bilingual text lives in
@@ -319,7 +332,8 @@ keeps them associated. Both block types share the shape.
 ### Sitemap — [Implicit]
 
 `@astrojs/sitemap` writes `sitemap-index.xml`, using `site` for absolute URLs;
-`robots.txt` points crawlers to it.
+`robots.txt` points crawlers to it. A filter leaves out `/`, which only
+forwards; the integration leaves out the 404 page itself.
 
 ---
 
@@ -328,9 +342,18 @@ keeps them associated. Both block types share the shape.
 ### Page metadata flows into `Base.astro` — [Implicit]
 
 A page passes `Base` only what it knows about itself: a description, a share
-image, its Open Graph type and its structured-data nodes. `Base` falls back to
-the site description, derives the canonical address from `site` and the path,
-and adds the architect's node, so every page gets the same head.
+image, its Open Graph type, its structured-data nodes and, for the 404 page,
+`noindex`. `Base` derives the canonical address from `site` and the path (none
+for a `noindex` page) and adds the architect's node; `PageMeta.astro` writes the
+title, description, canonical, Open Graph and Twitter tags, falling back to the
+site description, so every page gets the same head.
+
+### The forwarding page shares the head, not the layout — [Implicit]
+
+`/` is a bare document with a meta refresh and `PageMeta.astro`, fed the work
+page's title and share image from `src/work-page.ts`, so its preview cannot
+drift from Work. It loads none of `Base`'s styles or scripts, so no view
+transition, language or reveal script runs before the refresh.
 
 ### Share images come from the responsive pipeline — [Implicit]
 
@@ -342,8 +365,9 @@ onto white, because LinkedIn is reported to drop WebP previews.
 Pure functions in `src/structured-data.ts` turn content into schema.org nodes,
 which `Base` inlines as one `@graph` per page. Text is plain Czech, because
 Google documents only plain-text values for these properties, not
-language-tagged ones. The area she works in sits on a `ContactPoint`, which,
-unlike `Person`, has `areaServed`, with email and phone on the `Person` too.
+language-tagged ones. Her location is `Person.workLocation`, a `Place`.
+Credentials are named "programme, school (years)" and awards "award, placement
+(years)"; `award` is plain text.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 
@@ -377,15 +401,17 @@ An image cannot be doubled per language like text, so a project image ships its
 Czech title as `alt`, with both titles in `data-cs`/`data-en`, and the language
 script sets `alt` from them. The lightbox sets it from its own language state.
 
-### Strings: `i18n.ts`, `T.astro`, `Prose.astro` — [Implicit]
+### Strings: `i18n.ts`, `T.astro`, `Prose.astro`, `Paragraphs.astro` — [Implicit]
 
-UI labels are a `{ cs, en }` dictionary in `src/i18n.ts`. `T.astro` and
-`Prose.astro` emit one element per language with a `lang` attribute.
+UI labels are a `{ cs, en }` dictionary in `src/i18n.ts`. `T.astro`,
+`Prose.astro` and `Paragraphs.astro` emit one element per language with a
+`lang` attribute: `T` a string, `Prose` Markdown, `Paragraphs` plain text split
+into one `<p>` per paragraph (Approach texts and timeline descriptions).
 
 ### Paired `_cs`/`_en` fields — [Implicit]
 
 One file and one CMS form per entry; language-neutral fields (images, year,
-email, phone) stay single. The project route is the filename-derived content
+years, email, phone) stay single. The project route is the filename-derived content
 ID, so the filename is the only source of the slug.
 
 ---
