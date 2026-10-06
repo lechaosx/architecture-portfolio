@@ -5,8 +5,6 @@ export type Lang = 'cs' | 'en';
 
 export const ui = {
   cs: {
-    workNav: 'Práce',
-    aboutNav: 'O mně',
     about: 'O mně',
     approach: 'Přístup',
     experience: 'Praxe',
@@ -43,8 +41,6 @@ export const ui = {
     notFoundLink: 'Zpátky do ateliéru',
   },
   en: {
-    workNav: 'Work',
-    aboutNav: 'About',
     about: 'About',
     approach: 'Approach',
     experience: 'Experience',

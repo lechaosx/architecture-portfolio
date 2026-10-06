@@ -1,6 +1,6 @@
 import type { CollectionEntry } from 'astro:content';
 import { ui, type UiKey } from './i18n';
-import { newestFirst } from './projects';
+import { newestFirst, type Project } from './projects';
 
 // /llms.txt (https://llmstxt.org): the site's facts as one Markdown file,
 // each in Czech and then English.
@@ -52,10 +52,7 @@ function list(rows: string[]) {
   return line(rows.filter((row) => row).map((row) => `- ${row}`).join('\n'));
 }
 
-function project(
-  site: URL,
-  { id, data }: Pick<CollectionEntry<'projects'>, 'id' | 'data'>,
-) {
+function project(site: URL, { id, data }: Project) {
   const images = data.blocks.flatMap((block) =>
     block.type === 'text' ? [] : block.images,
   );
@@ -102,7 +99,7 @@ export function llmsTxt({
   >;
   contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location_cs' | 'location_en'>;
   /** The published projects. */
-  projects: Pick<CollectionEntry<'projects'>, 'id' | 'data'>[];
+  projects: Project[];
 }) {
   const blocks = [
     `# ${name}`,

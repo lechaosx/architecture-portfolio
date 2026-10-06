@@ -46,13 +46,12 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/i18n.ts` | baked-in UI labels |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
-| `src/components/LandingPage.astro` | the landing page at `/`, also rendered by the e2e fixtures |
-| `src/components/ProjectGrid.astro`, `ProjectCard.astro` | the project cards, on Work and the landing page |
+| `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro` | the pages, also rendered by the e2e fixtures |
+| `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |
 | `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD and `/llms.txt`, built from content |
 | `src/pages/llms.txt.ts`, `src/pages/robots.txt.ts` | the `/llms.txt` and `/robots.txt` endpoints |
 | `src/components/Gallery.svelte`, `Lightbox*.svelte`, `lightbox-*.ts`, `gallery.ts` | the project lightbox |
-| `src/components/AboutPage.astro` | the About page, also rendered by the e2e fixtures |
 | `src/components/ProjectBlocks.astro` | project blocks |
 | `scripts/generate-responsive-images.ts` | image pipeline → `public/_responsive/` (gitignored) |
 | `tests/e2e/` | browser tests and their pages |

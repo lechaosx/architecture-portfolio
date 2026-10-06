@@ -1,7 +1,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { marked } from 'marked';
 
-type Project = CollectionEntry<'projects'>['data'];
+type Data = CollectionEntry<'projects'>['data'];
 
 // Search engines show about this much of a description.
 const MAX_LENGTH = 160;
@@ -36,7 +36,7 @@ function excerpt(markdown: string) {
  * first text block.
  */
 export function projectDescription(
-  project: Pick<Project, 'brief_cs' | 'brief_en' | 'blocks'>,
+  project: Pick<Data, 'brief_cs' | 'brief_en' | 'blocks'>,
 ) {
   const text = project.blocks.find((block) => block.type === 'text');
   const describe = (brief?: string, body?: string) =>

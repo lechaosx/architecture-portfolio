@@ -189,8 +189,8 @@ Native horizontal scroll-snap with arrows and dots; no island. It scrolls its
 own container, not the page. `Carousel.astro` is the frame, controls and script
 for both project image sets and the landing images; the caller renders one
 slide per item, which the track sizes, and only the landing page turns on
-auto-advance. It shares the
-interaction language with the lightbox but not its implementation.
+auto-advance. It shares the interaction language with the lightbox but not its
+implementation.
 
 ### Project blocks render in Astro — [Explicit]
 
@@ -199,41 +199,15 @@ carries its page index so the single island treats every occurrence as its own
 slide. The first image of the page is the project's cover: the work card shows
 it, it is the only image that loads eagerly, and it is the page's share image.
 
-### Work page: one component for grid and list — [Implicit]
+### Pages are components the e2e fixtures render — [Implicit]
 
-`WorkProjects.astro` sorts the projects and renders the grid and the list; it is
-a component so the e2e fixtures can render it with their own projects. The grid
-is `ProjectGrid.astro`, shared with the landing page because `ProjectCard`'s
-image sizes follow its columns; card titles are `h2`s directly under Work's
-`h1` and `h3`s under the landing page's section heading. The order
-(`newestFirst`), a project's cover (`projectCover`) and the split into grid and
-list (`workProjects`) live in `src/projects.ts`, so the share images that fall
-back to the newest cover always show the first card's; `llms.txt` uses the
-same order.
-
-### Landing page: one component — [Implicit]
-
-`LandingPage.astro` renders `/` from the landing singleton and the projects
-passed in, as `AboutPage.astro` does for About, so the e2e fixtures can render
-it with no, one or several images. The site description is its `h1`, the
-page's statement.
-
-### About page: one component — [Implicit]
-
-`AboutPage.astro` renders the whole page from the about and contact data passed
-in, as `ProjectPage.astro` does for a project, so the e2e fixtures can render it
-with their own; `ApproachIcon.astro` holds the four Approach icons and
-`ContactIcon.astro` the contact icons the About page and the footer share;
-`SectionHeading.astro` is the small-caps heading over a thin rule that About
-and the landing page share. The
-`h1` comes first in the grid and the side bar is placed beside it from `lg`, so
-the heading order runs `h1`, then the `h2` sections, then the `h3` entries at
-every width. A timeline's line and square marker are decorative spans
-positioned on the boundary between an entry's cells, so the cells can be placed
-freely (an entry's tags come last on phones and under its years from `sm`). A
-contact line filled in one language carries that `lang` (`onlyIn` in
-`i18n.ts`, used by About and the footer), so the language CSS hides it in the
-other.
+`LandingPage`, `WorkPage`, `AboutPage` and `ProjectPage` each render a whole
+page from the data passed in, so the e2e fixtures can render them with their
+own. Their routes in `src/pages/` only load the content and pass it on.
+`src/projects.ts` holds the one project order and splits the projects into
+cards with a cover and the list, so the share image that falls back to the
+newest cover always matches the first card, and `llms.txt` lists projects in
+the same order.
 
 ### Page transitions: native View Transitions — [Implicit]
 

@@ -74,11 +74,12 @@ Baked into code: page structure, navigation and section labels. CMS entries:
 
 ### Required fields are what a page cannot do without — [Implicit]
 
-The name, both site descriptions (the landing page's intro), the contact email, both About texts, every field of an Approach item,
-both names of a service or tag and both places and titles of an experience,
-education or award row are required; everything else may be empty, including a
-row's years — [Explicit] — and the hours and location — [Implicit]. An edit
-that would leave a page unrenderable fails the build and does not deploy.
+The name, both site descriptions (the landing page's intro), the contact email,
+both About texts, every field of an Approach item, both names of a service or
+tag and both places and titles of an experience, education or award row are
+required; everything else may be empty, including a row's years — [Explicit] —
+and the hours and location — [Implicit]. An edit that would leave a page
+unrenderable fails the build and does not deploy.
 
 ### Projects: title and year; everything else optional — [Explicit]
 
@@ -209,8 +210,8 @@ or two — [Implicit].
 
 Email, phone and when she is reachable (one short line per language, e.g.
 "Po–Pá 10–15") are in every page's footer; email and phone are links, phone
-and hours show only when filled. There is no contact page and no contact form:
-there is no backend to receive one.
+and hours show only when filled. No contact form: there is no backend to
+receive one.
 
 The contacts have no label; the icons and links say what they are — [Explicit].
 
@@ -437,9 +438,8 @@ described images, each linked at the size the lightbox opens it at. `/llms.txt`
 gathers the same facts, her work experience, her bio and every published
 project's texts and image captions in one Markdown file, Czech then English.
 
-### The front page's tab title says what she is — [Explicit]
+### The landing page's tab title says what she is — [Explicit]
 
-The front page's tab title is the credentialed name and her profession: "Ing.
-arch. Tereza Kalábková | Architektka" in Czech, "… | Architect" in English. The
-landing page is the front page, so it carries this title; Work's is "Práce |
-Ing. arch. Tereza Kalábková" like the other pages — [Explicit].
+"Ing. arch. Tereza Kalábková | Architektka" in Czech, "… | Architect" in
+English: the credentialed name and her profession. Other pages lead with their
+own name, e.g. "Práce | Ing. arch. Tereza Kalábková".

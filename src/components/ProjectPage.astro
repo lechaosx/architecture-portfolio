@@ -1,5 +1,4 @@
 ---
-import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Gallery from './Gallery.svelte';
 import ProjectBlocks from './ProjectBlocks.astro';
@@ -8,9 +7,10 @@ import { credentialedName } from '../site-title';
 import { getResponsiveImage } from '../server-images';
 import { projectDescription } from '../project-description';
 import { creativeWork } from '../structured-data';
+import type { Project } from '../projects';
 
 interface Props {
-  project: Pick<CollectionEntry<'projects'>, 'id' | 'data'>;
+  project: Project;
 }
 
 const { project } = Astro.props;

@@ -1,34 +1,73 @@
 ---
-import type { CollectionEntry } from 'astro:content';
-import ProjectCard from './ProjectCard.astro';
-import type { workProjects } from '../projects';
+import T from './T.astro';
+import type { CardProject } from '../projects';
+import {
+  coverSizes,
+  displayImageUrl,
+  responsiveSrcset,
+  THUMBNAIL_WIDTHS,
+} from '../images';
+import { getResponsiveImage } from '../server-images';
 
-type Project = Pick<CollectionEntry<'projects'>, 'id' | 'data'>;
-
-// ProjectCard's image sizes follow this grid's columns and gaps.
 interface Props {
-  projects: ReturnType<typeof workProjects<Project>>['grid'];
+  projects: CardProject[];
   heading: 'h2' | 'h3';
 }
 
 const { projects, heading } = Astro.props;
+const cards = await Promise.all(
+  projects.map(async (project) => {
+    const responsive = await getResponsiveImage(project.cover.image);
+    // Mirrors the grid's breakpoints, columns and gaps below; change them together.
+    const sizes = coverSizes(
+      responsive ? responsive.source.width / responsive.source.height : 1,
+      1,
+      [
+        { media: '(min-width: 1152px)', fixed: 283 },
+        { media: '(min-width: 1024px)', viewport: 100 / 3, gutter: 304 / 3 },
+        { media: '(min-width: 640px)', viewport: 50, gutter: 48 },
+        { viewport: 100, gutter: 48 },
+      ],
+      1.03,
+    );
+    return { ...project, responsive, sizes };
+  }),
+);
 ---
 
 <div
   class="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-20 lg:grid-cols-3 lg:gap-x-32"
 >
   {
-    projects.map((p) => (
-      <ProjectCard
-        slug={p.id}
-        titleCs={p.data.title_cs}
-        titleEn={p.data.title_en}
-        year={p.data.year}
-        locationCs={p.data.location_cs}
-        locationEn={p.data.location_en}
-        cover={p.cover.image}
-        {heading}
-      />
+    cards.map(({ id, data, cover, responsive, sizes }) => (
+      <a href={`/projects/${id}/`} class="group relative block hover:z-10">
+        <div
+          class="project-cover aspect-square overflow-hidden bg-neutral-100"
+          style={`view-transition-name: cover-${id}`}
+        >
+          <img
+            src={displayImageUrl(responsive, cover.image)}
+            srcset={responsiveSrcset(responsive, THUMBNAIL_WIDTHS)}
+            {sizes}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            class="size-full object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-103"
+          />
+        </div>
+        <div class="mt-3 flex items-baseline justify-between">
+          <T as={heading} cs={data.title_cs} en={data.title_en} class="text-base font-medium" />
+          <span class="text-sm text-neutral-500">{data.year}</span>
+        </div>
+        {(data.location_cs || data.location_en) && (
+          <T
+            as="p"
+            cs={data.location_cs}
+            en={data.location_en}
+            class="text-sm text-neutral-500"
+          />
+        )}
+      </a>
     ))
   }
 </div>

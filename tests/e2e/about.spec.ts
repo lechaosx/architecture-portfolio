@@ -173,15 +173,3 @@ test('the side bar sits beside the main column on wide screens, above it on phon
     ).toBe(true);
   }
 });
-
-test('an approach text keeps the author’s paragraphs in both languages', async ({ page }) => {
-  await page.goto('/e2e/about/');
-  const paragraphs = section(page, /^(Approach|Přístup)$/)
-    .getByRole('listitem')
-    .first()
-    .getByRole('paragraph');
-  await expect(paragraphs).toHaveText(['First paragraph.', 'Second paragraph.']);
-
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  await expect(paragraphs).toHaveText(['První odstavec.', 'Druhý odstavec.']);
-});

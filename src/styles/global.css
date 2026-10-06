@@ -232,6 +232,10 @@ html[data-theme="dark"] .theme-icon-moon {
   }
 }
 
+@utility text-link {
+  @apply underline underline-offset-4 hover:decoration-dotted;
+}
+
 /* Carousel track scrolls natively (scroll-snap); hide the scrollbar chrome. */
 @utility no-scrollbar {
   scrollbar-width: none;
