@@ -1,23 +1,9 @@
 ---
-import PageMeta from '../components/PageMeta.astro';
-import { image, title } from '../work-page';
+import { getCollection } from 'astro:content';
+import LandingPage from '../components/LandingPage.astro';
+import { landing } from '../singletons';
 
-// GitHub Pages cannot redirect, so / forwards with a meta refresh. It carries
-// the work page's head, so link previews of the bare domain show that page.
-const work = new URL('/work/', Astro.site).href;
+const projects = await getCollection('projects', ({ data }) => !data.draft);
 ---
 
-<!doctype html>
-<html lang="cs">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light dark" />
-    <meta http-equiv="refresh" content="0; url=/work/" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <PageMeta {title} {image} url={work} />
-  </head>
-  <body>
-    <a href="/work/">{work}</a>
-  </body>
-</html>
+<LandingPage {landing} {projects} />

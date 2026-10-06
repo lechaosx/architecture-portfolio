@@ -6,6 +6,7 @@ import ContactIcon from './ContactIcon.astro';
 import T from './T.astro';
 import Paragraphs from './Paragraphs.astro';
 import Prose from './Prose.astro';
+import SectionHeading from './SectionHeading.astro';
 import { credentialedName } from '../site-title';
 import { onlyIn, ui } from '../i18n';
 import { getResponsiveImage } from '../server-images';
@@ -28,7 +29,6 @@ const timelines = [
   { k: 'awards', rows: about.awards },
 ] as const;
 
-const sectionHeading = 'mb-6 border-b border-black pb-2 text-sm tracking-widest uppercase';
 const badgeList = 'flex flex-wrap gap-1.5';
 const badge = 'border border-neutral-500 px-2 py-0.5 text-xs';
 // A timeline entry's left cell: place, department and years, then its tags.
@@ -99,7 +99,7 @@ const link = 'underline underline-offset-4 hover:decoration-dotted';
       {
         about.services.length > 0 && (
           <section>
-            <T as="h2" k="services" class={sectionHeading} />
+            <SectionHeading k="services" />
             <ul class={badgeList}>
               {about.services.map((service) => (
                 <li class={badge}>
@@ -125,7 +125,7 @@ const link = 'underline underline-offset-4 hover:decoration-dotted';
         ({ k, rows }) =>
           rows.length > 0 && (
             <section class="reveal">
-              <T as="h2" {k} class={sectionHeading} />
+              <SectionHeading {k} />
               <ul>
                 {rows.map((entry) => (
                   <li class="relative grid items-start pb-8 last:pb-0 sm:grid-cols-[1fr_2fr] sm:grid-rows-[auto_1fr]">
@@ -177,7 +177,7 @@ const link = 'underline underline-offset-4 hover:decoration-dotted';
       {
         about.approaches.length > 0 && (
           <section>
-            <T as="h2" k="approach" class={sectionHeading} />
+            <SectionHeading k="approach" />
             <ul class="grid gap-x-12 gap-y-10 sm:grid-cols-2">
               {about.approaches.map((item) => (
                 <li class="reveal group">

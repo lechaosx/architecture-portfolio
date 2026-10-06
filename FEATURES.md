@@ -23,7 +23,7 @@ The headline requirement: static pages, near-zero JavaScript, lazy-loaded images
 
 Generous whitespace and a simple grid. The nav wordmark is the credentialed name
 ("Ing. arch. TEREZA KALÁBKOVÁ", name uppercase, credential not) and leads to the
-work page, the front page; there is no Home menu item.
+landing page; there is no Home menu item.
 
 ### Works on phones — [Implicit]
 
@@ -65,15 +65,16 @@ Structural and design changes are made in code on the same repo.
 
 ### Most of the site is editable — [Explicit]
 
-Editable: projects, the About page (bio, portrait, work experience, services,
-education, awards, Approach), the contact details in the footer and on About
-and Site settings (name, credential, SEO description). Baked into code: page
-structure, navigation and section labels. CMS entries: **Projects**, **About
-page**, **Contact (footer and About)**, **Site settings**.
+Editable: projects, the landing page's images, the About page (bio, portrait,
+work experience, services, education, awards, Approach), the contact details in
+the footer and on About and Site settings (name, credential, description).
+Baked into code: page structure, navigation and section labels. CMS entries:
+**Projects**, **Landing page**, **About page**, **Contact (footer and About)**,
+**Site settings**.
 
 ### Required fields are what a page cannot do without — [Implicit]
 
-The name, the contact email, both About texts, every field of an Approach item,
+The name, both site descriptions (the landing page's intro), the contact email, both About texts, every field of an Approach item,
 both names of a service or tag and both places and titles of an experience,
 education or award row are required; everything else may be empty, including a
 row's years — [Explicit] — and the hours and location — [Implicit]. An edit
@@ -110,8 +111,8 @@ links.
 
 ### Editable site settings — [Explicit]
 
-Name, credential and SEO description in one CMS entry, feeding the wordmark,
-footer, tab titles, the work page's intro line and the description of pages
+Name, credential and description in one CMS entry, feeding the wordmark,
+footer, tab titles, the landing page's intro and the description of pages
 without their own.
 
 ### Draft flag — [Implicit]
@@ -123,23 +124,31 @@ without their own.
 Automatic, with no order field; the English title keeps the order the same in
 both languages.
 
-### Two pages: Work and About — [Explicit]
+### Three pages: landing, Work and About — [Explicit]
 
-The work page comes first and is the front page; the About page holds her bio,
-CV and approach. Contacts are in the footer of every page and beside the
-portrait on About.
+The landing page at `/` gives a visitor her context before the work: chosen
+images, who she is and a few projects, even where that repeats Work and About.
+The work page lists every project; the About page holds her bio, CV and
+approach. Contacts are in the footer of every page and beside the portrait on
+About.
 
-### The bare domain forwards to the work page — [Explicit]
+### Landing page — [Explicit]
 
-GitHub Pages cannot redirect, so `/` is a page that forwards at once to
-`/work/`, and it is left out of the sitemap. When a real home page is added, `/`
-stops forwarding.
+Top to bottom: her chosen images, the site description in large type with
+**O mně →**, then **Vybrané práce**, the three newest projects with images as
+the work page's cards, and **Všechny práce →**. The details — [Implicit]: three
+cards fill one row of the grid; the heading and links are About's section
+heading and the site's underlined links; the cards open their projects with the
+same cover transition as on Work.
 
-### The forwarding page previews as the work page — [Implicit]
+### Landing images or carousel — [Explicit]
 
-It carries the work page's title, description, share image and canonical
-address, so a shared link to the bare domain previews as the work page. Its only
-content is a plain link to `/work/`, for browsers that do not follow the refresh.
+The architect picks and orders the landing images; project images are never
+added automatically. One image shows at its natural aspect ratio; two or more
+form a carousel with arrows and dots that auto-advances, pausing on hover or
+focus, and not at all with reduced motion; with none, the page starts with the
+intro. The carousel is the project image sets' one with auto-advance added, its
+images cropped to fill the frame — [Implicit].
 
 ### About page: a CV with a side bar — [Explicit]
 
@@ -166,11 +175,6 @@ lines; the contact lines have small icons and thin rules between them, email
 and phone are links; a contact line filled in one language shows only in that
 language; an empty timeline or service list shows no heading, so with nothing
 filled About is the heading, bio and email.
-
-### Work page: the site description as its intro — [Explicit]
-
-Under the **Práce** heading, the SEO description from Site settings shows as one
-line in the visitor's language, then the projects.
 
 ### Work page: a grid of square covers — [Explicit]
 
@@ -210,17 +214,19 @@ there is no backend to receive one.
 
 The contacts have no label; the icons and links say what they are — [Explicit].
 
-The layout — [Implicit]: each contact with the About page's icon, in one row on
-wide screens and one per line on phones, never broken inside; below them, in
-smaller quiet type, the © on the left and the theme and language switches on
-the right. Everything sits on the page's left edge at every width.
+The layout — [Implicit]: on wide screens one line, the © on the left, the
+contacts in the middle and the theme and language switches on the right; each
+contact has the About page's icon, which also separates it from the next. All of
+it is in the footer's small grey type — [Explicit]. Where the line does not fit,
+the contacts come first, wrapping only between whole contacts, then the © and
+the switches in one row; everything starts on the page's left edge.
 
 ### Custom 404 page — [Explicit]
 
 An unknown address gets a page in the site's frame, menu and footer included: a
 heading ("Na této parcele nic nestojí." / "Nothing stands on this plot."), a line
-asking whether the address is right and a link back to the studio, the work page
-— copy [Explicit]. It is kept out of search engines and the sitemap, and nothing
+asking whether the address is right and a link back to the studio, the landing
+page — copy [Explicit]. It is kept out of search engines and the sitemap, and nothing
 redirects.
 
 ---
@@ -258,7 +264,8 @@ Motion rides the native scrollbar and stays subtle.
 ### Page transitions — [Implicit]
 
 Where the browser supports cross-document View Transitions, pages crossfade and
-a project's first image moves between its work card and its project page,
+a project's first image moves between its card, on the work or landing page, and
+its project page,
 changing crop on the way; elsewhere, ordinary navigation. The moving image is
 one image, starting from the card's hover zoom — [Explicit]. It moves only when
 the first block is an image block, so the image is at the top of the page; when
@@ -414,10 +421,11 @@ description.
 
 ### Share image: the first image — [Implicit]
 
-A project's link preview shows its cover, the work page's (and so the bare
-domain's) the first cover in its grid, the About page's the portrait, as a JPEG
-about 1200px wide, the format every social site shows. Social sites do not show
-SVGs, so an SVG gives no preview image.
+A project's link preview shows its cover, the work page's the first cover in its
+grid, the landing page's its first landing image that is not an SVG, else the
+work page's, and the About page's the portrait, as a JPEG about 1200px wide, the
+format every social site shows. Social sites do not show SVGs, so an SVG gives
+no preview image.
 
 ### Facts for search engines and AI assistants — [Implicit]
 
@@ -433,4 +441,5 @@ project's texts and image captions in one Markdown file, Czech then English.
 
 The front page's tab title is the credentialed name and her profession: "Ing.
 arch. Tereza Kalábková | Architektka" in Czech, "… | Architect" in English. The
-work page is the front page, so it carries this title — [Implicit].
+landing page is the front page, so it carries this title; Work's is "Práce |
+Ing. arch. Tereza Kalábková" like the other pages — [Explicit].

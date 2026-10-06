@@ -73,8 +73,15 @@ const site = defineCollection({
   schema: z.object({
     name: z.string(),
     credential: z.string().optional(),
-    description_cs: z.string().optional(),
-    description_en: z.string().optional(),
+    description_cs: z.string(),
+    description_en: z.string(),
+  }),
+});
+
+const landing = defineCollection({
+  loader: glob({ pattern: 'landing.md', base: singletons }),
+  schema: z.object({
+    images: z.array(z.string()).default([]),
   }),
 });
 
@@ -134,4 +141,4 @@ const contact = defineCollection({
   }),
 });
 
-export const collections = { projects, site, about, contact };
+export const collections = { projects, site, landing, about, contact };

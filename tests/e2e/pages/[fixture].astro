@@ -5,6 +5,7 @@
 import type { CollectionEntry } from 'astro:content';
 import Base from '../../../src/layouts/Base.astro';
 import AboutPage from '../../../src/components/AboutPage.astro';
+import LandingPage from '../../../src/components/LandingPage.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
 import ProjectPage from '../../../src/components/ProjectPage.astro';
 import WorkProjects from '../../../src/components/WorkProjects.astro';
@@ -196,7 +197,27 @@ export function getStaticPaths() {
   const bareAbout = { ...about, portrait: undefined, approaches: [], experience: [], services: [], education: [], awards: [] };
   const bareContact = { email: contact.email, location_cs: 'Brno' };
 
+  // Four projects with images, one more than the landing page shows.
+  const landingProjects = [
+    ...briefProjects,
+    ...[2025, 2024, 2023].map((year) =>
+      listed(String(year), {
+        title_en: `Project ${year}`,
+        title_cs: `Projekt ${year}`,
+        year,
+        blocks: [{ type: 'image_set', images: [item('square-1.png')] }],
+      }),
+    ),
+  ];
+  const landing = (heroImages: string[]) => ({
+    landing: { images: heroImages },
+    projects: landingProjects,
+  });
+
   return [
+    { params: { fixture: 'landing' }, props: landing([images[0], '/e2e/images/wide.png', '/e2e/images/cover.png']) },
+    { params: { fixture: 'landing-single' }, props: landing(images.slice(0, 1)) },
+    { params: { fixture: 'landing-bare' }, props: landing([]) },
     { params: { fixture: 'about' }, props: { about, contact } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout, contact: bareContact } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
@@ -232,7 +253,7 @@ export function getStaticPaths() {
   ];
 }
 
-const { about, contact, images, project, projects } = Astro.props;
+const { about, contact, images, landing, project, projects } = Astro.props;
 ---
 
 {
@@ -240,6 +261,8 @@ const { about, contact, images, project, projects } = Astro.props;
     <ProjectPage {project} />
   ) : about ? (
     <AboutPage {about} {contact} />
+  ) : landing ? (
+    <LandingPage {landing} {projects} />
   ) : projects ? (
     <Base title={{ cs: 'E2E', en: 'E2E' }}>
       <WorkProjects {projects} />

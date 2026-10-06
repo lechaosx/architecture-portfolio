@@ -10,7 +10,7 @@ test('projects without images are listed below the grid in sort order, with thei
   page,
 }) => {
   await page.goto('/e2e/work/');
-  await expect(page.locator('main section.grid > a')).toHaveCount(1);
+  await expect(page.locator('main .grid > a')).toHaveCount(1);
 
   const rows = list(page).locator('li');
   await expect(rows).toHaveCount(3);
@@ -21,7 +21,7 @@ test('projects without images are listed below the grid in sort order, with thei
   await expect(rows.nth(1)).toContainText('Beta text');
   await expect(rows.nth(2)).toContainText('Old brief');
 
-  const gridBottom = (await page.locator('main section.grid').boundingBox())!;
+  const gridBottom = (await page.locator('main .grid').boundingBox())!;
   const listTop = (await list(page).boundingBox())!;
   expect(listTop.y).toBeGreaterThan(gridBottom.y + gridBottom.height);
   await expect(page.locator('main hr')).toHaveCount(1);
@@ -43,7 +43,7 @@ test('a row links to the project page only when the project has blocks', async (
 
 test('neither the rule nor the list render when every project has an image', async ({ page }) => {
   await page.goto('/e2e/work-grid-only/');
-  await expect(page.locator('main section.grid > a')).toHaveCount(1);
+  await expect(page.locator('main .grid > a')).toHaveCount(1);
   await expect(list(page)).toHaveCount(0);
   await expect(page.locator('main hr')).toHaveCount(0);
 });
@@ -95,6 +95,6 @@ test('hovering a linked row underlines its title, and an unlinked row has no lin
 
 test('no grid renders when no project has an image', async ({ page }) => {
   await page.goto('/e2e/work-list-only/');
-  await expect(page.locator('main section.grid')).toHaveCount(0);
+  await expect(page.locator('main .grid')).toHaveCount(0);
   await expect(list(page).locator('li')).toHaveCount(3);
 });

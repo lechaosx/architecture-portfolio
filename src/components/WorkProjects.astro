@@ -1,8 +1,8 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import ProjectCard from './ProjectCard.astro';
+import ProjectGrid from './ProjectGrid.astro';
 import T from './T.astro';
-import { newestFirst, projectCover } from '../projects';
+import { workProjects } from '../projects';
 
 type Project = Pick<CollectionEntry<'projects'>, 'id' | 'data'>;
 
@@ -10,29 +10,14 @@ interface Props {
   projects: Project[];
 }
 
-const sorted = [...Astro.props.projects].sort(newestFirst);
-const grid = sorted.flatMap((p) => {
-  const cover = projectCover(p.data);
-  return cover ? [{ ...p, cover }] : [];
-});
-const listed = sorted.filter((p) => !projectCover(p.data));
+const { grid, listed } = workProjects(Astro.props.projects);
 ---
 
 {
   grid.length > 0 && (
-    <section class="mx-auto grid max-w-6xl grid-cols-1 gap-x-8 gap-y-12 px-6 pb-16 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-20 sm:pb-24 lg:grid-cols-3 lg:gap-x-32">
-      {grid.map((p) => (
-        <ProjectCard
-          slug={p.id}
-          titleCs={p.data.title_cs}
-          titleEn={p.data.title_en}
-          year={p.data.year}
-          locationCs={p.data.location_cs}
-          locationEn={p.data.location_en}
-          cover={p.cover.image}
-        />
-      ))}
-    </section>
+    <div class="mx-auto max-w-6xl px-6 pb-16 sm:pb-24">
+      <ProjectGrid projects={grid} heading="h2" />
+    </div>
   )
 }
 

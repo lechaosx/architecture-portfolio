@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { parse } from 'yaml';
 
 const site = parse(
@@ -12,12 +12,6 @@ const owner = [site.credential, site.name].filter(Boolean).join(' ');
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-});
-
-test('the bare domain forwards to the work page', async ({ page }) => {
-  await page.goto('/');
-  await expect(page).toHaveURL(/\/work\/$/);
-  await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
 });
 
 test('primary navigation reaches every page and marks the current section', async ({
@@ -33,7 +27,7 @@ test('primary navigation reaches every page and marks the current section', asyn
   await expect(workLink).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
 
-  await page.locator('main section.grid > a').first().click();
+  await page.locator('main .grid > a').first().click();
   await expect(page).toHaveURL(/\/projects\/.+\/$/);
   await page.getByRole('link', { name: 'Back to work' }).click();
   await expect(page).toHaveURL(/\/work\/$/);
@@ -46,15 +40,14 @@ test('primary navigation reaches every page and marks the current section', asyn
   await expect(page.getByRole('heading', { name: 'Approach' })).toBeVisible();
 
   await page.locator('header nav > a').first().click();
-  await expect(page).toHaveURL(/\/work\/$/);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator('header nav [aria-current]')).toHaveCount(0);
 });
 
-test('the work page opens with the site description', async ({ page }) => {
+test('the work page has no intro, only its heading and the projects', async ({ page }) => {
   await page.goto('/work/');
-  const intro = page.locator('main h1 ~ p:visible');
-  await expect(intro).toHaveText(site.description_en);
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  await expect(intro).toHaveText(site.description_cs);
+  await expect(page.getByRole('heading', { level: 1, name: 'Work' })).toBeVisible();
+  await expect(page.locator('main').getByText(site.description_en)).toHaveCount(0);
 });
 
 test('an unknown address shows the not-found page with the menu', async ({ page }) => {
@@ -75,7 +68,7 @@ test('an unknown address shows the not-found page with the menu', async ({ page 
   await expect(page.getByRole('heading', { name: 'Na této parcele nic nestojí.' })).toBeVisible();
   await expect(page).toHaveTitle(`Stránka nenalezena | ${owner}`);
   await page.getByRole('link', { name: 'Zpátky do ateliéru' }).click();
-  await expect(page).toHaveURL(/\/work\/$/);
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test.describe(() => {
@@ -112,7 +105,7 @@ test.describe(() => {
     await page.goto('/work/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
-    await expect(page).toHaveTitle(`${owner} | Architect`);
+    await expect(page).toHaveTitle(`Work | ${owner}`);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
       site.description_en,
@@ -134,7 +127,7 @@ test.describe(() => {
     await page.goto('/work/');
     expect(
       await page.evaluate(() => (window as unknown as { titleWhenParsed: string }).titleWhenParsed),
-    ).toBe(`${owner} | Architect`);
+    ).toBe(`Work | ${owner}`);
   });
 });
 
@@ -142,7 +135,8 @@ test('tab titles name the page and the credentialed architect in both languages'
   page,
 }) => {
   const titles = [
-    ['/work/', `${owner} | Architect`, `${owner} | Architektka`],
+    ['/', `${owner} | Architect`, `${owner} | Architektka`],
+    ['/work/', `Work | ${owner}`, `Práce | ${owner}`],
     ['/about/', `About | ${owner}`, `O mně | ${owner}`],
     // tests/e2e/pages/[fixture].astro, which the e2e build adds.
     ['/e2e/project/', `Test project | ${owner}`, `Testovací projekt | ${owner}`],
@@ -224,7 +218,7 @@ test('work projects are sorted and the grid follows its responsive breakpoints',
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/work/');
-  const grid = page.locator('main section.grid');
+  const grid = page.locator('main .grid');
   const cards = grid.locator(':scope > a');
   const rendered = await cards.evaluateAll((elements) =>
     elements.map((element) => ({
@@ -250,67 +244,73 @@ test('work projects are sorted and the grid follows its responsive breakpoints',
   expect(await columnCount()).toBe(1);
 });
 
-test('the footer links its contacts, in a row on wide screens and stacked on phones', async ({
+const middle = async (item: Locator) => {
+  const box = (await item.boundingBox())!;
+  return Math.round(box.y + box.height / 2);
+};
+
+const footerParts = (page: Page) => {
+  const footer = page.locator('footer');
+  return {
+    footer,
+    copyright: footer.getByText(`© ${new Date().getFullYear()} ${site.name}`),
+    email: footer.getByRole('link', { name: contact.email }),
+    phone: footer.getByRole('link', { name: contact.phone }),
+    hours: (lang: 'en' | 'cs') => footer.getByText(contact[`hours_${lang}`], { exact: true }),
+    theme: footer.locator('[data-theme-toggle]'),
+    language: footer.locator('[data-lang-toggle]'),
+  };
+};
+
+test('the footer is one row on wide screens: ©, contacts, then the switches', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/work/');
-  const footer = page.locator('footer');
-  const email = footer.getByRole('link', { name: contact.email });
-  const phone = footer.getByRole('link', { name: contact.phone });
-  const hours = footer.getByText(contact.hours_en);
-  const copyright = footer.getByText(`© ${new Date().getFullYear()} ${site.name}`);
-  const middle = async (item: Locator) => {
-    const box = (await item.boundingBox())!;
-    return Math.round(box.y + box.height / 2);
-  };
+  const { footer, copyright, email, phone, hours, theme, language } = footerParts(page);
 
   await expect(email).toHaveAttribute('href', `mailto:${contact.email}`);
   await expect(phone).toHaveAttribute('href', `tel:${contact.phone.replace(/\s+/g, '')}`);
-  await expect(hours).toBeVisible();
-  expect(new Set(await Promise.all([email, phone, hours].map(middle))).size).toBe(1);
+  await expect(hours('en')).toBeVisible();
+  const row = [copyright, email, phone, hours('en'), theme, language];
+  expect(new Set(await Promise.all(row.map(middle))).size).toBe(1);
+  const lefts = await Promise.all(row.map(async (item) => (await item.boundingBox())!.x));
+  expect(lefts).toEqual([...lefts].sort((a, b) => a - b));
 
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  await expect(footer.getByText(contact.hours_cs)).toBeVisible();
-  await expect(hours).toBeHidden();
-
-  await page.setViewportSize({ width: 390, height: 800 });
-  const [e, p, h, c, first] = await Promise.all(
-    [
-      email,
-      phone,
-      footer.getByText(contact.hours_cs),
-      copyright,
-      footer.getByRole('listitem').first(),
-    ].map((item) => item.boundingBox()),
-  );
-  expect(p!.y).toBeGreaterThan(e!.y + e!.height - 1);
-  expect(h!.y).toBeGreaterThan(p!.y + p!.height - 1);
-  expect(p!.x).toBeCloseTo(e!.x);
-  expect(h!.x).toBeCloseTo(e!.x);
-  expect(c!.x, 'left-aligned, not centred').toBeCloseTo(first!.x);
+  await language.click();
+  await expect(hours('cs')).toBeVisible();
+  await expect(hours('en')).toBeHidden();
   await expect(footer.getByRole('heading')).toHaveCount(0);
 });
 
-test('the footer fits a 320px phone, its bottom row on one line', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 700 });
+test('on phones the footer lists the contacts, then © and the switches in one row', async ({
+  page,
+}) => {
   await page.goto('/work/');
-  const footer = page.locator('footer');
-  const middles = await Promise.all(
-    [
-      footer.getByText(`© ${new Date().getFullYear()} ${site.name}`),
-      footer.getByRole('button', { name: 'Switch to Czech' }),
-    ].map(async (item) => {
-      const box = (await item.boundingBox())!;
-      return Math.round(box.y + box.height / 2);
-    }),
-  );
-  expect(new Set(middles).size).toBe(1);
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
-    ),
-  ).toBe(true);
+  const { footer, copyright, email, phone, hours, theme } = footerParts(page);
+  for (const lang of ['en', 'cs'] as const) {
+    if (lang === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    for (const width of [390, 375, 360, 320]) {
+      const at = `${lang} at ${width}px`;
+      await page.setViewportSize({ width, height: 700 });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        ),
+        at,
+      ).toBe(true);
+      for (const item of [email, phone, hours(lang)]) {
+        expect(await item.evaluate((element) => element.getClientRects().length), at).toBe(1);
+      }
+      const [e, p, h, c] = await Promise.all(
+        [email, phone, hours(lang), copyright].map(async (item) => (await item.boundingBox())!),
+      );
+      expect(c.y, at).toBeGreaterThan(Math.max(e.y + e.height, p.y + p.height, h.y + h.height));
+      expect(await middle(theme), at).toBe(await middle(copyright));
+      const first = (await footer.getByRole('listitem').first().boundingBox())!;
+      expect(c.x, `${at}: left-aligned with the contacts`).toBeCloseTo(first.x);
+    }
+  }
 });
 
 test('the wordmark and menu fit a 320px phone, each menu item on one line', async ({ page }) => {
@@ -328,26 +328,6 @@ test('the wordmark and menu fit a 320px phone, each menu item on one line', asyn
       ),
       lang,
     ).toBe(true);
-  }
-});
-
-test('no footer contact breaks inside on phones', async ({ page }) => {
-  await page.goto('/work/');
-  const footer = page.locator('footer');
-  for (const [lang, hours] of [
-    ['en', contact.hours_en],
-    ['cs', contact.hours_cs],
-  ]) {
-    if (lang === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
-    for (const width of [390, 375, 360]) {
-      await page.setViewportSize({ width, height: 700 });
-      for (const text of [contact.email, contact.phone, hours]) {
-        const lines = await footer
-          .getByText(text, { exact: true })
-          .evaluate((element) => element.getClientRects().length);
-        expect(lines, `${text} in ${lang} at ${width}px`).toBe(1);
-      }
-    }
   }
 });
 
@@ -484,9 +464,9 @@ test.describe(() => {
   test.use({ javaScriptEnabled: false });
 
   test('the static page is Czech, as crawlers and link previews read it', async ({ page }) => {
-    await page.goto('/work/');
+    await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
-    await expect(page.getByRole('heading', { name: 'Práce' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(site.description_cs);
     await expect(page).toHaveTitle(`${owner} | Architektka`);
     const meta = (selector: string) => page.locator(`meta[${selector}]`);
     await expect(meta('name="description"')).toHaveAttribute('content', site.description_cs);
@@ -548,7 +528,7 @@ test('reveal content fades in as soon as it enters the viewport', async ({ page 
   await expect.poll(opacity).toBe('1');
 });
 
-for (const path of ['/work/', '/about/', '/e2e/about/']) {
+for (const path of ['/', '/e2e/landing/', '/work/', '/about/', '/e2e/about/']) {
   test(`the headings of ${path} nest without skipping a level`, async ({ page }) => {
     await page.goto(path);
     const levels = await page

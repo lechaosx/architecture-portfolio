@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import Carousel from './Carousel.astro';
 import Prose from './Prose.astro';
 import T from './T.astro';
 import { imageText } from './gallery';
@@ -152,164 +153,37 @@ const morphName = `view-transition-name: cover-${projectId}`;
       }
 
       return (
-        <div data-project-carousel class="relative bg-neutral-100">
-          <div
-            data-project-carousel-track
-            class="no-scrollbar flex aspect-video snap-x snap-mandatory overflow-x-auto"
-          >
-            {block.images.map(({ item, index, responsive, title, loading, decoding, morph }) => (
-              <button
-                type="button"
-                data-lightbox-index={index}
-                data-project-slide
-                class:list={[
-                  'relative size-full shrink-0 snap-start',
-                  { 'project-cover': morph },
-                ]}
-                style={morph ? morphName : undefined}
-              >
-                <T
-                  cs={`${ui.cs.openImage} ${index + 1}`}
-                  en={`${ui.en.openImage} ${index + 1}`}
-                  class="sr-only"
-                />
-                <img
-                  src={displayImageUrl(responsive, item.image)}
-                  srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
-                  sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
-                  width={responsive?.source.width}
-                  height={responsive?.source.height}
-                  alt={title.cs ?? ''}
-                  data-cs={title.cs}
-                  data-en={title.en}
-                  {loading}
-                  {decoding}
-                  class="size-full object-contain"
-                />
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            data-project-carousel-prev
-            class="media-navigation-button absolute top-1/2 left-3 -translate-y-1/2"
-          >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              class="size-5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
+        <Carousel items={block.images}>
+          {({ item, index, responsive, title, loading, decoding, morph }: (typeof block.images)[number]) => (
+            <button
+              type="button"
+              data-lightbox-index={index}
+              class:list={{ 'project-cover': morph }}
+              style={morph ? morphName : undefined}
             >
-              <path d="M15.5 5l-7 7 7 7" />
-            </svg>
-            <T k="previousImage" class="sr-only" />
-          </button>
-          <button
-            type="button"
-            data-project-carousel-next
-            class="media-navigation-button absolute top-1/2 right-3 -translate-y-1/2"
-          >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              class="size-5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-            >
-              <path d="M8.5 5l7 7-7 7" />
-            </svg>
-            <T k="nextImage" class="sr-only" />
-          </button>
-          <div class="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-            {block.images.map((_, index) => (
-              <button
-                type="button"
-                data-project-dot
-                class="carousel-dot size-2.5 rounded-full"
-              >
-                <T
-                  cs={`${ui.cs.goToImage} ${index + 1}`}
-                  en={`${ui.en.goToImage} ${index + 1}`}
-                  class="sr-only"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
+              <T
+                cs={`${ui.cs.openImage} ${index + 1}`}
+                en={`${ui.en.openImage} ${index + 1}`}
+                class="sr-only"
+              />
+              <img
+                src={displayImageUrl(responsive, item.image)}
+                srcset={responsiveSrcset(responsive, LARGE_IMAGE_WIDTHS)}
+                sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
+                width={responsive?.source.width}
+                height={responsive?.source.height}
+                alt={title.cs ?? ''}
+                data-cs={title.cs}
+                data-en={title.en}
+                {loading}
+                {decoding}
+                class="size-full object-contain"
+              />
+            </button>
+          )}
+        </Carousel>
       );
     })
   }
 </div>
 
-<script>
-  for (const root of document.querySelectorAll<HTMLElement>(
-    '[data-project-carousel]',
-  )) {
-    const track = root.querySelector<HTMLElement>(
-      '[data-project-carousel-track]',
-    );
-    if (!track) continue;
-    const slides = Array.from(
-      root.querySelectorAll<HTMLElement>('[data-project-slide]'),
-    );
-    const dots = Array.from(
-      root.querySelectorAll<HTMLElement>('[data-project-dot]'),
-    );
-    // The current slide is state; the smooth scroll only chases it. Only the
-    // visitor's own scrolling of the track moves it from the scroll position.
-    let current = 0;
-    let visitorScrolling = false;
-    const sync = () => {
-      dots.forEach((dot, index) =>
-        dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
-      );
-    };
-    const goTo = (index: number) => {
-      current = ((index % slides.length) + slides.length) % slides.length;
-      visitorScrolling = false;
-      sync();
-      track.scrollTo({
-        left: current * track.clientWidth,
-        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? 'auto'
-          : 'smooth',
-      });
-    };
-
-    root
-      .querySelector('[data-project-carousel-prev]')
-      ?.addEventListener('click', () => goTo(current - 1));
-    root
-      .querySelector('[data-project-carousel-next]')
-      ?.addEventListener('click', () => goTo(current + 1));
-    dots.forEach((dot, index) =>
-      dot.addEventListener('click', () => goTo(index)),
-    );
-    for (const event of ['pointerdown', 'keydown', 'focusin']) {
-      track.addEventListener(event, () => (visitorScrolling = true), {
-        passive: true,
-      });
-    }
-    // A vertical wheel over the track scrolls the page, not the track.
-    track.addEventListener(
-      'wheel',
-      (event) => {
-        if (event.deltaX || event.shiftKey) visitorScrolling = true;
-      },
-      { passive: true },
-    );
-    track.addEventListener(
-      'scroll',
-      () => {
-        if (!visitorScrolling) return;
-        current = Math.round(track.scrollLeft / track.clientWidth);
-        sync();
-      },
-      { passive: true },
-    );
-    sync();
-  }
-</script>

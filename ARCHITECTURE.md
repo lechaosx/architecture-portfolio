@@ -59,11 +59,13 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
   `tests/e2e/images`, served at `/e2e/images/` — [Implicit].
 - The About tests render `AboutPage.astro` with fixture data, everything filled
   and nothing optional filled — [Implicit].
+- The landing tests render `LandingPage.astro` with no image, one SVG, and an
+  SVG and two rasters, over fixture projects — [Implicit].
 - Metadata, structured-data and alt-text tests use fixture project pages; the
   `llms.txt` test checks it against the shipped projects and follows its links
   — [Implicit].
 - The work list and the brief and text-only project pages are tested through
-  fixture projects; other About, work-page, footer and transition tests use the
+  fixture projects; other landing, About, work-page, footer and transition tests use the
   shipped content — [Implicit].
 
 ---
@@ -104,8 +106,7 @@ Pages are static; only components that must run in the browser hydrate
 [Implicit], written in Svelte [Explicit]. The only island is the project
 lightbox, `Gallery.svelte`, loaded `client:load` so a pasted `#image-N` opens at
 once [Implicit]. Everything else is a few small vanilla scripts: reveal, the
-project carousel, the language and theme switches, the project-transition
-tagging.
+carousel, the language and theme switches, the project-transition tagging.
 
 ### Lightbox structure — [Explicit] (seams [Implicit])
 
@@ -144,7 +145,7 @@ address) changes the moment input arrives; each visual is one number a Svelte
 - The phone's edge arrows are derived from the turns on screen, not tweened
   separately, so they stay in step by construction.
 
-The project carousel keeps a slide index instead of reading it from a mid-scroll
+The carousel keeps a slide index instead of reading it from a mid-scroll
 position, which would drop a quick second press. Page View Transitions are the
 one accepted exception — [Explicit]: the browser holds input during them.
 
@@ -182,11 +183,14 @@ constraints and auto-resize are off, so it only follows the lightbox's view.
   pending Back, because Chromium and Firefox disagree on a push made during one.
   Scroll restoration is manual while the entry is active.
 
-### Project carousel: scroll-snap plus a small script — [Implicit]
+### Carousel: scroll-snap plus a small script — [Implicit]
 
 Native horizontal scroll-snap with arrows and dots; no island. It scrolls its
-own container, not the page. It shares the interaction language with the
-lightbox but not its implementation.
+own container, not the page. `Carousel.astro` is the frame, controls and script
+for both project image sets and the landing images; the caller renders one
+slide per item, which the track sizes, and only the landing page turns on
+auto-advance. It shares the
+interaction language with the lightbox but not its implementation.
 
 ### Project blocks render in Astro — [Explicit]
 
@@ -198,18 +202,30 @@ it, it is the only image that loads eagerly, and it is the page's share image.
 ### Work page: one component for grid and list — [Implicit]
 
 `WorkProjects.astro` sorts the projects and renders the grid and the list; it is
-a component so the e2e fixtures can render it with their own projects. Project
-titles in both are `h2`s, directly under the page's `h1`. The order
-(`newestFirst`) and a project's cover (`projectCover`) live in `src/projects.ts`,
-so the work page's share image is always its first card's cover; `llms.txt`
-uses the same order.
+a component so the e2e fixtures can render it with their own projects. The grid
+is `ProjectGrid.astro`, shared with the landing page because `ProjectCard`'s
+image sizes follow its columns; card titles are `h2`s directly under Work's
+`h1` and `h3`s under the landing page's section heading. The order
+(`newestFirst`), a project's cover (`projectCover`) and the split into grid and
+list (`workProjects`) live in `src/projects.ts`, so the share images that fall
+back to the newest cover always show the first card's; `llms.txt` uses the
+same order.
+
+### Landing page: one component — [Implicit]
+
+`LandingPage.astro` renders `/` from the landing singleton and the projects
+passed in, as `AboutPage.astro` does for About, so the e2e fixtures can render
+it with no, one or several images. The site description is its `h1`, the
+page's statement.
 
 ### About page: one component — [Implicit]
 
 `AboutPage.astro` renders the whole page from the about and contact data passed
 in, as `ProjectPage.astro` does for a project, so the e2e fixtures can render it
 with their own; `ApproachIcon.astro` holds the four Approach icons and
-`ContactIcon.astro` the contact icons the About page and the footer share. The
+`ContactIcon.astro` the contact icons the About page and the footer share;
+`SectionHeading.astro` is the small-caps heading over a thin rule that About
+and the landing page share. The
 `h1` comes first in the grid and the side bar is placed beside it from `lg`, so
 the heading order runs `h1`, then the `h2` sections, then the `h3` entries at
 every width. A timeline's line and square marker are decorative spans
@@ -225,7 +241,9 @@ other.
 `cover-<id>` sits on the wrapper holding the first image (for a multi-image set,
 its first slide), so it does not compete with the inner image's hover scale. It
 is set only when the first block is an image block. An inline `pagereveal` script tags
-each navigation and carries the card's hover scale across. One snapshot is
+each navigation by whether it arrives at a project page and carries the card's
+hover scale across, so a card morphs from any page that shows one, Work or the
+landing page. One snapshot is
 drawn, because blending two crops doubles the edges.
 
 ### Reveal on scroll: IntersectionObserver — [Implicit]
@@ -293,8 +311,8 @@ no-JS.
 
 ### Content collections; singletons as one-entry collections — [Implicit] / [Explicit]
 
-`src/content.config.ts` validates projects and the site, about and contact
-singletons [Explicit] with Zod, so a CMS edit the pages cannot render fails the
+`src/content.config.ts` validates projects and the site, landing, about and
+contact singletons [Explicit] with Zod, so a CMS edit the pages cannot render fails the
 build. A field is required only when a page needs it; optional lists default to
 empty — [Implicit]. Markdown file bodies are unused: bilingual text lives in
 `_cs`/`_en` frontmatter.
@@ -332,8 +350,8 @@ keeps them associated. Both block types share the shape.
 ### Sitemap — [Implicit]
 
 `@astrojs/sitemap` writes `sitemap-index.xml`, using `site` for absolute URLs;
-`robots.txt` points crawlers to it. A filter leaves out `/`, which only
-forwards; the integration leaves out the 404 page itself.
+`robots.txt` points crawlers to it. The integration leaves out the 404 page
+itself.
 
 ---
 
@@ -344,16 +362,9 @@ forwards; the integration leaves out the 404 page itself.
 A page passes `Base` only what it knows about itself: a description, a share
 image, its Open Graph type, its structured-data nodes and, for the 404 page,
 `noindex`. `Base` derives the canonical address from `site` and the path (none
-for a `noindex` page) and adds the architect's node; `PageMeta.astro` writes the
-title, description, canonical, Open Graph and Twitter tags, falling back to the
-site description, so every page gets the same head.
-
-### The forwarding page shares the head, not the layout — [Implicit]
-
-`/` is a bare document with a meta refresh and `PageMeta.astro`, fed the work
-page's title and share image from `src/work-page.ts`, so its preview cannot
-drift from Work. It loads none of `Base`'s styles or scripts, so no view
-transition, language or reveal script runs before the refresh.
+for a `noindex` page), adds the architect's node and writes the title,
+description, canonical, Open Graph and Twitter tags, falling back to the site
+description, so every page gets the same head.
 
 ### Share images come from the responsive pipeline — [Implicit]
 

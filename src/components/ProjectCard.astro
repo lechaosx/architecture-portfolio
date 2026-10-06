@@ -16,9 +16,10 @@ interface Props {
   locationCs?: string;
   locationEn?: string;
   cover: string;
+  heading: 'h2' | 'h3';
 }
 
-const { slug, titleCs, titleEn, year, locationCs, locationEn, cover } =
+const { slug, titleCs, titleEn, year, locationCs, locationEn, cover, heading } =
   Astro.props;
 const responsiveCover = await getResponsiveImage(cover);
 const aspectRatio = responsiveCover
@@ -53,7 +54,7 @@ const sizes = coverSizes(
     />
   </div>
   <div class="mt-3 flex items-baseline justify-between">
-    <T as="h2" cs={titleCs} en={titleEn} class="text-base font-medium" />
+    <T as={heading} cs={titleCs} en={titleEn} class="text-base font-medium" />
     <span class="text-sm text-neutral-500">{year}</span>
   </div>
   {

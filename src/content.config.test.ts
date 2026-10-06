@@ -108,7 +108,7 @@ const project = {
   blocks: [imageSet],
 };
 
-describe.each(['projects', 'site', 'about', 'contact'] as const)('%s schema', (name) => {
+describe.each(['projects', 'site', 'landing', 'about', 'contact'] as const)('%s schema', (name) => {
   test('declares the same fields as Pages CMS, required in the same places', () => {
     const editor = pagesConfig.content.find((entry) => entry.name === name);
     expect(editorShape(editor?.fields ?? [])).toEqual(rowShape(staticSchema(name)));
@@ -194,6 +194,21 @@ describe('project content schema', () => {
   });
 });
 
+test('site settings need the description in both languages, the landing page intro', () => {
+  const settings = { name: 'Jana', description_cs: 'Portfolio', description_en: 'Portfolio' };
+  expect(staticSchema('site').safeParse(settings).success).toBe(true);
+  for (const field of ['description_cs', 'description_en']) {
+    expect(staticSchema('site').safeParse({ ...settings, [field]: undefined }).success, field).toBe(false);
+  }
+});
+
+test('the landing page may have no images', () => {
+  expect(staticSchema('landing').safeParse({})).toMatchObject({
+    success: true,
+    data: { images: [] },
+  });
+});
+
 describe('about content schema', () => {
   const aboutSchema = staticSchema('about');
   const about = { body_cs: 'O mně', body_en: 'About me' };
@@ -268,7 +283,7 @@ test('contact reads where she is and when she is reachable, one line per languag
   ).toMatchObject({ success: true, data: lines });
 });
 
-test.each(['site', 'about', 'contact'] as const)('the committed %s singleton is valid', (name) => {
+test.each(['site', 'landing', 'about', 'contact'] as const)('the committed %s singleton is valid', (name) => {
   const content = frontmatter(`src/content/singletons/${name}.md`);
   expect(staticSchema(name).safeParse(content).success).toBe(true);
 });
