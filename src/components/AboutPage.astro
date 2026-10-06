@@ -35,7 +35,6 @@ const badge = 'border border-neutral-500 px-2 py-0.5 text-xs';
 const timelineLeft = 'pl-5 sm:col-start-1 sm:pr-5 sm:pl-0 sm:text-right';
 const contactLine = 'flex items-center gap-3 border-t border-neutral-200 py-2';
 const icon = 'size-4 shrink-0 text-neutral-500';
-const link = 'underline underline-offset-4 hover:decoration-dotted';
 ---
 
 <Base
@@ -80,12 +79,12 @@ const link = 'underline underline-offset-4 hover:decoration-dotted';
           {contact.phone && (
             <li class={contactLine}>
               <ContactIcon icon="phone" class={icon} />
-              <a href={`tel:${contact.phone.replace(/\s+/g, '')}`} class={link}>{contact.phone}</a>
+              <a href={`tel:${contact.phone.replace(/\s+/g, '')}`} class="text-link">{contact.phone}</a>
             </li>
           )}
           <li class={contactLine}>
             <ContactIcon icon="email" class={icon} />
-            <a href={`mailto:${contact.email}`} class={link}>{contact.email}</a>
+            <a href={`mailto:${contact.email}`} class="text-link">{contact.email}</a>
           </li>
           {(contact.hours_cs || contact.hours_en) && (
             <li class={contactLine} lang={onlyIn(contact.hours_cs, contact.hours_en)}>

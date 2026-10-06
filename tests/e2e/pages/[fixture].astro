@@ -8,7 +8,7 @@ import AboutPage from '../../../src/components/AboutPage.astro';
 import LandingPage from '../../../src/components/LandingPage.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
 import ProjectPage from '../../../src/components/ProjectPage.astro';
-import WorkProjects from '../../../src/components/WorkProjects.astro';
+import WorkPage from '../../../src/components/WorkPage.astro';
 
 export function getStaticPaths() {
   const images = [
@@ -264,9 +264,7 @@ const { about, contact, images, landing, project, projects } = Astro.props;
   ) : landing ? (
     <LandingPage {landing} {projects} />
   ) : projects ? (
-    <Base title={{ cs: 'E2E', en: 'E2E' }}>
-      <WorkProjects {projects} />
-    </Base>
+    <WorkPage {projects} />
   ) : (
     <Base title={{ cs: 'E2E', en: 'E2E' }}>
       <div class="mx-auto max-w-6xl px-6 pb-16">

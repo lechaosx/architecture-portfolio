@@ -8,7 +8,6 @@ const year = new Date().getFullYear();
 const { email, phone, hours_cs, hours_en } = contact;
 const item = 'flex items-center gap-2 whitespace-nowrap';
 const icon = 'size-3.5 shrink-0 text-neutral-500';
-const link = 'underline underline-offset-4 hover:decoration-dotted';
 ---
 
 {/* Contacts come first in the source and on phones; from lg one row reads
@@ -20,12 +19,12 @@ const link = 'underline underline-offset-4 hover:decoration-dotted';
     <ul class="col-span-2 flex flex-wrap gap-x-6 gap-y-2 lg:col-span-1 lg:col-start-2 lg:row-start-1">
       <li class={item}>
         <ContactIcon icon="email" class={icon} />
-        <a href={`mailto:${email}`} class={link}>{email}</a>
+        <a href={`mailto:${email}`} class="text-link">{email}</a>
       </li>
       {phone && (
         <li class={item}>
           <ContactIcon icon="phone" class={icon} />
-          <a href={`tel:${phone.replace(/\s+/g, '')}`} class={link}>{phone}</a>
+          <a href={`tel:${phone.replace(/\s+/g, '')}`} class="text-link">{phone}</a>
         </li>
       )}
       {(hours_cs || hours_en) && (

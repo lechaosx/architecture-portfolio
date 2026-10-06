@@ -44,12 +44,6 @@ test('primary navigation reaches every page and marks the current section', asyn
   await expect(page.locator('header nav [aria-current]')).toHaveCount(0);
 });
 
-test('the work page has no intro, only its heading and the projects', async ({ page }) => {
-  await page.goto('/work/');
-  await expect(page.getByRole('heading', { level: 1, name: 'Work' })).toBeVisible();
-  await expect(page.locator('main').getByText(site.description_en)).toHaveCount(0);
-});
-
 test('an unknown address shows the not-found page with the menu', async ({ page }) => {
   const response = await page.goto('/no-such-page/');
   expect(response?.status()).toBe(404);
@@ -528,7 +522,15 @@ test('reveal content fades in as soon as it enters the viewport', async ({ page 
   await expect.poll(opacity).toBe('1');
 });
 
-for (const path of ['/', '/e2e/landing/', '/work/', '/about/', '/e2e/about/']) {
+for (const path of [
+  '/',
+  '/e2e/landing/',
+  '/work/',
+  '/e2e/work/',
+  '/e2e/work-list-only/',
+  '/about/',
+  '/e2e/about/',
+]) {
   test(`the headings of ${path} nest without skipping a level`, async ({ page }) => {
     await page.goto(path);
     const levels = await page

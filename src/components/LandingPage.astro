@@ -8,7 +8,7 @@ import T from './T.astro';
 import { site } from '../singletons';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
-import { workProjects } from '../projects';
+import { workProjects, type Project } from '../projects';
 import { getResponsiveImage } from '../server-images';
 import {
   coverSizes,
@@ -17,8 +17,6 @@ import {
   responsiveSrcset,
 } from '../images';
 import { webSite } from '../structured-data';
-
-type Project = Pick<CollectionEntry<'projects'>, 'id' | 'data'>;
 
 interface Props {
   landing: CollectionEntry<'landing'>['data'];
@@ -35,7 +33,6 @@ const selected = workProjects(projects).grid.slice(0, 3);
 const image =
   heroImages.find(({ responsive }) => responsive)?.responsive?.share ??
   (selected[0] && (await getResponsiveImage(selected[0].cover.image))?.share);
-const link = 'underline underline-offset-4 hover:decoration-dotted';
 ---
 
 <Base
@@ -99,7 +96,7 @@ const link = 'underline underline-offset-4 hover:decoration-dotted';
         class="max-w-3xl text-3xl font-medium text-balance sm:text-4xl"
       />
       <p class="mt-6">
-        <a href="/about/" class={link}><T k="toAbout" /></a>
+        <a href="/about/" class="text-link"><T k="toAbout" /></a>
       </p>
     </div>
 
@@ -109,7 +106,7 @@ const link = 'underline underline-offset-4 hover:decoration-dotted';
           <SectionHeading k="selectedWork" />
           <ProjectGrid projects={selected} heading="h3" />
           <p class="mt-12 sm:mt-16">
-            <a href="/work/" class={link}><T k="allWork" /></a>
+            <a href="/work/" class="text-link"><T k="allWork" /></a>
           </p>
         </section>
       )
