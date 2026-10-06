@@ -3,9 +3,10 @@ import { llmsTxt } from './llms-txt';
 
 const site = new URL('https://example.cz/');
 const name = 'Ing. arch. Jana Nováková';
-const home = {
+const about = {
   body_cs: 'Jsem **architektka**.',
   body_en: 'I am an **architect**.',
+  experience: [],
   services: [],
   education: [],
   awards: [],
@@ -25,18 +26,43 @@ test('presents the architect and her projects, Czech first', () => {
       site,
       name,
       description: { cs: 'Portfolio architektky.', en: 'An architect’s portfolio.' },
-      home: {
-        ...home,
+      about: {
+        ...about,
+        experience: [
+          {
+            place_cs: 'Ateliér A, Brno',
+            place_en: 'Studio A, Brno',
+            years: '2024–dosud',
+            title_cs: 'Architektka',
+            title_en: 'Architect',
+            description_cs: 'Rodinné domy.\nInteriéry.',
+            description_en: 'Family houses.\n\nInteriors.',
+            tags: [
+              { name_cs: 'BIM', name_en: 'BIM' },
+              { name_cs: 'Studie', name_en: 'Studies' },
+            ],
+          },
+          { place_cs: 'Ateliér B', place_en: 'Studio B', title_cs: 'Stáž', title_en: 'Internship', tags: [] },
+        ],
         services: [
           { name_cs: 'Rodinné domy', name_en: 'Family houses' },
           { name_cs: 'Interiéry', name_en: 'Interiors' },
         ],
-        area_cs: 'Brno a okolí',
-        area_en: 'Brno and around',
-        education: [{ text_cs: 'FA VUT Brno', text_en: 'FA BUT Brno' }],
-        awards: [{ text_cs: 'Cena, 2025', text_en: 'Award, 2025' }],
+        education: [
+          {
+            place_cs: 'Fakulta stavební VUT v Brně',
+            place_en: 'Faculty of Civil Engineering, BUT',
+            department_cs: 'Ústav architektury',
+            department_en: 'Institute of Architecture',
+            years: '2020–2024',
+            title_cs: 'Architektura pozemních staveb',
+            title_en: 'Building Architecture',
+            tags: [],
+          },
+        ],
+        awards: [{ place_cs: 'Soutěž', place_en: 'Competition', years: '2025', title_cs: '1. místo', title_en: '1st place', tags: [] }],
       },
-      contact: { ...contact, phone: '+420 777 000 000' },
+      contact: { ...contact, phone: '+420 777 000 000', location_cs: 'Brno', location_en: 'Brno' },
       projects: [
         {
           id: 'galerie',
@@ -73,27 +99,34 @@ Jsem **architektka**.
 
 I am an **architect**.
 
+## Praxe / Experience
+
+- 2024–dosud · Architektka – Ateliér A, Brno / Architect – Studio A, Brno
+  Rodinné domy.
+  Interiéry.
+  Family houses.
+  Interiors.
+  BIM, Studie / BIM, Studies
+- Stáž – Ateliér B / Internship – Studio B
+
 ## Služby / Services
 
 - Rodinné domy / Family houses
 - Interiéry / Interiors
 
-## Kde pracuji / Where I work
-
-Brno a okolí / Brno and around
-
 ## Vzdělání / Education
 
-- FA VUT Brno / FA BUT Brno
+- 2020–2024 · Architektura pozemních staveb – Fakulta stavební VUT v Brně, Ústav architektury / Building Architecture – Faculty of Civil Engineering, BUT, Institute of Architecture
 
 ## Ocenění / Awards
 
-- Cena, 2025 / Award, 2025
+- 2025 · 1. místo – Soutěž / 1st place – Competition
 
 ## Kontakt / Contact
 
 - E-mail / Email: jana@example.cz
 - Telefon / Phone: +420 777 000 000
+- Místo / Location: Brno
 
 ## Práce / Work
 
@@ -122,7 +155,7 @@ Description.
 });
 
 test('leaves out empty sections', () => {
-  expect(llmsTxt({ site, name, description: {}, home, contact, projects: [] })).toBe(`# Ing. arch. Jana Nováková
+  expect(llmsTxt({ site, name, description: {}, about, contact, projects: [] })).toBe(`# Ing. arch. Jana Nováková
 
 ## O mně / About
 
@@ -141,7 +174,7 @@ test('lists projects newest first, linking only those with a page', () => {
     site,
     name,
     description: {},
-    home,
+    about,
     contact,
     projects: [
       { id: 'old', data: { ...project, title_cs: 'Starý', title_en: 'Old', year: 2020 } },

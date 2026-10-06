@@ -78,11 +78,27 @@ const site = defineCollection({
   }),
 });
 
-const home = defineCollection({
-  loader: glob({ pattern: 'home.md', base: singletons }),
+const badge = z.object({ name_cs: z.string(), name_en: z.string() });
+const badges = z.preprocess(withoutEmptyCmsRows, z.array(badge).default([]));
+
+const timelineRow = z.object({
+  place_cs: z.string(),
+  place_en: z.string(),
+  department_cs: z.string().optional(),
+  department_en: z.string().optional(),
+  years: z.string().optional(),
+  title_cs: z.string(),
+  title_en: z.string(),
+  description_cs: z.string().optional(),
+  description_en: z.string().optional(),
+  tags: badges,
+});
+const timeline = z.preprocess(withoutEmptyCmsRows, z.array(timelineRow).default([]));
+
+const about = defineCollection({
+  loader: glob({ pattern: 'about.md', base: singletons }),
   schema: z.object({
     portrait: z.string().optional(),
-    gallery: z.array(z.string()).min(1),
     approaches: z.preprocess(
       withoutEmptyCmsRows,
       z
@@ -99,26 +115,10 @@ const home = defineCollection({
     ),
     body_cs: z.string(),
     body_en: z.string(),
-    services: z.preprocess(
-      withoutEmptyCmsRows,
-      z
-        .array(z.object({ name_cs: z.string(), name_en: z.string() }))
-        .default([]),
-    ),
-    area_cs: z.string().optional(),
-    area_en: z.string().optional(),
-    education: z.preprocess(
-      withoutEmptyCmsRows,
-      z
-        .array(z.object({ text_cs: z.string(), text_en: z.string() }))
-        .default([]),
-    ),
-    awards: z.preprocess(
-      withoutEmptyCmsRows,
-      z
-        .array(z.object({ text_cs: z.string(), text_en: z.string() }))
-        .default([]),
-    ),
+    experience: timeline,
+    services: badges,
+    education: timeline,
+    awards: timeline,
   }),
 });
 
@@ -127,19 +127,11 @@ const contact = defineCollection({
   schema: z.object({
     email: z.string(),
     phone: z.string().optional(),
-    hours: z.preprocess(
-      withoutEmptyCmsRows,
-      z
-        .array(
-          z.object({
-            day_cs: z.string(),
-            day_en: z.string(),
-            hours: z.string(),
-          }),
-        )
-        .default([]),
-    ),
+    location_cs: z.string().optional(),
+    location_en: z.string().optional(),
+    hours_cs: z.string().optional(),
+    hours_en: z.string().optional(),
   }),
 });
 
-export const collections = { projects, site, home, contact };
+export const collections = { projects, site, about, contact };

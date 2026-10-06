@@ -1,0 +1,204 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ApproachIcon from './ApproachIcon.astro';
+import ContactIcon from './ContactIcon.astro';
+import T from './T.astro';
+import Paragraphs from './Paragraphs.astro';
+import Prose from './Prose.astro';
+import { credentialedName } from '../site-title';
+import { onlyIn, ui } from '../i18n';
+import { getResponsiveImage } from '../server-images';
+import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
+import { profilePage } from '../structured-data';
+
+interface Props {
+  about: CollectionEntry<'about'>['data'];
+  contact: CollectionEntry<'contact'>['data'];
+}
+
+const { about, contact } = Astro.props;
+const responsivePortrait = about.portrait
+  ? await getResponsiveImage(about.portrait)
+  : undefined;
+const site = new URL('/', Astro.site);
+const timelines = [
+  { k: 'experience', rows: about.experience },
+  { k: 'education', rows: about.education },
+  { k: 'awards', rows: about.awards },
+] as const;
+
+const sectionHeading = 'mb-6 border-b border-black pb-2 text-sm tracking-widest uppercase';
+const badgeList = 'flex flex-wrap gap-1.5';
+const badge = 'border border-neutral-500 px-2 py-0.5 text-xs';
+// A timeline entry's left cell: place, department and years, then its tags.
+const timelineLeft = 'pl-5 sm:col-start-1 sm:pr-5 sm:pl-0 sm:text-right';
+const contactLine = 'flex items-center gap-3 border-t border-neutral-200 py-2';
+const icon = 'size-4 shrink-0 text-neutral-500';
+const link = 'underline underline-offset-4 hover:decoration-dotted';
+---
+
+<Base
+  title={{
+    cs: `${ui.cs.about} | ${credentialedName}`,
+    en: `${ui.en.about} | ${credentialedName}`,
+  }}
+  image={responsivePortrait?.share}
+  graph={[profilePage({ site, url: new URL(Astro.url.pathname, site).href })]}
+>
+  {/* The h1 comes first, so on phones the page opens with it and the heading
+      order holds; on wide screens the side bar spans its row too. */}
+  <div
+    class="mx-auto grid max-w-6xl gap-y-10 px-6 pt-12 pb-16 sm:pt-16 sm:pb-24 lg:grid-cols-[1fr_2fr] lg:gap-x-16"
+  >
+    <T as="h1" k="about" class="text-3xl font-medium sm:text-4xl lg:col-start-2 lg:row-start-1" />
+
+    <aside class="flex flex-col gap-10 lg:col-start-1 lg:row-span-2 lg:row-start-1">
+      {
+        about.portrait && (
+          <img
+            src={displayImageUrl(responsivePortrait, about.portrait)}
+            srcset={responsiveSrcset(responsivePortrait, THUMBNAIL_WIDTHS)}
+            sizes="(min-width: 1152px) 347px, (min-width: 1024px) calc((100vw - 112px) / 3), (min-width: 432px) 384px, calc(100vw - 48px)"
+            width={responsivePortrait?.source.width}
+            height={responsivePortrait?.source.height}
+            alt=""
+            loading="lazy"
+            class="reveal w-full max-w-sm bg-neutral-100 lg:max-w-none"
+          />
+        )
+      }
+
+      <address class="text-neutral-700 not-italic">
+        <ul>
+          {(contact.location_cs || contact.location_en) && (
+            <li class={contactLine} lang={onlyIn(contact.location_cs, contact.location_en)}>
+              <ContactIcon icon="location" class={icon} />
+              <T cs={contact.location_cs} en={contact.location_en} />
+            </li>
+          )}
+          {contact.phone && (
+            <li class={contactLine}>
+              <ContactIcon icon="phone" class={icon} />
+              <a href={`tel:${contact.phone.replace(/\s+/g, '')}`} class={link}>{contact.phone}</a>
+            </li>
+          )}
+          <li class={contactLine}>
+            <ContactIcon icon="email" class={icon} />
+            <a href={`mailto:${contact.email}`} class={link}>{contact.email}</a>
+          </li>
+          {(contact.hours_cs || contact.hours_en) && (
+            <li class={contactLine} lang={onlyIn(contact.hours_cs, contact.hours_en)}>
+              <ContactIcon icon="hours" class={icon} />
+              <T cs={contact.hours_cs} en={contact.hours_en} />
+            </li>
+          )}
+        </ul>
+      </address>
+
+      {
+        about.services.length > 0 && (
+          <section>
+            <T as="h2" k="services" class={sectionHeading} />
+            <ul class={badgeList}>
+              {about.services.map((service) => (
+                <li class={badge}>
+                  <T cs={service.name_cs} en={service.name_en} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </aside>
+
+    <div class="flex min-w-0 flex-col gap-16 lg:col-start-2">
+      <div class="reveal">
+        <Prose
+          cs={about.body_cs}
+          en={about.body_en}
+          class="prose prose-neutral max-w-none dark:prose-invert"
+        />
+      </div>
+
+      {timelines.map(
+        ({ k, rows }) =>
+          rows.length > 0 && (
+            <section class="reveal">
+              <T as="h2" {k} class={sectionHeading} />
+              <ul>
+                {rows.map((entry) => (
+                  <li class="relative grid items-start pb-8 last:pb-0 sm:grid-cols-[1fr_2fr] sm:grid-rows-[auto_1fr]">
+                    {/* The line and marker sit on the cells' boundary: the left
+                        edge on phones, a third of the way across from sm. */}
+                    <span
+                      class="absolute inset-y-0 left-0 w-px -translate-x-1/2 bg-neutral-500 sm:left-1/3"
+                      aria-hidden="true"
+                    />
+                    <span
+                      class="absolute top-1.5 left-0 size-2.5 -translate-x-1/2 bg-black sm:left-1/3"
+                      aria-hidden="true"
+                    />
+                    <div class={timelineLeft}>
+                      <T as="p" cs={entry.place_cs} en={entry.place_en} class="text-sm tracking-widest text-balance uppercase" />
+                      <T
+                        as="p"
+                        cs={entry.department_cs}
+                        en={entry.department_en}
+                        class="text-sm text-balance text-neutral-600 empty:hidden"
+                      />
+                      {entry.years && <p class="text-sm text-neutral-500 tabular-nums">{entry.years}</p>}
+                    </div>
+                    <div class="pt-2 pl-5 sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:pt-0">
+                      <T as="h3" cs={entry.title_cs} en={entry.title_en} class="font-medium text-balance" />
+                      <Paragraphs
+                        cs={entry.description_cs}
+                        en={entry.description_en}
+                        class="mt-1 space-y-4 text-neutral-700"
+                      />
+                    </div>
+                    {/* Last on phones, under the years from sm. */}
+                    {entry.tags.length > 0 && (
+                      <ul class={`${timelineLeft} mt-2 sm:row-start-2 sm:justify-end ${badgeList}`}>
+                        {entry.tags.map((tag) => (
+                          <li class={badge}>
+                            <T cs={tag.name_cs} en={tag.name_en} />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ),
+      )}
+
+      {
+        about.approaches.length > 0 && (
+          <section>
+            <T as="h2" k="approach" class={sectionHeading} />
+            <ul class="grid gap-x-12 gap-y-10 sm:grid-cols-2">
+              {about.approaches.map((item) => (
+                <li class="reveal group">
+                  <div class="flex items-center gap-3">
+                    <ApproachIcon
+                      icon={item.icon}
+                      class="size-5 shrink-0 text-black motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-125"
+                    />
+                    <T as="h3" cs={item.label_cs} en={item.label_en} class="text-sm tracking-widest uppercase" />
+                  </div>
+                  <Paragraphs
+                    cs={item.text_cs}
+                    en={item.text_en}
+                    class="mt-3 space-y-4 text-neutral-700"
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </div>
+  </div>
+</Base>

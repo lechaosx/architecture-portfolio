@@ -1,25 +1,42 @@
 ---
 import { contact, site } from '../singletons';
+import { onlyIn } from '../i18n';
+import ContactIcon from './ContactIcon.astro';
 import T from './T.astro';
 
 const year = new Date().getFullYear();
+const { email, phone, hours_cs, hours_en } = contact;
+const item = 'flex items-center gap-2 whitespace-nowrap';
+const icon = 'size-4 shrink-0 text-neutral-500';
+const link = 'underline underline-offset-4 hover:decoration-dotted';
 ---
 
-<footer class="border-t border-black text-sm text-neutral-600">
-  <div
-    class="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-10 text-center sm:flex-row sm:justify-between sm:gap-4 sm:py-16 sm:text-left"
-  >
-    <p>© {year} {site.name}</p>
+<footer class="border-t border-black">
+  <div class="mx-auto max-w-6xl px-6 pt-8 pb-4 sm:pt-10 sm:pb-6">
+    <ul class="flex flex-col gap-2 text-neutral-700 sm:flex-row sm:flex-wrap sm:gap-x-10">
+      <li class={item}>
+        <ContactIcon icon="email" class={icon} />
+        <a href={`mailto:${email}`} class={link}>{email}</a>
+      </li>
+      {phone && (
+        <li class={item}>
+          <ContactIcon icon="phone" class={icon} />
+          <a href={`tel:${phone.replace(/\s+/g, '')}`} class={link}>{phone}</a>
+        </li>
+      )}
+      {(hours_cs || hours_en) && (
+        <li class={item} lang={onlyIn(hours_cs, hours_en)}>
+          <ContactIcon icon="hours" class={icon} />
+          <T cs={hours_cs} en={hours_en} />
+        </li>
+      )}
+    </ul>
 
-    <div class="flex flex-col items-center gap-5 sm:flex-row sm:gap-6">
-      <a
-        href={`mailto:${contact.email}`}
-        class="underline underline-offset-4 hover:decoration-dotted"
-      >
-        {contact.email}
-      </a>
+    <div class="mt-6 flex items-center justify-between gap-4 text-sm text-neutral-500 sm:mt-8">
+      <p>© {year} {site.name}</p>
 
-      <div class="flex items-center gap-3">
+      {/* Pulled out by the buttons' inner space, so the switches end on the page edge. */}
+      <div class="-mr-2 flex items-center gap-3">
         <button
           type="button"
           data-theme-toggle

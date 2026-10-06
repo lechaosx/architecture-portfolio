@@ -1,9 +1,12 @@
 import { readFileSync } from 'node:fs';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 import { parse } from 'yaml';
 
 const site = parse(
   readFileSync('src/content/singletons/site.md', 'utf8').split('---')[1],
+);
+const contact = parse(
+  readFileSync('src/content/singletons/contact.md', 'utf8').split('---')[1],
 );
 const owner = [site.credential, site.name].filter(Boolean).join(' ');
 
@@ -11,31 +14,68 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 });
 
+test('the bare domain forwards to the work page', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/work\/$/);
+  await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
+});
+
 test('primary navigation reaches every page and marks the current section', async ({
   page,
 }) => {
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Approach' })).toBeVisible();
-
+  await page.goto('/work/');
   const workLink = page.getByRole('link', { name: 'Work', exact: true });
-  await workLink.click();
-  await expect(page).toHaveURL(/\/work\/?$/);
+  const aboutLink = page.getByRole('link', { name: 'About', exact: true });
+  await expect(page.locator('header nav li')).toHaveText(['Work', 'About'], {
+    useInnerText: true,
+    ignoreCase: true,
+  });
   await expect(workLink).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
 
   await page.locator('main section.grid > a').first().click();
   await expect(page).toHaveURL(/\/projects\/.+\/$/);
   await page.getByRole('link', { name: 'Back to work' }).click();
-  await expect(page).toHaveURL(/\/work\/?$/);
+  await expect(page).toHaveURL(/\/work\/$/);
 
-  const contactLink = page.getByRole('link', { name: 'Contact', exact: true });
-  await contactLink.click();
-  await expect(page).toHaveURL(/\/contact\/?$/);
-  await expect(contactLink).toHaveAttribute('aria-current', 'page');
+  await aboutLink.click();
+  await expect(page).toHaveURL(/\/about\/$/);
+  await expect(aboutLink).toHaveAttribute('aria-current', 'page');
+  await expect(workLink).not.toHaveAttribute('aria-current');
+  await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Approach' })).toBeVisible();
 
-  await page.locator('header nav > a[href="/"]').click();
-  await expect(page).toHaveURL(/\/$/);
+  await page.locator('header nav > a').first().click();
+  await expect(page).toHaveURL(/\/work\/$/);
+});
+
+test('the work page opens with the site description', async ({ page }) => {
+  await page.goto('/work/');
+  const intro = page.locator('main h1 ~ p:visible');
+  await expect(intro).toHaveText(site.description_en);
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await expect(intro).toHaveText(site.description_cs);
+});
+
+test('an unknown address shows the not-found page with the menu', async ({ page }) => {
+  const response = await page.goto('/no-such-page/');
+  expect(response?.status()).toBe(404);
+  await expect(
+    page.getByRole('heading', { name: 'Nothing stands on this plot.' }),
+  ).toBeVisible();
+  await expect(page.getByText('Are you sure you have the right address?')).toBeVisible();
+  await expect(page.locator('header nav li')).toHaveText(['Work', 'About'], {
+    useInnerText: true,
+    ignoreCase: true,
+  });
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
+  await expect(page).toHaveTitle(`Page not found | ${owner}`);
+
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await expect(page.getByRole('heading', { name: 'Na této parcele nic nestojí.' })).toBeVisible();
+  await expect(page).toHaveTitle(`Stránka nenalezena | ${owner}`);
+  await page.getByRole('link', { name: 'Zpátky do ateliéru' }).click();
+  await expect(page).toHaveURL(/\/work\/$/);
 });
 
 test.describe(() => {
@@ -44,7 +84,7 @@ test.describe(() => {
   test('language follows the saved choice, else the browser, and ignores ?lang=', async ({
     page,
   }) => {
-    await page.goto('/?lang=en');
+    await page.goto('/about/?lang=en');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
     await expect(page.getByRole('heading', { name: 'O mně' })).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem('lang'))).toBeNull();
@@ -52,17 +92,15 @@ test.describe(() => {
     await page.getByRole('button', { name: 'Přepnout do angličtiny' }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
-    await expect(page).toHaveTitle(`${owner} | Architect`);
+    await expect(page).toHaveTitle(`About | ${owner}`);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
       /architect/i,
     );
 
-    await page.goto('/contact/?lang=cs');
+    await page.goto('/work/?lang=cs');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(
-      page.getByRole('heading', { name: 'When to reach me' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem('lang'))).toBe('en');
   });
 });
@@ -71,9 +109,9 @@ test.describe(() => {
   test.use({ locale: 'en-US' });
 
   test('an English browser gets English over the Czech static default', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/work/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
     await expect(page).toHaveTitle(`${owner} | Architect`);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
@@ -93,7 +131,7 @@ test.describe(() => {
         }
       });
     });
-    await page.goto('/');
+    await page.goto('/work/');
     expect(
       await page.evaluate(() => (window as unknown as { titleWhenParsed: string }).titleWhenParsed),
     ).toBe(`${owner} | Architect`);
@@ -104,13 +142,12 @@ test('tab titles name the page and the credentialed architect in both languages'
   page,
 }) => {
   const titles = [
-    ['/', `${owner} | Architect`, `${owner} | Architektka`],
-    ['/work/', `Work | ${owner}`, `Práce | ${owner}`],
-    ['/contact/', `Contact | ${owner}`, `Kontakt | ${owner}`],
+    ['/work/', `${owner} | Architect`, `${owner} | Architektka`],
+    ['/about/', `About | ${owner}`, `O mně | ${owner}`],
     // tests/e2e/pages/[fixture].astro, which the e2e build adds.
     ['/e2e/project/', `Test project | ${owner}`, `Testovací projekt | ${owner}`],
   ];
-  await page.goto('/');
+  await page.goto('/work/');
   for (const [path, en, cs] of titles) {
     await page.evaluate(() => localStorage.setItem('lang', 'en'));
     await page.goto(path);
@@ -128,7 +165,7 @@ test.describe(() => {
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
+    await page.goto('/about/');
 
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     expect(
@@ -153,7 +190,7 @@ test('footer toggles share dimensions and show the state they switch to', async 
   page,
 }) => {
   await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/');
+  await page.goto('/work/');
 
   const theme = page.locator('[data-theme-toggle]');
   const language = page.locator('[data-lang-toggle]');
@@ -191,7 +228,7 @@ test('work projects are sorted and the grid follows its responsive breakpoints',
   const cards = grid.locator(':scope > a');
   const rendered = await cards.evaluateAll((elements) =>
     elements.map((element) => ({
-      title: element.querySelector('h3[lang="en"]')?.textContent?.trim() ?? '',
+      title: element.querySelector('h2[lang="en"]')?.textContent?.trim() ?? '',
       year: Number(element.querySelector('span.text-sm')?.textContent),
     })),
   );
@@ -213,37 +250,111 @@ test('work projects are sorted and the grid follows its responsive breakpoints',
   expect(await columnCount()).toBe(1);
 });
 
-test('contact details remain actionable in both languages', async ({ page }) => {
-  await page.goto('/contact/');
-  const main = page.locator('main');
-  const email = main.locator('a[href^="mailto:"]');
-  const phone = main.locator('a[href^="tel:"]');
+test('the footer links its contacts, in a row on wide screens and stacked on phones', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/work/');
+  const footer = page.locator('footer');
+  const email = footer.getByRole('link', { name: contact.email });
+  const phone = footer.getByRole('link', { name: contact.phone });
+  const hours = footer.getByText(contact.hours_en);
+  const copyright = footer.getByText(`© ${new Date().getFullYear()} ${site.name}`);
+  const middle = async (item: Locator) => {
+    const box = (await item.boundingBox())!;
+    return Math.round(box.y + box.height / 2);
+  };
 
-  await expect(email).toBeVisible();
-  await expect(phone).toBeVisible();
-  expect(await email.getAttribute('href')).toBe(
-    `mailto:${(await email.textContent())?.trim()}`,
-  );
-  expect(await phone.getAttribute('href')).toBe(
-    `tel:${(await phone.textContent())?.replace(/\s+/g, '')}`,
-  );
-  await expect(
-    page.getByRole('heading', { name: 'When to reach me' }),
-  ).toBeVisible();
-  await expect(main.locator('ul li')).not.toHaveCount(0);
+  await expect(email).toHaveAttribute('href', `mailto:${contact.email}`);
+  await expect(phone).toHaveAttribute('href', `tel:${contact.phone.replace(/\s+/g, '')}`);
+  await expect(hours).toBeVisible();
+  expect(new Set(await Promise.all([email, phone, hours].map(middle))).size).toBe(1);
 
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Kdy mě zastihnete' }),
-  ).toBeVisible();
-  await expect(main.locator('li [lang="cs"]').first()).toBeVisible();
-  await expect(main.locator('li [lang="en"]').first()).toBeHidden();
+  await expect(footer.getByText(contact.hours_cs)).toBeVisible();
+  await expect(hours).toBeHidden();
+
+  await page.setViewportSize({ width: 390, height: 800 });
+  const [e, p, h, c, first] = await Promise.all(
+    [
+      email,
+      phone,
+      footer.getByText(contact.hours_cs),
+      copyright,
+      footer.getByRole('listitem').first(),
+    ].map((item) => item.boundingBox()),
+  );
+  expect(p!.y).toBeGreaterThan(e!.y + e!.height - 1);
+  expect(h!.y).toBeGreaterThan(p!.y + p!.height - 1);
+  expect(p!.x).toBeCloseTo(e!.x);
+  expect(h!.x).toBeCloseTo(e!.x);
+  expect(c!.x, 'left-aligned, not centred').toBeCloseTo(first!.x);
+  await expect(footer.getByRole('heading')).toHaveCount(0);
+});
+
+test('the footer fits a 320px phone, its bottom row on one line', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto('/work/');
+  const footer = page.locator('footer');
+  const middles = await Promise.all(
+    [
+      footer.getByText(`© ${new Date().getFullYear()} ${site.name}`),
+      footer.getByRole('button', { name: 'Switch to Czech' }),
+    ].map(async (item) => {
+      const box = (await item.boundingBox())!;
+      return Math.round(box.y + box.height / 2);
+    }),
+  );
+  expect(new Set(middles).size).toBe(1);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+});
+
+test('the wordmark and menu fit a 320px phone, each menu item on one line', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto('/about/');
+  for (const lang of ['en', 'cs']) {
+    if (lang === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    const lines = await page
+      .locator('header nav li span:visible')
+      .evaluateAll((items) => items.map((item) => item.getClientRects().length));
+    expect(lines, lang).toEqual([1, 1]);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+      lang,
+    ).toBe(true);
+  }
+});
+
+test('no footer contact breaks inside on phones', async ({ page }) => {
+  await page.goto('/work/');
+  const footer = page.locator('footer');
+  for (const [lang, hours] of [
+    ['en', contact.hours_en],
+    ['cs', contact.hours_cs],
+  ]) {
+    if (lang === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    for (const width of [390, 375, 360]) {
+      await page.setViewportSize({ width, height: 700 });
+      for (const text of [contact.email, contact.phone, hours]) {
+        const lines = await footer
+          .getByText(text, { exact: true })
+          .evaluate((element) => element.getClientRects().length);
+        expect(lines, `${text} in ${lang} at ${width}px`).toBe(1);
+      }
+    }
+  }
 });
 
 test('prose is justified and hyphenates according to its language', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/about/');
   const prose = page.locator('.prose');
 
   expect(
@@ -331,7 +442,7 @@ test('project prose fills the available width with comfortable columns', async (
 });
 
 test('reduced motion exposes reveal content without animation', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/about/');
   // Starts off screen, so the script hides it once it has observed it.
   const reveal = page.locator('.reveal').last();
   await page.evaluate(
@@ -373,9 +484,9 @@ test.describe(() => {
   test.use({ javaScriptEnabled: false });
 
   test('the static page is Czech, as crawlers and link previews read it', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/work/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
-    await expect(page.getByRole('heading', { name: 'O mně' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Práce' })).toBeVisible();
     await expect(page).toHaveTitle(`${owner} | Architektka`);
     const meta = (selector: string) => page.locator(`meta[${selector}]`);
     await expect(meta('name="description"')).toHaveAttribute('content', site.description_cs);
@@ -388,16 +499,14 @@ test.describe(() => {
 
   test('reveal content is visible without JavaScript', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    for (const path of ['/', '/contact/']) {
-      await page.goto(path);
-      const opacities = await page
-        .locator('.reveal')
-        .evaluateAll((elements) =>
-          elements.map((element) => getComputedStyle(element).opacity),
-        );
-      expect(opacities.length).toBeGreaterThan(0);
-      expect(opacities.every((opacity) => opacity === '1')).toBe(true);
-    }
+    await page.goto('/about/');
+    const opacities = await page
+      .locator('.reveal')
+      .evaluateAll((elements) =>
+        elements.map((element) => getComputedStyle(element).opacity),
+      );
+    expect(opacities.length).toBeGreaterThan(0);
+    expect(opacities.every((opacity) => opacity === '1')).toBe(true);
   });
 });
 
@@ -408,26 +517,24 @@ test('reveal content on screen at load shows without a fade', async ({ page }) =
     addEventListener('transitionrun', (event) => faded.add(event.target as Element), true);
     Object.assign(window, { faded });
   });
-  for (const path of ['/', '/contact/']) {
-    await page.setViewportSize({ width: 1280, height: path === '/' ? 1600 : 720 });
-    await page.goto(path);
-    await page.waitForTimeout(1000);
-    const onScreen = await page.locator('.reveal').evaluateAll((elements) =>
-      elements
-        .filter((element) => element.getBoundingClientRect().top < innerHeight)
-        .map((element) => ({
-          faded: (window as unknown as { faded: Set<Element> }).faded.has(element),
-          opacity: getComputedStyle(element).opacity,
-        })),
-    );
-    expect(onScreen.length).toBeGreaterThan(0);
-    expect(onScreen).toEqual(onScreen.map(() => ({ faded: false, opacity: '1' })));
-  }
+  await page.setViewportSize({ width: 1280, height: 1600 });
+  await page.goto('/about/');
+  await page.waitForTimeout(1000);
+  const onScreen = await page.locator('.reveal').evaluateAll((elements) =>
+    elements
+      .filter((element) => element.getBoundingClientRect().top < innerHeight)
+      .map((element) => ({
+        faded: (window as unknown as { faded: Set<Element> }).faded.has(element),
+        opacity: getComputedStyle(element).opacity,
+      })),
+  );
+  expect(onScreen.length).toBeGreaterThan(0);
+  expect(onScreen).toEqual(onScreen.map(() => ({ faded: false, opacity: '1' })));
 });
 
 test('reveal content fades in as soon as it enters the viewport', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/');
+  await page.goto('/about/');
   const reveal = page.locator('.reveal').last();
   const opacity = () => reveal.evaluate((element) => getComputedStyle(element).opacity);
   expect(
@@ -440,3 +547,23 @@ test('reveal content fades in as soon as it enters the viewport', async ({ page 
   );
   await expect.poll(opacity).toBe('1');
 });
+
+for (const path of ['/work/', '/about/', '/e2e/about/']) {
+  test(`the headings of ${path} nest without skipping a level`, async ({ page }) => {
+    await page.goto(path);
+    const levels = await page
+      .locator('main')
+      .locator('h1, h2, h3, h4, h5, h6')
+      .evaluateAll((headings) =>
+        headings
+          .filter((heading) => heading.checkVisibility())
+          .map((heading) => Number(heading.tagName[1])),
+      );
+    expect(levels[0]).toBe(1);
+    levels.slice(1).forEach((level, index) => {
+      expect(level, `heading ${index + 2} of ${levels.join(', ')}`).toBeLessThanOrEqual(
+        levels[index] + 1,
+      );
+    });
+  });
+}

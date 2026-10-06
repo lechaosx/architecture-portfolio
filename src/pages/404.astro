@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import T from '../components/T.astro';
+import { credentialedName } from '../site-title';
+import { ui } from '../i18n';
+---
+
+<Base
+  title={{
+    cs: `${ui.cs.notFound} | ${credentialedName}`,
+    en: `${ui.en.notFound} | ${credentialedName}`,
+  }}
+  noindex
+>
+  <section class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
+    <T as="h1" k="notFoundHeading" class="text-3xl font-medium sm:text-4xl" />
+    <T as="p" k="notFoundLine" class="mt-4 text-neutral-600" />
+    <p class="mt-6">
+      <a href="/work/" class="underline underline-offset-4 hover:decoration-dotted">
+        <T k="notFoundLink" />
+      </a>
+    </p>
+  </section>
+</Base>

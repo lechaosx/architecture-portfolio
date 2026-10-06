@@ -10,7 +10,7 @@ import type { ResponsiveImage } from './images';
 
 const site = new URL('https://example.cz/');
 const owner = { name: 'Jana Nováková', credential: 'Ing. arch.' };
-const emptyHome = { services: [], education: [], awards: [] };
+const emptyAbout = { services: [], education: [], awards: [] };
 const contact = { email: 'jana@example.cz' };
 
 describe('person', () => {
@@ -19,13 +19,24 @@ describe('person', () => {
       person({
         site,
         owner,
-        home: {
-          area_cs: 'Brno',
+        about: {
           services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
-          education: [{ text_cs: 'FA VUT Brno', text_en: 'FA BUT Brno' }],
-          awards: [{ text_cs: 'Cena, 2025', text_en: 'Award, 2025' }],
+          education: [
+            {
+              place_cs: 'Fakulta stavební VUT v Brně',
+              place_en: 'Faculty of Civil Engineering, BUT',
+              department_cs: 'Ústav architektury',
+              department_en: 'Institute of Architecture',
+              years: '2024–2026',
+              title_cs: 'Architektura a rozvoj sídel',
+              title_en: 'Architecture and Urban Development',
+              tags: [],
+            },
+            { place_cs: 'SPŠ stavební', place_en: 'Building school', years: ' ', title_cs: 'Maturita', title_en: 'School-leaving exam', tags: [] },
+          ],
+          awards: [{ place_cs: 'Cena Bohuslava Fuchse', place_en: 'Bohuslav Fuchs Award', years: '2025', title_cs: '2. místo', title_en: '2nd place', tags: [] }],
         },
-        contact: { ...contact, phone: '+420 777 000 000' },
+        contact: { ...contact, phone: '+420 777 000 000', location_cs: 'Brno' },
         portrait: '/_responsive/hash/1280.webp',
       }),
     ).toEqual({
@@ -38,18 +49,18 @@ describe('person', () => {
       email: 'jana@example.cz',
       telephone: '+420 777 000 000',
       image: 'https://example.cz/_responsive/hash/1280.webp',
-      contactPoint: {
-        '@type': 'ContactPoint',
-        email: 'jana@example.cz',
-        telephone: '+420 777 000 000',
-        areaServed: 'Brno',
-        availableLanguage: ['cs', 'en'],
-      },
+      workLocation: { '@type': 'Place', name: 'Brno' },
       makesOffer: [
         { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rodinné domy' } },
       ],
-      hasCredential: [{ '@type': 'EducationalOccupationalCredential', name: 'FA VUT Brno' }],
-      award: ['Cena, 2025'],
+      hasCredential: [
+        {
+          '@type': 'EducationalOccupationalCredential',
+          name: 'Architektura a rozvoj sídel, Fakulta stavební VUT v Brně (2024–2026)',
+        },
+        { '@type': 'EducationalOccupationalCredential', name: 'Maturita, SPŠ stavební' },
+      ],
+      award: ['Cena Bohuslava Fuchse, 2. místo (2025)'],
       knowsLanguage: ['cs', 'en'],
     });
   });
@@ -58,19 +69,17 @@ describe('person', () => {
     const node = person({
       site,
       owner: { name: owner.name },
-      home: { ...emptyHome, area_cs: ' ', awards: [{ text_cs: '', text_en: 'Award' }] },
-      contact,
+      about: {
+        ...emptyAbout,
+        awards: [{ place_cs: ' ', place_en: 'Competition', title_cs: '', title_en: 'Award', tags: [] }],
+      },
+      contact: { ...contact, location_cs: ' ' },
     });
-    expect(Object.keys(node)).toEqual(['@type', '@id', 'name', 'jobTitle', 'url', 'email', 'contactPoint', 'knowsLanguage']);
-    expect(node.contactPoint).toEqual({
-      '@type': 'ContactPoint',
-      email: 'jana@example.cz',
-      availableLanguage: ['cs', 'en'],
-    });
+    expect(Object.keys(node)).toEqual(['@type', '@id', 'name', 'jobTitle', 'url', 'email', 'knowsLanguage']);
   });
 });
 
-test('the home page is the website and the architect’s profile', () => {
+test('the work page is the website', () => {
   expect(webSite({ site, name: 'Ing. arch. Jana Nováková' })).toEqual({
     '@type': 'WebSite',
     '@id': 'https://example.cz/#website',
@@ -78,9 +87,12 @@ test('the home page is the website and the architect’s profile', () => {
     url: 'https://example.cz/',
     inLanguage: ['cs', 'en'],
   });
-  expect(profilePage({ site })).toEqual({
+});
+
+test('the about page is the architect’s profile', () => {
+  expect(profilePage({ site, url: 'https://example.cz/about/' })).toEqual({
     '@type': 'ProfilePage',
-    url: 'https://example.cz/',
+    url: 'https://example.cz/about/',
     mainEntity: { '@id': 'https://example.cz/#person' },
   });
 });

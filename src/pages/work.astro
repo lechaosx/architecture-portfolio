@@ -1,19 +1,26 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import WorkProjects from '../components/WorkProjects.astro';
 import T from '../components/T.astro';
+import { site } from '../singletons';
 import { credentialedName } from '../site-title';
-import { ui } from '../i18n';
-
-const projects = await getCollection('projects', ({ data }) => !data.draft);
+import { webSite } from '../structured-data';
+import { image, projects, title } from '../work-page';
 ---
 
 <Base
-  title={{ cs: `${ui.cs.work} | ${credentialedName}`, en: `${ui.en.work} | ${credentialedName}` }}
+  {title}
+  {image}
+  graph={[webSite({ site: new URL('/', Astro.site), name: credentialedName })]}
 >
   <section class="mx-auto max-w-6xl px-6 pt-12 pb-8 sm:pt-16">
     <T as="h1" k="work" class="text-3xl font-medium sm:text-4xl" />
+    <T
+      as="p"
+      cs={site.description_cs}
+      en={site.description_en}
+      class="mt-4 max-w-prose text-neutral-600 empty:hidden"
+    />
   </section>
 
   <WorkProjects {projects} />

@@ -6,7 +6,7 @@
 # which triggers the GitHub Pages deploy.
 #
 # The site is bilingual (Czech + English). Fields that differ per language come
-# in pairs suffixed _cs / _en; language-neutral fields (images, year, email,
+# in pairs suffixed _cs / _en; language-neutral fields (images, year(s), email,
 # phone) are single. See FEATURES.md "Dual language (Czech + English)".
 
 media:
@@ -76,17 +76,12 @@ content:
                   - { name: description_cs, label: Image description (Czech), type: text, required: false }
                   - { name: description_en, label: Image description (English), type: text, required: false }
 
-  - name: home
-    label: Home page
+  - name: about
+    label: About page
     type: file
-    path: src/content/singletons/home.md
+    path: src/content/singletons/about.md
     fields:
       - { name: portrait, label: Portrait, type: image, required: false }
-      - name: gallery
-        label: Homepage images
-        type: image
-        list: { min: 1 }
-        required: true
       - name: approaches
         label: Approach
         type: object
@@ -104,48 +99,95 @@ content:
               values: [place, scale, material, thinking]
       - { name: body_cs, label: About text (Czech), type: rich-text, required: true }
       - { name: body_en, label: About text (English), type: rich-text, required: true }
+      - name: experience
+        label: Work experience
+        type: object
+        list: true
+        description: 'One row per studio or employer, newest first.'
+        fields:
+          - { name: place_cs, label: Studio or employer (Czech), type: string, required: true, description: 'Name and city, e.g. "Ateliér A, Brno".' }
+          - { name: place_en, label: Studio or employer (English), type: string, required: true, description: 'Name and city, e.g. "Studio A, Brno".' }
+          - { name: department_cs, label: Department or team (Czech), type: string, required: false }
+          - { name: department_en, label: Department or team (English), type: string, required: false }
+          - { name: years, label: Years, type: string, required: false, description: 'Shared by both languages, e.g. 2024–2026, or 2024– for ongoing.' }
+          - { name: title_cs, label: Your role (Czech), type: string, required: true, description: 'e.g. "Architektka".' }
+          - { name: title_en, label: Your role (English), type: string, required: true, description: 'e.g. "Architect".' }
+          - { name: description_cs, label: Description (Czech), type: text, required: false }
+          - { name: description_en, label: Description (English), type: text, required: false }
+          - name: tags
+            label: Tags
+            type: object
+            list: true
+            description: Short keywords shown as tags, e.g. BIM.
+            fields:
+              - { name: name_cs, label: Tag (Czech), type: string, required: true }
+              - { name: name_en, label: Tag (English), type: string, required: true }
       - name: services
         label: Services
         type: object
         list: true
-        description: One service per row, named the way a client would ask for it.
+        description: One service per row, named the way a client would ask for it. Shown as tags beside the portrait.
         fields:
           - { name: name_cs, label: Service (Czech), type: string, required: true }
           - { name: name_en, label: Service (English), type: string, required: true }
-      - { name: area_cs, label: Where I work (Czech), type: string, required: false, description: 'Your base city first, then where you take on projects, e.g. "Brno, projekty v Česku i v zahraničí".' }
-      - { name: area_en, label: Where I work (English), type: string, required: false, description: 'Your base city first, then where you take on projects, e.g. "Brno, projects in the Czech Republic and abroad".' }
       - name: education
         label: Education
         type: object
         list: true
-        description: School, faculty, degree and year.
+        description: 'One row per programme, newest first.'
         fields:
-          - { name: text_cs, label: Text (Czech), type: string, required: true }
-          - { name: text_en, label: Text (English), type: string, required: true }
+          - { name: place_cs, label: School (Czech), type: string, required: true, description: 'e.g. "VUT v Brně".' }
+          - { name: place_en, label: School (English), type: string, required: true, description: 'e.g. "Brno University of Technology".' }
+          - { name: department_cs, label: Faculty or department (Czech), type: string, required: false, description: 'e.g. "Fakulta stavební, Ústav architektury".' }
+          - { name: department_en, label: Faculty or department (English), type: string, required: false, description: 'e.g. "Faculty of Civil Engineering, Institute of Architecture".' }
+          - { name: years, label: Years, type: string, required: false, description: 'Shared by both languages, e.g. 2024–2026, or 2024– for ongoing.' }
+          - { name: title_cs, label: Programme (Czech), type: string, required: true, description: 'e.g. "Architektura a rozvoj sídel".' }
+          - { name: title_en, label: Programme (English), type: string, required: true, description: 'e.g. "Architecture and Urban Development".' }
+          - { name: description_cs, label: Description (Czech), type: text, required: false }
+          - { name: description_en, label: Description (English), type: text, required: false }
+          - name: tags
+            label: Tags
+            type: object
+            list: true
+            description: Short keywords shown as tags, e.g. BIM.
+            fields:
+              - { name: name_cs, label: Tag (Czech), type: string, required: true }
+              - { name: name_en, label: Tag (English), type: string, required: true }
       - name: awards
         label: Awards
         type: object
         list: true
-        description: Competition or award, the placement, the year.
+        description: 'One row per competition or award, newest first.'
         fields:
-          - { name: text_cs, label: Text (Czech), type: string, required: true }
-          - { name: text_en, label: Text (English), type: string, required: true }
+          - { name: place_cs, label: Competition or award (Czech), type: string, required: true, description: 'e.g. "Cena Bohuslava Fuchse".' }
+          - { name: place_en, label: Competition or award (English), type: string, required: true, description: 'e.g. "Bohuslav Fuchs Award".' }
+          - { name: department_cs, label: Category or organiser (Czech), type: string, required: false }
+          - { name: department_en, label: Category or organiser (English), type: string, required: false }
+          - { name: years, label: Years, type: string, required: false, description: 'Shared by both languages, e.g. 2024–2026, or 2024– for ongoing.' }
+          - { name: title_cs, label: Placement (Czech), type: string, required: true, description: 'e.g. "2. místo".' }
+          - { name: title_en, label: Placement (English), type: string, required: true, description: 'e.g. "2nd place".' }
+          - { name: description_cs, label: Description (Czech), type: text, required: false }
+          - { name: description_en, label: Description (English), type: text, required: false }
+          - name: tags
+            label: Tags
+            type: object
+            list: true
+            description: Short keywords shown as tags, e.g. BIM.
+            fields:
+              - { name: name_cs, label: Tag (Czech), type: string, required: true }
+              - { name: name_en, label: Tag (English), type: string, required: true }
 
   - name: contact
-    label: Contact
+    label: Contact (footer and About)
     type: file
     path: src/content/singletons/contact.md
     fields:
       - { name: email, label: Email, type: string, required: true }
       - { name: phone, label: Phone, type: string, required: false }
-      - name: hours
-        label: When I'm reachable (per day)
-        type: object
-        list: true
-        fields:
-          - { name: day_cs, label: Day (Czech), type: string, required: true }
-          - { name: day_en, label: Day (English), type: string, required: true }
-          - { name: hours, label: Hours (e.g. 10:00 – 15:00, or —), type: string, required: true }
+      - { name: location_cs, label: Where I am (Czech), type: string, required: false, description: 'Your city, e.g. "Brno". Shown on the About page.' }
+      - { name: location_en, label: Where I am (English), type: string, required: false, description: 'Your city, e.g. "Brno". Shown on the About page.' }
+      - { name: hours_cs, label: When I'm reachable (Czech), type: string, required: false, description: 'One short line, e.g. "Po–Pá 10–15".' }
+      - { name: hours_en, label: When I'm reachable (English), type: string, required: false, description: 'One short line, e.g. "Mon–Fri 10–15".' }
 
   - name: site
     label: Site settings
@@ -154,5 +196,5 @@ content:
     fields:
       - { name: name, label: Name, type: string, required: true }
       - { name: credential, label: Credential (e.g. Ing. arch.), type: string }
-      - { name: description_cs, label: SEO description (Czech), type: text }
-      - { name: description_en, label: SEO description (English), type: text }
+      - { name: description_cs, label: SEO description (Czech), type: text, description: Also the intro line under the Work heading. }
+      - { name: description_en, label: SEO description (English), type: text, description: Also the intro line under the Work heading. }

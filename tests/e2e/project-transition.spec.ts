@@ -69,7 +69,7 @@ test('work cards do not start a second entrance animation after navigation', asy
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/');
+  await page.goto('/about/');
   await page.getByRole('link', { name: 'Work' }).click();
   await expect(page).toHaveURL(/\/work\/?$/);
 

@@ -6,18 +6,18 @@ export type Lang = 'cs' | 'en';
 export const ui = {
   cs: {
     workNav: 'Práce',
-    contactNav: 'Kontakt',
+    aboutNav: 'O mně',
     about: 'O mně',
     approach: 'Přístup',
+    experience: 'Praxe',
     services: 'Služby',
-    area: 'Kde pracuji',
     education: 'Vzdělání',
     awards: 'Ocenění',
     work: 'Práce',
     contact: 'Kontakt',
-    whenToReach: 'Kdy mě zastihnete',
     email: 'E-mail',
     phone: 'Telefon',
+    location: 'Místo',
     backToWork: '← Zpět na práce',
     close: 'Zavřít',
     description: 'Popis',
@@ -31,25 +31,28 @@ export const ui = {
     positionOf: 'z',
     previousImage: 'Předchozí obrázek',
     showDescription: 'Zobrazit popis',
-    selectedWork: 'Vybrané práce',
     tagline: 'Architektka',
     switchLanguage: 'Přepnout do angličtiny',
     switchTheme: 'Přepnout motiv',
+    notFound: 'Stránka nenalezena',
+    notFoundHeading: 'Na této parcele nic nestojí.',
+    notFoundLine: 'Určitě jste na správné adrese?',
+    notFoundLink: 'Zpátky do ateliéru',
   },
   en: {
     workNav: 'Work',
-    contactNav: 'Contact',
+    aboutNav: 'About',
     about: 'About',
     approach: 'Approach',
+    experience: 'Experience',
     services: 'Services',
-    area: 'Where I work',
     education: 'Education',
     awards: 'Awards',
     work: 'Work',
     contact: 'Contact',
-    whenToReach: 'When to reach me',
     email: 'Email',
     phone: 'Phone',
+    location: 'Location',
     backToWork: '← Back to work',
     close: 'Close',
     description: 'Description',
@@ -63,11 +66,22 @@ export const ui = {
     positionOf: 'of',
     previousImage: 'Previous image',
     showDescription: 'Show description',
-    selectedWork: 'Selected work',
     tagline: 'Architect',
     switchLanguage: 'Switch to Czech',
     switchTheme: 'Toggle theme',
+    notFound: 'Page not found',
+    notFoundHeading: 'Nothing stands on this plot.',
+    notFoundLine: 'Are you sure you have the right address?',
+    notFoundLink: 'Back to the studio',
   },
 } satisfies Record<Lang, Record<string, string>>;
 
 export type UiKey = keyof typeof ui.cs;
+
+/**
+ * The one language a pair of texts is filled in, or undefined when both are.
+ * An element carrying it is hidden by the language switch in the other
+ * language, so a line filled in one language never shows empty in the other.
+ */
+export const onlyIn = (cs?: string, en?: string): Lang | undefined =>
+  cs && en ? undefined : cs ? 'cs' : 'en';

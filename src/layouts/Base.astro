@@ -3,36 +3,27 @@ import '@fontsource-variable/roboto/index.css';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { contact, home, site } from '../singletons';
-import { credentialedName } from '../site-title';
-import type { ImageVariant } from '../images';
+import PageMeta from '../components/PageMeta.astro';
+import type { ComponentProps } from 'astro/types';
+import { about, contact, site } from '../singletons';
 import { getResponsiveImage } from '../server-images';
 import { jsonLd, person } from '../structured-data';
 
-interface Props {
-  title: { cs: string; en: string };
-  /** Falls back to the site description in each language. */
-  description?: { cs?: string; en?: string };
-  /** The JPEG link previews show. */
-  image?: ImageVariant;
-  type?: 'website' | 'article';
+interface Props extends Omit<ComponentProps<typeof PageMeta>, 'url'> {
+  /** Keeps the page out of search engines. */
+  noindex?: boolean;
   /** schema.org nodes beside the architect's. */
   graph?: Record<string, unknown>[];
 }
 
-const { title, image, type = 'website', graph = [] } = Astro.props;
-const description = {
-  cs: Astro.props.description?.cs ?? site.description_cs,
-  en: Astro.props.description?.en ?? site.description_en,
-};
+const { noindex = false, graph = [], ...meta } = Astro.props;
 const origin = new URL('/', Astro.site);
-const url = new URL(Astro.url.pathname, origin).href;
-const imageUrl = image && new URL(image.url, origin).href;
-const portrait = home.portrait
-  ? await getResponsiveImage(home.portrait)
+const url = noindex ? undefined : new URL(Astro.url.pathname, origin).href;
+const portrait = about.portrait
+  ? await getResponsiveImage(about.portrait)
   : undefined;
 const structuredData = jsonLd([
-  person({ site: origin, owner: site, home, contact, portrait: portrait?.share.url }),
+  person({ site: origin, owner: site, about, contact, portrait: portrait?.share.url }),
   ...graph,
 ]);
 ---
@@ -44,37 +35,8 @@ const structuredData = jsonLd([
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <title>{title.cs}</title>
-    <meta name="page-title" data-cs={title.cs} data-en={title.en} />
-    <meta
-      name="description"
-      content={description.cs}
-      data-cs={description.cs}
-      data-en={description.en}
-    />
-    <link rel="canonical" href={url} />
-    <meta property="og:title" content={title.cs} />
-    <meta property="og:description" content={description.cs} />
-    <meta property="og:type" content={type} />
-    <meta property="og:url" content={url} />
-    <meta property="og:site_name" content={credentialedName} />
-    <meta property="og:locale" content="cs_CZ" />
-    <meta property="og:locale:alternate" content="en_US" />
-    {
-      image && (
-        <>
-          <meta property="og:image" content={imageUrl} />
-          <meta property="og:image:type" content={`image/${image.format}`} />
-          <meta property="og:image:width" content={String(image.width)} />
-          <meta property="og:image:height" content={String(image.height)} />
-          <meta name="twitter:image" content={imageUrl} />
-        </>
-      )
-    }
-    <meta
-      name="twitter:card"
-      content={image ? 'summary_large_image' : 'summary'}
-    />
+    <PageMeta {...meta} {url} />
+    {noindex && <meta name="robots" content="noindex" />}
     <script type="application/ld+json" set:html={structuredData} />
 
     <!-- Pick the language and its tab title before first paint (saved >

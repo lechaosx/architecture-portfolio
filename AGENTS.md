@@ -66,9 +66,9 @@ Only then reconcile them.
   on screen towards the new target instead of jumping or restarting.
 - **All user-facing text is bilingual (cs + en).** Translatable fields come in
   `_cs`/`_en` pairs (add both, in both schema places); baked-in UI labels live in
-  `src/i18n.ts`. Render bilingual text through `T.astro`/`Prose.astro` so the
-  language switch keeps working — never emit a bare user-facing string. See
-  ARCHITECTURE.md → "Internationalization".
+  `src/i18n.ts`. Render bilingual text through `T.astro`, `Prose.astro` or
+  `Paragraphs.astro` so the language switch keeps working — never emit a bare
+  user-facing string. See ARCHITECTURE.md → "Internationalization".
 
 ## Verifying a change
 

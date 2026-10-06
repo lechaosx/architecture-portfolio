@@ -1,7 +1,5 @@
 ---
 portrait: /uploads/placeholder-portrait.svg
-gallery:
-  - /uploads/placeholder-cover.svg
 approaches:
   - label_cs: Místo
     label_en: Place
@@ -80,15 +78,19 @@ body_en: >-
   permitting process – from communication with authorities and technical
   infrastructure administrators to the coordination of individual disciplines.
   All of this with the use of BIM.
-area_cs: Brno, Česká republika
-area_en: Brno, Czech republic
 education:
-  - text_cs: Fakulta stavební, Vysoké učení technické v Brně
-    text_en: Faculty of Civil Engineering, Brno University of Technology
-  - text_cs: Ústav architektury
-    text_en: Institute of Architecture
-  - text_cs: Architektura pozemních staveb, 2020-2024
-    text_en: Building Architecture, 2020-2024
-  - text_cs: Architektura a rozvoj sídel, 2024-2026
-    text_en: Architecture and Urban Development, 2024-2026
+  - place_cs: VUT v Brně
+    place_en: Brno University of Technology
+    department_cs: Fakulta stavební, Ústav architektury
+    department_en: Faculty of Civil Engineering, Institute of Architecture
+    years: 2024–2026
+    title_cs: Architektura a rozvoj sídel
+    title_en: Architecture and Urban Development
+  - place_cs: VUT v Brně
+    place_en: Brno University of Technology
+    department_cs: Fakulta stavební, Ústav architektury
+    department_en: Faculty of Civil Engineering, Institute of Architecture
+    years: 2020–2024
+    title_cs: Architektura pozemních staveb
+    title_en: Building Architecture
 ---

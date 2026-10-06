@@ -2,6 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 import ProjectCard from './ProjectCard.astro';
 import T from './T.astro';
+import { newestFirst, projectCover } from '../projects';
 
 type Project = Pick<CollectionEntry<'projects'>, 'id' | 'data'>;
 
@@ -9,16 +10,12 @@ interface Props {
   projects: Project[];
 }
 
-const sorted = [...Astro.props.projects].sort(
-  (a, b) =>
-    b.data.year - a.data.year || a.data.title_en.localeCompare(b.data.title_en),
-);
-const images = (p: Project) =>
-  p.data.blocks.flatMap((block) =>
-    block.type === 'text' ? [] : block.images,
-  );
-const grid = sorted.filter((p) => images(p).length > 0);
-const listed = sorted.filter((p) => images(p).length === 0);
+const sorted = [...Astro.props.projects].sort(newestFirst);
+const grid = sorted.flatMap((p) => {
+  const cover = projectCover(p.data);
+  return cover ? [{ ...p, cover }] : [];
+});
+const listed = sorted.filter((p) => !projectCover(p.data));
 ---
 
 {
@@ -32,7 +29,7 @@ const listed = sorted.filter((p) => images(p).length === 0);
           year={p.data.year}
           locationCs={p.data.location_cs}
           locationEn={p.data.location_en}
-          cover={images(p)[0].image}
+          cover={p.cover.image}
         />
       ))}
     </section>
@@ -53,7 +50,7 @@ const listed = sorted.filter((p) => images(p).length === 0);
               <Row {href} class:list={['block max-w-prose', { group: href }]}>
                 <div class="flex items-baseline justify-between">
                   <T
-                    as="h3"
+                    as="h2"
                     cs={p.data.title_cs}
                     en={p.data.title_en}
                     class="text-base font-medium group-hover:underline group-focus-visible:underline"

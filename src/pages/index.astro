@@ -1,61 +1,23 @@
 ---
-import Base from '../layouts/Base.astro';
-import Carousel from '../components/Carousel.astro';
-import Approaches from '../components/Approaches.astro';
-import HomeFacts from '../components/HomeFacts.astro';
-import T from '../components/T.astro';
-import Prose from '../components/Prose.astro';
-import { home } from '../singletons';
-import { credentialedName } from '../site-title';
-import { ui } from '../i18n';
-import { getResponsiveImage } from '../server-images';
-import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
-import { profilePage, webSite } from '../structured-data';
+import PageMeta from '../components/PageMeta.astro';
+import { image, title } from '../work-page';
 
-const responsivePortrait = home.portrait
-  ? await getResponsiveImage(home.portrait)
-  : undefined;
-const image = (await getResponsiveImage(home.gallery[0]))?.share;
-const site = new URL('/', Astro.site);
+// GitHub Pages cannot redirect, so / forwards with a meta refresh. It carries
+// the work page's head, so link previews of the bare domain show that page.
+const work = new URL('/work/', Astro.site).href;
 ---
 
-<Base
-  title={{
-    cs: `${credentialedName} | ${ui.cs.tagline}`,
-    en: `${credentialedName} | ${ui.en.tagline}`,
-  }}
-  {image}
-  graph={[webSite({ site, name: credentialedName }), profilePage({ site })]}
->
-  <Carousel />
-
-  <section class="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-    <div class="grid gap-10 md:grid-cols-2 md:items-start md:gap-16">
-      <div class="reveal">
-        <T as="h2" k="about" class="text-sm tracking-widest uppercase" />
-        <Prose
-          cs={home.body_cs}
-          en={home.body_en}
-          class="prose prose-neutral mt-6 max-w-none dark:prose-invert"
-        />
-        <HomeFacts {home} />
-      </div>
-      {
-        home.portrait && (
-          <img
-            src={displayImageUrl(responsivePortrait, home.portrait)}
-            srcset={responsiveSrcset(responsivePortrait, THUMBNAIL_WIDTHS)}
-            sizes="(min-width: 1152px) 520px, (min-width: 768px) calc(50vw - 56px), calc(100vw - 48px)"
-            width={responsivePortrait?.source.width}
-            height={responsivePortrait?.source.height}
-            alt=""
-            loading="lazy"
-            class="reveal w-full bg-neutral-100 md:order-last"
-          />
-        )
-      }
-    </div>
-  </section>
-
-  <Approaches />
-</Base>
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta http-equiv="refresh" content="0; url=/work/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <PageMeta {title} {image} url={work} />
+  </head>
+  <body>
+    <a href="/work/">{work}</a>
+  </body>
+</html>

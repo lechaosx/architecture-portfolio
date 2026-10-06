@@ -22,8 +22,8 @@ The headline requirement: static pages, near-zero JavaScript, lazy-loaded images
 ### Minimal, image-forward design — [Implicit]
 
 Generous whitespace and a simple grid. The nav wordmark is the credentialed name
-("Ing. arch. TEREZA KALÁBKOVÁ", name uppercase, credential not) and is the way
-home; there is no Home menu item.
+("Ing. arch. TEREZA KALÁBKOVÁ", name uppercase, credential not) and leads to the
+work page, the front page; there is no Home menu item.
 
 ### Works on phones — [Implicit]
 
@@ -38,9 +38,10 @@ the imagery, never the UI, following the design brief.
 
 ### Nav and controls: idle, outline on hover, inverted when current — [Explicit]
 
-The menu is just **Work** and **Contact**, uppercase with wide tracking. The
-outline-then-invert treatment is the site's interaction vocabulary, reused by
-carousel and lightbox controls. Inline text links keep an underline.
+The menu is just **Práce** · **O mně** (Work · About), uppercase with wide
+tracking. The outline-then-invert treatment is the site's interaction
+vocabulary, reused by carousel and lightbox controls. Inline text links keep an
+underline.
 
 ### Roboto throughout — [Explicit]
 
@@ -64,18 +65,19 @@ Structural and design changes are made in code on the same repo.
 
 ### Most of the site is editable — [Explicit]
 
-Editable: projects, the home page (images, bio, portrait, services, where she
-works, education, awards, Approach), contact details and Site settings (name,
-credential, SEO description). Baked into code: page structure, navigation and
-section labels. CMS entries mirror the pages: **Home page**, **Projects**,
-**Contact**, **Site settings**.
+Editable: projects, the About page (bio, portrait, work experience, services,
+education, awards, Approach), the contact details in the footer and on About
+and Site settings (name, credential, SEO description). Baked into code: page
+structure, navigation and section labels. CMS entries: **Projects**, **About
+page**, **Contact (footer and About)**, **Site settings**.
 
 ### Required fields are what a page cannot do without — [Implicit]
 
-The name, the contact email, both About texts, at least one home image and every
-field of an Approach item, home fact row or availability row are required;
-everything else may be empty. An edit that would leave a page unrenderable fails
-the build and does not deploy.
+The name, the contact email, both About texts, every field of an Approach item,
+both names of a service or tag and both places and titles of an experience,
+education or award row are required; everything else may be empty, including a
+row's years — [Explicit] — and the hours and location — [Implicit]. An edit
+that would leave a page unrenderable fails the build and does not deploy.
 
 ### Projects: title and year; everything else optional — [Explicit]
 
@@ -109,7 +111,8 @@ links.
 ### Editable site settings — [Explicit]
 
 Name, credential and SEO description in one CMS entry, feeding the wordmark,
-footer, tab titles and the description of pages without their own.
+footer, tab titles, the work page's intro line and the description of pages
+without their own.
 
 ### Draft flag — [Implicit]
 
@@ -120,26 +123,54 @@ footer, tab titles and the description of pages without their own.
 Automatic, with no order field; the English title keeps the order the same in
 both languages.
 
-### The home page is the About page — [Explicit]
+### Two pages: Work and About — [Explicit]
 
-Following the architect's wireframe: images at the top, then About (bio left,
-portrait right), then Approach. All of it is edited in the one **Home page**
-entry.
+The work page comes first and is the front page; the About page holds her bio,
+CV and approach. Contacts are in the footer of every page and beside the
+portrait on About.
 
-### Home facts under the bio — [Explicit]
+### The bare domain forwards to the work page — [Explicit]
 
-Services, where she works, education and awards follow the bio in that order,
-each under a small label: services as one run separated by middle dots,
-education and awards one entry per line, in the bio's tone. An empty field shows
-neither label nor entry, so with none filled About is just the bio and portrait.
+GitHub Pages cannot redirect, so `/` is a page that forwards at once to
+`/work/`, and it is left out of the sitemap. When a real home page is added, `/`
+stops forwarding.
 
-### Home image or carousel — [Explicit]
+### The forwarding page previews as the work page — [Implicit]
 
-The architect picks and orders at least one home image; project images are never
-added automatically. One image shows at its natural aspect ratio; two or more
-form a carousel with arrows and dots that auto-advances, pausing on hover or
-focus; with reduced motion it does not auto-advance. Controls over images keep a
-high-contrast palette in both themes.
+It carries the work page's title, description, share image and canonical
+address, so a shared link to the bare domain previews as the work page. Its only
+content is a plain link to `/work/`, for browsers that do not follow the refresh.
+
+### About page: a CV with a side bar — [Explicit]
+
+The name stays in the wordmark, so **O mně** opens with its heading. On wide
+screens a side bar holds the portrait, the contacts (where she is, phone,
+email, hours) and her services as tags; the main column, twice as wide, holds
+the heading and bio, then the **Praxe**, **Vzdělání** and **Ocenění**
+timelines, then Approach. Section headings are small caps over a thin rule.
+Narrower screens take one column: the heading, the side bar, then the rest.
+Everything but the contacts is edited in the one **About page** entry.
+
+### Timelines — [Explicit]
+
+Work experience, education and awards are each a timeline: a thin line with a
+square marker per entry, the place, department, years and tags on its left,
+the title and description on its right. On phones the line moves to the left
+edge and each entry stacks beside it. Tags and services are small square
+outline tags. An entry's years are one field shared by both languages, e.g.
+"2024–2026", or "2024–" while ongoing — [Implicit].
+
+The details — [Implicit]: on phones an entry reads place, department, years,
+title, description, then its tags; place names and titles wrap into balanced
+lines; the contact lines have small icons and thin rules between them, email
+and phone are links; a contact line filled in one language shows only in that
+language; an empty timeline or service list shows no heading, so with nothing
+filled About is the heading, bio and email.
+
+### Work page: the site description as its intro — [Explicit]
+
+Under the **Práce** heading, the SEO description from Site settings shows as one
+line in the visitor's language, then the projects.
 
 ### Work page: a grid of square covers — [Explicit]
 
@@ -158,17 +189,39 @@ no such projects, neither the rule nor the list shows — [Implicit].
 
 ### Approach section — [Explicit]
 
-How the architect works, as a vertical list of items with no dividers, as she
-preferred; each icon enlarges from its centre on hover. The items (label, text
-and which icon) are added, removed and reordered in the CMS.
+How the architect works, the last section of About's main column, as a
+two-by-two grid: each item a small icon beside its small-caps label, with the
+text under it. Its items have no order in time, so it stays off the timeline.
+The items (label, text and which icon) are added, removed and reordered in the
+CMS.
 
-The four icons themselves are fixed in code — [Implicit].
+The details — [Implicit]: the heading is a section heading like the
+timelines'; one column on phones; the four icons are fixed in code, and each
+enlarges from its centre on hover. In Approach texts and timeline descriptions,
+every line break the architect types starts a paragraph, whether she typed one
+or two — [Implicit].
 
-### Contact page — [Explicit]
+### Contacts in the footer — [Explicit]
 
-Email, phone and a per-day "When to reach me" schedule (likely-to-answer times,
-"—" when unavailable), all editable. The email is also in the footer. No contact
-form: there is no backend to receive one.
+Email, phone and when she is reachable (one short line per language, e.g.
+"Po–Pá 10–15") are in every page's footer; email and phone are links, phone
+and hours show only when filled. There is no contact page and no contact form:
+there is no backend to receive one.
+
+The contacts have no label; the icons and links say what they are — [Explicit].
+
+The layout — [Implicit]: each contact with the About page's icon, in one row on
+wide screens and one per line on phones, never broken inside; below them, in
+smaller quiet type, the © on the left and the theme and language switches on
+the right. Everything sits on the page's left edge at every width.
+
+### Custom 404 page — [Explicit]
+
+An unknown address gets a page in the site's frame, menu and footer included: a
+heading ("Na této parcele nic nestojí." / "Nothing stands on this plot."), a line
+asking whether the address is right and a link back to the studio, the work page
+— copy [Explicit]. It is kept out of search engines and the sitemap, and nothing
+redirects.
 
 ---
 
@@ -253,7 +306,8 @@ room — [Implicit]:
 
 A project page is an ordered list of text, thumbnail-gallery and full-width
 image-set blocks, in any order and repeated freely. A one-image set is a plain
-image; more form a manual carousel.
+image; more form a manual carousel, whose controls keep a high-contrast palette
+in both themes.
 
 ### Project text fills the width with comfortable columns — [Explicit]
 
@@ -349,7 +403,7 @@ Served at the architect's own domain; the `*.github.io` URL redirects to it.
 
 Per-page title, description and canonical address, Open Graph and Twitter tags,
 a sitemap, and a `robots.txt` that admits every crawler and names the sitemap.
-Tab titles pair page and credentialed name with `|`, e.g. "Work | Ing. arch.
+Tab titles pair page and credentialed name with `|`, e.g. "About | Ing. arch.
 Tereza Kalábková" — [Explicit].
 
 ### Project descriptions from the brief — [Implicit]
@@ -360,21 +414,23 @@ description.
 
 ### Share image: the first image — [Implicit]
 
-A project's link preview shows its cover, the home page's its first home image,
-as a JPEG about 1200px wide, the format every social site shows. Social sites
-do not show SVGs, so an SVG gives no preview image.
+A project's link preview shows its cover, the work page's (and so the bare
+domain's) the first cover in its grid, the About page's the portrait, as a JPEG
+about 1200px wide, the format every social site shows. Social sites do not show
+SVGs, so an SVG gives no preview image.
 
 ### Facts for search engines and AI assistants — [Implicit]
 
 So that an assistant asked which architect to hire can quote her, every page
 carries structured data (schema.org) about the architect: name, credential,
-contact with where she works, services, education and awards; a project page
-adds its project, its cover and its titled or described images, each linked at
-the size the lightbox opens it at. `/llms.txt` gathers the same facts, her bio
-and every published project's texts and image captions in one Markdown file,
-Czech then English.
+contact and where she works, services, and education and awards with their
+places and years; a project page adds its project, its cover and its titled or
+described images, each linked at the size the lightbox opens it at. `/llms.txt`
+gathers the same facts, her work experience, her bio and every published
+project's texts and image captions in one Markdown file, Czech then English.
 
-### Home tab title says what she is — [Explicit]
+### The front page's tab title says what she is — [Explicit]
 
-The home tab title is the credentialed name and her profession: "Ing. arch.
-Tereza Kalábková | Architektka" in Czech, "… | Architect" in English.
+The front page's tab title is the credentialed name and her profession: "Ing.
+arch. Tereza Kalábková | Architektka" in Czech, "… | Architect" in English. The
+work page is the front page, so it carries this title — [Implicit].
