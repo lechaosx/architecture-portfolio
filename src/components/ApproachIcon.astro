@@ -26,11 +26,10 @@ const { icon, class: cls } = Astro.props;
     </>
   )}
   {icon === 'scale' && (
-    <>
-      <rect x="6" y="6" width="36" height="36" />
-      <rect x="16" y="16" width="16" height="16" />
-      <path d="M6 6l10 10M42 6L32 16" />
-    </>
+    <g transform="rotate(-45 24 24)">
+      <rect x="4" y="16" width="40" height="16" />
+      <path d="M12 16v7M20 16v4M28 16v7M36 16v4" />
+    </g>
   )}
   {icon === 'material' && (
     <>
