@@ -43,7 +43,14 @@ const image =
   {image}
   graph={[webSite({ site: new URL('/', Astro.site), name: credentialedName })]}
 >
-  <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
+  {/* The hero sits closer under the header than a page heading does; without
+      it the intro opens the page like one. */}
+  <div
+    class:list={[
+      'mx-auto max-w-6xl px-6 pb-16 sm:pb-24',
+      heroImages.length > 0 ? 'pt-8' : 'pt-12 sm:pt-16',
+    ]}
+  >
     {
       heroImages.length === 1 ? (
         <img
@@ -88,26 +95,28 @@ const image =
       )
     }
 
-    <div>
+    <div
+      class:list={[
+        'flex flex-col items-start gap-6 sm:flex-row sm:items-baseline-last sm:justify-between sm:gap-12',
+        { 'mt-8 sm:mt-12': heroImages.length > 0 },
+      ]}
+    >
       <T
         as="h1"
         cs={site.description_cs}
         en={site.description_en}
         class="max-w-3xl text-3xl font-medium text-balance sm:text-4xl"
       />
-      <p class="mt-6">
-        <a href="/about/" class="text-link"><T k="toAbout" /></a>
-      </p>
+      <a href="/about/" class="text-link shrink-0"><T k="toAbout" /></a>
     </div>
 
     {
       selected.length > 0 && (
-        <section>
-          <SectionHeading k="selectedWork" />
+        <section class="mt-16 sm:mt-24">
+          <SectionHeading k="selectedWork">
+            <a href="/work/" class="shrink-0 hover:underline focus-visible:underline"><T k="allWork" /></a>
+          </SectionHeading>
           <ProjectGrid projects={selected} heading="h3" />
-          <p class="mt-12 sm:mt-16">
-            <a href="/work/" class="text-link"><T k="allWork" /></a>
-          </p>
         </section>
       )
     }

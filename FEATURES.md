@@ -136,11 +136,17 @@ About.
 ### Landing page — [Explicit]
 
 Top to bottom: her chosen images, the site description in large type with
-**O mně →**, then **Vybrané práce**, the three newest projects with images as
-the work page's cards, and **Všechny práce →**. The details — [Implicit]: three
-cards fill one row of the grid; the heading and links are About's section
-heading and the site's underlined links; the cards open their projects with the
-same cover transition as on Work.
+**O mně →**, then **Vybrané práce** with **Všechny práce →** over the three
+newest projects with images as the work page's cards. The images fill the
+content width just under the header — [Explicit].
+
+The layout — [Implicit]: the images and the description read as one opening,
+with a wider gap before the selected work. **O mně →** ends the description's
+last line on the right, or goes under it on phones, as an underlined link.
+**Všechny práce →** ends the row of the heading, About's section heading, in
+its small caps and underlined on hover and focus like a linked list row. Three cards fill
+one row of the grid and open their projects with the same cover transition as
+on Work.
 
 ### Landing images or carousel — [Explicit]
 

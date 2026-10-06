@@ -209,6 +209,13 @@ cards with a cover and the list, so the share image that falls back to the
 newest cover always matches the first card, and `llms.txt` lists projects in
 the same order.
 
+### Section headings own their row — [Implicit]
+
+`SectionHeading` draws the small caps and the rule for About and the landing
+page. Its default slot ends the row on the same rule and inherits the small
+caps, so a link onward, like the landing page's link to all work, needs no
+layout of its own.
+
 ### Page transitions: native View Transitions — [Implicit]
 
 `@view-transition { navigation: auto; }`, with no client router. The name
