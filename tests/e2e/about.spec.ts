@@ -173,3 +173,65 @@ test('the side bar sits beside the main column on wide screens, above it on phon
     ).toBe(true);
   }
 });
+
+test('Approach items stay still on hover, since they are not links', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/e2e/about/');
+  const item = section(page, 'Approach').getByRole('listitem').first();
+  const look = () =>
+    item.evaluate((root) =>
+      [root, ...root.querySelectorAll('*')].map((element) => {
+        for (const animation of element.getAnimations()) animation.finish();
+        const style = getComputedStyle(element);
+        return [style.transform, style.scale, style.translate, style.color, style.opacity];
+      }),
+    );
+  await item.scrollIntoViewIfNeeded();
+  await expect(item).not.toHaveClass(/is-hidden/);
+  await page.mouse.move(0, 0);
+  const atRest = await look();
+  await item.hover();
+  expect(await look()).toEqual(atRest);
+});
+
+test('the bio splits into columns only where each keeps a comfortable width', async ({
+  page,
+}) => {
+  await page.goto('/e2e/about/');
+  await page.evaluate(() => document.fonts.ready);
+  const bio = page.locator('main .prose:visible');
+
+  // Two columns in the main column on desktop, one on phones; in between the
+  // shared minimum column width decides.
+  for (const [width, expected] of [
+    [390, 1],
+    [1024, undefined],
+    [1280, 2],
+    [1440, 2],
+  ] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    const layout = await bio.evaluate((element) => {
+      const measure = document.createElement('div');
+      measure.style.cssText = 'position:absolute; width:35ch; visibility:hidden';
+      element.append(measure);
+      const minimumColumnWidth = measure.getBoundingClientRect().width;
+      measure.remove();
+      const columns = Array.from(element.querySelector('p')!.getClientRects());
+      return {
+        fits:
+          element.getBoundingClientRect().width >=
+          2 * minimumColumnWidth + parseFloat(getComputedStyle(element).columnGap),
+        minimumColumnWidth,
+        columns: columns.length,
+        columnWidth: Math.min(...columns.map((column) => column.width)),
+      };
+    });
+
+    const context = `viewport ${width}`;
+    expect(layout.columns, context).toBe(expected ?? (layout.fits ? 2 : 1));
+    if (layout.columns > 1) {
+      expect(layout.columnWidth, context).toBeGreaterThanOrEqual(layout.minimumColumnWidth);
+    }
+  }
+});

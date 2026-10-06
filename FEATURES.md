@@ -167,6 +167,9 @@ timelines, then Approach. Section headings are small caps over a thin rule.
 Narrower screens take one column: the heading, the side bar, then the rest.
 Everything but the contacts is edited in the one **About page** entry.
 
+The bio follows the project text's column rule: balanced columns where each
+keeps a comfortable width, else one — [Explicit].
+
 ### Timelines — [Explicit]
 
 Work experience, education and awards are each a timeline: a thin line with a
@@ -207,10 +210,11 @@ The items (label, text and which icon) are added, removed and reordered in the
 CMS.
 
 The details — [Implicit]: the heading is a section heading like the
-timelines'; one column on phones; the four icons are fixed in code, and each
-enlarges from its centre on hover. In Approach texts and timeline descriptions,
-every line break the architect types starts a paragraph, whether she typed one
-or two — [Implicit].
+timelines'; one column on phones; the four icons are fixed in code. Hover
+effects mark only links and buttons, so Approach items stay still —
+[Explicit]. In Approach texts
+and timeline descriptions, every line break the architect types starts a
+paragraph, whether she typed one or two — [Implicit].
 
 ### Contacts in the footer — [Explicit]
 

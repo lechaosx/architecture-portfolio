@@ -260,10 +260,11 @@ the file body, so `Prose.astro` renders them with `marked`. `.prose` justifies
 and hyphenates, and each language's wrapper carries its `lang` so the browser
 picks the right dictionary — [Explicit].
 
-### Project text columns follow the container — [Implicit]
+### Text columns follow the container — [Implicit]
 
-Native CSS columns balance project text across at most two columns, using a
-font-relative minimum width so a split never makes either column too narrow.
+Native CSS columns balance project text and the About bio across at most two
+columns, using a font-relative minimum width so a split never makes either
+column too narrow. Both render through `Prose.astro`, which holds the rule.
 The minimum uses `ch` to follow the font's metrics and size; it approximates
 character count for proportional text. Text fills the available width and
 reflows on resize without client-side JavaScript, allowing longer single lines
