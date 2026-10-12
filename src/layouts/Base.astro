@@ -163,7 +163,7 @@ const structuredData = jsonLd([
     </script>
   </head>
   <body class="min-h-screen bg-white font-sans text-black antialiased">
-    <Nav />
+    <slot name="navigation"><Nav /></slot>
     <main>
       <slot />
     </main>

@@ -209,6 +209,30 @@ cards with a cover and the list, so the share image that falls back to the
 newest cover always matches the first card, and `llms.txt` lists projects in
 the same order.
 
+### Single-page proposal uses the ordinary build — [Implicit]
+
+`src/pages/single-page.astro` renders `SinglePageProposal` in the production
+build so the review URL deploys with the site. Its stylesheet is scoped to the
+proposal, while `Base`'s navigation slot supplies section links through the
+existing `Nav` component. The page carries `noindex` and the sitemap excludes
+its URL; its fixture projects are injected only by the browser-test configuration.
+
+### Proposal section scrolling is native — [Implicit]
+
+The proposal uses anchor links and CSS smooth scrolling, enabled
+only without a reduced-motion preference. The fragment changes immediately
+and the browser moves toward the section. With JavaScript, section clicks
+update browser history and call native `scrollIntoView` so another click
+can redirect an ongoing scroll; without JavaScript, the anchors still work.
+
+### Proposal current-section highlighting — [Implicit]
+
+A small vanilla script updates the proposal menu from section positions while
+the visitor scrolls, at most once per animation frame. An anchor click selects
+its destination synchronously and holds it until arrival or manual scroll input;
+native scrolling owns movement. Browser history navigation also releases the
+pending selection. The menu uses its existing inverted classes.
+
 ### Section headings own their row — [Implicit]
 
 `SectionHeading` draws the small caps and the rule for About and the landing

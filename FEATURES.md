@@ -133,6 +133,62 @@ The work page lists every project; the About page holds her bio, CV and
 approach. Contacts are in the footer of every page and beside the portrait on
 About.
 
+### Unlisted single-page proposal — [Explicit]
+
+The architect can review the single-page design at `/single-page/` through a
+direct link before a full implementation. It is absent from normal navigation
+and the sitemap and carries `noindex` — [Implicit]. The headline, introductory
+copy and invitation to enquire remain drafts for review — [Implicit].
+
+### Proposal work and profile layout — [Explicit]
+
+The proposal shows every published project, including a text list for
+projects without images, and individual projects open their existing pages.
+The portrait and biography have equal width on wide screens and stack on
+phones; section navigation scrolls smoothly unless the visitor requests
+reduced motion.
+
+### Proposal visual consistency — [Explicit]
+
+The opening text and project image share equal-width columns on wide screens.
+Work and About use the site's existing small-cap headings and thin rules,
+matching the menu; Services, Approach and the CV use quieter subsection
+headings within About. Assertive opening and profile titles, the filled Work
+button and the black contact card retain their emphasis.
+
+### Proposal contact card — [Explicit]
+
+The Contact heading sits inside the black card above its assertive title.
+Enquiry text, the email button and contact details occupy the right column
+on wide screens and stack below the heading on phones.
+Email, phone, call-hours and location icons share a left edge, with call
+hours grouped under the phone.
+
+### Proposal opening image — [Implicit]
+
+The opening image introduces the practice without a link, hover zoom or
+caption. The Work button leads to the complete portfolio, where project cards
+provide the links and hover zoom, so adjacent sections do not offer duplicate
+links to the same project.
+
+### Proposal timelines and current section — [Explicit]
+
+Practice, education and awards remain visible as timelines with a line and
+square markers. The compact timeline sits against the page's left edge,
+with institution and date details aligned right beside left-aligned
+qualification or role details on wide screens — [Explicit]. The rail separates
+the columns; on phones the two sides stack beside a left-hand rail — [Implicit].
+The proposal header highlights Work, About or Contact as the
+visitor scrolls, using its existing inverted style. Selecting a section turns
+its menu item black immediately and retains the selection while scrolling
+toward it; manual scrolling takes over the highlight.
+
+### Original bars in the proposal — [Explicit]
+
+The proposal uses the original header's wordmark, typography and spacing,
+with Contact added to the menu. The menu wraps when needed on phones —
+[Implicit]. The footer retains its original layout and controls.
+
 ### Landing page — [Explicit]
 
 Top to bottom: her chosen images, the site description in large type with
@@ -218,12 +274,14 @@ paragraph, whether she typed one or two — [Implicit].
 
 ### Contacts in the footer — [Explicit]
 
-Email, phone and when she is reachable (one short line per language, e.g.
-"Po–Pá 10–15") are in every page's footer; email and phone are links, phone
-and hours show only when filled. No contact form: there is no backend to
-receive one.
+Email, phone and when she receives calls (one short line per language, e.g.
+"Po–Pá 10–15") are in every page's footer; email and phone are links, and
+phone and hours show only when filled.
+No contact form: there is no backend to receive one.
 
 The contacts have no label; the icons and links say what they are — [Explicit].
+On About, call hours are grouped with the phone — [Explicit]. They use a
+clock icon and a call-hours label for screen readers — [Implicit].
 
 The layout — [Implicit]: on wide screens one line, the © on the left, the
 contacts in the middle and the theme and language switches on the right; each

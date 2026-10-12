@@ -10,7 +10,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://kalabkova.cz',
   trailingSlash: 'always',
-  integrations: [svelte(), sitemap()],
+  integrations: [svelte(), sitemap({ filter: (page) => !page.endsWith('/single-page/') })],
   vite: {
     plugins: [tailwindcss()],
     // direnv links the flake's nixpkgs source into .direnv/flake-inputs, and

@@ -1,0 +1,284 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Nav from './Nav.astro';
+import T from './T.astro';
+import Prose from './Prose.astro';
+import Paragraphs from './Paragraphs.astro';
+import ApproachIcon from './ApproachIcon.astro';
+import ContactIcon from './ContactIcon.astro';
+import SectionHeading from './SectionHeading.astro';
+import { about, contact, site } from '../singletons';
+import { credentialedName } from '../site-title';
+import { onlyIn, ui } from '../i18n';
+import { workProjects, type Project } from '../projects';
+import { getResponsiveImage } from '../server-images';
+import { coverSizes, displayImageUrl, LARGE_IMAGE_WIDTHS, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
+import '../styles/single-page.css';
+
+interface Props {
+  projects?: Project[];
+}
+
+const work = workProjects(Astro.props.projects ?? await getCollection('projects', ({ data }) => !data.draft));
+const projects = work.grid;
+const listed = work.listed;
+const cards = await Promise.all(projects.map(async (project) => ({
+  ...project,
+  responsive: await getResponsiveImage(project.cover.image),
+})));
+const heroSrc = '/uploads/Scene 25_1.webp';
+const hero = await getResponsiveImage(heroSrc);
+const portrait = about.portrait ? await getResponsiveImage(about.portrait) : undefined;
+const timelines = [
+  { k: 'experience', rows: about.experience },
+  { k: 'education', rows: about.education },
+  { k: 'awards', rows: about.awards },
+] as const;
+---
+
+<Base
+  title={{ cs: `${ui.cs.tagline} | ${credentialedName}`, en: `${ui.en.tagline} | ${credentialedName}` }}
+  image={hero?.share}
+  noindex
+>
+  <Nav slot="navigation" homeHref="/single-page/" workHref="#work" aboutHref="#about" contactHref="#contact" />
+
+  <div class="single-page-proposal mx-auto max-w-6xl px-6 pb-12">
+    <section class="hero">
+      <div class="hero-copy">
+        <T as="p" k="experimentScope" class="text-sm tracking-widest uppercase" />
+        <T as="h1" k="experimentHeadline" class="display mt-6" />
+        <T as="p" k="experimentIntro" class="mt-6 text-lg leading-relaxed text-neutral-700" />
+        <div class="mt-8 flex flex-wrap items-center gap-x-7 gap-y-5">
+          <a href="#work" class="primary-link"><T k="experimentExplore" /></a>
+          <a href="#contact" class="text-link"><T k="experimentDiscuss" /></a>
+        </div>
+      </div>
+      <div>
+        <img src={displayImageUrl(hero, heroSrc)} srcset={responsiveSrcset(hero, LARGE_IMAGE_WIDTHS)}
+          sizes={coverSizes(hero ? hero.source.width / hero.source.height : 1.44, 5 / 4, [{ media: '(min-width: 1152px)', fixed: 528 }, { media: '(min-width: 900px)', viewport: 50, gutter: 48 }, { viewport: 100, gutter: 48 }])}
+          width={hero?.source.width} height={hero?.source.height} alt="" loading="eager" decoding="async" fetchpriority="high" class="hero-image" />
+      </div>
+    </section>
+
+    {(cards.length > 0 || listed.length > 0) && (
+      <section id="work" class="page-section">
+        <SectionHeading k="work" />
+        <div class="project-grid">
+          {cards.map(({ id, data, cover, responsive }) => (
+            <a href={`/projects/${id}/`} class="group min-w-0">
+              <div class="project-cover aspect-square overflow-hidden bg-neutral-100" style={`view-transition-name: cover-${id}`}>
+                <img src={displayImageUrl(responsive, cover.image)} srcset={responsiveSrcset(responsive, THUMBNAIL_WIDTHS)}
+                  sizes={coverSizes(responsive ? responsive.source.width / responsive.source.height : 1, 1, [{ media: '(min-width: 1152px)', fixed: 347 }, { media: '(min-width: 700px)', viewport: 100 / 3, gutter: 112 / 3 }, { viewport: 100, gutter: 48 }], 1.03)}
+                  width={responsive?.source.width} height={responsive?.source.height} alt="" loading="lazy" decoding="async"
+                  class="size-full object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-103" />
+              </div>
+              <div class="mt-4 flex items-baseline justify-between gap-4">
+                <T as="h3" cs={data.title_cs} en={data.title_en} class="font-medium text-balance" />
+                <span class="shrink-0 text-sm text-neutral-500">{data.year}</span>
+              </div>
+              <T as="p" cs={data.location_cs} en={data.location_en} class="mt-1 text-sm text-neutral-600" />
+            </a>
+          ))}
+        </div>
+        {listed.length > 0 && (
+          <ul class:list={['flex flex-col gap-8', { 'mt-10 border-t border-neutral-200 pt-8': cards.length > 0 }]}>
+            {listed.map(({ id, data }) => {
+              const href = data.blocks.length > 0 ? `/projects/${id}/` : undefined;
+              const Row = href ? 'a' : 'div';
+              return (
+                <li>
+                  <Row {href} class:list={['block max-w-prose', { group: href }]}>
+                    <div class="flex items-baseline justify-between gap-4">
+                      <T as="h3" cs={data.title_cs} en={data.title_en} class="font-medium group-hover:underline group-focus-visible:underline" />
+                      <span class="shrink-0 text-sm text-neutral-500">{data.year}</span>
+                    </div>
+                    <T as="p" cs={data.location_cs} en={data.location_en} class="mt-1 text-sm text-neutral-600 empty:hidden" />
+                    <T as="p" cs={data.brief_cs} en={data.brief_en} class="mt-2 text-sm whitespace-pre-line empty:hidden" />
+                  </Row>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    )}
+
+    <section id="about" class="page-section">
+      <SectionHeading k="about" />
+      <div class="about-opening">
+        <div>
+          <T as="p" cs={site.name} en={site.name} class="section-title" />
+          <div class="bio mt-8"><Prose cs={about.body_cs} en={about.body_en} /></div>
+          <a href="#contact" class="text-link mt-7 inline-block"><T k="experimentDiscuss" /></a>
+        </div>
+        {about.portrait && (
+          <figure class="portrait">
+            <img src={displayImageUrl(portrait, about.portrait)} srcset={responsiveSrcset(portrait, THUMBNAIL_WIDTHS)}
+              sizes="(min-width: 1152px) 528px, (min-width: 700px) calc((100vw - 96px) / 2), (min-width: 496px) 448px, calc(100vw - 48px)"
+              width={portrait?.source.width} height={portrait?.source.height} alt="" loading="lazy" decoding="async" class="w-full bg-neutral-100" />
+          </figure>
+        )}
+      </div>
+
+      {about.services.length > 0 && (
+        <div class="mt-10">
+          <T as="h3" k="services" class="mb-6 text-xl font-medium" />
+          <ul class="flex flex-wrap gap-1.5">
+            {about.services.map((service) => <li class="border border-neutral-500 px-2 py-0.5 text-xs"><T cs={service.name_cs} en={service.name_en} /></li>)}
+          </ul>
+        </div>
+      )}
+
+      {about.approaches.length > 0 && (
+        <section class="mt-14">
+          <T as="h3" k="approach" class="mb-6 text-xl font-medium" />
+          <ul class="grid gap-x-12 gap-y-10 sm:grid-cols-2">
+            {about.approaches.map((item) => (
+              <li>
+                <div class="flex items-center gap-3">
+                  <ApproachIcon icon={item.icon} class="size-5 shrink-0" />
+                  <T as="h4" cs={item.label_cs} en={item.label_en} class="text-sm tracking-widest uppercase" />
+                </div>
+                <Paragraphs cs={item.text_cs} en={item.text_en} class="mt-3 space-y-4 text-neutral-700" />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {timelines.map(({ k, rows }) => rows.length > 0 && (
+        <section class="mt-14">
+          <T as="h3" {k} class="mb-6 text-xl font-medium" />
+          <ul class="max-w-3xl">
+            {rows.map((entry) => (
+              <li class="relative grid items-start gap-x-12 gap-y-3 pb-8 last:pb-0 sm:grid-cols-[14rem_minmax(0,1fr)]">
+                <span class="absolute inset-y-0 left-0 w-px -translate-x-1/2 bg-neutral-500 sm:left-[15.5rem]" aria-hidden="true" />
+                <span class="absolute top-1.5 left-0 size-2 -translate-x-1/2 bg-black sm:left-[15.5rem]" aria-hidden="true" />
+                <div class="min-w-0 pl-6 sm:pl-0 sm:text-right">
+                  <T as="p" cs={entry.place_cs} en={entry.place_en} class="text-sm tracking-widest text-balance uppercase" />
+                  <T as="p" cs={entry.department_cs} en={entry.department_en} class="text-sm text-balance text-neutral-600 empty:hidden" />
+                  {entry.years && <p class="mt-1 text-sm text-neutral-500 tabular-nums">{entry.years}</p>}
+                </div>
+                <div class="min-w-0 pl-6 sm:pl-0">
+                  <T as="h4" cs={entry.title_cs} en={entry.title_en} class="font-medium text-balance" />
+                  <Paragraphs cs={entry.description_cs} en={entry.description_en} class="mt-3 space-y-4 text-neutral-700 empty:hidden" />
+                  {entry.tags.length > 0 && (
+                    <ul class="mt-3 flex flex-wrap gap-1.5">
+                      {entry.tags.map((tag) => <li class="border border-neutral-500 px-2 py-0.5 text-xs"><T cs={tag.name_cs} en={tag.name_en} /></li>)}
+                    </ul>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </section>
+    <section id="contact" class="page-section">
+      <div class="contact-panel bg-black text-white">
+        <div>
+          <T as="h2" k="contact" class="text-sm tracking-widest uppercase" />
+          <T as="h3" k="experimentContactHeadline" class="section-title mt-5" />
+        </div>
+        <div>
+          <T as="p" k="experimentContactText" class="leading-relaxed" />
+          <a href={`mailto:${contact.email}`} class="contact-button mt-7"><T k="experimentWrite" /></a>
+          <address class="mt-7 flex flex-col gap-3 text-sm not-italic">
+            <div class="flex items-center gap-2">
+              <ContactIcon icon="email" class="size-4 shrink-0" />
+              <a href={`mailto:${contact.email}`} class="text-link break-words">{contact.email}</a>
+            </div>
+            {contact.phone && (
+              <div class="grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-2">
+                <ContactIcon icon="phone" class="size-4 shrink-0" />
+                <a href={`tel:${contact.phone.replace(/\s+/g, '')}`} class="text-link">{contact.phone}</a>
+                {(contact.hours_cs || contact.hours_en) && <p lang={onlyIn(contact.hours_cs, contact.hours_en)} class="col-span-2 mt-1 flex items-center gap-2"><ContactIcon icon="hours" class="size-4 shrink-0" /><T k="callHours" class="sr-only" /><T cs={contact.hours_cs} en={contact.hours_en} /></p>}
+              </div>
+            )}
+            {(contact.location_cs || contact.location_en) && <p lang={onlyIn(contact.location_cs, contact.location_en)} class="flex items-center gap-2"><ContactIcon icon="location" class="size-4 shrink-0" /><T cs={contact.location_cs} en={contact.location_en} /></p>}
+          </address>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<script>
+  const header = document.querySelector<HTMLElement>('body > header')!;
+  const links = Array.from(header.querySelectorAll<HTMLAnchorElement>('[data-section]'));
+  if (links.some((link) => link.hash)) {
+    const sections = ['work', 'about', 'contact'].flatMap((id) => {
+      const section = document.getElementById(id);
+      return section ? [section] : [];
+    });
+    let scheduled = false;
+    let destination: HTMLElement | undefined;
+
+    function selectSection(current?: HTMLElement) {
+      for (const link of links) {
+        const active = link.dataset.section === current?.id;
+        for (const cls of ['border-black', 'bg-black', 'text-white']) link.classList.toggle(cls, active);
+        link.classList.toggle('hover:border-black', !active);
+        if (active) link.setAttribute('aria-current', new URL(link.href).pathname === location.pathname && !link.hash ? 'page' : 'location');
+        else link.removeAttribute('aria-current');
+      }
+    }
+
+    function updateSection() {
+      scheduled = false;
+      if (destination) {
+        const top = destination.getBoundingClientRect().top + scrollY - parseFloat(getComputedStyle(destination).scrollMarginTop);
+        const target = Math.max(0, Math.min(top, document.documentElement.scrollHeight - innerHeight));
+        if (Math.abs(scrollY - target) > 1) return;
+        destination = undefined;
+      }
+      const marker = header.getBoundingClientRect().bottom + 4 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+      let current = sections[0]?.id === 'about' ? sections[0] : undefined;
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= marker) current = section;
+      }
+      if (scrollY + innerHeight >= document.documentElement.scrollHeight - 1) current = sections.at(-1);
+      selectSection(current);
+    }
+
+    function scheduleUpdate() {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(updateSection);
+    }
+
+    document.addEventListener('click', (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target instanceof Element ? event.target.closest('a') : null;
+      if (!link || link.target === '_blank' || link.hasAttribute('download')) return;
+      const url = new URL(link.href);
+      if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search) return;
+      const section = sections.find((section) => url.hash === `#${section.id}`);
+      if (!section) return;
+      event.preventDefault();
+      destination = section;
+      selectSection(destination);
+      if (location.hash !== url.hash) history.pushState(null, '', url);
+      destination.scrollIntoView({ block: 'start' });
+      scheduleUpdate();
+    });
+
+    function resumeScrollHighlight() {
+      destination = undefined;
+      scheduleUpdate();
+    }
+
+    addEventListener('wheel', resumeScrollHighlight, { passive: true });
+    addEventListener('touchstart', resumeScrollHighlight, { passive: true });
+    addEventListener('popstate', resumeScrollHighlight);
+    addEventListener('keydown', (event) => {
+      if (event.target instanceof Element && event.target.closest('input, textarea, select, button, [contenteditable]')) return;
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) resumeScrollHighlight();
+    });
+    addEventListener('scroll', scheduleUpdate, { passive: true });
+    addEventListener('resize', scheduleUpdate);
+    updateSection();
+  }
+</script>
