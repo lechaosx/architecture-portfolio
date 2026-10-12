@@ -24,6 +24,10 @@ npm run images       # regenerate responsive images (dev and build run it)
 
 ### Browser tests
 
+The unlisted `/single-page/` proposal uses the ordinary build and browser
+suite. `single-page.spec.ts` checks its review route, section navigation and
+visibility boundaries; `/e2e/single-page-work/` supplies fixture projects.
+
 - `test:e2e` first builds `astro.config.e2e.mjs` into `dist-e2e/`, then serves it
   on port 4322, so it runs beside `dev` and `preview`. To run Playwright
   directly, run `npm run pretest:e2e` first.
@@ -47,6 +51,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/i18n.ts` | baked-in UI labels |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
 | `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro` | the pages, also rendered by the e2e fixtures |
+| `src/pages/single-page.astro`, `src/components/SinglePageProposal.astro`, `src/styles/single-page.css` | the unlisted single-page proposal |
 | `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |
 | `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD and `/llms.txt`, built from content |

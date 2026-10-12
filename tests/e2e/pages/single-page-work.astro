@@ -1,0 +1,30 @@
+---
+import SinglePageProposal from '../../../src/components/SinglePageProposal.astro';
+import type { Project } from '../../../src/projects';
+
+const projects: Project[] = [2027, 2026, 2025, 2024].map((year) => ({
+  id: `fixture-${year}`,
+  data: {
+    title_cs: `Projekt ${year}`,
+    title_en: `Project ${year}`,
+    year,
+    draft: false,
+    blocks: [{ type: 'image_set', images: [{ image: '/uploads/placeholder-cover.svg' }] }],
+  },
+}));
+projects.push({
+  id: 'fixture-text',
+  data: {
+    title_cs: 'Textový projekt', title_en: 'Text-only project', year: 2023, draft: false,
+    blocks: [{ type: 'text', body_cs: 'Studie.', body_en: 'A study.' }],
+  },
+}, {
+  id: 'fixture-brief',
+  data: {
+    title_cs: 'Stručný projekt', title_en: 'Brief-only project', year: 2022, draft: false,
+    brief_cs: 'Zadání.', brief_en: 'The brief.', blocks: [],
+  },
+});
+---
+
+<SinglePageProposal {projects} />

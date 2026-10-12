@@ -193,8 +193,8 @@ content:
       - { name: phone, label: Phone, type: string, required: false }
       - { name: location_cs, label: Where I am (Czech), type: string, required: false, description: 'Your city, e.g. "Brno". Shown on the About page.' }
       - { name: location_en, label: Where I am (English), type: string, required: false, description: 'Your city, e.g. "Brno". Shown on the About page.' }
-      - { name: hours_cs, label: When I'm reachable (Czech), type: string, required: false, description: 'One short line, e.g. "Po–Pá 10–15".' }
-      - { name: hours_en, label: When I'm reachable (English), type: string, required: false, description: 'One short line, e.g. "Mon–Fri 10–15".' }
+      - { name: hours_cs, label: Phone call hours (Czech), type: string, required: false, description: 'When I receive calls, e.g. "Po–Pá 10–15".' }
+      - { name: hours_en, label: Phone call hours (English), type: string, required: false, description: 'When I receive calls, e.g. "Mon–Fri 10–15".' }
 
   - name: site
     label: Site settings

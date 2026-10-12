@@ -17,6 +17,12 @@ npm run dev      # http://localhost:4321
 
 Tests, build and other commands: [MAINTAINERS.md](MAINTAINERS.md).
 
+The single-page design proposal is available for direct review at
+[kalabkova.cz/single-page/](https://kalabkova.cz/single-page/). It is absent
+from normal navigation and the sitemap and carries `noindex`. Preview it
+locally at `http://localhost:4321/single-page/` with the ordinary dev command;
+its bilingual headline and enquiry copy remain drafts for the architect to review.
+
 ## Content
 
 Projects are Markdown files in `src/content/projects/`, the landing page's
