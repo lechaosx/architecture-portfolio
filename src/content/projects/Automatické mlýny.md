@@ -16,7 +16,7 @@ brief_cs: >-
   Autorský tým: Jan Žahour, Michal Škoda, Olivia Dimitrishina, Tereza Kalábková,
   Libor Šenekel, Pavel Lauš, Adam Schwarz, Jakub Jurásek.
 
-  Autorský ateliér: Fránek Architects | Ing. arch. Zdeněk Fránek
+  Autorský ateliér: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
 brief_en: >-
   Team collaboration on the architectural design for the extension of the Gočár
   Gallery at the Automatic Mills complex in Pardubice, as part of an open,
@@ -30,6 +30,6 @@ brief_en: >-
   Libor Šenekel, Pavel Lauš, Adam Schwarz, Jakub Jurásek.
 
 
-  Design Studio: Fránek Architects | Ing. arch. Zdeněk Fránek
+  Design Studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
 draft: false
 ---
