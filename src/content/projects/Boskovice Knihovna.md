@@ -11,7 +11,7 @@ brief_cs: >-
 
   Spolupráce: Ing. arch. Libor Šenekel – vizualizace
 
-  Autorský ateliér: Fránek Architects | Ing. arch. Zdeněk Fránek
+  Autorský ateliér: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
 brief_en: >-
   Development of the architectural design for the Municipal Library in Boskovice
   as part of an open, single-stage architectural design competition.
@@ -19,6 +19,6 @@ brief_en: >-
 
   Collaboration: Ing. arch. Libor Šenekel – Visualizations
 
-  Design Studio: Fránek Architects | Ing. arch. Zdeněk Fránek
+  Design Studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
 draft: false
 ---
