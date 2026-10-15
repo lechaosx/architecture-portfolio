@@ -38,17 +38,17 @@ approaches:
   - label_cs: Myšlení
     label_en: Thinking
     text_cs: "Architektura je pokaždé jen nový složitý hlavolam bez jasného návodu.
-      Je nutné ke každému přistupovat individuálně. A nakonec vždy se najde řešení.
-      "
+      Je nutné ke každému přistupovat individuálně. A nakonec vždy se najde
+      řešení. "
     text_en: Architecture is always a new and complex puzzle with no clear
       instructions. Each one needs to be approached individually. And in the
       end, there is always a solution.
     icon: thinking
 body_cs: >-
-  Jmenuji se Tereza Kalábková, jsem architektka v oblasti pozemních staveb a věnuji
-  se architektuře všech měřítek. Zajímají mne jak drobné zásahy, které mají za
-  úkol jen utužit něco již funkčního, návrhy interiérů do prostor, které svou
-  funkci teprve hledají, a stejně tak vyhledávám i projekty, které mají být
+  Jmenuji se Tereza Kalábková, jsem architektka v oblasti pozemních staveb a
+  věnuji se architektuře všech měřítek. Zajímají mne jak drobné zásahy, které
+  mají za úkol jen utužit něco již funkčního, návrhy interiérů do prostor, které
+  svou funkci teprve hledají, a stejně tak vyhledávám i projekty, které mají být
   definovány od samého začátku – od studie, přes stavební povolení až po
   realizaci. 
 
@@ -57,8 +57,8 @@ body_cs: >-
   stavbách i drobném urbanismu.
 
 
-  Jsem zvyklá na samostatnou práci a mám zkušenosti s celým povolovacím procesem –
-  od komunikace s úřady a správci technické infrastruktury až po koordinaci
+  Jsem zvyklá na samostatnou práci a mám zkušenosti s celým povolovacím procesem
+  – od komunikace s úřady a správci technické infrastruktury až po koordinaci
   jednotlivých profesí. To vše s použitím BIM.
 body_en: >-
   My name is Tereza Kalábková. I am an architect working in the field of
@@ -78,6 +78,14 @@ body_en: >-
   permitting process – from communication with authorities and technical
   infrastructure administrators to the coordination of individual disciplines.
   All of this with the use of BIM.
+experience:
+  - place_cs: Fránek Architects s.r.o.
+    place_en: Fránek Architects s.r.o.
+    department_cs: Architektura, projekce a inženýring
+    department_en: Architecture, Design Documentation & Permitting
+    years: 2022-2026
+    title_cs: Architektka
+    title_en: Architect
 education:
   - place_cs: VUT v Brně
     place_en: Brno University of Technology
