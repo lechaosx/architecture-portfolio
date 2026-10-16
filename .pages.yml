@@ -15,7 +15,7 @@ media:
 
 content:
   - name: projects
-    label: Projects
+    label: Projekty
     type: collection
     path: src/content/projects
     filename:
@@ -25,16 +25,16 @@ content:
       primary: title_en
       fields: [title_en, year, location_en]
     fields:
-      - { name: title_cs, label: Title (Czech), type: string, required: true }
-      - { name: title_en, label: Title (English), type: string, required: true }
-      - { name: year, label: Year, type: number, required: true }
-      - { name: location_cs, label: Location (Czech), type: string, required: false }
-      - { name: location_en, label: Location (English), type: string, required: false }
-      - { name: brief_cs, label: Brief (Czech), type: text, required: false }
-      - { name: brief_en, label: Brief (English), type: text, required: false }
-      - { name: draft, label: Draft (hide from site), type: boolean, default: false }
+      - { name: title_cs, label: Název (česky), type: string, required: true }
+      - { name: title_en, label: Název (anglicky), type: string, required: true }
+      - { name: year, label: Rok, type: number, required: true }
+      - { name: location_cs, label: Místo (česky), type: string, required: false }
+      - { name: location_en, label: Místo (anglicky), type: string, required: false }
+      - { name: brief_cs, label: Stručný popis (česky), type: text, required: false }
+      - { name: brief_en, label: Stručný popis (anglicky), type: text, required: false }
+      - { name: draft, label: Koncept (nezveřejňovat), type: boolean, default: false }
       - name: blocks
-        label: Page content
+        label: Obsah stránky
         type: block
         list: true
         required: false
@@ -43,141 +43,146 @@ content:
           - name: text
             label: Text
             fields:
-              - { name: body_cs, label: Text (Czech), type: rich-text, required: true }
-              - { name: body_en, label: Text (English), type: rich-text, required: true }
+              - { name: body_cs, label: Text (česky), type: rich-text, required: true }
+              - { name: body_en, label: Text (anglicky), type: rich-text, required: true }
           - name: gallery
-            label: Thumbnail gallery
+            label: Galerie náhledů
             fields:
               - name: images
-                label: Images
+                label: Obrázky
                 type: object
                 list: { min: 1 }
                 required: true
                 fields:
-                  - { name: image, label: Image, type: image, required: true }
-                  - { name: comparison_set, label: Comparison set, type: string, required: false, description: "Images with the same value share a set strip of buttons in the lightbox." }
-                  - { name: title_cs, label: Image name/title (Czech), type: string, required: false }
-                  - { name: title_en, label: Image name/title (English), type: string, required: false }
-                  - { name: description_cs, label: Image description (Czech), type: text, required: false }
-                  - { name: description_en, label: Image description (English), type: text, required: false }
+                  - { name: image, label: Obrázek, type: image, required: true }
+                  - { name: comparison_set, label: Srovnávací sada, type: string, required: false, description: "Obrázky se stejnou hodnotou tvoří v prohlížeči obrázků jednu sadu a přepínají se tlačítky." }
+                  - { name: title_cs, label: Název obrázku (česky), type: string, required: false }
+                  - { name: title_en, label: Název obrázku (anglicky), type: string, required: false }
+                  - { name: description_cs, label: Popis obrázku (česky), type: text, required: false }
+                  - { name: description_en, label: Popis obrázku (anglicky), type: text, required: false }
           - name: image_set
-            label: Full-width image set
+            label: Sada obrázků na celou šířku
             fields:
               - name: images
-                label: Images
+                label: Obrázky
                 type: object
                 list: { min: 1 }
                 required: true
                 fields:
-                  - { name: image, label: Image, type: image, required: true }
-                  - { name: comparison_set, label: Comparison set, type: string, required: false, description: "Images with the same value share a set strip of buttons in the lightbox." }
-                  - { name: title_cs, label: Image name/title (Czech), type: string, required: false }
-                  - { name: title_en, label: Image name/title (English), type: string, required: false }
-                  - { name: description_cs, label: Image description (Czech), type: text, required: false }
-                  - { name: description_en, label: Image description (English), type: text, required: false }
+                  - { name: image, label: Obrázek, type: image, required: true }
+                  - { name: comparison_set, label: Srovnávací sada, type: string, required: false, description: "Obrázky se stejnou hodnotou tvoří v prohlížeči obrázků jednu sadu a přepínají se tlačítky." }
+                  - { name: title_cs, label: Název obrázku (česky), type: string, required: false }
+                  - { name: title_en, label: Název obrázku (anglicky), type: string, required: false }
+                  - { name: description_cs, label: Popis obrázku (česky), type: text, required: false }
+                  - { name: description_en, label: Popis obrázku (anglicky), type: text, required: false }
 
   - name: landing
-    label: Landing page
+    label: Úvodní stránka
     type: file
     path: src/content/singletons/landing.md
     fields:
-      - { name: images, label: Images, type: image, list: true, required: false, description: 'Shown at the top of the landing page in this order: one image as it is, two or more as a slideshow. Leave empty to start the page with the line saying what you do and where.' }
+      - { name: images, label: Obrázky, type: image, list: true, required: false, description: 'Zobrazují se nahoře na úvodní stránce v tomto pořadí: jeden obrázek samostatně, dva a více jako prezentace. Když pole necháte prázdné, stránka začne řádkem o tom, co děláte a kde.' }
 
   - name: about
-    label: About page
+    label: O mně
     type: file
     path: src/content/singletons/about.md
     fields:
-      - { name: portrait, label: Portrait, type: image, required: false }
+      - { name: portrait, label: Portrét, type: image, required: false }
       - name: approaches
-        label: Approach
+        label: Přístup
         type: object
         list: true
         fields:
-          - { name: label_cs, label: Label (Czech), type: string, required: true }
-          - { name: label_en, label: Label (English), type: string, required: true }
-          - { name: text_cs, label: Text (Czech), type: text, required: true }
-          - { name: text_en, label: Text (English), type: text, required: true }
+          - { name: label_cs, label: Nadpis (česky), type: string, required: true }
+          - { name: label_en, label: Nadpis (anglicky), type: string, required: true }
+          - { name: text_cs, label: Text (česky), type: text, required: true }
+          - { name: text_en, label: Text (anglicky), type: text, required: true }
           - name: icon
-            label: Icon
+            label: Ikona
             type: select
             required: true
             options:
-              values: [place, scale, material, thinking]
-      - { name: body_cs, label: About text (Czech), type: rich-text, required: true }
-      - { name: body_en, label: About text (English), type: rich-text, required: true }
+              placeholder: Vyberte ikonu
+              values:
+                - { name: place, label: Místo (špendlík) }
+                - { name: scale, label: Měřítko (pravítko) }
+                - { name: material, label: Materiál (vrstvy) }
+                - { name: thinking, label: Myšlení (žárovka) }
+      - { name: body_cs, label: Text o mně (česky), type: rich-text, required: true }
+      - { name: body_en, label: Text o mně (anglicky), type: rich-text, required: true }
       - name: experience
-        label: Work experience
+        label: Praxe
         type: object
         list: true
-        description: 'One row per studio or employer, newest first.'
+        description: 'Jedna položka na ateliér nebo zaměstnavatele, nejnovější nahoře.'
         fields:
-          - { name: place_cs, label: Studio or employer (Czech), type: string, required: true, description: 'Name and city, e.g. "Ateliér A, Brno".' }
-          - { name: place_en, label: Studio or employer (English), type: string, required: true, description: 'Name and city, e.g. "Studio A, Brno".' }
-          - { name: department_cs, label: Department or team (Czech), type: string, required: false }
-          - { name: department_en, label: Department or team (English), type: string, required: false }
-          - { name: years, label: Years, type: string, required: false, description: 'Shared by both languages, e.g. 2024–2026, or 2024– for ongoing.' }
-          - { name: title_cs, label: Your role (Czech), type: string, required: true, description: 'e.g. "Architektka".' }
-          - { name: title_en, label: Your role (English), type: string, required: true, description: 'e.g. "Architect".' }
-          - { name: description_cs, label: Description (Czech), type: text, required: false }
-          - { name: description_en, label: Description (English), type: text, required: false }
+          - { name: place_cs, label: Ateliér nebo zaměstnavatel (česky), type: string, required: true, description: 'Název a město, např. „Ateliér A, Brno“.' }
+          - { name: place_en, label: Ateliér nebo zaměstnavatel (anglicky), type: string, required: true, description: 'Název a město, např. „Studio A, Brno“.' }
+          - { name: department_cs, label: Oddělení nebo tým (česky), type: string, required: false }
+          - { name: department_en, label: Oddělení nebo tým (anglicky), type: string, required: false }
+          - { name: years, label: Období, type: string, required: false, description: 'Společné pro oba jazyky, např. 2024–2026, nebo 2024–, pokud stále trvá.' }
+          - { name: title_cs, label: Pozice (česky), type: string, required: true, description: 'Např. „Architektka“.' }
+          - { name: title_en, label: Pozice (anglicky), type: string, required: true, description: 'Např. „Architect“.' }
+          - { name: description_cs, label: Popis (česky), type: text, required: false }
+          - { name: description_en, label: Popis (anglicky), type: text, required: false }
       - name: services
-        label: Services
+        label: Služby
         type: object
         list: true
-        description: One service per row, named the way a client would ask for it. Listed on the About page and named under the landing images.
+        description: Jedna služba na položku, pojmenovaná tak, jak by ji hledal klient. Služby se zobrazují na stránce O mně a pod obrázky na úvodní stránce.
         fields:
-          - { name: name_cs, label: Service (Czech), type: string, required: true }
-          - { name: name_en, label: Service (English), type: string, required: true }
+          - { name: name_cs, label: Služba (česky), type: string, required: true }
+          - { name: name_en, label: Služba (anglicky), type: string, required: true }
       - name: education
-        label: Education
+        label: Vzdělání
         type: object
         list: true
-        description: 'One row per programme, newest first.'
+        description: 'Jedna položka na studijní program, nejnovější nahoře.'
         fields:
-          - { name: place_cs, label: School (Czech), type: string, required: true, description: 'e.g. "VUT v Brně".' }
-          - { name: place_en, label: School (English), type: string, required: true, description: 'e.g. "Brno University of Technology".' }
-          - { name: department_cs, label: Faculty or department (Czech), type: string, required: false, description: 'e.g. "Fakulta stavební, Ústav architektury".' }
-          - { name: department_en, label: Faculty or department (English), type: string, required: false, description: 'e.g. "Faculty of Civil Engineering, Institute of Architecture".' }
-          - { name: years, label: Years, type: string, required: false, description: 'Shared by both languages, e.g. 2024–2026, or 2024– for ongoing.' }
-          - { name: title_cs, label: Programme (Czech), type: string, required: true, description: 'e.g. "Architektura a rozvoj sídel".' }
-          - { name: title_en, label: Programme (English), type: string, required: true, description: 'e.g. "Architecture and Urban Development".' }
-          - { name: description_cs, label: Description (Czech), type: text, required: false }
-          - { name: description_en, label: Description (English), type: text, required: false }
+          - { name: place_cs, label: Škola (česky), type: string, required: true, description: 'Např. „VUT v Brně“.' }
+          - { name: place_en, label: Škola (anglicky), type: string, required: true, description: 'Např. „Brno University of Technology“.' }
+          - { name: department_cs, label: Fakulta nebo ústav (česky), type: string, required: false, description: 'Např. „Fakulta stavební, Ústav architektury“.' }
+          - { name: department_en, label: Fakulta nebo ústav (anglicky), type: string, required: false, description: 'Např. „Faculty of Civil Engineering, Institute of Architecture“.' }
+          - { name: years, label: Období, type: string, required: false, description: 'Společné pro oba jazyky, např. 2024–2026, nebo 2024–, pokud stále trvá.' }
+          - { name: title_cs, label: Studijní program (česky), type: string, required: true, description: 'Např. „Architektura a rozvoj sídel“.' }
+          - { name: title_en, label: Studijní program (anglicky), type: string, required: true, description: 'Např. „Architecture and Urban Development“.' }
+          - { name: description_cs, label: Popis (česky), type: text, required: false }
+          - { name: description_en, label: Popis (anglicky), type: text, required: false }
       - name: awards
-        label: Awards
+        label: Ocenění
         type: object
         list: true
-        description: 'One row per competition or award, newest first.'
+        description: 'Jedna položka na soutěž nebo ocenění, nejnovější nahoře.'
         fields:
-          - { name: place_cs, label: Competition or award (Czech), type: string, required: true, description: 'e.g. "Cena Bohuslava Fuchse".' }
-          - { name: place_en, label: Competition or award (English), type: string, required: true, description: 'e.g. "Bohuslav Fuchs Award".' }
-          - { name: department_cs, label: Category or organiser (Czech), type: string, required: false }
-          - { name: department_en, label: Category or organiser (English), type: string, required: false }
-          - { name: years, label: Years, type: string, required: false, description: 'Shared by both languages, e.g. 2024–2026, or 2024– for ongoing.' }
-          - { name: title_cs, label: Placement (Czech), type: string, required: true, description: 'e.g. "2. místo".' }
-          - { name: title_en, label: Placement (English), type: string, required: true, description: 'e.g. "2nd place".' }
-          - { name: description_cs, label: Description (Czech), type: text, required: false }
-          - { name: description_en, label: Description (English), type: text, required: false }
+          - { name: place_cs, label: Soutěž nebo ocenění (česky), type: string, required: true, description: 'Např. „Cena Bohuslava Fuchse“.' }
+          - { name: place_en, label: Soutěž nebo ocenění (anglicky), type: string, required: true, description: 'Např. „Bohuslav Fuchs Award“.' }
+          - { name: department_cs, label: Kategorie nebo pořadatel (česky), type: string, required: false }
+          - { name: department_en, label: Kategorie nebo pořadatel (anglicky), type: string, required: false }
+          - { name: years, label: Období, type: string, required: false, description: 'Společné pro oba jazyky, např. 2024–2026, nebo 2024–, pokud stále trvá.' }
+          - { name: title_cs, label: Umístění (česky), type: string, required: true, description: 'Např. „2. místo“.' }
+          - { name: title_en, label: Umístění (anglicky), type: string, required: true, description: 'Např. „2nd place“.' }
+          - { name: description_cs, label: Popis (česky), type: text, required: false }
+          - { name: description_en, label: Popis (anglicky), type: text, required: false }
 
   - name: contact
-    label: Contact (footer and contact card)
+    label: Kontakt (patička a kontaktní karta)
     type: file
     path: src/content/singletons/contact.md
     fields:
-      - { name: email, label: Email, type: string, required: true }
-      - { name: phone, label: Phone, type: string, required: false }
-      - { name: location_cs, label: Where I am (Czech), type: string, required: false, description: 'Your city, e.g. "Brno". Shown under the landing images and on the contact card.' }
-      - { name: location_en, label: Where I am (English), type: string, required: false, description: 'Your city, e.g. "Brno". Shown under the landing images and on the contact card.' }
-      - { name: hours_cs, label: Phone call hours (Czech), type: string, required: false, description: 'When I receive calls, e.g. "Po–Pá 10–15".' }
-      - { name: hours_en, label: Phone call hours (English), type: string, required: false, description: 'When I receive calls, e.g. "Mon–Fri 10–15".' }
+      - { name: email, label: E-mail, type: string, required: true }
+      - { name: phone, label: Telefon, type: string, required: false }
+      - { name: location_cs, label: Místo (česky), type: string, required: false, description: 'Uveďte vaše město, např. „Brno“. Zobrazuje se pod obrázky na úvodní stránce a na kontaktní kartě.' }
+      - { name: location_en, label: Místo (anglicky), type: string, required: false, description: 'Uveďte vaše město, např. „Brno“. Zobrazuje se pod obrázky na úvodní stránce a na kontaktní kartě.' }
+      - { name: hours_cs, label: Čas pro telefonické hovory (česky), type: string, required: false, description: 'Kdy přijímáte hovory, např. „Po–Pá 10–15“.' }
+      - { name: hours_en, label: Čas pro telefonické hovory (anglicky), type: string, required: false, description: 'Kdy přijímáte hovory, např. „Mon–Fri 10–15“.' }
 
   - name: site
-    label: Site settings
+    label: Nastavení webu
     type: file
     path: src/content/singletons/site.md
     fields:
-      - { name: name, label: Name, type: string, required: true }
-      - { name: credential, label: Credential (e.g. Ing. arch.), type: string }
-      - { name: description_cs, label: Search description (Czech), type: text, required: true, description: 'The text search engines and link previews show for pages without their own. One or two sentences.' }
-      - { name: description_en, label: Search description (English), type: text, required: true, description: 'The text search engines and link previews show for pages without their own. One or two sentences.' }
+      - { name: name, label: Jméno, type: string, required: true }
+      - { name: credential, label: Titul (např. Ing. arch.), type: string }
+      - { name: description_cs, label: Popis pro vyhledávače (česky), type: text, required: true, description: 'Text, který vyhledávače a náhledy odkazů ukážou u stránek bez vlastního popisu. Jedna nebo dvě věty.' }
+      - { name: description_en, label: Popis pro vyhledávače (anglicky), type: text, required: true, description: 'Text, který vyhledávače a náhledy odkazů ukážou u stránek bez vlastního popisu. Jedna nebo dvě věty.' }

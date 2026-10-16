@@ -67,10 +67,17 @@ Structural and design changes are made in code on the same repo.
 
 Editable: projects, the landing page's images, the About page (bio, portrait,
 work experience, services, education, awards, Approach), the contact details in
-the footer and the contact card, and Site settings (name, credential,
+the footer and the contact card, and the site settings (name, credential,
 description). Baked into code: page structure, navigation, section labels and
-the contact card's invitation. CMS entries: **Projects**, **Landing page**,
-**About page**, **Contact (footer and contact card)**, **Site settings**.
+the contact card's invitation. CMS entries: **Projekty**, **Úvodní stránka**,
+**O mně**, **Kontakt (patička a kontaktní karta)**, **Nastavení webu**.
+
+### The CMS speaks Czech — [Explicit]
+
+Every entry, field, help text and option the repo configures in Pages CMS is in
+Czech, the architect's language. A field kept in both languages names its
+language as "Název (česky)" / "Název (anglicky)" — [Implicit]. Pages CMS's own
+buttons and menus stay in English.
 
 ### Required fields are what a page cannot do without — [Implicit]
 
@@ -166,7 +173,7 @@ auto-advance added, its images cropped to fill the frame — [Implicit].
 under it as an assertive title. The name and bio sit beside the portrait in
 equal columns on wide screens and above it on phones. Then Approach, then the
 facts, and the contact card ends the page — [Implicit]. Everything but the
-contacts is edited in the one **About page** entry.
+contacts is edited in the one **O mně** entry.
 
 The bio follows the project text's column rule: balanced columns where each
 keeps a comfortable width, else one — [Explicit]. Beside the portrait it is
