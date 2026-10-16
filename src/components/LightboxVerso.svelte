@@ -2,6 +2,7 @@
   import { onMount, tick, untrack } from 'svelte';
   import { on } from 'svelte/events';
   import { ui, type Lang } from '../i18n';
+  import { bindOneLetterWords } from '../one-letter-words';
   import { cardColumn, cardScale as fitCard, type Size } from './gallery';
 
   // The back of a lightbox image's card: the page's surface in the image's
@@ -30,6 +31,7 @@
   let fontLoads = $state(0);
   let cardWidth = $derived(restImage.width * cardScale);
   let column = $derived(cardColumn(cardWidth, columnLimit));
+  const typeset = (text: string) => (lang === 'cs' ? bindOneLetterWords(text, { newlinesAreSpaces: true }) : text);
 
   // A face that finishes loading later (a subset first needed by the other
   // language) changes the text's size.
@@ -74,10 +76,10 @@
 
 {#snippet text()}
   {#if title}
-    <h2 class="mb-3 text-2xl leading-tight sm:mb-4 sm:text-3xl">{title}</h2>
+    <h2 class="mb-3 text-2xl leading-tight sm:mb-4 sm:text-3xl">{typeset(title)}</h2>
   {/if}
   <p class="running-text text-base leading-relaxed">
-    {description}
+    {typeset(description)}
   </p>
 {/snippet}
 

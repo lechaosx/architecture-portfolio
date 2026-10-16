@@ -287,6 +287,14 @@ text (`Prose.astro`, `Paragraphs.astro`, briefs, the lightbox back), and the
 element or its wrapper carries `lang` so the browser picks the right dictionary
 — [Explicit].
 
+### One-letter words bound where Czech text is rendered — [Implicit]
+
+`T.astro`, `Prose.astro`, `Paragraphs.astro` and the lightbox back put a no-break
+space after Czech one-letter words (`src/one-letter-words.ts`), so the content
+files, metadata, alt text, JSON-LD and `/llms.txt` keep the text as written.
+`Prose.astro` binds the text `marked` renders as HTML, never its markup, link
+targets or image alt text.
+
 ### Text columns follow the container — [Implicit]
 
 Native CSS columns balance project text and the About bio across at most two

@@ -219,6 +219,7 @@ test('llms.txt presents the architect and her published projects, linking pages 
   for (const project of projects) {
     if (project.draft) expect(text).not.toContain(project.title_cs);
     else expect(text).toContain(project.title_cs);
+    if (!project.draft && project.brief_cs) expect(text).toContain(project.brief_cs.trim());
   }
 
   const links = text.match(new RegExp(`${origin}/\\S*`, 'g')) ?? [];

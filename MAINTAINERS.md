@@ -45,6 +45,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/i18n.ts` | baked-in UI labels |
+| `src/one-letter-words.ts` | Czech one-letter words kept off line ends, applied where text renders |
 | `src/period.ts` | project and About periods: the date format, checks, display and project order |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
 | `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro` | the pages, also rendered by the e2e fixtures |

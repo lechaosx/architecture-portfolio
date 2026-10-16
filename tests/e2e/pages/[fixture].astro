@@ -267,6 +267,14 @@ export function getStaticPaths() {
     projectWith('text-only', [{ type: 'text', body_en: text(2).en, body_cs: text(2).cs }]),
     projectWith('vector-only', [{ type: 'gallery', images: [item('vector.svg')] }]),
     projectWith('náměstí', [{ type: 'text', body_en: text(1).en, body_cs: text(1).cs }]),
+    // A soft line break, emphasis and an image in the rich text.
+    projectWith('markdown', [
+      {
+        type: 'text',
+        body_en: 'A plan in a park\nand a **view**.\n\n![A plan](/e2e/images/placeholder-1.svg)',
+        body_cs: 'Plán v\nparku a **v Brně**.\n\n![Plán v parku](/e2e/images/placeholder-1.svg)',
+      },
+    ]),
     projectWith('titled-sets', [
       { type: 'image_set', images: [item('wide.png', ['Plan', 'Půdorys'])] },
       {

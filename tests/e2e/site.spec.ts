@@ -382,6 +382,32 @@ test('running text is justified and hyphenates in its own language, short lines 
   expect(await typeset('Anotace stránky.\nDruhý řádek.')).toEqual(running('cs'));
 });
 
+test('Czech running text never ends a line on a one-letter word; English text and structured data keep plain spaces', async ({
+  page,
+}) => {
+  const nbsp = '\u00A0';
+  // The fixtures' sentence: "… podél řeky a kudy …", "… a park and a stadium …".
+  const sentences = (text: string) => page.locator('main .running-text').filter({ hasText: text }).allTextContents();
+  // About's bio and row descriptions, and a project's brief.
+  for (const path of ['/e2e/about/', '/e2e/credits/']) {
+    await page.goto(path);
+    const czech = await sentences('Výkres sleduje');
+    const english = await sentences('The drawing follows');
+    expect(czech.length, path).toBeGreaterThan(0);
+    expect(english.length, path).toBeGreaterThan(0);
+    for (const text of czech) expect(text, path).toContain(`řeky a${nbsp}kudy`);
+    for (const text of english) expect(text, path).not.toContain(nbsp);
+  }
+  expect(await page.locator('script[type="application/ld+json"]').textContent()).not.toContain(nbsp);
+
+  // Rich text: across a soft line break and into emphasis, but not in alt text.
+  await page.goto('/e2e/markdown/');
+  const prose = (lang: string) => page.locator(`main .prose[lang="${lang}"]`);
+  expect(await prose('cs').textContent()).toContain(`Plán v${nbsp}parku a${nbsp}v${nbsp}Brně.`);
+  expect(await prose('cs').locator('img').getAttribute('alt')).toBe('Plán v parku');
+  expect(await prose('en').textContent()).not.toContain(nbsp);
+});
+
 test('project prose fills the available width with comfortable columns', async ({
   page,
 }) => {

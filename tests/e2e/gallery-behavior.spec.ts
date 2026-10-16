@@ -814,6 +814,25 @@ test('changing image always shows the drawing; the language switch keeps the sid
   ).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('the back never ends a Czech line on a one-letter word, and keeps English spaces plain', async ({
+  page,
+}) => {
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Show description' }).click();
+  // The fixtures' description: "… podél řeky a kudy …", "… a park and a stadium …".
+  const description = async (title: string) => {
+    const back = dialog.getByRole('region', { name: title });
+    await expect(back).toBeVisible();
+    return back.locator('p').textContent();
+  };
+  expect(await description('Tiled variant 3')).not.toContain('\u00A0');
+  await dialog.getByRole('button', { name: 'Switch to Czech' }).click();
+  expect(await description('Dlaždicová varianta 3')).toContain('řeky a\u00A0kudy');
+});
+
 test('images without a description have no flip control', async ({ page }) => {
   await gotoProject(page);
   await galleryImage(page, 11).click();
