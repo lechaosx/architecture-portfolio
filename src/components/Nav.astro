@@ -3,32 +3,20 @@ import { site } from '../singletons';
 import type { UiKey } from '../i18n';
 import T from './T.astro';
 
-interface Props {
-  homeHref?: string;
-  workHref?: string;
-  aboutHref?: string;
-  contactHref?: string;
-}
-
-const { homeHref = '/', workHref = '/work/', aboutHref = '/about/', contactHref } = Astro.props;
 const links: { href: string; key: UiKey }[] = [
-  { href: workHref, key: 'work' },
-  { href: aboutHref, key: 'about' },
+  { href: '/work/', key: 'work' },
+  { href: '/about/', key: 'about' },
 ];
-if (contactHref) links.push({ href: contactHref, key: 'contact' });
 
 const isActive = (href: string) => Astro.url.pathname === href;
 ---
 
 <header class="sticky top-0 z-40 border-b border-black bg-white">
   <nav
-    class:list={[
-      'mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4',
-      { 'flex-wrap': contactHref },
-    ]}
+    class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4"
   >
     <a
-      href={homeHref}
+      href="/"
       class="flex flex-col gap-0.5 leading-none sm:flex-row sm:items-baseline sm:gap-1.5 sm:leading-normal"
     >
       <span class="text-xs font-normal tracking-widest">{site.credential}</span>
@@ -44,7 +32,6 @@ const isActive = (href: string) => Astro.url.pathname === href;
           <li>
             <a
               href={l.href}
-              data-section={l.key}
               aria-current={isActive(l.href) ? 'page' : undefined}
               class:list={[
                 'border border-transparent px-2 py-1.5 whitespace-nowrap sm:py-0.5',

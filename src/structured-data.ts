@@ -13,9 +13,9 @@ type Data<Collection extends 'site' | 'about' | 'contact' | 'projects'> =
 const text = (value?: string) => value?.trim() || undefined;
 const texts = (values: (string | undefined)[]) =>
   values.flatMap((value) => text(value) ?? []);
-type TimelineRow = Data<'about'>['education'][number];
+type FactRow = Data<'about'>['education'][number];
 /** The row's filled parts in the given order, then its years in brackets. */
-const timelineNames = (rows: TimelineRow[], parts: (row: TimelineRow) => (string | undefined)[]) =>
+const factNames = (rows: FactRow[], parts: (row: FactRow) => (string | undefined)[]) =>
   rows.flatMap((row) => {
     const name = texts(parts(row)).join(', ');
     const years = text(row.years);
@@ -66,11 +66,11 @@ export function person({
         itemOffered: { '@type': 'Service', name },
       }),
     ),
-    hasCredential: timelineNames(about.education, (row) => [row.title_cs, row.place_cs]).map((name) => ({
+    hasCredential: factNames(about.education, (row) => [row.title_cs, row.place_cs]).map((name) => ({
       '@type': 'EducationalOccupationalCredential',
       name,
     })),
-    award: timelineNames(about.awards, (row) => [row.place_cs, row.title_cs]),
+    award: factNames(about.awards, (row) => [row.place_cs, row.title_cs]),
     knowsLanguage: ['cs', 'en'],
   });
 }

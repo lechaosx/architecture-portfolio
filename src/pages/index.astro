@@ -1,9 +1,9 @@
 ---
 import { getCollection } from 'astro:content';
 import LandingPage from '../components/LandingPage.astro';
-import { landing } from '../singletons';
+import { about, contact, landing } from '../singletons';
 
 const projects = await getCollection('projects', ({ data }) => !data.draft);
 ---
 
-<LandingPage {landing} {projects} />
+<LandingPage {landing} {projects} {about} {contact} />

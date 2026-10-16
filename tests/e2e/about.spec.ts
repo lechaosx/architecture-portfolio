@@ -12,46 +12,109 @@ const section = (page: Page, heading: string | RegExp) =>
 const box = async (page: Page, text: string) =>
   (await page.locator('main').getByText(text, { exact: true }).boundingBox())!;
 
-test('timeline rows keep their order, with place and years beside the title', async ({
+test('the name and bio sit beside the portrait on wide screens, above it on phones', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/e2e/about/');
-  await expect(section(page, 'Experience').getByRole('heading', { level: 3 })).toHaveText([
-    'Architect',
-    'Intern',
-  ]);
-  const titles = ['Experience', 'Education', 'Awards'];
-  await expect(page.locator('main').getByRole('heading', { level: 2 })).toHaveText([
-    'Services',
-    ...titles,
-    'Approach',
-  ]);
+  const portrait = page.locator('main img').first();
+  const bio = page.locator('main .prose:visible');
 
-  const place = await box(page, 'Studio A, Brno');
-  const years = await box(page, '2024–');
-  const title = await box(page, 'Architect');
-  expect(place.x + place.width).toBeLessThan(title.x);
-  expect(years.x + years.width).toBeLessThan(title.x);
-  expect(Math.abs(place.y - title.y)).toBeLessThan(8);
-  expect(years.y).toBeGreaterThan(place.y);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const [b, p] = await Promise.all([bio, portrait].map(async (l) => (await l.boundingBox())!));
+  expect(p.x).toBeGreaterThan(b.x + b.width);
+  expect(p.width).toBeCloseTo(b.width, 0);
+
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    const [bPhone, pPhone] = await Promise.all([bio, portrait].map(async (l) => (await l.boundingBox())!));
+    expect(pPhone.x, `${width}px`).toBeCloseTo(bPhone.x);
+    expect(pPhone.y, `${width}px`).toBeGreaterThan(bPhone.y + bPhone.height);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      `${width}px`,
+    ).toBe(true);
+  }
 });
 
-test('on phones a timeline row stacks to the right of its line, tags last', async ({
+test('Approach comes before the facts, whose rows keep their order, and the contact card ends the page', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  await expect(page.locator('main').getByRole('heading', { level: 2 })).toHaveText([
+    'Approach',
+    'Services',
+    'Experience',
+    'Education',
+    'Awards',
+    'Contact',
+  ]);
+  await expect(section(page, 'Experience').getByRole('listitem')).toHaveText(
+    [/^2024–\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],
+    visibleText,
+  );
+});
+
+test('a fact row reads years, then title and place, with the department under them', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 800 });
   await page.goto('/e2e/about/');
-  const place = await box(page, 'Studio A, Brno');
-  const years = await box(page, '2024–');
-  const title = await box(page, 'Architect');
-  const entry = page.locator('main li', { has: page.getByRole('heading', { name: 'Architect', exact: true }) });
-  const description = (await entry.getByText(/^The drawing/).boundingBox())!;
-  const tag = (await entry.getByRole('listitem').first().boundingBox())!;
-  expect(years.y).toBeGreaterThan(place.y);
-  expect(title.y).toBeGreaterThan(years.y + years.height);
-  expect(tag.y).toBeGreaterThan(description.y + description.height);
-  expect(title.x).toBeCloseTo(place.x);
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const years = await box(page, '2024–');
+    const title = await box(page, 'Architect');
+    const department = await box(page, 'Housing team');
+    expect(years.x + years.width, `${width}px`).toBeLessThan(title.x);
+    expect(Math.abs(years.y + years.height - (title.y + title.height)), `${width}px`).toBeLessThan(4);
+    expect(department.y, `${width}px`).toBeGreaterThanOrEqual(title.y + title.height);
+    expect(department.x, `${width}px`).toBeCloseTo(title.x, 0);
+  }
+});
+
+test('a fact description keeps the author’s paragraphs in both languages', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  const row = (title: string) =>
+    section(page, /^(Experience|Praxe)$/).getByRole('listitem').filter({ hasText: title }).first();
+  await expect(row('Architect').getByRole('paragraph').filter({ visible: true })).toHaveText([
+    'Architect, Studio A, Brno',
+    'Housing team',
+    /^The drawing/,
+    'Permit drawings.',
+  ], visibleText);
+
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await expect(row('Architektka').getByRole('paragraph').filter({ visible: true })).toHaveText([
+    'Architektka, Ateliér A, Brno',
+    'Tým bydlení',
+    /^Výkres/,
+    'Výkresy k povolení.',
+  ], visibleText);
+});
+
+test('services are a plain list in the visitor’s language', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  await expect(section(page, 'Services').getByRole('listitem')).toHaveText(
+    ['Family houses', 'Renovations', 'Interiors'],
+    visibleText,
+  );
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await expect(section(page, 'Služby').getByRole('listitem')).toHaveText(
+    ['Rodinné domy', 'Rekonstrukce', 'Interiéry'],
+    visibleText,
+  );
+});
+
+test('About ends with the contact card', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  await expect(page.locator('main').getByRole('heading', { level: 2 }).last()).toHaveText('Contact');
+  await expect(page.getByRole('link', { name: 'Write an email ↗' })).toHaveAttribute(
+    'href',
+    'mailto:jana@example.cz',
+  );
+});
+
+test('with nothing optional filled, only the name, bio and contact card remain', async ({ page }) => {
+  await page.goto('/e2e/about-bare/');
+  await expect(page.locator('main').getByRole('heading')).toHaveText(['About', 'Contact']);
+  await expect(page.locator('main img')).toHaveCount(0);
+  await expect(page.locator('main .prose:visible')).toBeVisible();
 });
 
 test('Approach is two columns on wide screens and one on phones', async ({ page }) => {
@@ -73,104 +136,6 @@ test('Approach is two columns on wide screens and one on phones', async ({ page 
   for (const [index, box] of phone.entries()) {
     expect(box.x, `item ${index + 1}`).toBeCloseTo(phone[0].x);
     if (index > 0) expect(box.y, `item ${index + 1}`).toBeGreaterThan(phone[index - 1].y);
-  }
-});
-
-test('a timeline description keeps the author’s paragraphs in both languages', async ({
-  page,
-}) => {
-  await page.goto('/e2e/about/');
-  // The paragraphs in the title's own cell.
-  const description = (title: string) =>
-    page
-      .getByRole('heading', { level: 3, name: title, exact: true })
-      .locator('xpath=..')
-      .getByRole('paragraph');
-  await expect(description('Architect')).toHaveText([/^The drawing/, 'Permit drawings.']);
-
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  await expect(description('Architektka')).toHaveText([/^Výkres/, 'Výkresy k povolení.']);
-});
-
-test('badges list each entry’s tags and the services', async ({ page }) => {
-  await page.goto('/e2e/about/');
-  const entry = (title: string) =>
-    page.locator('main li', { has: page.getByRole('heading', { level: 3, name: title, exact: true }) });
-  await expect(entry('Architect').getByRole('listitem')).toHaveText([
-    'BIM',
-    'Studies',
-    'Building permits',
-  ], visibleText);
-  await expect(entry('Intern').getByRole('listitem')).toHaveCount(0);
-  await expect(entry('2nd place').getByRole('listitem')).toHaveText(['Urbanism'], visibleText);
-  await expect(section(page, 'Services').getByRole('listitem')).toHaveText([
-    'Family houses',
-    'Renovations',
-    'Interiors',
-  ], visibleText);
-
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  await expect(entry('Architektka').getByRole('listitem')).toHaveText([
-    'BIM',
-    'Studie',
-    'Stavební povolení',
-  ], visibleText);
-});
-
-test('the contact list links email and phone and says where and when', async ({ page }) => {
-  await page.goto('/e2e/about/');
-  const contacts = page.locator('main address');
-  await expect(contacts.getByRole('link', { name: 'jana@example.cz' })).toHaveAttribute(
-    'href',
-    'mailto:jana@example.cz',
-  );
-  await expect(contacts.getByRole('link', { name: '+420 777 000 000' })).toHaveAttribute(
-    'href',
-    'tel:+420777000000',
-  );
-  await expect(contacts.getByText('Brno', { exact: true }).filter({ visible: true })).toBeVisible();
-  await expect(contacts.getByText('Mon–Fri 9–17')).toBeVisible();
-});
-
-test('a contact line filled in one language shows only in that language', async ({ page }) => {
-  await page.goto('/e2e/about-bare/');
-  const contacts = page.locator('main address');
-  await expect(contacts.getByRole('link', { name: 'jana@example.cz' })).toBeVisible();
-  await expect(contacts.getByRole('listitem')).toHaveCount(1);
-
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  await expect(contacts.getByText('Brno', { exact: true })).toBeVisible();
-  await expect(contacts.getByRole('listitem')).toHaveCount(2);
-});
-
-test('with nothing optional filled, only the bio and the email remain', async ({ page }) => {
-  await page.goto('/e2e/about-bare/');
-  await expect(page.locator('main').getByRole('heading')).toHaveText(['About']);
-  await expect(page.locator('main img')).toHaveCount(0);
-});
-
-test('the side bar sits beside the main column on wide screens, above it on phones', async ({
-  page,
-}) => {
-  await page.goto('/e2e/about/');
-  const portrait = page.locator('main img').first();
-  const heading = page.locator('main h1:visible');
-  const bio = page.locator('main .prose:visible');
-
-  await page.setViewportSize({ width: 1280, height: 900 });
-  expect((await portrait.boundingBox())!.x + (await portrait.boundingBox())!.width).toBeLessThan(
-    (await heading.boundingBox())!.x,
-  );
-
-  for (const width of [390, 320]) {
-    await page.setViewportSize({ width, height: 800 });
-    const [h, p, b] = await Promise.all([heading, portrait, bio].map((l) => l.boundingBox()));
-    expect(p!.x, `${width}px`).toBeCloseTo(h!.x);
-    expect(b!.y, `${width}px`).toBeGreaterThan(p!.y + p!.height);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-      `${width}px`,
-    ).toBe(true);
   }
 });
 
@@ -198,40 +163,35 @@ test('Approach items stay still on hover, since they are not links', async ({ pa
 test('the bio splits into columns only where each keeps a comfortable width', async ({
   page,
 }) => {
-  await page.goto('/e2e/about/');
-  await page.evaluate(() => document.fonts.ready);
-  const bio = page.locator('main .prose:visible');
+  for (const path of ['/e2e/about/', '/e2e/about-bare/']) {
+    await page.goto(path);
+    await page.evaluate(() => document.fonts.ready);
+    const bio = page.locator('main .prose:visible');
 
-  // Two columns in the main column on desktop, one on phones; in between the
-  // shared minimum column width decides.
-  for (const [width, expected] of [
-    [390, 1],
-    [1024, undefined],
-    [1280, 2],
-    [1440, 2],
-  ] as const) {
-    await page.setViewportSize({ width, height: 900 });
-    const layout = await bio.evaluate((element) => {
-      const measure = document.createElement('div');
-      measure.style.cssText = 'position:absolute; width:35ch; visibility:hidden';
-      element.append(measure);
-      const minimumColumnWidth = measure.getBoundingClientRect().width;
-      measure.remove();
-      const columns = Array.from(element.querySelector('p')!.getClientRects());
-      return {
-        fits:
-          element.getBoundingClientRect().width >=
-          2 * minimumColumnWidth + parseFloat(getComputedStyle(element).columnGap),
-        minimumColumnWidth,
-        columns: columns.length,
-        columnWidth: Math.min(...columns.map((column) => column.width)),
-      };
-    });
+    for (const width of [390, 1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const layout = await bio.evaluate((element) => {
+        const measure = document.createElement('div');
+        measure.style.cssText = 'position:absolute; width:35ch; visibility:hidden';
+        element.append(measure);
+        const minimumColumnWidth = measure.getBoundingClientRect().width;
+        measure.remove();
+        const columns = Array.from(element.querySelector('p')!.getClientRects());
+        return {
+          fits:
+            element.getBoundingClientRect().width >=
+            2 * minimumColumnWidth + parseFloat(getComputedStyle(element).columnGap),
+          minimumColumnWidth,
+          columns: columns.length,
+          columnWidth: Math.min(...columns.map((column) => column.width)),
+        };
+      });
 
-    const context = `viewport ${width}`;
-    expect(layout.columns, context).toBe(expected ?? (layout.fits ? 2 : 1));
-    if (layout.columns > 1) {
-      expect(layout.columnWidth, context).toBeGreaterThanOrEqual(layout.minimumColumnWidth);
+      const context = `${path} at ${width}px`;
+      expect(layout.columns, context).toBe(layout.fits ? 2 : 1);
+      if (layout.columns > 1) {
+        expect(layout.columnWidth, context).toBeGreaterThanOrEqual(layout.minimumColumnWidth);
+      }
     }
   }
 });

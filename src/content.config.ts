@@ -85,10 +85,7 @@ const landing = defineCollection({
   }),
 });
 
-const badge = z.object({ name_cs: z.string(), name_en: z.string() });
-const badges = z.preprocess(withoutEmptyCmsRows, z.array(badge).default([]));
-
-const timelineRow = z.object({
+const factRow = z.object({
   place_cs: z.string(),
   place_en: z.string(),
   department_cs: z.string().optional(),
@@ -98,9 +95,8 @@ const timelineRow = z.object({
   title_en: z.string(),
   description_cs: z.string().optional(),
   description_en: z.string().optional(),
-  tags: badges,
 });
-const timeline = z.preprocess(withoutEmptyCmsRows, z.array(timelineRow).default([]));
+const facts = z.preprocess(withoutEmptyCmsRows, z.array(factRow).default([]));
 
 const about = defineCollection({
   loader: glob({ pattern: 'about.md', base: singletons }),
@@ -122,10 +118,13 @@ const about = defineCollection({
     ),
     body_cs: z.string(),
     body_en: z.string(),
-    experience: timeline,
-    services: badges,
-    education: timeline,
-    awards: timeline,
+    experience: facts,
+    services: z.preprocess(
+      withoutEmptyCmsRows,
+      z.array(z.object({ name_cs: z.string(), name_en: z.string() })).default([]),
+    ),
+    education: facts,
+    awards: facts,
   }),
 });
 

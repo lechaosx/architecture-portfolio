@@ -18,10 +18,6 @@ export default mergeConfig(config, {
             pattern: '/e2e/images/[file]',
             entrypoint: './tests/e2e/pages/images/[file].ts',
           });
-          injectRoute({
-            pattern: '/e2e/single-page-work',
-            entrypoint: './tests/e2e/pages/single-page-work.astro',
-          });
         },
       },
     },

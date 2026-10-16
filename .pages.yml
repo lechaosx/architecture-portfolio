@@ -81,7 +81,7 @@ content:
     type: file
     path: src/content/singletons/landing.md
     fields:
-      - { name: images, label: Images, type: image, list: true, required: false, description: 'Shown at the top of the landing page in this order: one image as it is, two or more as a slideshow. Leave empty to start the page with the intro.' }
+      - { name: images, label: Images, type: image, list: true, required: false, description: 'Shown at the top of the landing page in this order: one image as it is, two or more as a slideshow. Leave empty to start the page with the line saying what you do and where.' }
 
   - name: about
     label: About page
@@ -121,19 +121,11 @@ content:
           - { name: title_en, label: Your role (English), type: string, required: true, description: 'e.g. "Architect".' }
           - { name: description_cs, label: Description (Czech), type: text, required: false }
           - { name: description_en, label: Description (English), type: text, required: false }
-          - name: tags
-            label: Tags
-            type: object
-            list: true
-            description: Short keywords shown as tags, e.g. BIM.
-            fields:
-              - { name: name_cs, label: Tag (Czech), type: string, required: true }
-              - { name: name_en, label: Tag (English), type: string, required: true }
       - name: services
         label: Services
         type: object
         list: true
-        description: One service per row, named the way a client would ask for it. Shown as tags beside the portrait.
+        description: One service per row, named the way a client would ask for it. Listed on the About page and named under the landing images.
         fields:
           - { name: name_cs, label: Service (Czech), type: string, required: true }
           - { name: name_en, label: Service (English), type: string, required: true }
@@ -152,14 +144,6 @@ content:
           - { name: title_en, label: Programme (English), type: string, required: true, description: 'e.g. "Architecture and Urban Development".' }
           - { name: description_cs, label: Description (Czech), type: text, required: false }
           - { name: description_en, label: Description (English), type: text, required: false }
-          - name: tags
-            label: Tags
-            type: object
-            list: true
-            description: Short keywords shown as tags, e.g. BIM.
-            fields:
-              - { name: name_cs, label: Tag (Czech), type: string, required: true }
-              - { name: name_en, label: Tag (English), type: string, required: true }
       - name: awards
         label: Awards
         type: object
@@ -175,24 +159,16 @@ content:
           - { name: title_en, label: Placement (English), type: string, required: true, description: 'e.g. "2nd place".' }
           - { name: description_cs, label: Description (Czech), type: text, required: false }
           - { name: description_en, label: Description (English), type: text, required: false }
-          - name: tags
-            label: Tags
-            type: object
-            list: true
-            description: Short keywords shown as tags, e.g. BIM.
-            fields:
-              - { name: name_cs, label: Tag (Czech), type: string, required: true }
-              - { name: name_en, label: Tag (English), type: string, required: true }
 
   - name: contact
-    label: Contact (footer and About)
+    label: Contact (footer and contact card)
     type: file
     path: src/content/singletons/contact.md
     fields:
       - { name: email, label: Email, type: string, required: true }
       - { name: phone, label: Phone, type: string, required: false }
-      - { name: location_cs, label: Where I am (Czech), type: string, required: false, description: 'Your city, e.g. "Brno". Shown on the About page.' }
-      - { name: location_en, label: Where I am (English), type: string, required: false, description: 'Your city, e.g. "Brno". Shown on the About page.' }
+      - { name: location_cs, label: Where I am (Czech), type: string, required: false, description: 'Your city, e.g. "Brno". Shown under the landing images and on the contact card.' }
+      - { name: location_en, label: Where I am (English), type: string, required: false, description: 'Your city, e.g. "Brno". Shown under the landing images and on the contact card.' }
       - { name: hours_cs, label: Phone call hours (Czech), type: string, required: false, description: 'When I receive calls, e.g. "Po–Pá 10–15".' }
       - { name: hours_en, label: Phone call hours (English), type: string, required: false, description: 'When I receive calls, e.g. "Mon–Fri 10–15".' }
 
@@ -203,5 +179,5 @@ content:
     fields:
       - { name: name, label: Name, type: string, required: true }
       - { name: credential, label: Credential (e.g. Ing. arch.), type: string }
-      - { name: description_cs, label: Landing intro and search description (Czech), type: text, required: true, description: 'The large sentence that opens the landing page, also the text search engines and link previews show for pages without their own. One or two sentences.' }
-      - { name: description_en, label: Landing intro and search description (English), type: text, required: true, description: 'The large sentence that opens the landing page, also the text search engines and link previews show for pages without their own. One or two sentences.' }
+      - { name: description_cs, label: Search description (Czech), type: text, required: true, description: 'The text search engines and link previews show for pages without their own. One or two sentences.' }
+      - { name: description_en, label: Search description (English), type: text, required: true, description: 'The text search engines and link previews show for pages without their own. One or two sentences.' }

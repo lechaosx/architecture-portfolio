@@ -30,11 +30,10 @@ describe('person', () => {
               years: '2024–2026',
               title_cs: 'Architektura a rozvoj sídel',
               title_en: 'Architecture and Urban Development',
-              tags: [],
             },
-            { place_cs: 'SPŠ stavební', place_en: 'Building school', years: ' ', title_cs: 'Maturita', title_en: 'School-leaving exam', tags: [] },
+            { place_cs: 'SPŠ stavební', place_en: 'Building school', years: ' ', title_cs: 'Maturita', title_en: 'School-leaving exam' },
           ],
-          awards: [{ place_cs: 'Cena Bohuslava Fuchse', place_en: 'Bohuslav Fuchs Award', years: '2025', title_cs: '2. místo', title_en: '2nd place', tags: [] }],
+          awards: [{ place_cs: 'Cena Bohuslava Fuchse', place_en: 'Bohuslav Fuchs Award', years: '2025', title_cs: '2. místo', title_en: '2nd place' }],
         },
         contact: { ...contact, phone: '+420 777 000 000', location_cs: 'Brno' },
         portrait: '/_responsive/hash/1280.webp',
@@ -71,7 +70,7 @@ describe('person', () => {
       owner: { name: owner.name },
       about: {
         ...emptyAbout,
-        awards: [{ place_cs: ' ', place_en: 'Competition', title_cs: '', title_en: 'Award', tags: [] }],
+        awards: [{ place_cs: ' ', place_en: 'Competition', title_cs: '', title_en: 'Award' }],
       },
       contact: { ...contact, location_cs: ' ' },
     });

@@ -17,28 +17,24 @@ const label = (key: UiKey) => pair(ui.cs[key], ui.en[key]);
 
 const line = (text: string) => (text ? [text] : []);
 
-type TimelineRow = Data<'about'>['education'][number];
+type FactRow = Data<'about'>['education'][number];
 
-const timelineHeading = (title: string, place: string, department?: string) =>
+const factHeading = (title: string, place: string, department?: string) =>
   `${title} – ${[place, department?.trim()].filter(Boolean).join(', ')}`;
-const tagNames = (row: TimelineRow, lang: 'cs' | 'en') =>
-  row.tags.map((tag) => tag[`name_${lang}`]).join(', ');
 
-/** "years · title – place, department", then each line of the description and the tags, indented under it. */
-function timelineRow(row: TimelineRow) {
+/** "years · title – place, department", then each line of the description, indented under it. */
+function factRow(row: FactRow) {
   const heading = [
     row.years?.trim(),
     both(
-      timelineHeading(row.title_cs, row.place_cs, row.department_cs),
-      timelineHeading(row.title_en, row.place_en, row.department_en),
+      factHeading(row.title_cs, row.place_cs, row.department_cs),
+      factHeading(row.title_en, row.place_en, row.department_en),
     ).join(' / '),
   ]
     .filter(Boolean)
     .join(' · ');
-  const details = [
-    ...both(row.description_cs, row.description_en).flatMap((text) => text.split('\n')),
-    both(tagNames(row, 'cs'), tagNames(row, 'en')).join(' / '),
-  ]
+  const details = both(row.description_cs, row.description_en)
+    .flatMap((text) => text.split('\n'))
     .map((detail) => detail.trim())
     .filter(Boolean);
   return [heading, ...details.map((detail) => `  ${detail}`)].join('\n');
@@ -105,13 +101,13 @@ export function llmsTxt({
     `# ${name}`,
     ...line(both(description.cs, description.en).map((text) => `> ${text}`).join('\n>\n')),
     ...section(label('about'), both(about.body_cs, about.body_en)),
-    ...section(label('experience'), list(about.experience.map(timelineRow))),
+    ...section(label('experience'), list(about.experience.map(factRow))),
     ...section(
       label('services'),
       list(about.services.map((service) => pair(service.name_cs, service.name_en))),
     ),
-    ...section(label('education'), list(about.education.map(timelineRow))),
-    ...section(label('awards'), list(about.awards.map(timelineRow))),
+    ...section(label('education'), list(about.education.map(factRow))),
+    ...section(label('awards'), list(about.awards.map(factRow))),
     ...section(
       label('contact'),
       list([
