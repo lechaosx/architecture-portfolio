@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-.prose {
+/* Running text: hyphenated by the dictionary of its nearest `lang`. */
+.running-text {
   text-align: justify;
   hyphens: auto;
 }

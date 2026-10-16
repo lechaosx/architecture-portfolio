@@ -76,7 +76,7 @@
   {#if title}
     <h2 class="mb-3 text-2xl leading-tight sm:mb-4 sm:text-3xl">{title}</h2>
   {/if}
-  <p class="text-base leading-relaxed text-justify hyphens-auto">
+  <p class="running-text text-base leading-relaxed">
     {description}
   </p>
 {/snippet}

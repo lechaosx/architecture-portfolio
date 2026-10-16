@@ -342,27 +342,44 @@ test('the wordmark and menu fit a 320px phone, each menu item on one line', asyn
   }
 });
 
-test('prose is justified and hyphenates according to its language', async ({
+test('running text is justified and hyphenates in its own language, short lines are not', async ({
   page,
 }) => {
-  await page.goto('/about/');
-  const prose = page.locator('.prose');
-
-  expect(
-    await prose.evaluateAll((elements) =>
-      elements.map((element) => {
+  // The first match: on About, the bio comes before the row descriptions.
+  const typeset = (text: string | RegExp) =>
+    page
+      .getByText(text, { exact: true })
+      .first()
+      .evaluate((element) => {
         const style = getComputedStyle(element);
         return {
-          lang: element.getAttribute('lang'),
+          lang: element.closest('[lang]')!.getAttribute('lang'),
           textAlign: style.textAlign,
           hyphens: style.hyphens,
         };
-      }),
-    ),
-  ).toEqual([
-    { lang: 'cs', textAlign: 'justify', hyphens: 'auto' },
-    { lang: 'en', textAlign: 'justify', hyphens: 'auto' },
-  ]);
+      });
+  const running = (lang: string) => ({ lang, textAlign: 'justify', hyphens: 'auto' });
+
+  await page.goto('/e2e/about/');
+  for (const [lang, bio, approach, description, award] of [
+    ['en', /^The drawing follows .* The drawing follows /, 'First paragraph.', 'Permit drawings.', /^The drawing follows [^.]*\.$/],
+    ['cs', /^Výkres sleduje, .* Výkres sleduje, /, 'První odstavec.', 'Výkresy k povolení.', /^Výkres sleduje, [^.]*\.$/],
+  ] as const) {
+    for (const text of [bio, approach, description, award]) {
+      expect(await typeset(text), String(text)).toEqual(running(lang));
+    }
+  }
+  expect((await typeset('Place')).textAlign).not.toBe('justify');
+  expect((await typeset('Architect')).textAlign).not.toBe('justify');
+
+  await page.goto('/e2e/work/');
+  expect(await typeset('First line\nSecond line')).toEqual(running('en'));
+  expect(await typeset('První řádek\nDruhý řádek')).toEqual(running('cs'));
+  expect((await typeset('Alpha brief')).textAlign).not.toBe('justify');
+
+  await page.goto('/e2e/brief/');
+  expect(await typeset('A brief for the page.\nSecond line.')).toEqual(running('en'));
+  expect(await typeset('Anotace stránky.\nDruhý řádek.')).toEqual(running('cs'));
 });
 
 test('project prose fills the available width with comfortable columns', async ({
