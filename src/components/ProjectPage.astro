@@ -13,16 +13,9 @@ import type { Project } from '../projects';
 
 interface Props {
   project: Project;
-  /** Its neighbours in the work page's order. */
-  previous?: Project;
-  next?: Project;
 }
 
-const { project, previous, next } = Astro.props;
-const neighbours = [
-  { k: 'previousProject', to: previous, align: '' },
-  { k: 'nextProject', to: next, align: 'col-start-2 text-right' },
-] as const;
+const { project } = Astro.props;
 const d = project.data;
 
 const period = formatPeriod(d);
@@ -59,7 +52,7 @@ const site = new URL('/', Astro.site);
     }),
   ]}
 >
-  <article class="mx-auto max-w-6xl px-6 pt-12 sm:pt-16">
+  <article class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
     <a href="/work/" class="text-sm text-neutral-500 hover:text-neutral-900">
       <T k="backToWork" />
     </a>
@@ -92,27 +85,4 @@ const site = new URL('/', Astro.site);
     <ProjectBlocks projectId={project.id} blocks={d.blocks} {responsiveImages} />
     {images.length > 0 && <Gallery {images} {responsiveImages} client:load />}
   </article>
-
-  <div class="mx-auto max-w-6xl px-6 pb-16 sm:pb-24">
-    {
-      (previous || next) && (
-        <nav class="mt-16 grid grid-cols-2 gap-x-6 border-t border-black pt-4 sm:mt-24">
-          <T as="h2" k="projects" class="sr-only" />
-          {neighbours.map(
-            ({ k, to, align }) =>
-              to && (
-                <a href={`/projects/${to.id}/`} class={`group ${align}`}>
-                  <T k={k} class="block text-sm tracking-widest uppercase" />
-                  <T
-                    cs={to.data.title_cs}
-                    en={to.data.title_en}
-                    class="mt-2 block text-xl font-medium tracking-tight text-balance group-hover:underline group-focus-visible:underline sm:text-2xl"
-                  />
-                </a>
-              ),
-          )}
-        </nav>
-      )
-    }
-  </div>
 </Base>

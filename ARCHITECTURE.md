@@ -65,9 +65,9 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
 - Metadata, structured-data and alt-text tests use fixture project pages; the
   `llms.txt` test checks it against the shipped projects and follows its links
   — [Implicit].
-- The work page's index, the brief and text-only project pages and a project
-  page's neighbours are tested through fixture projects; other landing, About,
-  work-page, footer and transition tests use the shipped content — [Implicit].
+- The work page's index and the brief and text-only project pages are tested
+  through fixture projects; other landing, About, work-page, footer and
+  transition tests use the shipped content — [Implicit].
 
 ---
 
@@ -208,8 +208,7 @@ own. Their routes in `src/pages/` only load the content and pass it on.
 `src/projects.ts` holds the one project order and splits the projects into
 cards with a cover and the index, so the share image that falls back to the
 newest cover always matches the first card, and `llms.txt` lists projects in
-the same order. It also derives the project pages and their neighbours from
-that split, so previous and next walk the work page as it reads.
+the same order.
 
 ### Section headings own their row — [Implicit]
 
@@ -226,11 +225,8 @@ its first slide), so it does not compete with the inner image's hover scale. It
 is set only when the first block is an image block. An inline `pagereveal` script tags
 each navigation by whether it arrives at a project page and carries the card's
 hover scale across, so a card morphs from any page that shows one, Work or the
-landing page. One snapshot is
-drawn, because blending two crops doubles the edges. A navigation between two
-project pages is left untagged, read from `navigation.activation`, so their
-covers fade with the page instead of popping in. Browsers without the
-Navigation API, such as older Safari, still tag it as opening a project.
+landing page. One snapshot is drawn, because blending two crops doubles the
+edges.
 
 ### The work index expands with native `<details>` — [Explicit]
 

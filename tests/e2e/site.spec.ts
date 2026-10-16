@@ -549,7 +549,6 @@ for (const path of [
   '/e2e/work-list-only/',
   '/about/',
   '/e2e/about/',
-  '/e2e/between/',
 ]) {
   test(`the headings of ${path} nest without skipping a level`, async ({ page }) => {
     await page.goto(path);

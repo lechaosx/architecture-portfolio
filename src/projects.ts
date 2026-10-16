@@ -28,17 +28,3 @@ export function workProjects(projects: Project[]): {
   }
   return { grid, listed };
 }
-
-/**
- * The projects with a page, the ones with content blocks, in the work page's
- * order, each with the ones before and after it.
- */
-export function projectPages(projects: Project[]) {
-  const { grid, listed } = workProjects(projects);
-  const pages = [...grid, ...listed].filter((project) => project.data.blocks.length > 0);
-  return pages.map((project, index) => ({
-    project,
-    previous: pages[index - 1] as Project | undefined,
-    next: pages[index + 1] as Project | undefined,
-  }));
-}
