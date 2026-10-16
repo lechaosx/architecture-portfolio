@@ -67,10 +67,10 @@ Structural and design changes are made in code on the same repo.
 
 Editable: projects, the landing page's images, the About page (bio, portrait,
 work experience, services, education, awards, Approach), the contact details in
-the footer and the contact card, and the site settings (name, credential,
-description). Baked into code: page structure, navigation, section labels and
-the contact card's invitation. CMS entries: **Projekty**, **Úvodní stránka**,
-**O mně**, **Kontakt (patička a kontaktní karta)**, **Nastavení webu**.
+the footer, and the site settings (name, credential, description). Baked into
+code: page structure, navigation and section labels. CMS entries:
+**Projekty**, **Úvodní stránka**, **O mně**, **Kontakt (patička)**,
+**Nastavení webu**.
 
 ### The CMS speaks Czech — [Explicit]
 
@@ -135,12 +135,10 @@ both languages.
 ### Three pages: landing, Work and About — [Explicit]
 
 The landing page at `/` gives a visitor her context before the work: chosen
-images, what she is and where, a few projects and how to reach her, even where
-that repeats Work and About. The work page lists every project; the About page
-holds her bio, approach and the facts behind them. The contacts are in the
-footer of every page, and the contact card closes the landing page and every
-project page, so there is no separate Contact page — [Explicit]. About ends with
-the same card — [Implicit].
+images, what she is and where, and a few projects, even where that repeats Work
+and About. The work page lists every project; the About page holds her bio,
+approach and the facts behind them. The contacts are in the footer of every
+page, so there is no separate Contact page — [Explicit].
 
 ### Landing page — [Explicit]
 
@@ -148,8 +146,8 @@ Top to bottom: her chosen images, large, filling the content width just under
 the header; one quiet line saying what she is and where ("Architektka · Brno",
 the place from the contacts), followed by her services when there are any,
 with **O mně →**; then **Vybrané práce** with **Všechny práce →** over the three
-newest projects with images as the work page's cards; then the contact card.
-No headline or introductory paragraph.
+newest projects with images as the work page's cards, which end the page. No
+headline or introductory paragraph.
 
 The layout — [Implicit]: the line sits under the images like a caption, in the
 section headings' small caps, the services in grey; a place filled in one
@@ -172,8 +170,8 @@ auto-advance added, its images cropped to fill the frame — [Implicit].
 **O mně** is a section heading, small caps over a thin rule, with her name
 under it as an assertive title. The name and bio sit beside the portrait in
 equal columns on wide screens and above it on phones. Then Approach, then the
-facts, and the contact card ends the page — [Implicit]. Everything but the
-contacts is edited in the one **O mně** entry.
+facts, which end the page. Everything but the contacts is edited in the one
+**O mně** entry.
 
 The bio follows the project text's column rule: balanced columns where each
 keeps a comfortable width, else one — [Explicit]. Beside the portrait it is
@@ -185,9 +183,9 @@ Services, work experience, education and awards are each a quiet plain-text
 list under its own section heading. A row reads years, then title and place,
 with the department or category under it in grey and its description, if
 filled, below. Services are a plain list. An empty group shows no heading, so
-with nothing filled About is the heading, name, bio and contact card. An
-entry's years are one field shared by both languages, e.g. "2024–2026", or
-"2024–" while ongoing — [Implicit].
+with nothing filled About is the heading, name and bio. An entry's years are one
+field shared by both languages, e.g. "2024–2026", or "2024–" while ongoing —
+[Implicit].
 
 The layout — [Implicit]: the groups pair up in two columns on wide screens, on
 the same columns as the bio and portrait, services first; the years have a
@@ -231,7 +229,9 @@ paragraph, whether she typed one or two — [Implicit].
 Email, phone and when she receives calls (one short line per language, e.g.
 "Po–Pá 10–15") are in every page's footer; email and phone are links, and
 phone and hours show only when filled.
-No contact form: there is no backend to receive one.
+No contact form: there is no backend to receive one. The footer is the one
+place for contacts: no card or call to action above it repeats them —
+[Explicit].
 
 The contacts have no label; the icons and links say what they are — [Explicit].
 Call hours use a clock icon and a call-hours label for screen readers —
@@ -239,22 +239,10 @@ Call hours use a clock icon and a call-hours label for screen readers —
 
 The layout — [Implicit]: on wide screens one line, the © on the left, the
 contacts in the middle and the theme and language switches on the right; each
-contact has the contact card's icon, which also separates it from the next.
+contact has its icon, which also separates it from the next.
 All of it is in the footer's small grey type — [Explicit]. Where the line does
 not fit, the contacts come first, wrapping only between whole contacts, then
 the © and the switches in one row; everything starts on the page's left edge.
-
-### Contact card — [Explicit]
-
-A black card closes the landing page: the **Kontakt** heading in small caps
-over an assertive invitation, then a short enquiry text, an email button and
-the contact lines — email, phone with its call hours under it, and where she
-is, each with its icon, thin rules between them. On wide screens the heading
-and invitation take the left half and the rest the right; on phones they
-stack. The icons share a left edge. Every project page ends with the same card
-— [Explicit], and so does About — [Implicit].
-In dark mode the card inverts with the page, a light card on charcoal, and a
-contact line filled in one language shows only in that language — [Implicit].
 
 ### Custom 404 page — [Explicit]
 
@@ -352,12 +340,12 @@ image-set blocks, in any order and repeated freely. A one-image set is a plain
 image; more form a manual carousel, whose controls keep a high-contrast palette
 in both themes.
 
-### Project pages end with the previous and next projects and the contact card — [Explicit]
+### Project pages end with the previous and next projects — [Explicit]
 
 After the blocks, links to the neighbouring projects in the work page's order
-let a visitor walk the work without going back to it, and the contact card
-invites an enquiry. The links name only the titles, and the order does
-not wrap, so the walk ends at the card — [Implicit].
+let a visitor walk the work without going back to it. The links name only the
+titles, and the order does not wrap, so the walk stops at the first and last
+project — [Implicit].
 
 ### Project text fills the width with comfortable columns — [Explicit]
 

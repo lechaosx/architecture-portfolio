@@ -2,7 +2,6 @@
 import { getCollection } from 'astro:content';
 import ProjectPage from '../../components/ProjectPage.astro';
 import { projectPages } from '../../projects';
-import { contact } from '../../singletons';
 
 export async function getStaticPaths() {
   const projects = await getCollection('projects', ({ data }) => !data.draft);
@@ -12,4 +11,4 @@ export async function getStaticPaths() {
 const { project, previous, next } = Astro.props;
 ---
 
-<ProjectPage {project} {previous} {next} {contact} />
+<ProjectPage {project} {previous} {next} />

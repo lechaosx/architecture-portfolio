@@ -1,7 +1,5 @@
 ---
-import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import ContactCard from './ContactCard.astro';
 import Gallery from './Gallery.svelte';
 import ProjectBlocks from './ProjectBlocks.astro';
 import T from './T.astro';
@@ -16,10 +14,9 @@ interface Props {
   /** Its neighbours in the work page's order. */
   previous?: Project;
   next?: Project;
-  contact: CollectionEntry<'contact'>['data'];
 }
 
-const { project, previous, next, contact } = Astro.props;
+const { project, previous, next } = Astro.props;
 const neighbours = [
   { k: 'previousProject', to: previous, align: '' },
   { k: 'nextProject', to: next, align: 'col-start-2 text-right' },
@@ -113,8 +110,5 @@ const site = new URL('/', Astro.site);
         </nav>
       )
     }
-    <div class="mt-16 sm:mt-24">
-      <ContactCard {contact} />
-    </div>
   </div>
 </Base>

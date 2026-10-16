@@ -20,7 +20,7 @@ Tests, build and other commands: [MAINTAINERS.md](MAINTAINERS.md).
 ## Content
 
 Projects are Markdown files in `src/content/projects/`, the landing page's
-images, the About page, the contacts (footer and contact card) and the site
+images, the About page, the contacts in the footer and the site
 settings are in `src/content/singletons/`, and images in `public/uploads/`.
 
 The owner edits all of it through [Pages CMS](https://pagescms.org): the repo is

@@ -56,16 +56,9 @@ test('the site description is not shown, only used as the page description', asy
   await expect(page.locator('main')).not.toContainText(site.description_en);
 });
 
-test('the landing page closes with the contact card', async ({ page }) => {
+test('the landing page ends with the selected work', async ({ page }) => {
   await page.goto('/e2e/landing/');
-  await expect(page.locator('main').getByRole('heading', { level: 2 }).last()).toHaveText('Contact');
-  const card = page.locator('main section', {
-    has: page.getByRole('heading', { level: 2, name: 'Contact' }),
-  });
-  await expect(card.getByRole('link', { name: 'Write an email ↗' })).toHaveAttribute(
-    'href',
-    'mailto:jana@example.cz',
-  );
+  await expect(page.locator('main').getByRole('heading', { level: 2 }).last()).toHaveText('Selected work');
 });
 
 test('selected work is the newest projects with images, with a link to all work', async ({

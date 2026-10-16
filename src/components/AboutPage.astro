@@ -2,7 +2,6 @@
 import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ApproachIcon from './ApproachIcon.astro';
-import ContactCard from './ContactCard.astro';
 import T from './T.astro';
 import Paragraphs from './Paragraphs.astro';
 import Prose from './Prose.astro';
@@ -16,10 +15,9 @@ import { profilePage } from '../structured-data';
 
 interface Props {
   about: CollectionEntry<'about'>['data'];
-  contact: CollectionEntry<'contact'>['data'];
 }
 
-const { about, contact } = Astro.props;
+const { about } = Astro.props;
 const responsivePortrait = about.portrait
   ? await getResponsiveImage(about.portrait)
   : undefined;
@@ -134,9 +132,5 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
         </div>
       )
     }
-
-    <div class="mt-16 sm:mt-24">
-      <ContactCard {contact} />
-    </div>
   </div>
 </Base>
