@@ -11,6 +11,7 @@ import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { getResponsiveImage } from '../server-images';
 import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
+import { formatPeriod } from '../period';
 import { profilePage } from '../structured-data';
 
 interface Props {
@@ -103,8 +104,8 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
                   <SectionHeading {k} />
                   <ul class="space-y-5">
                     {rows.map((row) => (
-                      <li class="grid grid-cols-[5rem_minmax(0,1fr)] items-baseline gap-x-4">
-                        <span class="text-sm text-neutral-500 tabular-nums">{row.years}</span>
+                      <li class="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-x-4 sm:grid-cols-[8rem_minmax(0,1fr)]">
+                        <T {...formatPeriod(row)} class="text-sm text-neutral-500 tabular-nums" />
                         <div>
                           <p class="text-balance">
                             <T cs={row.title_cs} en={row.title_en} class="font-medium" />,{' '}

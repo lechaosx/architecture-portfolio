@@ -214,17 +214,14 @@ test('work projects are sorted and the grid follows its responsive breakpoints',
   await page.goto('/work/');
   const grid = page.locator('main .grid:has(> a)');
   const cards = grid.locator(':scope > a');
-  const rendered = await cards.evaluateAll((elements) =>
-    elements.map((element) => ({
-      title: element.querySelector('h2[lang="en"]')?.textContent?.trim() ?? '',
-      year: Number(element.querySelector('span.text-sm')?.textContent),
-    })),
+  // Each card's period ends in its last year, or in "present" while ongoing.
+  const ends = await cards.evaluateAll((elements) =>
+    elements.map((element) => {
+      const period = element.querySelector('span.text-sm[lang="en"]')?.textContent ?? '';
+      return period.endsWith('present') ? Infinity : Number(period.slice(-4));
+    }),
   );
-  expect(rendered).toEqual(
-    [...rendered].sort(
-      (a, b) => b.year - a.year || a.title.localeCompare(b.title),
-    ),
-  );
+  expect(ends).toEqual([...ends].sort((a, b) => b - a));
 
   const columnCount = () =>
     grid.evaluate(

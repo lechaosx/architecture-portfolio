@@ -1,7 +1,8 @@
 ---
 title_cs: Exotárium | ZOO Brno
 title_en: Exotarium | Brno Zoo
-year: 2024
+from: '2024'
+to: '2024'
 location_cs: Česká republika, Brno
 location_en: Czech republic, Brno
 draft: false

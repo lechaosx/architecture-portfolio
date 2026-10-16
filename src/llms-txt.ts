@@ -1,5 +1,6 @@
 import type { CollectionEntry } from 'astro:content';
 import { ui, type UiKey } from './i18n';
+import { formatPeriod, type Period } from './period';
 import { newestFirst, type Project } from './projects';
 
 // /llms.txt (https://llmstxt.org): the site's facts as one Markdown file,
@@ -14,6 +15,10 @@ const both = (cs?: string, en?: string) => [
 ];
 const pair = (cs?: string, en?: string) => both(cs, en).join(' / ');
 const label = (key: UiKey) => pair(ui.cs[key], ui.en[key]);
+const period = (value: Period) => {
+  const text = formatPeriod(value);
+  return pair(text?.cs, text?.en);
+};
 
 const line = (text: string) => (text ? [text] : []);
 
@@ -22,10 +27,10 @@ type FactRow = Data<'about'>['education'][number];
 const factHeading = (title: string, place: string, department?: string) =>
   `${title} – ${[place, department?.trim()].filter(Boolean).join(', ')}`;
 
-/** "years · title – place, department", then each line of the description, indented under it. */
+/** "period · title – place, department", then each line of the description, indented under it. */
 function factRow(row: FactRow) {
   const heading = [
-    row.years?.trim(),
+    period(row),
     both(
       factHeading(row.title_cs, row.place_cs, row.department_cs),
       factHeading(row.title_en, row.place_en, row.department_en),
@@ -54,7 +59,7 @@ function project(site: URL, { id, data }: Project) {
   );
   return [
     `### ${pair(data.title_cs, data.title_en)}`,
-    [pair(data.location_cs, data.location_en), data.year]
+    [pair(data.location_cs, data.location_en), period(data)]
       .filter(Boolean)
       .join(' · '),
     ...(data.blocks.length > 0

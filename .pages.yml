@@ -6,7 +6,7 @@
 # which triggers the GitHub Pages deploy.
 #
 # The site is bilingual (Czech + English). Fields that differ per language come
-# in pairs suffixed _cs / _en; language-neutral fields (images, year(s), email,
+# in pairs suffixed _cs / _en; language-neutral fields (images, dates, email,
 # phone) are single. See FEATURES.md "Dual language (Czech + English)".
 
 media:
@@ -23,11 +23,17 @@ content:
       field: true
     view:
       primary: title_en
-      fields: [title_en, year, location_en]
+      fields: [title_en, from, to, location_en]
     fields:
       - { name: title_cs, label: Název (česky), type: string, required: true }
       - { name: title_en, label: Název (anglicky), type: string, required: true }
-      - { name: year, label: Rok, type: number, required: true }
+      - name: from
+        label: Od
+        type: string
+        required: true
+        pattern: &date { regex: '^((0?[1-9]|1[0-2])/)?[0-9]{4}$|^$', message: 'Zadejte rok, např. 2023, nebo měsíc a rok, např. 3/2023.' }
+        description: 'Začátek práce na projektu: rok, např. 2023, nebo měsíc a rok, např. 3/2023.'
+      - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec práce na projektu ve stejném tvaru; u projektu z jednoho roku stejný rok jako v poli „Od“. Pokud projekt stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
       - { name: location_cs, label: Místo (česky), type: string, required: false }
       - { name: location_en, label: Místo (anglicky), type: string, required: false }
       - { name: brief_cs, label: Stručný popis (česky), type: text, required: false }
@@ -121,7 +127,8 @@ content:
           - { name: place_en, label: Ateliér nebo zaměstnavatel (anglicky), type: string, required: true, description: 'Název a město, např. „Studio A, Brno“.' }
           - { name: department_cs, label: Oddělení nebo tým (česky), type: string, required: false }
           - { name: department_en, label: Oddělení nebo tým (anglicky), type: string, required: false }
-          - { name: years, label: Období, type: string, required: false, description: 'Společné pro oba jazyky, např. 2024–2026, nebo 2024–, pokud stále trvá.' }
+          - { name: from, label: Od, type: string, required: false, pattern: *date, description: 'Začátek, společný pro oba jazyky: rok, např. 2023, nebo měsíc a rok, např. 3/2023. U položky bez období nechte „Od“ i „Do“ prázdné.' }
+          - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec ve stejném tvaru; u jednoho roku stejný rok jako v poli „Od“. Pokud položka stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
           - { name: title_cs, label: Pozice (česky), type: string, required: true, description: 'Např. „Architektka“.' }
           - { name: title_en, label: Pozice (anglicky), type: string, required: true, description: 'Např. „Architect“.' }
           - { name: description_cs, label: Popis (česky), type: text, required: false }
@@ -144,7 +151,8 @@ content:
           - { name: place_en, label: Škola (anglicky), type: string, required: true, description: 'Např. „Brno University of Technology“.' }
           - { name: department_cs, label: Fakulta nebo ústav (česky), type: string, required: false, description: 'Např. „Fakulta stavební, Ústav architektury“.' }
           - { name: department_en, label: Fakulta nebo ústav (anglicky), type: string, required: false, description: 'Např. „Faculty of Civil Engineering, Institute of Architecture“.' }
-          - { name: years, label: Období, type: string, required: false, description: 'Společné pro oba jazyky, např. 2024–2026, nebo 2024–, pokud stále trvá.' }
+          - { name: from, label: Od, type: string, required: false, pattern: *date, description: 'Začátek, společný pro oba jazyky: rok, např. 2023, nebo měsíc a rok, např. 3/2023. U položky bez období nechte „Od“ i „Do“ prázdné.' }
+          - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec ve stejném tvaru; u jednoho roku stejný rok jako v poli „Od“. Pokud položka stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
           - { name: title_cs, label: Studijní program (česky), type: string, required: true, description: 'Např. „Architektura a rozvoj sídel“.' }
           - { name: title_en, label: Studijní program (anglicky), type: string, required: true, description: 'Např. „Architecture and Urban Development“.' }
           - { name: description_cs, label: Popis (česky), type: text, required: false }
@@ -159,7 +167,8 @@ content:
           - { name: place_en, label: Soutěž nebo ocenění (anglicky), type: string, required: true, description: 'Např. „Bohuslav Fuchs Award“.' }
           - { name: department_cs, label: Kategorie nebo pořadatel (česky), type: string, required: false }
           - { name: department_en, label: Kategorie nebo pořadatel (anglicky), type: string, required: false }
-          - { name: years, label: Období, type: string, required: false, description: 'Společné pro oba jazyky, např. 2024–2026, nebo 2024–, pokud stále trvá.' }
+          - { name: from, label: Od, type: string, required: false, pattern: *date, description: 'Začátek, společný pro oba jazyky: rok, např. 2023, nebo měsíc a rok, např. 3/2023. U položky bez období nechte „Od“ i „Do“ prázdné.' }
+          - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec ve stejném tvaru; u jednoho roku stejný rok jako v poli „Od“. Pokud položka stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
           - { name: title_cs, label: Umístění (česky), type: string, required: true, description: 'Např. „2. místo“.' }
           - { name: title_en, label: Umístění (anglicky), type: string, required: true, description: 'Např. „2nd place“.' }
           - { name: description_cs, label: Popis (česky), type: text, required: false }

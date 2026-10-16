@@ -1,7 +1,8 @@
 ---
 title_cs: Drobný urbanismus
 title_en: Urban Intervention
-year: 2025
+from: '2025'
+to: '2025'
 location_cs: Kyjov, Česká republika
 location_en: Kyjov, Czech Republic
 draft: false

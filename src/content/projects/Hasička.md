@@ -1,7 +1,8 @@
 ---
 title_cs: Hasičská stanice
 title_en: Fire Station
-year: 2023
+from: '2023'
+to: '2023'
 location_cs: Doubravník
 location_en: Doubravník
 brief_cs: >-

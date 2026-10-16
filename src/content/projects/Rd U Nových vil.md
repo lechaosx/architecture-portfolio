@@ -1,7 +1,8 @@
 ---
 title_cs: Vila Praha
 title_en: Villa Prague
-year: 2024
+from: '2024'
+to: '2024'
 location_cs: Praha
 location_en: Praha
 brief_cs: >-

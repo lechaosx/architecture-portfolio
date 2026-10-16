@@ -1,7 +1,8 @@
 ---
 title_cs: Městská knihovna v Boskovicích
 title_en: Municipal Library in Boskovice
-year: 2025
+from: '2025'
+to: '2025'
 location_cs: Boskovice
 location_en: Boskovice
 brief_cs: >-

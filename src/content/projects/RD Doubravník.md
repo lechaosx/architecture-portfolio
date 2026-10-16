@@ -1,7 +1,8 @@
 ---
 title_cs: RD Doubravník
 title_en: Family house Doubravník
-year: 2023
+from: '2023'
+to: '2023'
 location_cs: Doubravník
 location_en: Doubravník
 brief_cs: >-

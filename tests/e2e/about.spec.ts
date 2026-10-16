@@ -16,7 +16,7 @@ const section = (page: Page, heading: string | RegExp) =>
     has: page.getByRole('heading', { level: 2, name: heading, exact: true }),
   });
 const box = async (page: Page, text: string) =>
-  (await page.locator('main').getByText(text, { exact: true }).boundingBox())!;
+  (await page.locator('main').getByText(text, { exact: true }).filter({ visible: true }).boundingBox())!;
 
 test('her name is the page title and opens the page, as the identity line does on the landing page', async ({
   page,
@@ -69,22 +69,27 @@ test('Approach comes before the facts, whose rows keep their order', async ({ pa
     'Awards',
   ]);
   await expect(section(page, 'Experience').getByRole('listitem')).toHaveText(
-    [/^2024–\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],
+    [/^2024–present\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],
     visibleText,
   );
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await expect(section(page, 'Praxe').getByRole('listitem').first()).toHaveText(/^2024–dosud\s*Architektka/, visibleText);
 });
 
-test('a fact row reads years, then title and place, with the department under them', async ({
+test('a fact row reads its period, then title and place, with the department under them', async ({
   page,
 }) => {
   await page.goto('/e2e/about/');
-  for (const width of [1280, 390]) {
+  for (const width of [1280, 768, 640, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    const years = await box(page, '2024–');
+    const longest = await box(page, '12/2024–12/2026');
+    expect(longest.x + longest.width, `${width}px`).toBeLessThan((await box(page, 'Architecture and Urban Development')).x);
+    if (width >= 640) expect(longest.height, `${width}px`).toBeCloseTo((await box(page, '2022–2024')).height, 0);
+    const period = await box(page, '2024–present');
     const title = await box(page, 'Architect');
     const department = await box(page, 'Housing team');
-    expect(years.x + years.width, `${width}px`).toBeLessThan(title.x);
-    expect(Math.abs(years.y + years.height - (title.y + title.height)), `${width}px`).toBeLessThan(4);
+    expect(period.x + period.width, `${width}px`).toBeLessThan(title.x);
+    expect(Math.abs(period.y + period.height - (title.y + title.height)), `${width}px`).toBeLessThan(4);
     expect(department.y, `${width}px`).toBeGreaterThanOrEqual(title.y + title.height);
     expect(department.x, `${width}px`).toBeCloseTo(title.x, 0);
   }

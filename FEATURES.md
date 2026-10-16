@@ -84,15 +84,16 @@ buttons and menus stay in English.
 The name, both site descriptions (the search description), the contact email,
 both About texts, every field of an Approach item, both names of a service and
 both places and titles of an experience, education or award row are
-required; everything else may be empty, including a row's years — [Explicit] —
+required; everything else may be empty, including a row's period — [Explicit] —
 and the hours and location — [Implicit]. An edit that would leave a page
 unrenderable fails the build and does not deploy.
 
-### Projects: title and year; everything else optional — [Explicit]
+### Projects: title and start; everything else optional — [Explicit]
 
-The CMS refuses to save a project without both titles and a year. The brief and
-the content blocks are optional; so is the location — [Implicit]. A text block
-needs both languages, an image block at least one image.
+The CMS refuses to save a project without both titles and the start of its
+period ("Od"). The end, the brief and the content blocks are optional; so is
+the location — [Implicit]. A text block needs both languages, an image block
+at least one image.
 
 ### Brief — [Explicit]
 
@@ -127,10 +128,25 @@ description is for search engines and link previews only; no page shows it.
 
 `draft: true` hides a project from the site.
 
-### Projects sort newest year first, then by English title — [Explicit]
+### Periods: from and to, one model everywhere — [Explicit]
 
-Automatic, with no order field; the English title keeps the order the same in
-both languages.
+A project's period is when she worked on it; an About row's is the period of
+that job, study or award. Both have the same two fields, "Od" and "Do", each a
+year or a month and year ("2023", "3/2023"), shared by both languages. A
+one-year project has the same year in both. An empty "Do" means ongoing, shown
+as "2023–dosud" / "2023–present"; an identical start and end shows once. The
+CMS refuses a malformed date; an end without a start or before it fails the
+build.
+
+The details — [Implicit]: a date shows as "3/2023" or "2023", a period joins
+them with an en dash, and a month may be typed with a leading zero.
+
+### Projects sort ongoing first, then by end, then by start — [Explicit]
+
+Automatic, with no order field: ongoing projects first, then the latest end,
+then the latest start, then the English title, so the order is the same in both
+languages. A year without a month counts as the whole year: it starts in
+January and ends in December — [Implicit].
 
 ### Three pages: landing, Work and About — [Explicit]
 
@@ -186,20 +202,19 @@ one column; without one it spans the page — [Implicit].
 ### Experience, education and awards as facts — [Explicit]
 
 Services, work experience, education and awards are each a quiet plain-text
-list under its own section heading. A row reads years, then title and place,
+list under its own section heading. A row reads period, then title and place,
 with the department or category under it in grey and its description, if
 filled, below. Services are a plain list. An empty group shows no heading, so
-with nothing filled About is the name and bio. An entry's years are one
-field shared by both languages, e.g. "2024–2026", or "2024–" while ongoing —
-[Implicit].
+with nothing filled About is the name and bio. Rows keep the order they are
+entered in.
 
 The layout — [Implicit]: the groups pair up in two columns on wide screens, on
-the same columns as the bio and portrait, services first; the years have a
-narrow column of their own, on phones too.
+the same columns as the bio and portrait, services first; the period has a
+column of its own, on phones too.
 
 ### Work page: a grid of square covers — [Explicit]
 
-Three columns of each project's first image as a square crop, with title, year
+Three columns of each project's first image as a square crop, with title, period
 and location; hover enlarges the whole tile. Two and then one column on narrower
 screens — [Implicit]. The grid holds the projects with at least one image; the grid
 cards do not show the brief — [Implicit].
@@ -211,9 +226,10 @@ index, so the images lead and the rest stays easy to scan; a row with a brief
 opens in place to show it. The index has no heading of its own: its projects
 weigh the same as the grid's and only lack images yet — [Explicit]. The layout
 — [Implicit]: the index follows the grid at the grid's own row gap, with thin
-rules above, between and below its rows; one aligned row of year, title and
+rules above, between and below its rows; one aligned row of period, title and
 location per project, and a project with a page linking to it instead of
-opening. Without image projects the index opens the page.
+opening. On phones a long period wraps after its dash, beside the title and
+location. Without image projects the index opens the page.
 
 ### Approach section — [Explicit]
 
@@ -467,7 +483,7 @@ no preview image.
 So that an assistant asked which architect to hire can quote her, every page
 carries structured data (schema.org) about the architect: name, credential,
 contact and where she works, services, and education and awards with their
-places and years; a project page adds its project, its cover and its titled or
+places and periods; a project page adds its project, its cover and its titled or
 described images, each linked at the size the lightbox opens it at. `/llms.txt`
 gathers the same facts, her work experience, her bio and every published
 project's texts and image captions in one Markdown file, Czech then English.

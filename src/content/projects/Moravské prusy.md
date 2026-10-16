@@ -1,7 +1,8 @@
 ---
 title_cs: RD Moravské Prusy
 title_en: Family house Moravské Prusy
-year: 2024
+from: '2024'
+to: '2024'
 location_cs: Moravské Prusy
 location_en: Moravské Prusy
 brief_cs: Zpracování projektové dokumentace pro povolení stavby na základě
