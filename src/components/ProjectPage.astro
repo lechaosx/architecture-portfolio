@@ -7,6 +7,8 @@ import { credentialedName } from '../site-title';
 import { getResponsiveImage } from '../server-images';
 import { projectDescription } from '../project-description';
 import { creativeWork } from '../structured-data';
+import type { Lang } from '../i18n';
+import { formatPeriod } from '../period';
 import type { Project } from '../projects';
 
 interface Props {
@@ -23,7 +25,9 @@ const neighbours = [
 ] as const;
 const d = project.data;
 
-const meta = (loc?: string) => [loc, d.year].filter(Boolean).join(' · ');
+const period = formatPeriod(d);
+const meta = (loc: string | undefined, lang: Lang) =>
+  [loc, period?.[lang]].filter(Boolean).join(' · ');
 const images = d.blocks.flatMap((block) =>
   block.type === 'text' ? [] : block.images,
 );
@@ -69,8 +73,8 @@ const site = new URL('/', Astro.site);
       />
       <T
         as="p"
-        cs={meta(d.location_cs)}
-        en={meta(d.location_en)}
+        cs={meta(d.location_cs, 'cs')}
+        en={meta(d.location_en, 'en')}
         class="mt-2 text-neutral-500"
       />
       {

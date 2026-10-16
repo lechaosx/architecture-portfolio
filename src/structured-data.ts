@@ -2,6 +2,7 @@ import type { CollectionEntry } from 'astro:content';
 import type { GalleryImage } from './components/gallery';
 import { ui } from './i18n';
 import { largeImageUrl, type ResponsiveImage } from './images';
+import { formatPeriod, isoDate } from './period';
 
 // schema.org JSON-LD for the page's inline script. Text is the Czech source as
 // plain strings, the value type Google documents for these properties.
@@ -14,12 +15,12 @@ const text = (value?: string) => value?.trim() || undefined;
 const texts = (values: (string | undefined)[]) =>
   values.flatMap((value) => text(value) ?? []);
 type FactRow = Data<'about'>['education'][number];
-/** The row's filled parts in the given order, then its years in brackets. */
+/** The row's filled parts in the given order, then its period in brackets. */
 const factNames = (rows: FactRow[], parts: (row: FactRow) => (string | undefined)[]) =>
   rows.flatMap((row) => {
     const name = texts(parts(row)).join(', ');
-    const years = text(row.years);
-    return name ? [years ? `${name} (${years})` : name] : [];
+    const period = formatPeriod(row)?.cs;
+    return name ? [period ? `${name} (${period})` : name] : [];
   });
 
 /** Leaves out the fields the content left empty. */
@@ -107,7 +108,7 @@ export function creativeWork({
 }: {
   site: URL;
   url: string;
-  project: Pick<Data<'projects'>, 'title_cs' | 'year' | 'location_cs'>;
+  project: Pick<Data<'projects'>, 'title_cs' | 'from' | 'to' | 'location_cs'>;
   description?: string;
   images: GalleryImage[];
   responsiveImages: (ResponsiveImage | undefined)[];
@@ -116,7 +117,8 @@ export function creativeWork({
   return compact({
     '@type': 'CreativeWork',
     name: project.title_cs,
-    dateCreated: String(project.year),
+    // When her work on it ended; an ongoing project is not finished yet.
+    dateCreated: project.to && isoDate(project.to),
     locationCreated: location && { '@type': 'Place', name: location },
     description,
     inLanguage: 'cs',

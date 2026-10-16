@@ -27,13 +27,17 @@ describe('person', () => {
               place_en: 'Faculty of Civil Engineering, BUT',
               department_cs: 'Ústav architektury',
               department_en: 'Institute of Architecture',
-              years: '2024–2026',
+              from: '2024',
+              to: '2026',
               title_cs: 'Architektura a rozvoj sídel',
               title_en: 'Architecture and Urban Development',
             },
-            { place_cs: 'SPŠ stavební', place_en: 'Building school', years: ' ', title_cs: 'Maturita', title_en: 'School-leaving exam' },
+            { place_cs: 'SPŠ stavební', place_en: 'Building school', title_cs: 'Maturita', title_en: 'School-leaving exam' },
           ],
-          awards: [{ place_cs: 'Cena Bohuslava Fuchse', place_en: 'Bohuslav Fuchs Award', years: '2025', title_cs: '2. místo', title_en: '2nd place' }],
+          awards: [
+            { place_cs: 'Cena Bohuslava Fuchse', place_en: 'Bohuslav Fuchs Award', from: '2025', to: '2025', title_cs: '2. místo', title_en: '2nd place' },
+            { place_cs: 'Soutěž', place_en: 'Competition', from: '9/2025', title_cs: 'Finále', title_en: 'Final' },
+          ],
         },
         contact: { ...contact, phone: '+420 777 000 000', location_cs: 'Brno' },
         portrait: '/_responsive/hash/1280.webp',
@@ -59,7 +63,7 @@ describe('person', () => {
         },
         { '@type': 'EducationalOccupationalCredential', name: 'Maturita, SPŠ stavební' },
       ],
-      award: ['Cena Bohuslava Fuchse, 2. místo (2025)'],
+      award: ['Cena Bohuslava Fuchse, 2. místo (2025)', 'Soutěž, Finále (9/2025–dosud)'],
       knowsLanguage: ['cs', 'en'],
     });
   });
@@ -100,7 +104,8 @@ describe('creativeWork', () => {
   const project = {
     title_cs: 'Galerie',
     title_en: 'Gallery',
-    year: 2024,
+    from: '2023',
+    to: '6/2024',
     location_cs: 'Brno',
     location_en: 'Brno',
   };
@@ -137,7 +142,7 @@ describe('creativeWork', () => {
     ).toEqual({
       '@type': 'CreativeWork',
       name: 'Galerie',
-      dateCreated: '2024',
+      dateCreated: '2024-06',
       locationCreated: { '@type': 'Place', name: 'Brno' },
       description: 'Anotace.',
       inLanguage: 'cs',
@@ -179,18 +184,18 @@ describe('creativeWork', () => {
     ]);
   });
 
-  test('leaves out what the project leaves empty', () => {
+  test('leaves out what the project leaves empty, and the date it was finished while it is ongoing', () => {
     expect(
       Object.keys(
         creativeWork({
           site,
           url: 'https://example.cz/projects/galerie/',
-          project: { ...project, location_cs: undefined },
+          project: { ...project, location_cs: undefined, to: undefined },
           images: [],
           responsiveImages: [],
         }),
       ),
-    ).toEqual(['@type', 'name', 'dateCreated', 'inLanguage', 'url', 'creator']);
+    ).toEqual(['@type', 'name', 'inLanguage', 'url', 'creator']);
   });
 });
 

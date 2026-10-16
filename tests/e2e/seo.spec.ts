@@ -161,7 +161,7 @@ test.describe(() => {
     const work = node(await graph(page), 'CreativeWork')!;
     expect(work).toMatchObject({
       name: 'Testovací projekt',
-      dateCreated: '2026',
+      dateCreated: '2026-06',
       locationCreated: { '@type': 'Place', name: 'Nikde' },
       url: `${origin}/e2e/project/`,
       creator: { '@id': `${origin}/#person` },

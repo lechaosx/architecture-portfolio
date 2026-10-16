@@ -1,7 +1,8 @@
 ---
 title_cs: Knihovna pod Pernštejnem
 title_en: Library Beneath Pernštejn Castle
-year: 2026
+from: '2026'
+to: '2026'
 location_cs: Nedvědice
 location_en: Nedvědice
 brief_cs: >-

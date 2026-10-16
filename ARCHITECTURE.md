@@ -371,8 +371,10 @@ Pure functions in `src/structured-data.ts` turn content into schema.org nodes,
 which `Base` inlines as one `@graph` per page. Text is plain Czech, because
 Google documents only plain-text values for these properties, not
 language-tagged ones. Her location is `Person.workLocation`, a `Place`.
-Credentials are named "programme, school (years)" and awards "award, placement
-(years)"; `award` is plain text.
+Credentials are named "programme, school (period)" and awards "award, placement
+(period)"; `award` is plain text. A project's `dateCreated` is the end of its
+period in ISO 8601 ("2024", "2024-06"), when her work on it was done, so an
+ongoing project has none.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 
@@ -415,8 +417,8 @@ into one `<p>` per paragraph (Approach texts and fact descriptions).
 
 ### Paired `_cs`/`_en` fields — [Implicit]
 
-One file and one CMS form per entry; language-neutral fields (images, year,
-years, email, phone) stay single. The project route is the filename-derived content
+One file and one CMS form per entry; language-neutral fields (images, period
+dates, email, phone) stay single. The project route is the filename-derived content
 ID, so the filename is the only source of the slug.
 
 ---
@@ -435,6 +437,15 @@ The shape is declared in `src/content.config.ts` (build) and `.pages.yml`
 `required: true`, so `src/content.config.test.ts` checks that both declare the
 same fields, required in the same places, at every level, and that each
 singleton file is valid.
+
+### A period is two date strings — [Explicit] (module [Implicit])
+
+Pages CMS has no conditional fields or cross-field validation, so each end of a
+period is one string, "2023" or "3/2023", whose `pattern` lets the CMS refuse a
+malformed date. That pattern also takes the empty string, the value of an
+empty optional field in its form, and `src/content.config.test.ts` checks it
+against `DATE`. `src/period.ts` holds the rest: the cross-field checks the
+build runs, the display and the project order.
 
 ### Empty block rows are dropped — [Explicit]
 

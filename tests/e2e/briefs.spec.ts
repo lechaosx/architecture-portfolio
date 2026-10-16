@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => {
 
 // The fixture work pages in tests/e2e/pages/[fixture].astro: one project with
 // an image, then Alpha brief (2025, a two-line brief), Beta text (2025, text
-// blocks, so a page) and Old brief (2020, nothing but a title).
+// blocks, so a page) and Old brief (12/2019–12/2020, nothing but a title).
 const index = (page: Page) => page.locator('main ul');
 const rows = (page: Page) => index(page).locator(':scope > li');
 const gapUnderHeader = async (page: Page, content: Locator) => {
@@ -51,6 +51,16 @@ test('projects without images follow the grid as an index with no heading of its
   const gridBottom = (await page.locator('main .grid:has(> a)').boundingBox())!;
   const indexBox = (await index(page).boundingBox())!;
   expect(indexBox.y).toBeGreaterThan(gridBottom.y + gridBottom.height);
+});
+
+test('a card shows its period, an ongoing one running until now in the visitor’s language', async ({
+  page,
+}) => {
+  await page.goto('/e2e/work/');
+  const card = page.locator('main .grid > a').first();
+  await expect(card.getByText('2025–present')).toBeVisible();
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await expect(card.getByText('2025–dosud')).toBeVisible();
 });
 
 test('a row with a brief expands in place to show it with the author line breaks', async ({
@@ -113,17 +123,38 @@ test('the index lines up in columns on wide screens and stacks the location on p
 }) => {
   await page.goto('/e2e/work/');
   const lefts = (text: string[]) =>
-    Promise.all(text.map(async (t, n) => (await rows(page).nth(n).getByText(t).boundingBox())!.x));
+    Promise.all(
+      text.map(async (t, n) => (await rows(page).nth(n).getByText(t).filter({ visible: true }).boundingBox())!.x),
+    );
 
   await page.setViewportSize({ width: 1280, height: 900 });
-  const years = await lefts(['2025', '2025', '2020']);
+  const periods = await lefts(['2025', '2025', '12/2019–12/2020']);
   const titles = await lefts(['Alpha brief', 'Beta text', 'Old brief']);
-  expect(new Set(years.map(Math.round)).size).toBe(1);
+  expect(new Set(periods.map(Math.round)).size).toBe(1);
   expect(new Set(titles.map(Math.round)).size).toBe(1);
   const title = (await rows(page).nth(0).getByText('Alpha brief').boundingBox())!;
   const location = (await rows(page).nth(0).getByText('Prague').boundingBox())!;
   expect(location.x).toBeGreaterThan(title.x + title.width);
   expect(Math.abs(location.y + location.height - title.y - title.height)).toBeLessThan(title.height / 2);
+
+  // The longest period, on one line where there is room, and beside its title
+  // without pushing the location away from it where there is not.
+  const period = (n: number, text: string) => rows(page).nth(n).getByText(text).filter({ visible: true });
+  const gapUnderTitle = async (n: number, title: string) => {
+    const titleBox = (await rows(page).nth(n).getByText(title).boundingBox())!;
+    return (await rows(page).nth(n).getByText('Nowhere').boundingBox())!.y - titleBox.y - titleBox.height;
+  };
+  for (const width of [1280, 640, 390, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    const longest = (await period(2, '12/2019–12/2020').boundingBox())!;
+    const oldTitle = (await rows(page).nth(2).getByText('Old brief').boundingBox())!;
+    expect(longest.x + longest.width, `${width}px`).toBeLessThan(oldTitle.x);
+    if (width >= 640) {
+      expect(longest.height).toBeCloseTo((await period(1, '2025').boundingBox())!.height, 0);
+    } else {
+      expect(await gapUnderTitle(2, 'Old brief'), `${width}px`).toBeCloseTo(await gapUnderTitle(1, 'Beta text'), 0);
+    }
+  }
 
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 800 });
@@ -173,6 +204,16 @@ test('the brief shows under the title and location, above the blocks, when set',
   ]);
   expect(briefBox!.y).toBeGreaterThan(title!.y);
   expect(briefBox!.y).toBeLessThan(block!.y);
+});
+
+test('a project page names its location and period under the title, in the visitor’s language', async ({
+  page,
+}) => {
+  await page.goto('/e2e/project/');
+  const meta = page.locator('article header p:visible');
+  await expect(meta).toHaveText('Nowhere · 3/2025–6/2026');
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await expect(meta).toHaveText('Nikde · 3/2025–6/2026');
 });
 
 test('no brief shows on a project page without one', async ({ page }) => {

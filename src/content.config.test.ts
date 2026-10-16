@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro/zod';
 import { collections } from './content.config';
+import { DATE } from './period';
 
 const projectSchema = staticSchema('projects');
 
@@ -10,6 +11,7 @@ interface CmsField {
   name: string;
   type?: string;
   required?: boolean;
+  pattern?: { regex: string; message: string };
   list?: boolean | { min?: number };
   fields?: CmsField[];
   blocks?: Array<{ name: string; fields?: CmsField[] }>;
@@ -104,7 +106,8 @@ const imageSet = {
 const project = {
   title_cs: 'Projekt',
   title_en: 'Project',
-  year: 2026,
+  from: '2026',
+  to: '2026',
   blocks: [imageSet],
 };
 
@@ -113,6 +116,23 @@ describe.each(['projects', 'site', 'landing', 'about', 'contact'] as const)('%s 
     const editor = pagesConfig.content.find((entry) => entry.name === name);
     expect(editorShape(editor?.fields ?? [])).toEqual(rowShape(staticSchema(name)));
   });
+});
+
+test('every period date in Pages CMS takes the dates the build takes, or nothing', () => {
+  const dates = (fields: CmsField[]): CmsField[] =>
+    fields.flatMap((field) => [
+      ...(['from', 'to'].includes(field.name) ? [field] : []),
+      ...dates(field.fields ?? []),
+    ]);
+  const fields = pagesConfig.content.flatMap((entry) => dates(entry.fields ?? []));
+  expect(fields.length).toBeGreaterThan(0);
+  for (const field of fields) {
+    const pattern = new RegExp(field.pattern!.regex);
+    expect(pattern.test(''), `${field.name} left empty`).toBe(true);
+    for (const text of ['2023', '3/2023', '03/2023', '12/2023', '0/2023', '13/2023', '3/', '2023/3', '23', ' 2023']) {
+      expect(pattern.test(text), `${field.name}: ${text}`).toBe(DATE.test(text));
+    }
+  }
 });
 
 describe('project content schema', () => {
@@ -160,6 +180,14 @@ describe('project content schema', () => {
       success: true,
       data: { blocks },
     });
+  });
+
+  test.each([
+    ['without a start', { from: undefined, to: undefined }],
+    ['with a month that is none', { from: '13/2026' }],
+    ['ending before it starts', { to: '2025' }],
+  ])('rejects a project %s', (_, period) => {
+    expect(projectSchema.safeParse({ ...project, ...period }).success).toBe(false);
   });
 
   test('rejects an image block without images', () => {
@@ -218,7 +246,8 @@ describe('about content schema', () => {
     place_en: 'Faculty of Civil Engineering, Brno University of Technology',
     department_cs: 'Ústav architektury',
     department_en: 'Institute of Architecture',
-    years: '2024–2026',
+    from: '9/2024',
+    to: '2026',
     title_cs: 'Architektura a rozvoj sídel',
     title_en: 'Architecture and Urban Development',
     description_cs: 'Diplomová práce.',
@@ -231,7 +260,7 @@ describe('about content schema', () => {
       experience: [bare],
       services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
       education: [row],
-      awards: [{ ...bare, years: '2025' }],
+      awards: [{ ...bare, from: '2025', to: '2025' }],
     };
     expect(
       aboutSchema.safeParse({
@@ -260,6 +289,10 @@ describe('about content schema', () => {
       }
     },
   );
+
+  test.each(['experience', 'education', 'awards'])('rejects a %s row whose period ends without a start', (field) => {
+    expect(aboutSchema.safeParse({ ...about, [field]: [{ ...bare, to: '2024' }] }).success).toBe(false);
+  });
 
   test('rejects a service in only one language', () => {
     expect(aboutSchema.safeParse({ ...about, services: [{ name_cs: 'Interiéry' }] }).success).toBe(false);

@@ -45,7 +45,8 @@ export function getStaticPaths() {
   const project: CollectionEntry<'projects'>['data'] = {
     title_en: 'Test project',
     title_cs: 'Testovací projekt',
-    year: 2026,
+    from: '3/2025',
+    to: '6/2026',
     location_en: 'Nowhere',
     location_cs: 'Nikde',
     draft: false,
@@ -107,15 +108,17 @@ export function getStaticPaths() {
   });
   const gridProject = listed('grid', {
     title_en: 'Grid project',
-    year: 2026,
+    from: '2025',
+    to: undefined,
     blocks: [{ type: 'image_set', images: [item('wide.png')] }],
   });
-  // Out of order, so the list's sort shows.
+  // Out of order, so the list's sort shows. Old brief has a period as wide as any.
   const briefProjects = [
-    listed('old', { title_en: 'Old brief', year: 2020, blocks: [] }),
+    listed('old', { title_en: 'Old brief', from: '12/2019', to: '12/2020', blocks: [] }),
     listed('text-only', {
       title_en: 'Beta text',
-      year: 2025,
+      from: '2025',
+      to: '2025',
       blocks: [{ type: 'text', body_en: text(1).en, body_cs: text(1).cs }],
       brief_en: 'A text project.',
       brief_cs: 'Textový projekt.',
@@ -123,7 +126,8 @@ export function getStaticPaths() {
     gridProject,
     listed('alpha', {
       title_en: 'Alpha brief',
-      year: 2025,
+      from: '2025',
+      to: '2025',
       blocks: [],
       location_en: 'Prague',
       brief_en: 'First line\nSecond line',
@@ -150,7 +154,7 @@ export function getStaticPaths() {
         place_cs: 'Ateliér A, Brno',
         department_en: 'Housing team',
         department_cs: 'Tým bydlení',
-        years: '2024–',
+        from: '2024',
         title_en: 'Architect',
         title_cs: 'Architektka',
         description_en: `${text(2).en}\n\nPermit drawings.`,
@@ -159,7 +163,8 @@ export function getStaticPaths() {
       {
         place_en: 'Studio B, Prague',
         place_cs: 'Ateliér B, Praha',
-        years: '2022–2024',
+        from: '2022',
+        to: '2024',
         title_en: 'Intern',
         title_cs: 'Stážistka',
       },
@@ -171,7 +176,8 @@ export function getStaticPaths() {
         place_cs: 'Fakulta stavební VUT v Brně',
         department_en: 'Institute of Architecture',
         department_cs: 'Ústav architektury',
-        years: '2024–2026',
+        from: '12/2024',
+        to: '12/2026',
         title_en: 'Architecture and Urban Development',
         title_cs: 'Architektura a rozvoj sídel',
       },
@@ -206,7 +212,8 @@ export function getStaticPaths() {
       listed(String(year), {
         title_en: `Project ${year}`,
         title_cs: `Projekt ${year}`,
-        year,
+        from: String(year),
+        to: String(year),
         blocks: [{ type: 'image_set', images: [item('square-1.png')] }],
       }),
     ),

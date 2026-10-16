@@ -1,14 +1,15 @@
 import type { CollectionEntry } from 'astro:content';
 import type { GalleryImage } from './components/gallery';
+import { latestFirst } from './period';
 
 export type Project = Pick<CollectionEntry<'projects'>, 'id' | 'data'>;
 
 /** A project in the grid, with its cover: its first image in page order. */
 export type CardProject = Project & { cover: GalleryImage };
 
-/** Newest year first, then by English title, so both languages list projects alike. */
+/** Latest period first, then by English title, so both languages list projects alike. */
 export const newestFirst = (a: Project, b: Project) =>
-  b.data.year - a.data.year || a.data.title_en.localeCompare(b.data.title_en);
+  latestFirst(a.data, b.data) || a.data.title_en.localeCompare(b.data.title_en);
 
 /**
  * Newest first, split into the project grid's cards, the projects with a cover,

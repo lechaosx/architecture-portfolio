@@ -15,7 +15,8 @@ const contact = { email: 'jana@example.cz' };
 const project = {
   title_cs: 'Galerie',
   title_en: 'Gallery',
-  year: 2024,
+  from: '2024',
+  to: '2024',
   draft: false,
   blocks: [],
 };
@@ -32,7 +33,7 @@ test('presents the architect and her projects, Czech first', () => {
           {
             place_cs: 'Ateliér A, Brno',
             place_en: 'Studio A, Brno',
-            years: '2024–dosud',
+            from: '3/2024',
             title_cs: 'Architektka',
             title_en: 'Architect',
             description_cs: 'Rodinné domy.\nInteriéry.',
@@ -50,12 +51,13 @@ test('presents the architect and her projects, Czech first', () => {
             place_en: 'Faculty of Civil Engineering, BUT',
             department_cs: 'Ústav architektury',
             department_en: 'Institute of Architecture',
-            years: '2020–2024',
+            from: '2020',
+            to: '2024',
             title_cs: 'Architektura pozemních staveb',
             title_en: 'Building Architecture',
           },
         ],
-        awards: [{ place_cs: 'Soutěž', place_en: 'Competition', years: '2025', title_cs: '1. místo', title_en: '1st place' }],
+        awards: [{ place_cs: 'Soutěž', place_en: 'Competition', from: '2025', to: '2025', title_cs: '1. místo', title_en: '1st place' }],
       },
       contact: { ...contact, phone: '+420 777 000 000', location_cs: 'Brno', location_en: 'Brno' },
       projects: [
@@ -96,7 +98,7 @@ I am an **architect**.
 
 ## Praxe / Experience
 
-- 2024–dosud · Architektka – Ateliér A, Brno / Architect – Studio A, Brno
+- 3/2024–dosud / 3/2024–present · Architektka – Ateliér A, Brno / Architect – Studio A, Brno
   Rodinné domy.
   Interiéry.
   Family houses.
@@ -171,14 +173,15 @@ test('lists projects newest first, linking only those with a page', () => {
     about,
     contact,
     projects: [
-      { id: 'old', data: { ...project, title_cs: 'Starý', title_en: 'Old', year: 2020 } },
+      { id: 'old', data: { ...project, title_cs: 'Starý', title_en: 'Old', from: '2020', to: '2020' } },
       {
         id: 'new',
         data: {
           ...project,
           title_cs: 'Nový',
           title_en: 'New',
-          year: 2025,
+          from: '2025',
+          to: '2025',
           blocks: [{ type: 'text', body_cs: 'Text.', body_en: 'Text.' }],
         },
       },

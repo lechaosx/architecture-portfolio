@@ -83,7 +83,8 @@ experience:
     place_en: Fránek Architects s.r.o.
     department_cs: Architektura, projekce a inženýring
     department_en: Architecture, Design Documentation & Permitting
-    years: 2022-2026
+    from: '2022'
+    to: '2026'
     title_cs: Architektka
     title_en: Architect
 education:
@@ -91,14 +92,16 @@ education:
     place_en: Brno University of Technology
     department_cs: Fakulta stavební, Ústav architektury
     department_en: Faculty of Civil Engineering, Institute of Architecture
-    years: 2024–2026
+    from: '2024'
+    to: '2026'
     title_cs: Architektura a rozvoj sídel
     title_en: Architecture and Urban Development
   - place_cs: VUT v Brně
     place_en: Brno University of Technology
     department_cs: Fakulta stavební, Ústav architektury
     department_en: Faculty of Civil Engineering, Institute of Architecture
-    years: 2020–2024
+    from: '2020'
+    to: '2024'
     title_cs: Architektura pozemních staveb
     title_en: Building Architecture
 ---

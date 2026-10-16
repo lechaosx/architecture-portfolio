@@ -1,6 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { DATE, periodIssues, type Period } from './period';
 
 const withoutEmptyCmsRows = (value: unknown) =>
   Array.isArray(value)
@@ -12,6 +13,14 @@ const withoutEmptyCmsRows = (value: unknown) =>
           Object.keys(item).length > 0,
       )
     : value;
+
+const date = z.string().regex(DATE, 'Expected a year or month/year, e.g. 2023 or 3/2023');
+const period = { from: date.optional(), to: date.optional() };
+const validPeriod = (value: Period, context: z.RefinementCtx) => {
+  for (const { field, message } of periodIssues(value)) {
+    context.addIssue({ code: 'custom', path: [field], message });
+  }
+};
 
 const projectImage = z.object({
   // Image paths live under /public (served from root), so plain strings.
@@ -33,7 +42,8 @@ const projects = defineCollection({
   schema: z.object({
     title_cs: z.string(),
     title_en: z.string(),
-    year: z.number(),
+    from: date,
+    to: date.optional(),
     location_cs: z.string().optional(),
     location_en: z.string().optional(),
     brief_cs: z.string().optional(),
@@ -61,7 +71,7 @@ const projects = defineCollection({
         )
         .default([]),
     ),
-  }),
+  }).superRefine(validPeriod),
 });
 
 // Each singleton is one Markdown file, read as the one entry of its own
@@ -90,12 +100,12 @@ const factRow = z.object({
   place_en: z.string(),
   department_cs: z.string().optional(),
   department_en: z.string().optional(),
-  years: z.string().optional(),
+  ...period,
   title_cs: z.string(),
   title_en: z.string(),
   description_cs: z.string().optional(),
   description_en: z.string().optional(),
-});
+}).superRefine(validPeriod);
 const facts = z.preprocess(withoutEmptyCmsRows, z.array(factRow).default([]));
 
 const about = defineCollection({

@@ -1,7 +1,8 @@
 ---
 title_cs: Čtyři pokoje
 title_en: Four Rooms
-year: 2023
+from: '2023'
+to: '2023'
 location_cs: Křížovice
 location_en: Křížovice
 brief_cs: >-
