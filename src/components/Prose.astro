@@ -1,5 +1,6 @@
 ---
-import { marked } from 'marked';
+import { Marked, marked } from 'marked';
+import { bindOneLetterWords } from '../one-letter-words';
 
 // CMS frontmatter holds both Markdown strings; global.css hides the inactive
 // language after `marked` renders them.
@@ -9,14 +10,24 @@ interface Props {
 }
 
 const { cs, en } = Astro.props;
-const render = (md: string) => marked.parse(md, { async: false });
+const czech = new Marked({
+  renderer: {
+    // Only the HTML renderer's text: markup, code, link targets and image alt
+    // text, which marked renders separately, stay as written. A soft line
+    // break renders as a space.
+    text(token) {
+      token.text = bindOneLetterWords(token.text, { newlinesAreSpaces: true });
+      return false;
+    },
+  },
+});
 // Splits into balanced columns only where each keeps a comfortable measure
 // (https://webtypography.net/2.1.2); `ch` follows the font's metrics and size.
 const cls = 'running-text prose prose-neutral max-w-none columns-[35ch_2] gap-12 dark:prose-invert';
 ---
 
-<div lang="cs" class={cls} set:html={render(cs)} /><div
+<div lang="cs" class={cls} set:html={czech.parse(cs, { async: false })} /><div
   lang="en"
   class={cls}
-  set:html={render(en)}
+  set:html={marked.parse(en, { async: false })}
 />

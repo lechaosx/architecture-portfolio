@@ -57,6 +57,12 @@ short. Labels, metadata, credits and titles are not justified. On phones,
 index briefs and About descriptions span their row's full width, so justified
 lines keep a comfortable measure — [Implicit].
 
+### Czech one-letter words never end a line — [Explicit]
+
+As Czech typography requires, a one-letter preposition or conjunction (v, s, k,
+z, o, u, a, i) is kept on the line of the word after it, in all visible Czech
+text: content and labels alike, with nothing for the architect to type.
+
 ---
 
 ## Content & maintenance
