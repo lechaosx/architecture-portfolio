@@ -1,14 +1,16 @@
 ---
 import { getCollection } from 'astro:content';
 import ProjectPage from '../../components/ProjectPage.astro';
-import { projectPages } from '../../projects';
 
 export async function getStaticPaths() {
-  const projects = await getCollection('projects', ({ data }) => !data.draft);
-  return projectPages(projects).map((page) => ({ params: { slug: page.project.id }, props: page }));
+  const projects = await getCollection(
+    'projects',
+    ({ data }) => !data.draft && data.blocks.length > 0,
+  );
+  return projects.map((p) => ({ params: { slug: p.id }, props: { project: p } }));
 }
 
-const { project, previous, next } = Astro.props;
+const { project } = Astro.props;
 ---
 
-<ProjectPage {project} {previous} {next} />
+<ProjectPage {project} />

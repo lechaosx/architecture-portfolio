@@ -312,8 +312,7 @@ its project page,
 changing crop on the way; elsewhere, ordinary navigation. The moving image is
 one image, starting from the card's hover zoom — [Explicit]. It moves only when
 the first block is an image block, so the image is at the top of the page; when
-the first block is text, or between two project pages, the pages just crossfade
-— [Implicit].
+the first block is text, the pages just crossfade — [Implicit].
 
 ### Fade-in on scroll, as decoration only — [Implicit] / [Explicit]
 
@@ -360,12 +359,10 @@ image-set blocks, in any order and repeated freely. A one-image set is a plain
 image; more form a manual carousel, whose controls keep a high-contrast palette
 in both themes.
 
-### Project pages end with the previous and next projects — [Explicit]
+### Project pages end with their content — [Explicit]
 
-After the blocks, links to the neighbouring projects in the work page's order
-let a visitor walk the work without going back to it. The links name only the
-titles, and the order does not wrap, so the walk stops at the first and last
-project — [Implicit].
+The footer follows the blocks, as on every page, and a project page carries no
+links to the previous or next project.
 
 ### Project text fills the width with comfortable columns — [Explicit]
 

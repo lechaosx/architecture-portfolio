@@ -9,7 +9,6 @@ import LandingPage from '../../../src/components/LandingPage.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
 import ProjectPage from '../../../src/components/ProjectPage.astro';
 import WorkPage from '../../../src/components/WorkPage.astro';
-import type { Project } from '../../../src/projects';
 
 export function getStaticPaths() {
   const images = [
@@ -92,14 +91,9 @@ export function getStaticPaths() {
     ],
   };
 
-  const projectWith = (
-    id: string,
-    blocks: typeof project.blocks,
-    more = {},
-    neighbours: { previous?: Project; next?: Project } = {},
-  ) => ({
+  const projectWith = (id: string, blocks: typeof project.blocks, more = {}) => ({
     params: { fixture: id },
-    props: { project: { id: `e2e-${id}`, data: { ...project, blocks, ...more } }, ...neighbours },
+    props: { project: { id: `e2e-${id}`, data: { ...project, blocks, ...more } } },
   });
 
   const listed = (id: string, data: Partial<typeof project>) => ({
@@ -258,21 +252,17 @@ export function getStaticPaths() {
     projectWith('gallery-first', [
       { type: 'gallery', images: [item('square-1.png'), item('square-2.png')] },
     ]),
-    // Between two projects of the work page, and at either end of it.
-    projectWith('between', project.blocks.slice(0, 1), {}, { previous: briefProjects[1], next: gridProject }),
-    projectWith('first', project.blocks.slice(0, 1), {}, { next: gridProject }),
-    projectWith('last', project.blocks.slice(0, 1), {}, { previous: briefProjects[1] }),
     { params: { fixture: 'carousel' }, props: { images } },
     { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project } } },
   ];
 }
 
-const { about, contact, images, landing, next, previous, project, projects } = Astro.props;
+const { about, contact, images, landing, project, projects } = Astro.props;
 ---
 
 {
   project ? (
-    <ProjectPage {project} {previous} {next} />
+    <ProjectPage {project} />
   ) : landing ? (
     <LandingPage {landing} {projects} {about} {contact} />
   ) : about ? (
