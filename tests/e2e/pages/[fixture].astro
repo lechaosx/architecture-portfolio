@@ -98,7 +98,7 @@ export function getStaticPaths() {
     neighbours: { previous?: Project; next?: Project } = {},
   ) => ({
     params: { fixture: id },
-    props: { project: { id: `e2e-${id}`, data: { ...project, blocks, ...more } }, contact, ...neighbours },
+    props: { project: { id: `e2e-${id}`, data: { ...project, blocks, ...more } }, ...neighbours },
   });
 
   const listed = (id: string, data: Partial<typeof project>) => ({
@@ -221,8 +221,8 @@ export function getStaticPaths() {
     { params: { fixture: 'landing' }, props: landing([images[0], '/e2e/images/wide.png', '/e2e/images/cover.png']) },
     { params: { fixture: 'landing-single' }, props: landing(images.slice(0, 1)) },
     { params: { fixture: 'landing-bare' }, props: landing([]) },
-    { params: { fixture: 'about' }, props: { about, contact } },
-    { params: { fixture: 'about-bare' }, props: { about: bareAbout, contact: bareContact } },
+    { params: { fixture: 'about' }, props: { about } },
+    { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
@@ -256,7 +256,7 @@ export function getStaticPaths() {
     projectWith('first', project.blocks.slice(0, 1), {}, { next: gridProject }),
     projectWith('last', project.blocks.slice(0, 1), {}, { previous: briefProjects[1] }),
     { params: { fixture: 'carousel' }, props: { images } },
-    { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project }, contact } },
+    { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project } } },
   ];
 }
 
@@ -265,11 +265,11 @@ const { about, contact, images, landing, next, previous, project, projects } = A
 
 {
   project ? (
-    <ProjectPage {project} {previous} {next} {contact} />
+    <ProjectPage {project} {previous} {next} />
   ) : landing ? (
     <LandingPage {landing} {projects} {about} {contact} />
   ) : about ? (
-    <AboutPage {about} {contact} />
+    <AboutPage {about} />
   ) : projects ? (
     <WorkPage {projects} />
   ) : (

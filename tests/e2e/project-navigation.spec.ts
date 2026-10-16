@@ -5,16 +5,12 @@ import { expect, test, type Page } from '@playwright/test';
 // "last" only Beta text before it, and "project" has neither.
 const previous = (page: Page) => page.getByRole('link', { name: /Previous/ });
 const next = (page: Page) => page.getByRole('link', { name: /Next/ });
-const card = (page: Page) =>
-  page.locator('main section', { has: page.getByRole('heading', { level: 2, name: 'Contact' }) });
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
 });
 
-test('a project page ends with its neighbours on the work page, then the contact card', async ({
-  page,
-}) => {
+test('a project page ends with its neighbours on the work page', async ({ page }) => {
   await page.goto('/e2e/between/');
   await expect(previous(page)).toHaveAttribute('href', '/projects/e2e-text-only/');
   await expect(previous(page)).toContainText('Beta text');
@@ -22,16 +18,9 @@ test('a project page ends with its neighbours on the work page, then the contact
   await expect(next(page)).toContainText('Grid project');
 
   const lastImage = (await page.locator('article [data-lightbox-index]').last().boundingBox())!;
-  const [p, n, c] = await Promise.all(
-    [previous(page), next(page), card(page)].map(async (l) => (await l.boundingBox())!),
-  );
+  const [p, n] = await Promise.all([previous(page), next(page)].map(async (l) => (await l.boundingBox())!));
   expect(p.y).toBeGreaterThan(lastImage.y + lastImage.height);
   expect(n.x).toBeGreaterThan(p.x + p.width);
-  expect(c.y).toBeGreaterThan(Math.max(p.y + p.height, n.y + n.height));
-  await expect(card(page).getByRole('link', { name: 'Write an email ↗' })).toHaveAttribute(
-    'href',
-    'mailto:jana@example.cz',
-  );
 
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
   await expect(page.getByRole('link', { name: /Předchozí/ })).toBeVisible();
@@ -50,7 +39,6 @@ test('at either end of the work page only the neighbour there is offered', async
   await page.goto('/e2e/project/');
   await expect(previous(page)).toHaveCount(0);
   await expect(next(page)).toHaveCount(0);
-  await expect(card(page)).toBeVisible();
 });
 
 test('the neighbour links fit small phones', async ({ page }) => {

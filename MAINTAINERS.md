@@ -41,13 +41,12 @@ npm run images       # regenerate responsive images (dev and build run it)
 | Path | What |
 |------|------|
 | `src/content/projects/*.md` | one file per project; the filename is the URL |
-| `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images), `about.md`, `contact.md` (the contacts in the footer and the contact card) |
+| `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images), `about.md`, `contact.md` (the footer's contacts and the landing page's location) |
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/i18n.ts` | baked-in UI labels |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
 | `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro` | the pages, also rendered by the e2e fixtures |
-| `src/components/ContactCard.astro` | the black contact card closing the landing, About and project pages |
 | `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |
 | `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD and `/llms.txt`, built from content |

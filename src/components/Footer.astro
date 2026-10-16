@@ -30,6 +30,7 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
       {(hours_cs || hours_en) && (
         <li class={item} lang={onlyIn(hours_cs, hours_en)}>
           <ContactIcon icon="hours" class={icon} />
+          <T k="callHours" class="sr-only" />
           <T cs={hours_cs} en={hours_en} />
         </li>
       )}

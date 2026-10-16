@@ -36,7 +36,7 @@ test('the name and bio sit beside the portrait on wide screens, above it on phon
   }
 });
 
-test('Approach comes before the facts, whose rows keep their order, and the contact card ends the page', async ({ page }) => {
+test('Approach comes before the facts, whose rows keep their order', async ({ page }) => {
   await page.goto('/e2e/about/');
   await expect(page.locator('main').getByRole('heading', { level: 2 })).toHaveText([
     'Approach',
@@ -44,7 +44,6 @@ test('Approach comes before the facts, whose rows keep their order, and the cont
     'Experience',
     'Education',
     'Awards',
-    'Contact',
   ]);
   await expect(section(page, 'Experience').getByRole('listitem')).toHaveText(
     [/^2024–\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],
@@ -101,18 +100,9 @@ test('services are a plain list in the visitor’s language', async ({ page }) =
   );
 });
 
-test('About ends with the contact card', async ({ page }) => {
-  await page.goto('/e2e/about/');
-  await expect(page.locator('main').getByRole('heading', { level: 2 }).last()).toHaveText('Contact');
-  await expect(page.getByRole('link', { name: 'Write an email ↗' })).toHaveAttribute(
-    'href',
-    'mailto:jana@example.cz',
-  );
-});
-
-test('with nothing optional filled, only the name, bio and contact card remain', async ({ page }) => {
+test('with nothing optional filled, only the name and bio remain', async ({ page }) => {
   await page.goto('/e2e/about-bare/');
-  await expect(page.locator('main').getByRole('heading')).toHaveText(['About', 'Contact']);
+  await expect(page.locator('main').getByRole('heading')).toHaveText(['About']);
   await expect(page.locator('main img')).toHaveCount(0);
   await expect(page.locator('main .prose:visible')).toBeVisible();
 });

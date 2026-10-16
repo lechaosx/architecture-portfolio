@@ -277,6 +277,16 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
   await expect(footer.getByRole('heading')).toHaveCount(0);
 });
 
+test('screen readers hear the footer hours as call hours, in the visitor’s language', async ({ page }) => {
+  await page.goto('/work/');
+  const { footer, language } = footerParts(page);
+  const item = (lang: 'en' | 'cs') => footer.getByRole('listitem').filter({ hasText: contact[`hours_${lang}`] });
+
+  expect(await item('en').ariaSnapshot()).toContain(`Phone call hours: ${contact.hours_en}`);
+  await language.click();
+  expect(await item('cs').ariaSnapshot()).toContain(`Čas pro telefonické hovory: ${contact.hours_cs}`);
+});
+
 test('on phones the footer lists the contacts, then © and the switches in one row', async ({
   page,
 }) => {

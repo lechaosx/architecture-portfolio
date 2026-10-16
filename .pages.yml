@@ -166,14 +166,14 @@ content:
           - { name: description_en, label: Popis (anglicky), type: text, required: false }
 
   - name: contact
-    label: Kontakt (patička a kontaktní karta)
+    label: Kontakt (patička)
     type: file
     path: src/content/singletons/contact.md
     fields:
       - { name: email, label: E-mail, type: string, required: true }
       - { name: phone, label: Telefon, type: string, required: false }
-      - { name: location_cs, label: Místo (česky), type: string, required: false, description: 'Uveďte vaše město, např. „Brno“. Zobrazuje se pod obrázky na úvodní stránce a na kontaktní kartě.' }
-      - { name: location_en, label: Místo (anglicky), type: string, required: false, description: 'Uveďte vaše město, např. „Brno“. Zobrazuje se pod obrázky na úvodní stránce a na kontaktní kartě.' }
+      - { name: location_cs, label: Místo (česky), type: string, required: false, description: 'Uveďte vaše město, např. „Brno“. Zobrazuje se pod obrázky na úvodní stránce.' }
+      - { name: location_en, label: Místo (anglicky), type: string, required: false, description: 'Uveďte vaše město, např. „Brno“. Zobrazuje se pod obrázky na úvodní stránce.' }
       - { name: hours_cs, label: Čas pro telefonické hovory (česky), type: string, required: false, description: 'Kdy přijímáte hovory, např. „Po–Pá 10–15“.' }
       - { name: hours_en, label: Čas pro telefonické hovory (anglicky), type: string, required: false, description: 'Kdy přijímáte hovory, např. „Mon–Fri 10–15“.' }
 

@@ -211,11 +211,6 @@ newest cover always matches the first card, and `llms.txt` lists projects in
 the same order. It also derives the project pages and their neighbours from
 that split, so previous and next walk the work page as it reads.
 
-### One contact card — [Implicit]
-
-`ContactCard` is the black card closing the landing page, About and every
-project page, so the ends cannot drift apart.
-
 ### Section headings own their row — [Implicit]
 
 `SectionHeading` draws the small caps and the rule for About, Work and the
