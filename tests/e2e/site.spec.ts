@@ -265,14 +265,18 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
 
   await expect(email).toHaveAttribute('href', `mailto:${contact.email}`);
   await expect(phone).toHaveAttribute('href', `tel:${contact.phone.replace(/\s+/g, '')}`);
-  await expect(hours('en')).toBeVisible();
-  const row = [copyright, email, phone, hours('en'), theme, language];
-  expect(new Set(await Promise.all(row.map(middle))).size).toBe(1);
-  const lefts = await Promise.all(row.map(async (item) => (await item.boundingBox())!.x));
-  expect(lefts).toEqual([...lefts].sort((a, b) => a - b));
-
-  await language.click();
-  await expect(hours('cs')).toBeVisible();
+  for (const lang of ['en', 'cs'] as const) {
+    if (lang === 'cs') await language.click();
+    await expect(hours(lang)).toBeVisible();
+    for (const width of [1024, 1152, 1440]) {
+      const at = `${lang} at ${width}px`;
+      await page.setViewportSize({ width, height: 900 });
+      const row = [copyright, email, phone, hours(lang), theme, language];
+      expect(new Set(await Promise.all(row.map(middle))).size, at).toBe(1);
+      const lefts = await Promise.all(row.map(async (item) => (await item.boundingBox())!.x));
+      expect(lefts, at).toEqual([...lefts].sort((a, b) => a - b));
+    }
+  }
   await expect(hours('en')).toBeHidden();
   await expect(footer.getByRole('heading')).toHaveCount(0);
 });
@@ -287,14 +291,15 @@ test('screen readers hear the footer hours as call hours, in the visitor’s lan
   expect(await item('cs').ariaSnapshot()).toContain(`Čas pro telefonické hovory: ${contact.hours_cs}`);
 });
 
-test('on phones the footer lists the contacts, then © and the switches in one row', async ({
+test('on phones and tablets the footer stacks the contacts in a column, then © and the switches in one row', async ({
   page,
 }) => {
   await page.goto('/work/');
   const { footer, copyright, email, phone, hours, theme } = footerParts(page);
+  const icons = footer.getByRole('listitem').locator('svg');
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
-    for (const width of [390, 375, 360, 320]) {
+    for (const width of [320, 360, 390, 640, 768, 1023]) {
       const at = `${lang} at ${width}px`;
       await page.setViewportSize({ width, height: 700 });
       expect(
@@ -309,10 +314,15 @@ test('on phones the footer lists the contacts, then © and the switches in one r
       const [e, p, h, c] = await Promise.all(
         [email, phone, hours(lang), copyright].map(async (item) => (await item.boundingBox())!),
       );
-      expect(c.y, at).toBeGreaterThan(Math.max(e.y + e.height, p.y + p.height, h.y + h.height));
+      expect(p.y, `${at}: phone below email`).toBeGreaterThanOrEqual(e.y + e.height);
+      expect(h.y, `${at}: hours below phone`).toBeGreaterThanOrEqual(p.y + p.height);
+      expect(new Set([e.x, p.x, h.x].map(Math.round)).size, `${at}: text edge`).toBe(1);
+      const iconLefts = await icons.evaluateAll((all) =>
+        all.map((icon) => Math.round(icon.getBoundingClientRect().x)),
+      );
+      expect(iconLefts, `${at}: icon edge on the ©'s edge`).toEqual(iconLefts.map(() => Math.round(c.x)));
+      expect(c.y, at).toBeGreaterThan(h.y + h.height);
       expect(await middle(theme), at).toBe(await middle(copyright));
-      const first = (await footer.getByRole('listitem').first().boundingBox())!;
-      expect(c.x, `${at}: left-aligned with the contacts`).toBeCloseTo(first.x);
     }
   }
 });

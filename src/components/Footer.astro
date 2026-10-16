@@ -10,13 +10,13 @@ const item = 'flex items-center gap-2 whitespace-nowrap';
 const icon = 'size-3.5 shrink-0 text-neutral-500';
 ---
 
-{/* Contacts come first in the source and on phones; from lg one row reads
+{/* Contacts come first in the source and below lg; from lg one row reads
     ©, contacts, switches. */}
 <footer class="border-t border-black text-sm text-neutral-600">
   <div
     class="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-y-4 px-6 py-6 lg:grid-cols-[repeat(3,auto)] lg:justify-between lg:gap-x-12"
   >
-    <ul class="col-span-2 flex flex-wrap gap-x-6 gap-y-2 lg:col-span-1 lg:col-start-2 lg:row-start-1">
+    <ul class="col-span-2 flex flex-col gap-x-6 gap-y-2 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:flex-row">
       <li class={item}>
         <ContactIcon icon="email" class={icon} />
         <a href={`mailto:${email}`} class="text-link">{email}</a>
