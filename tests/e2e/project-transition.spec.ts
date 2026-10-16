@@ -349,3 +349,38 @@ test('a keyboard-opened project starts from its own card, not the hovered one', 
   const scale = await page.evaluate(() => sessionStorage.getItem('opening-scale'));
   expect(Number(scale) || 1).toBeCloseTo(1, 2);
 });
+
+test('moving on to the next project fades its cover in with the page instead of morphing it', async ({
+  browserName,
+  page,
+}) => {
+  test.skip(
+    browserName === 'firefox',
+    'The pinned Firefox does not support cross-document View Transitions',
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/work/');
+  await (await projectCard(page)).card.click();
+  const link = page.getByRole('link', { name: /Next/ });
+  test.skip((await link.count()) === 0, 'It needs a second project with a page');
+  const path = (await link.getAttribute('href'))!;
+  await page.addInitScript(() => {
+    addEventListener('pagereveal', (event) => {
+      const transition = (event as PageRevealEvent).viewTransition;
+      if (!transition) return;
+      void transition.ready.then(() => {
+        const covers = document
+          .getAnimations()
+          .map((animation) => (animation.effect as KeyframeEffect).pseudoElement ?? '')
+          .filter((pseudo) => pseudo.startsWith('::view-transition-new(cover-'))
+          .map((pseudo) => getComputedStyle(document.documentElement, pseudo).animationName);
+        sessionStorage.setItem('new-covers', JSON.stringify(covers));
+      });
+    });
+  });
+
+  await navigateWithTransition(page, new RegExp(`${path}$`), () => link.click());
+  await expect
+    .poll(() => page.evaluate(() => JSON.parse(sessionStorage.getItem('new-covers') ?? 'null')))
+    .toEqual([expect.stringContaining('fade-in')]);
+});

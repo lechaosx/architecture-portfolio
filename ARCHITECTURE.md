@@ -65,9 +65,9 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
 - Metadata, structured-data and alt-text tests use fixture project pages; the
   `llms.txt` test checks it against the shipped projects and follows its links
   — [Implicit].
-- The work list and the brief and text-only project pages are tested through
-  fixture projects; other landing, About, work-page, footer and transition tests use the
-  shipped content — [Implicit].
+- The work page's index, the brief and text-only project pages and a project
+  page's neighbours are tested through fixture projects; other landing, About,
+  work-page, footer and transition tests use the shipped content — [Implicit].
 
 ---
 
@@ -206,19 +206,21 @@ it, it is the only image that loads eagerly, and it is the page's share image.
 page from the data passed in, so the e2e fixtures can render them with their
 own. Their routes in `src/pages/` only load the content and pass it on.
 `src/projects.ts` holds the one project order and splits the projects into
-cards with a cover and the list, so the share image that falls back to the
+cards with a cover and the index, so the share image that falls back to the
 newest cover always matches the first card, and `llms.txt` lists projects in
-the same order.
+the same order. It also derives the project pages and their neighbours from
+that split, so previous and next walk the work page as it reads.
 
 ### One contact card — [Implicit]
 
-`ContactCard` is the black card closing both the landing page and About, so the
-two ends cannot drift apart.
+`ContactCard` is the black card closing the landing page, About and every
+project page, so the ends cannot drift apart.
 
 ### Section headings own their row — [Implicit]
 
-`SectionHeading` draws the small caps and the rule for About and the landing
-page, and is About's `h1` as well as its section headings. Its default slot
+`SectionHeading` draws the small caps and the rule for About, Work and the
+landing page, and is the `h1` of About and Work as well as their section
+headings. Its default slot
 ends the row on the same rule and inherits the small caps, so a link onward,
 like the landing page's link to all work, needs no layout of its own.
 
@@ -231,7 +233,17 @@ is set only when the first block is an image block. An inline `pagereveal` scrip
 each navigation by whether it arrives at a project page and carries the card's
 hover scale across, so a card morphs from any page that shows one, Work or the
 landing page. One snapshot is
-drawn, because blending two crops doubles the edges.
+drawn, because blending two crops doubles the edges. A navigation between two
+project pages is left untagged, read from `navigation.activation`, so their
+covers fade with the page instead of popping in. Browsers without the
+Navigation API, such as older Safari, still tag it as opening a project.
+
+### The work index expands with native `<details>` — [Explicit]
+
+A row with a brief is a `<details>` whose `<summary>` is the row, so it opens
+without JavaScript, from the keyboard and on find-in-page. Only the **+**/**−**
+turns; the brief shows at once, with no height animation to wait for —
+[Implicit].
 
 ### Reveal on scroll: IntersectionObserver — [Implicit]
 

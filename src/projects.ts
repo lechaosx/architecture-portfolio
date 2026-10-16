@@ -12,7 +12,7 @@ export const newestFirst = (a: Project, b: Project) =>
 
 /**
  * Newest first, split into the project grid's cards, the projects with a cover,
- * and the list of those without.
+ * and the index of those without.
  */
 export function workProjects(projects: Project[]): {
   grid: CardProject[];
@@ -26,4 +26,18 @@ export function workProjects(projects: Project[]): {
     else listed.push(project);
   }
   return { grid, listed };
+}
+
+/**
+ * The projects with a page, the ones with content blocks, in the work page's
+ * order, each with the ones before and after it.
+ */
+export function projectPages(projects: Project[]) {
+  const { grid, listed } = workProjects(projects);
+  const pages = [...grid, ...listed].filter((project) => project.data.blocks.length > 0);
+  return pages.map((project, index) => ({
+    project,
+    previous: pages[index - 1] as Project | undefined,
+    next: pages[index + 1] as Project | undefined,
+  }));
 }

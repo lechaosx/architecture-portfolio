@@ -212,7 +212,7 @@ test('work projects are sorted and the grid follows its responsive breakpoints',
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/work/');
-  const grid = page.locator('main .grid');
+  const grid = page.locator('main .grid:has(> a)');
   const cards = grid.locator(':scope > a');
   const rendered = await cards.evaluateAll((elements) =>
     elements.map((element) => ({
@@ -532,6 +532,7 @@ for (const path of [
   '/e2e/work-list-only/',
   '/about/',
   '/e2e/about/',
+  '/e2e/between/',
 ]) {
   test(`the headings of ${path} nest without skipping a level`, async ({ page }) => {
     await page.goto(path);

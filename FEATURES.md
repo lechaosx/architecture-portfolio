@@ -95,7 +95,7 @@ the content blocks — [Implicit].
 
 ### A project without content blocks has no page — [Explicit]
 
-It is a brief entry: it appears only in the work page's list. A project with text
+It is a brief entry: it appears only in the work page's index. A project with text
 blocks but no images has a page, with no lightbox — [Implicit].
 
 ### The cover is the first image in the project — [Explicit]
@@ -131,8 +131,9 @@ The landing page at `/` gives a visitor her context before the work: chosen
 images, what she is and where, a few projects and how to reach her, even where
 that repeats Work and About. The work page lists every project; the About page
 holds her bio, approach and the facts behind them. The contacts are in the
-footer of every page, and the contact card closes the landing page and About,
-so there is no separate Contact page — [Explicit].
+footer of every page, and the contact card closes the landing page and every
+project page, so there is no separate Contact page — [Explicit]. About ends with
+the same card — [Implicit].
 
 ### Landing page — [Explicit]
 
@@ -185,6 +186,11 @@ The layout — [Implicit]: the groups pair up in two columns on wide screens, on
 the same columns as the bio and portrait, services first; the years have a
 narrow column of their own, on phones too.
 
+### Work opens like About — [Implicit]
+
+**Práce** is a section heading, small caps over a thin rule, as **O mně** is on
+About, so both menu pages open the same way.
+
 ### Work page: a grid of square covers — [Explicit]
 
 Three columns of each project's first image as a square crop, with title, year
@@ -192,13 +198,13 @@ and location; hover enlarges the whole tile. Two and then one column on narrower
 screens — [Implicit]. The grid holds the projects with at least one image; the grid
 cards do not show the brief — [Implicit].
 
-### Work page: a list of projects without images — [Explicit]
+### Work page: an index of projects without images, expanding in place — [Explicit]
 
-All other projects follow the grid after a thin rule, as a compact text list in
-the same order: title and year on one line, then location and brief. A row links
-to its project page only when the project has content blocks, and a linked
-row's title is underlined on hover and focus — [Implicit]. With
-no such projects, neither the rule nor the list shows — [Implicit].
+The projects without images follow the grid, in the same order, as a compact
+index, so the images lead and the rest stays easy to scan; a row with a brief
+opens in place to show it. The layout — [Implicit]: the index under its own
+heading, one aligned row of year, title and location per project, and a
+project with a page linking to it instead of opening.
 
 ### Approach section — [Explicit]
 
@@ -238,7 +244,8 @@ over an assertive invitation, then a short enquiry text, an email button and
 the contact lines — email, phone with its call hours under it, and where she
 is, each with its icon, thin rules between them. On wide screens the heading
 and invitation take the left half and the rest the right; on phones they
-stack. The icons share a left edge. About ends with the same card — [Implicit].
+stack. The icons share a left edge. Every project page ends with the same card
+— [Explicit], and so does About — [Implicit].
 In dark mode the card inverts with the page, a light card on charcoal, and a
 contact line filled in one language shows only in that language — [Implicit].
 
@@ -290,7 +297,8 @@ its project page,
 changing crop on the way; elsewhere, ordinary navigation. The moving image is
 one image, starting from the card's hover zoom — [Explicit]. It moves only when
 the first block is an image block, so the image is at the top of the page; when
-the first block is text, the pages just crossfade — [Implicit].
+the first block is text, or between two project pages, the pages just crossfade
+— [Implicit].
 
 ### Fade-in on scroll, as decoration only — [Implicit] / [Explicit]
 
@@ -336,6 +344,13 @@ A project page is an ordered list of text, thumbnail-gallery and full-width
 image-set blocks, in any order and repeated freely. A one-image set is a plain
 image; more form a manual carousel, whose controls keep a high-contrast palette
 in both themes.
+
+### Project pages end with the previous and next projects and the contact card — [Explicit]
+
+After the blocks, links to the neighbouring projects in the work page's order
+let a visitor walk the work without going back to it, and the contact card
+invites an enquiry. The links name only the titles, and the order does
+not wrap, so the walk ends at the card — [Implicit].
 
 ### Project text fills the width with comfortable columns — [Explicit]
 

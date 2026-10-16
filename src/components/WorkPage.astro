@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import ProjectGrid from './ProjectGrid.astro';
+import SectionHeading from './SectionHeading.astro';
 import T from './T.astro';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
@@ -13,6 +14,10 @@ interface Props {
 
 const { grid, listed } = workProjects(Astro.props.projects);
 const image = grid[0] && (await getResponsiveImage(grid[0].cover.image))?.share;
+// One column template for every index row and its brief, so they line up.
+const row =
+  'grid grid-cols-[3.5rem_minmax(0,1fr)_1rem] items-baseline gap-x-4 sm:grid-cols-[5rem_minmax(0,3fr)_minmax(0,2fr)_1rem] sm:gap-x-8';
+const marker = 'col-start-3 row-start-1 justify-self-end sm:col-start-4';
 ---
 
 <Base
@@ -20,52 +25,65 @@ const image = grid[0] && (await getResponsiveImage(grid[0].cover.image))?.share;
   {image}
 >
   <div class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
-    <T as="h1" k="work" class="mb-8 text-3xl font-medium sm:text-4xl" />
+    <SectionHeading k="work" as="h1" />
 
     {grid.length > 0 && <ProjectGrid projects={grid} heading="h2" />}
 
     {
       listed.length > 0 && (
-        <div class:list={{ 'mt-16 sm:mt-24': grid.length > 0 }}>
-          <hr class="border-neutral-200" />
-          <ul class="mt-12 flex flex-col gap-8">
-            {listed.map((p) => {
-              const href = p.data.blocks.length > 0 ? `/projects/${p.id}/` : undefined;
-              const Row = href ? 'a' : 'div';
+        <section class:list={{ 'mt-16 sm:mt-24': grid.length > 0 }}>
+          {grid.length > 0 && <SectionHeading k="moreProjects" />}
+          <ul class="divide-y divide-neutral-200 border-b border-neutral-200">
+            {listed.map(({ id, data }) => {
+              const hasBrief = Boolean(data.brief_cs || data.brief_en);
+              const cells = (
+                <>
+                  <span class="col-start-1 row-start-1 text-sm text-neutral-500 tabular-nums">{data.year}</span>
+                  <T
+                    cs={data.title_cs}
+                    en={data.title_en}
+                    class="col-start-2 row-start-1 font-medium text-balance group-hover:underline group-focus-visible:underline"
+                  />
+                  <T
+                    cs={data.location_cs}
+                    en={data.location_en}
+                    class="col-start-2 text-sm text-neutral-500 sm:col-start-3 sm:row-start-1"
+                  />
+                </>
+              );
               return (
                 <li>
-                  <Row {href} class:list={['block max-w-prose', { group: href }]}>
-                    <div class="flex items-baseline justify-between">
-                      <T
-                        as="h2"
-                        cs={p.data.title_cs}
-                        en={p.data.title_en}
-                        class="text-base font-medium group-hover:underline group-focus-visible:underline"
-                      />
-                      <span class="text-sm text-neutral-500">{p.data.year}</span>
-                    </div>
-                    {(p.data.location_cs || p.data.location_en) && (
-                      <T
-                        as="p"
-                        cs={p.data.location_cs}
-                        en={p.data.location_en}
-                        class="text-sm text-neutral-500"
-                      />
-                    )}
-                    {(p.data.brief_cs || p.data.brief_en) && (
-                      <T
-                        as="p"
-                        cs={p.data.brief_cs}
-                        en={p.data.brief_en}
-                        class="mt-2 text-sm whitespace-pre-line"
-                      />
-                    )}
-                  </Row>
+                  {data.blocks.length > 0 ? (
+                    <a href={`/projects/${id}/`} class={`group ${row} py-3`}>
+                      {cells}
+                      <span aria-hidden="true" class={marker}>→</span>
+                    </a>
+                  ) : hasBrief ? (
+                    <details class="group/row">
+                      <summary class={`group ${row} cursor-pointer list-none py-3 [&::-webkit-details-marker]:hidden`}>
+                        {cells}
+                        <span aria-hidden="true" class={`${marker} relative size-3 self-center`}>
+                          <span class="absolute inset-x-0 top-1/2 h-px bg-current" />
+                          <span class="absolute inset-y-0 left-1/2 w-px bg-current group-open/row:rotate-90 motion-safe:transition-transform" />
+                        </span>
+                      </summary>
+                      <div class={`${row} pb-5`}>
+                        <T
+                          as="p"
+                          cs={data.brief_cs}
+                          en={data.brief_en}
+                          class="col-start-2 max-w-prose text-sm whitespace-pre-line text-neutral-700 sm:col-end-4"
+                        />
+                      </div>
+                    </details>
+                  ) : (
+                    <div class={`${row} py-3`}>{cells}</div>
+                  )}
                 </li>
               );
             })}
           </ul>
-        </div>
+        </section>
       )
     }
   </div>

@@ -150,6 +150,9 @@ const structuredData = jsonLd([
           const transition = /** @type {PageRevealEvent} */ (event).viewTransition;
           if (!transition) return;
           const opening = location.pathname.startsWith('/projects/');
+          // Two project pages share no cover, so both fade with the page.
+          const from = window.navigation?.activation?.from?.url;
+          if (opening && from && new URL(from).pathname.startsWith('/projects/')) return;
           transition.types.add(opening ? 'project-open' : 'project-close');
           if (opening && scale) {
             const root = document.documentElement;
