@@ -223,11 +223,10 @@ describe('about content schema', () => {
     title_en: 'Architecture and Urban Development',
     description_cs: 'Diplomová práce.',
     description_en: 'Diploma thesis.',
-    tags: [{ name_cs: 'Urbanismus', name_en: 'Urbanism' }],
   };
   const bare = { place_cs: 'Ateliér', place_en: 'Studio', title_cs: 'Stáž', title_en: 'Internship' };
 
-  test('reads timeline rows and services, dropping empty CMS rows', () => {
+  test('reads fact rows and services, dropping empty CMS rows', () => {
     const facts = {
       experience: [bare],
       services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
@@ -240,9 +239,9 @@ describe('about content schema', () => {
         ...facts,
         experience: [{}, ...facts.experience],
         services: [{}, ...facts.services],
-        education: [{ ...row, tags: [{}, ...row.tags] }, {}],
+        education: [row, {}],
       }),
-    ).toMatchObject({ success: true, data: { ...facts, experience: [{ ...bare, tags: [] }] } });
+    ).toMatchObject({ success: true, data: facts });
   });
 
   test('leaves the facts empty when they are not filled', () => {
@@ -262,12 +261,8 @@ describe('about content schema', () => {
     },
   );
 
-  test.each([
-    ['services', { name_cs: 'Interiéry' }],
-    ['tags', { name_cs: 'BIM' }],
-  ])('rejects %s in only one language', (field, badge) => {
-    const value = field === 'services' ? { services: [badge] } : { awards: [{ ...bare, tags: [badge] }] };
-    expect(aboutSchema.safeParse({ ...about, ...value }).success).toBe(false);
+  test('rejects a service in only one language', () => {
+    expect(aboutSchema.safeParse({ ...about, services: [{ name_cs: 'Interiéry' }] }).success).toBe(false);
   });
 });
 

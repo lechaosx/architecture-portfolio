@@ -125,7 +125,7 @@ export function getStaticPaths() {
     }),
   ];
 
-  const tag = (en: string, cs = en) => ({ name_en: en, name_cs: cs });
+  const service = (en: string, cs: string) => ({ name_en: en, name_cs: cs });
   // Pages CMS writes one typed line break as a single newline, two as a blank line.
   const approach = {
     label_en: 'Place',
@@ -149,7 +149,6 @@ export function getStaticPaths() {
         title_cs: 'Architektka',
         description_en: `${text(2).en}\n\nPermit drawings.`,
         description_cs: `${text(2).cs}\nVýkresy k povolení.`,
-        tags: [tag('BIM'), tag('Studies', 'Studie'), tag('Building permits', 'Stavební povolení')],
       },
       {
         place_en: 'Studio B, Prague',
@@ -157,10 +156,9 @@ export function getStaticPaths() {
         years: '2022–2024',
         title_en: 'Intern',
         title_cs: 'Stážistka',
-        tags: [],
       },
     ],
-    services: [tag('Family houses', 'Rodinné domy'), tag('Renovations', 'Rekonstrukce'), tag('Interiors', 'Interiéry')],
+    services: [service('Family houses', 'Rodinné domy'), service('Renovations', 'Rekonstrukce'), service('Interiors', 'Interiéry')],
     education: [
       {
         place_en: 'Faculty of Civil Engineering, Brno University of Technology',
@@ -170,7 +168,6 @@ export function getStaticPaths() {
         years: '2024–2026',
         title_en: 'Architecture and Urban Development',
         title_cs: 'Architektura a rozvoj sídel',
-        tags: [],
       },
     ],
     awards: [
@@ -181,7 +178,6 @@ export function getStaticPaths() {
         title_cs: '2. místo',
         description_en: sentence.en,
         description_cs: sentence.cs,
-        tags: [tag('Urbanism', 'Urbanismus')],
       },
     ],
   };
@@ -212,6 +208,7 @@ export function getStaticPaths() {
   const landing = (heroImages: string[]) => ({
     landing: { images: heroImages },
     projects: landingProjects,
+    ...(heroImages.length > 0 ? { about, contact } : { about: bareAbout, contact: bareContact }),
   });
 
   return [
@@ -259,10 +256,10 @@ const { about, contact, images, landing, project, projects } = Astro.props;
 {
   project ? (
     <ProjectPage {project} />
+  ) : landing ? (
+    <LandingPage {landing} {projects} {about} {contact} />
   ) : about ? (
     <AboutPage {about} {contact} />
-  ) : landing ? (
-    <LandingPage {landing} {projects} />
   ) : projects ? (
     <WorkPage {projects} />
   ) : (

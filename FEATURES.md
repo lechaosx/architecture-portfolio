@@ -67,16 +67,16 @@ Structural and design changes are made in code on the same repo.
 
 Editable: projects, the landing page's images, the About page (bio, portrait,
 work experience, services, education, awards, Approach), the contact details in
-the footer and on About and Site settings (name, credential, description).
-Baked into code: page structure, navigation and section labels. CMS entries:
-**Projects**, **Landing page**, **About page**, **Contact (footer and About)**,
-**Site settings**.
+the footer and the contact card, and Site settings (name, credential,
+description). Baked into code: page structure, navigation, section labels and
+the contact card's invitation. CMS entries: **Projects**, **Landing page**,
+**About page**, **Contact (footer and contact card)**, **Site settings**.
 
 ### Required fields are what a page cannot do without — [Implicit]
 
-The name, both site descriptions (the landing page's intro), the contact email,
-both About texts, every field of an Approach item, both names of a service or
-tag and both places and titles of an experience, education or award row are
+The name, both site descriptions (the search description), the contact email,
+both About texts, every field of an Approach item, both names of a service and
+both places and titles of an experience, education or award row are
 required; everything else may be empty, including a row's years — [Explicit] —
 and the hours and location — [Implicit]. An edit that would leave a page
 unrenderable fails the build and does not deploy.
@@ -113,8 +113,8 @@ links.
 ### Editable site settings — [Explicit]
 
 Name, credential and description in one CMS entry, feeding the wordmark,
-footer, tab titles, the landing page's intro and the description of pages
-without their own.
+footer, tab titles and the description of pages without their own. The
+description is for search engines and link previews only; no page shows it.
 
 ### Draft flag — [Implicit]
 
@@ -128,81 +128,27 @@ both languages.
 ### Three pages: landing, Work and About — [Explicit]
 
 The landing page at `/` gives a visitor her context before the work: chosen
-images, who she is and a few projects, even where that repeats Work and About.
-The work page lists every project; the About page holds her bio, CV and
-approach. Contacts are in the footer of every page and beside the portrait on
-About.
-
-### Unlisted single-page proposal — [Explicit]
-
-The architect can review the single-page design at `/single-page/` through a
-direct link before a full implementation. It is absent from normal navigation
-and the sitemap and carries `noindex` — [Implicit]. The headline, introductory
-copy and invitation to enquire remain drafts for review — [Implicit].
-
-### Proposal work and profile layout — [Explicit]
-
-The proposal shows every published project, including a text list for
-projects without images, and individual projects open their existing pages.
-The portrait and biography have equal width on wide screens and stack on
-phones; section navigation scrolls smoothly unless the visitor requests
-reduced motion.
-
-### Proposal visual consistency — [Explicit]
-
-The opening text and project image share equal-width columns on wide screens.
-Work and About use the site's existing small-cap headings and thin rules,
-matching the menu; Services, Approach and the CV use quieter subsection
-headings within About. Assertive opening and profile titles, the filled Work
-button and the black contact card retain their emphasis.
-
-### Proposal contact card — [Explicit]
-
-The Contact heading sits inside the black card above its assertive title.
-Enquiry text, the email button and contact details occupy the right column
-on wide screens and stack below the heading on phones.
-Email, phone, call-hours and location icons share a left edge, with call
-hours grouped under the phone.
-
-### Proposal opening image — [Implicit]
-
-The opening image introduces the practice without a link, hover zoom or
-caption. The Work button leads to the complete portfolio, where project cards
-provide the links and hover zoom, so adjacent sections do not offer duplicate
-links to the same project.
-
-### Proposal timelines and current section — [Explicit]
-
-Practice, education and awards remain visible as timelines with a line and
-square markers. The compact timeline sits against the page's left edge,
-with institution and date details aligned right beside left-aligned
-qualification or role details on wide screens — [Explicit]. The rail separates
-the columns; on phones the two sides stack beside a left-hand rail — [Implicit].
-The proposal header highlights Work, About or Contact as the
-visitor scrolls, using its existing inverted style. Selecting a section turns
-its menu item black immediately and retains the selection while scrolling
-toward it; manual scrolling takes over the highlight.
-
-### Original bars in the proposal — [Explicit]
-
-The proposal uses the original header's wordmark, typography and spacing,
-with Contact added to the menu. The menu wraps when needed on phones —
-[Implicit]. The footer retains its original layout and controls.
+images, what she is and where, a few projects and how to reach her, even where
+that repeats Work and About. The work page lists every project; the About page
+holds her bio, approach and the facts behind them. The contacts are in the
+footer of every page, and the contact card closes the landing page and About,
+so there is no separate Contact page — [Explicit].
 
 ### Landing page — [Explicit]
 
-Top to bottom: her chosen images, the site description in large type with
-**O mně →**, then **Vybrané práce** with **Všechny práce →** over the three
-newest projects with images as the work page's cards. The images fill the
-content width just under the header — [Explicit].
+Top to bottom: her chosen images, large, filling the content width just under
+the header; one quiet line saying what she is and where ("Architektka · Brno",
+the place from the contacts), followed by her services when there are any,
+with **O mně →**; then **Vybrané práce** with **Všechny práce →** over the three
+newest projects with images as the work page's cards; then the contact card.
+No headline or introductory paragraph.
 
-The layout — [Implicit]: the images and the description read as one opening,
-with a wider gap before the selected work. **O mně →** ends the description's
-last line on the right, or goes under it on phones, as an underlined link.
-**Všechny práce →** ends the row of the heading, About's section heading, in
-its small caps and underlined on hover and focus like a linked list row. Three cards fill
-one row of the grid and open their projects with the same cover transition as
-on Work.
+The layout — [Implicit]: the line sits under the images like a caption, in the
+section headings' small caps, the services in grey; a place filled in one
+language shows only in that language. **O mně →** ends the line on the right,
+like **Všechny práce →** ends its heading row, both underlined on hover and
+focus. Three cards fill one row of the grid and open their projects with the
+same cover transition as on Work.
 
 ### Landing images or carousel — [Explicit]
 
@@ -210,37 +156,34 @@ The architect picks and orders the landing images; project images are never
 added automatically. One image shows at its natural aspect ratio; two or more
 form a carousel with arrows and dots that auto-advances, pausing on hover or
 focus, and not at all with reduced motion; with none, the page starts with the
-intro. The carousel is the project image sets' one with auto-advance added, its
-images cropped to fill the frame — [Implicit].
+line saying what she is. The carousel is the project image sets' one with
+auto-advance added, its images cropped to fill the frame — [Implicit].
 
-### About page: a CV with a side bar — [Explicit]
+### About page — [Explicit]
 
-The name stays in the wordmark, so **O mně** opens with its heading. On wide
-screens a side bar holds the portrait, the contacts (where she is, phone,
-email, hours) and her services as tags; the main column, twice as wide, holds
-the heading and bio, then the **Praxe**, **Vzdělání** and **Ocenění**
-timelines, then Approach. Section headings are small caps over a thin rule.
-Narrower screens take one column: the heading, the side bar, then the rest.
-Everything but the contacts is edited in the one **About page** entry.
+**O mně** is a section heading, small caps over a thin rule, with her name
+under it as an assertive title. The name and bio sit beside the portrait in
+equal columns on wide screens and above it on phones. Then Approach, then the
+facts, and the contact card ends the page — [Implicit]. Everything but the
+contacts is edited in the one **About page** entry.
 
 The bio follows the project text's column rule: balanced columns where each
-keeps a comfortable width, else one — [Explicit].
+keeps a comfortable width, else one — [Explicit]. Beside the portrait it is
+one column; without one it spans the page — [Implicit].
 
-### Timelines — [Explicit]
+### Experience, education and awards as facts — [Explicit]
 
-Work experience, education and awards are each a timeline: a thin line with a
-square marker per entry, the place, department, years and tags on its left,
-the title and description on its right. On phones the line moves to the left
-edge and each entry stacks beside it. Tags and services are small square
-outline tags. An entry's years are one field shared by both languages, e.g.
-"2024–2026", or "2024–" while ongoing — [Implicit].
+Services, work experience, education and awards are each a quiet plain-text
+list under its own section heading. A row reads years, then title and place,
+with the department or category under it in grey and its description, if
+filled, below. Services are a plain list. An empty group shows no heading, so
+with nothing filled About is the heading, name, bio and contact card. An
+entry's years are one field shared by both languages, e.g. "2024–2026", or
+"2024–" while ongoing — [Implicit].
 
-The details — [Implicit]: on phones an entry reads place, department, years,
-title, description, then its tags; place names and titles wrap into balanced
-lines; the contact lines have small icons and thin rules between them, email
-and phone are links; a contact line filled in one language shows only in that
-language; an empty timeline or service list shows no heading, so with nothing
-filled About is the heading, bio and email.
+The layout — [Implicit]: the groups pair up in two columns on wide screens, on
+the same columns as the bio and portrait, services first; the years have a
+narrow column of their own, on phones too.
 
 ### Work page: a grid of square covers — [Explicit]
 
@@ -259,17 +202,15 @@ no such projects, neither the rule nor the list shows — [Implicit].
 
 ### Approach section — [Explicit]
 
-How the architect works, the last section of About's main column, as a
+How the architect works, between About's opening and the facts, as a
 two-by-two grid: each item a small icon beside its small-caps label, with the
-text under it. Its items have no order in time, so it stays off the timeline.
-The items (label, text and which icon) are added, removed and reordered in the
-CMS.
+text under it. The items (label, text and which icon) are added, removed and
+reordered in the CMS.
 
-The details — [Implicit]: the heading is a section heading like the
-timelines'; one column on phones; the four icons are fixed in code. Hover
-effects mark only links and buttons, so Approach items stay still —
-[Explicit]. In Approach texts
-and timeline descriptions, every line break the architect types starts a
+The details — [Implicit]: the heading is a section heading like the facts';
+one column on phones; the four icons are fixed in code. Hover effects mark only
+links and buttons, so Approach items stay still — [Explicit]. In Approach texts
+and fact descriptions, every line break the architect types starts a
 paragraph, whether she typed one or two — [Implicit].
 
 ### Contacts in the footer — [Explicit]
@@ -280,15 +221,26 @@ phone and hours show only when filled.
 No contact form: there is no backend to receive one.
 
 The contacts have no label; the icons and links say what they are — [Explicit].
-On About, call hours are grouped with the phone — [Explicit]. They use a
-clock icon and a call-hours label for screen readers — [Implicit].
+Call hours use a clock icon and a call-hours label for screen readers —
+[Implicit].
 
 The layout — [Implicit]: on wide screens one line, the © on the left, the
 contacts in the middle and the theme and language switches on the right; each
-contact has the About page's icon, which also separates it from the next. All of
-it is in the footer's small grey type — [Explicit]. Where the line does not fit,
-the contacts come first, wrapping only between whole contacts, then the © and
-the switches in one row; everything starts on the page's left edge.
+contact has the contact card's icon, which also separates it from the next.
+All of it is in the footer's small grey type — [Explicit]. Where the line does
+not fit, the contacts come first, wrapping only between whole contacts, then
+the © and the switches in one row; everything starts on the page's left edge.
+
+### Contact card — [Explicit]
+
+A black card closes the landing page: the **Kontakt** heading in small caps
+over an assertive invitation, then a short enquiry text, an email button and
+the contact lines — email, phone with its call hours under it, and where she
+is, each with its icon, thin rules between them. On wide screens the heading
+and invitation take the left half and the rest the right; on phones they
+stack. The icons share a left edge. About ends with the same card — [Implicit].
+In dark mode the card inverts with the page, a light card on charcoal, and a
+contact line filled in one language shows only in that language — [Implicit].
 
 ### Custom 404 page — [Explicit]
 

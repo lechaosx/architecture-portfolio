@@ -460,7 +460,9 @@ test.describe(() => {
   test('the static page is Czech, as crawlers and link previews read it', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(site.description_cs);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      `Architektka · ${contact.location_cs}`,
+    );
     await expect(page).toHaveTitle(`${owner} | Architektka`);
     const meta = (selector: string) => page.locator(`meta[${selector}]`);
     await expect(meta('name="description"')).toHaveAttribute('content', site.description_cs);

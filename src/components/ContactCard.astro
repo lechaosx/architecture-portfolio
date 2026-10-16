@@ -1,0 +1,57 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ContactIcon from './ContactIcon.astro';
+import T from './T.astro';
+import { onlyIn } from '../i18n';
+
+interface Props {
+  contact: CollectionEntry<'contact'>['data'];
+}
+
+const { contact } = Astro.props;
+const line = 'flex items-center gap-3 border-t border-white/25 py-2.5';
+const icon = 'size-4 shrink-0';
+---
+
+<section class="grid gap-8 bg-black px-6 py-8 text-white sm:p-12 md:grid-cols-2 md:gap-12">
+  <div>
+    <T as="h2" k="contact" class="text-sm tracking-widest uppercase" />
+    <T as="p" k="contactHeadline" class="mt-5 text-4xl font-medium tracking-tight text-balance sm:text-5xl" />
+  </div>
+  <div>
+    <T as="p" k="contactText" class="leading-relaxed" />
+    <a
+      href={`mailto:${contact.email}`}
+      class="mt-7 inline-flex min-h-12 items-center border border-white px-5 py-3 text-sm hover:bg-white hover:text-black"
+    >
+      <T k="writeEmail" />
+    </a>
+    <address class="mt-8 not-italic">
+      <ul>
+        <li class={line}>
+          <ContactIcon icon="email" class={icon} />
+          <a href={`mailto:${contact.email}`} class="text-link min-w-0 break-words">{contact.email}</a>
+        </li>
+        {contact.phone && (
+          <li class={`${line} flex-wrap gap-y-1.5`}>
+            <ContactIcon icon="phone" class={icon} />
+            <a href={`tel:${contact.phone.replace(/\s+/g, '')}`} class="text-link">{contact.phone}</a>
+            {(contact.hours_cs || contact.hours_en) && (
+              <p lang={onlyIn(contact.hours_cs, contact.hours_en)} class="flex basis-full items-center gap-3 text-sm">
+                <ContactIcon icon="hours" class={icon} />
+                <T k="callHours" class="sr-only" />
+                <T cs={contact.hours_cs} en={contact.hours_en} />
+              </p>
+            )}
+          </li>
+        )}
+        {(contact.location_cs || contact.location_en) && (
+          <li class={line} lang={onlyIn(contact.location_cs, contact.location_en)}>
+            <ContactIcon icon="location" class={icon} />
+            <T cs={contact.location_cs} en={contact.location_en} />
+          </li>
+        )}
+      </ul>
+    </address>
+  </div>
+</section>

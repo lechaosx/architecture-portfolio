@@ -2,10 +2,10 @@
 import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Carousel from './Carousel.astro';
+import ContactCard from './ContactCard.astro';
 import ProjectGrid from './ProjectGrid.astro';
 import SectionHeading from './SectionHeading.astro';
 import T from './T.astro';
-import { site } from '../singletons';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { workProjects, type Project } from '../projects';
@@ -21,9 +21,17 @@ import { webSite } from '../structured-data';
 interface Props {
   landing: CollectionEntry<'landing'>['data'];
   projects: Project[];
+  about: CollectionEntry<'about'>['data'];
+  contact: CollectionEntry<'contact'>['data'];
 }
 
-const { landing, projects } = Astro.props;
+const { landing, projects, about, contact } = Astro.props;
+// Each language's line is built whole, so a place filled in one language
+// leaves no stray separator in the other.
+const identity = (lang: 'cs' | 'en') =>
+  [ui[lang].tagline, contact[`location_${lang}`]?.trim()].filter(Boolean).join(' · ');
+const services = (lang: 'cs' | 'en') =>
+  about.services.map((service) => service[`name_${lang}`]).join(' · ');
 const heroImages = await Promise.all(
   landing.images.map(async (src) => ({ src, responsive: await getResponsiveImage(src) })),
 );
@@ -44,7 +52,7 @@ const image =
   graph={[webSite({ site: new URL('/', Astro.site), name: credentialedName })]}
 >
   {/* The hero sits closer under the header than a page heading does; without
-      it the intro opens the page like one. */}
+      it the identity line opens the page like one. */}
   <div
     class:list={[
       'mx-auto max-w-6xl px-6 pb-16 sm:pb-24',
@@ -97,17 +105,15 @@ const image =
 
     <div
       class:list={[
-        'flex flex-col items-start gap-6 sm:flex-row sm:items-baseline-last sm:justify-between sm:gap-12',
-        { 'mt-8 sm:mt-12': heroImages.length > 0 },
+        'flex flex-wrap items-baseline gap-x-6 gap-y-2 text-sm tracking-widest uppercase',
+        { 'mt-4 sm:mt-6': heroImages.length > 0 },
       ]}
     >
-      <T
-        as="h1"
-        cs={site.description_cs}
-        en={site.description_en}
-        class="max-w-3xl text-3xl font-medium text-balance sm:text-4xl"
-      />
-      <a href="/about/" class="text-link shrink-0"><T k="toAbout" /></a>
+      <T as="h1" cs={identity('cs')} en={identity('en')} class="shrink-0" />
+      {about.services.length > 0 && (
+        <T as="p" cs={services('cs')} en={services('en')} class="min-w-0 text-balance text-neutral-500" />
+      )}
+      <a href="/about/" class="ml-auto shrink-0 hover:underline focus-visible:underline"><T k="toAbout" /></a>
     </div>
 
     {
@@ -120,5 +126,9 @@ const image =
         </section>
       )
     }
+
+    <div class="mt-16 sm:mt-24">
+      <ContactCard {contact} />
+    </div>
   </div>
 </Base>

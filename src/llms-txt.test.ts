@@ -37,12 +37,8 @@ test('presents the architect and her projects, Czech first', () => {
             title_en: 'Architect',
             description_cs: 'Rodinné domy.\nInteriéry.',
             description_en: 'Family houses.\n\nInteriors.',
-            tags: [
-              { name_cs: 'BIM', name_en: 'BIM' },
-              { name_cs: 'Studie', name_en: 'Studies' },
-            ],
           },
-          { place_cs: 'Ateliér B', place_en: 'Studio B', title_cs: 'Stáž', title_en: 'Internship', tags: [] },
+          { place_cs: 'Ateliér B', place_en: 'Studio B', title_cs: 'Stáž', title_en: 'Internship' },
         ],
         services: [
           { name_cs: 'Rodinné domy', name_en: 'Family houses' },
@@ -57,10 +53,9 @@ test('presents the architect and her projects, Czech first', () => {
             years: '2020–2024',
             title_cs: 'Architektura pozemních staveb',
             title_en: 'Building Architecture',
-            tags: [],
           },
         ],
-        awards: [{ place_cs: 'Soutěž', place_en: 'Competition', years: '2025', title_cs: '1. místo', title_en: '1st place', tags: [] }],
+        awards: [{ place_cs: 'Soutěž', place_en: 'Competition', years: '2025', title_cs: '1. místo', title_en: '1st place' }],
       },
       contact: { ...contact, phone: '+420 777 000 000', location_cs: 'Brno', location_en: 'Brno' },
       projects: [
@@ -106,7 +101,6 @@ I am an **architect**.
   Interiéry.
   Family houses.
   Interiors.
-  BIM, Studie / BIM, Studies
 - Stáž – Ateliér B / Internship – Studio B
 
 ## Služby / Services
