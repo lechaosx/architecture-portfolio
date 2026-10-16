@@ -1,8 +1,8 @@
 ---
 title_cs: Čtyři pokoje
 title_en: Four Rooms
-from: '2023'
-to: '2023'
+from: "2023"
+to: "2023"
 location_cs: Křížovice
 location_en: Křížovice
 brief_cs: >-
@@ -22,4 +22,27 @@ brief_en: >-
 
   Collaboration: Ing. Jiří Železný
 draft: false
+blocks:
+  - type: gallery
+    images:
+      - image: /uploads/Výkres krovu.webp
+        title_cs: Výkres krovu
+      - image: /uploads/Bourané konstrukce.webp
+        title_cs: Bourané konstrukce
+      - image: /uploads/Půdorys nového stavu.webp
+        title_cs: Půdorys navrženého stavu
+      - image: /uploads/Řez techn.webp
+        title_cs: Řez - technický
+      - image: /uploads/Pohled V+Z.webp
+        title_cs: Pohledy
+      - image: /uploads/Pohled S+J.webp
+        title_cs: Pohledy
+      - image: /uploads/INT1.webp
+        title_cs: Interiérový řez
+      - image: /uploads/INT2.webp
+        title_cs: Interiérový řez
+      - image: /uploads/INT4.webp
+        title_cs: Interiérový řez
+      - image: /uploads/INT3.webp
+        title_cs: Interiérový řez
 ---
