@@ -9,12 +9,37 @@ test.beforeEach(async ({ page }) => {
 // blocks, so a page) and Old brief (2020, nothing but a title).
 const index = (page: Page) => page.locator('main ul');
 const rows = (page: Page) => index(page).locator(':scope > li');
+const gapUnderHeader = async (page: Page, content: Locator) => {
+  const header = (await page.locator('body > header').boundingBox())!;
+  return (await content.boundingBox())!.y - header.y - header.height;
+};
 
-test('projects without images form an index under its own heading below the grid, newest first', async ({
+test('the work page opens with the grid, as the landing page with its images, under a title only for screen readers', async ({
+  page,
+}) => {
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/e2e/landing/');
+    const heroGap = await gapUnderHeader(page, page.locator('main [data-carousel]'));
+    await page.goto('/e2e/work/');
+    const gridGap = await gapUnderHeader(page, page.locator('main .grid > a').first());
+    expect(gridGap, `${width}px`).toBeCloseTo(heroGap, 0);
+  }
+  await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('Work');
+});
+
+test('projects without images follow the grid as an index with no heading of its own, newest first', async ({
   page,
 }) => {
   await page.goto('/e2e/work/');
   await expect(page.locator('main .grid > a')).toHaveCount(1);
+  await expect(page.locator('main').getByRole('heading')).toHaveText([
+    'Work',
+    'Grid project',
+    'Alpha brief',
+    'Beta text',
+    'Old brief',
+  ]);
 
   await expect(rows(page)).toHaveCount(3);
   await expect(rows(page).nth(0)).toContainText('2025');
@@ -23,12 +48,9 @@ test('projects without images form an index under its own heading below the grid
   await expect(rows(page).nth(1)).toContainText('Beta text');
   await expect(rows(page).nth(2)).toContainText('Old brief');
 
-  const heading = page.getByRole('heading', { level: 2, name: 'More projects' });
   const gridBottom = (await page.locator('main .grid:has(> a)').boundingBox())!;
-  const headingBox = (await heading.boundingBox())!;
   const indexBox = (await index(page).boundingBox())!;
-  expect(headingBox.y).toBeGreaterThan(gridBottom.y + gridBottom.height);
-  expect(indexBox.y).toBeGreaterThan(headingBox.y + headingBox.height);
+  expect(indexBox.y).toBeGreaterThan(gridBottom.y + gridBottom.height);
 });
 
 test('a row with a brief expands in place to show it with the author line breaks', async ({
@@ -116,17 +138,24 @@ test('the index lines up in columns on wide screens and stacks the location on p
   }
 });
 
-test('neither the index nor its heading render when every project has an image', async ({ page }) => {
+test('no index renders when every project has an image', async ({ page }) => {
   await page.goto('/e2e/work-grid-only/');
   await expect(page.locator('main .grid > a')).toHaveCount(1);
   await expect(index(page)).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'More projects' })).toHaveCount(0);
 });
 
-test('without a grid the work heading leads straight into the index', async ({ page }) => {
-  await page.goto('/e2e/work-list-only/');
+test('without a grid the index opens the page, as the identity line does without images', async ({
+  page,
+}) => {
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/e2e/landing-bare/');
+    const lineGap = await gapUnderHeader(page, page.locator('main h1:visible'));
+    await page.goto('/e2e/work-list-only/');
+    expect(await gapUnderHeader(page, index(page)), `${width}px`).toBeCloseTo(lineGap, 0);
+  }
   await expect(page.locator('main .grid > a')).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'More projects' })).toHaveCount(0);
+  await expect(page.locator('main').getByRole('heading')).toHaveText(['Work', 'Alpha brief', 'Beta text', 'Old brief']);
   await expect(rows(page)).toHaveCount(3);
 });
 

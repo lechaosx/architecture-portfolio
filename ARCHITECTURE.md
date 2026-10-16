@@ -213,9 +213,8 @@ that split, so previous and next walk the work page as it reads.
 
 ### Section headings own their row — [Implicit]
 
-`SectionHeading` draws the small caps and the rule for About, Work and the
-landing page, and is the `h1` of About and Work as well as their section
-headings. Its default slot
+`SectionHeading` draws the small caps and the rule over a section of About or
+the landing page, always as an `h2`: it never titles a page. Its default slot
 ends the row on the same rule and inherits the small caps, so a link onward,
 like the landing page's link to all work, needs no layout of its own.
 

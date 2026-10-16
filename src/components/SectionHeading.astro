@@ -6,15 +6,14 @@ import type { UiKey } from '../i18n';
 // small caps as the heading, e.g. a link onward.
 interface Props {
   k: UiKey;
-  as?: 'h1' | 'h2';
 }
 
-const { k, as = 'h2' } = Astro.props;
+const { k } = Astro.props;
 ---
 
 <div
   class="mb-6 flex items-baseline-last justify-between gap-6 border-b border-black pb-2 text-sm tracking-widest uppercase"
 >
-  <T {as} {k} />
+  <T as="h2" {k} />
   <slot />
 </div>

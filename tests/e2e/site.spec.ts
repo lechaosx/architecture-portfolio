@@ -25,7 +25,7 @@ test('primary navigation reaches every page and marks the current section', asyn
     ignoreCase: true,
   });
   await expect(workLink).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Work' })).toHaveCount(1);
 
   await page.locator('main .grid > a').first().click();
   await expect(page).toHaveURL(/\/projects\/.+\/$/);
@@ -36,7 +36,7 @@ test('primary navigation reaches every page and marks the current section', asyn
   await expect(page).toHaveURL(/\/about\/$/);
   await expect(aboutLink).toHaveAttribute('aria-current', 'page');
   await expect(workLink).not.toHaveAttribute('aria-current');
-  await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: site.name })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Approach' })).toBeVisible();
 
   await page.locator('header nav > a').first().click();
@@ -73,12 +73,12 @@ test.describe(() => {
   }) => {
     await page.goto('/about/?lang=en');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
-    await expect(page.getByRole('heading', { name: 'O mně' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Přístup' })).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem('lang'))).toBeNull();
 
     await page.getByRole('button', { name: 'Přepnout do angličtiny' }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.getByRole('heading', { name: 'About' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Approach' })).toBeVisible();
     await expect(page).toHaveTitle(`About | ${owner}`);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
@@ -87,7 +87,7 @@ test.describe(() => {
 
     await page.goto('/work/?lang=cs');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Work' })).toHaveCount(1);
     expect(await page.evaluate(() => localStorage.getItem('lang'))).toBe('en');
   });
 });
@@ -98,7 +98,7 @@ test.describe(() => {
   test('an English browser gets English over the Czech static default', async ({ page }) => {
     await page.goto('/work/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.getByRole('heading', { name: 'Work' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Work' })).toHaveCount(1);
     await expect(page).toHaveTitle(`Work | ${owner}`);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
