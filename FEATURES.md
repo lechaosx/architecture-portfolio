@@ -140,6 +140,13 @@ and About. The work page lists every project; the About page holds her bio,
 approach and the facts behind them. The contacts are in the footer of every
 page, so there is no separate Contact page — [Explicit].
 
+### Pages open with their content; section headings mark sections — [Explicit]
+
+The small-caps heading over a black rule marks a section inside a page and
+never titles one. The landing page opens with her images, Work with its covers
+and About with her name; the menu, which shows the current page inverted, says
+where the visitor is. Work's title is there only for screen readers and search.
+
 ### Landing page — [Explicit]
 
 Top to bottom: her chosen images, large, filling the content width just under
@@ -167,11 +174,10 @@ auto-advance added, its images cropped to fill the frame — [Implicit].
 
 ### About page — [Explicit]
 
-**O mně** is a section heading, small caps over a thin rule, with her name
-under it as an assertive title. The name and bio sit beside the portrait in
-equal columns on wide screens and above it on phones. Then Approach, then the
-facts, which end the page. Everything but the contacts is edited in the one
-**O mně** entry.
+Her name opens the page as an assertive title. The name and bio sit beside the
+portrait in equal columns on wide screens and above it on phones. Then
+Approach, then the facts, which end the page. Everything but the contacts is
+edited in the one **O mně** entry.
 
 The bio follows the project text's column rule: balanced columns where each
 keeps a comfortable width, else one — [Explicit]. Beside the portrait it is
@@ -183,18 +189,13 @@ Services, work experience, education and awards are each a quiet plain-text
 list under its own section heading. A row reads years, then title and place,
 with the department or category under it in grey and its description, if
 filled, below. Services are a plain list. An empty group shows no heading, so
-with nothing filled About is the heading, name and bio. An entry's years are one
+with nothing filled About is the name and bio. An entry's years are one
 field shared by both languages, e.g. "2024–2026", or "2024–" while ongoing —
 [Implicit].
 
 The layout — [Implicit]: the groups pair up in two columns on wide screens, on
 the same columns as the bio and portrait, services first; the years have a
 narrow column of their own, on phones too.
-
-### Work opens like About — [Implicit]
-
-**Práce** is a section heading, small caps over a thin rule, as **O mně** is on
-About, so both menu pages open the same way.
 
 ### Work page: a grid of square covers — [Explicit]
 
@@ -207,9 +208,12 @@ cards do not show the brief — [Implicit].
 
 The projects without images follow the grid, in the same order, as a compact
 index, so the images lead and the rest stays easy to scan; a row with a brief
-opens in place to show it. The layout — [Implicit]: the index under its own
-heading, one aligned row of year, title and location per project, and a
-project with a page linking to it instead of opening.
+opens in place to show it. The index has no heading of its own: its projects
+weigh the same as the grid's and only lack images yet — [Explicit]. The layout
+— [Implicit]: the index follows the grid at the grid's own row gap, with thin
+rules above, between and below its rows; one aligned row of year, title and
+location per project, and a project with a page linking to it instead of
+opening. Without image projects the index opens the page.
 
 ### Approach section — [Explicit]
 

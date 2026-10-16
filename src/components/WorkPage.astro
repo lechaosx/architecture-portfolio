@@ -1,7 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
 import ProjectGrid from './ProjectGrid.astro';
-import SectionHeading from './SectionHeading.astro';
 import T from './T.astro';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
@@ -24,66 +23,78 @@ const marker = 'col-start-3 row-start-1 justify-self-end sm:col-start-4';
   title={{ cs: `${ui.cs.work} | ${credentialedName}`, en: `${ui.en.work} | ${credentialedName}` }}
   {image}
 >
-  <div class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
-    <SectionHeading k="work" as="h1" />
+  {/* As on the landing page, images open the page closer under the header than
+      text does. */}
+  <div
+    class:list={[
+      'mx-auto max-w-6xl px-6 pb-16 sm:pb-24',
+      grid.length > 0 ? 'pt-8' : 'pt-12 sm:pt-16',
+    ]}
+  >
+    <T as="h1" k="work" class="sr-only" />
 
     {grid.length > 0 && <ProjectGrid projects={grid} heading="h2" />}
 
+    {/* The gap repeats ProjectGrid's row gap, so the index reads as the grid's
+        next row; change them together. */}
     {
       listed.length > 0 && (
-        <section class:list={{ 'mt-16 sm:mt-24': grid.length > 0 }}>
-          {grid.length > 0 && <SectionHeading k="moreProjects" />}
-          <ul class="divide-y divide-neutral-200 border-b border-neutral-200">
-            {listed.map(({ id, data }) => {
-              const hasBrief = Boolean(data.brief_cs || data.brief_en);
-              const cells = (
-                <>
-                  <span class="col-start-1 row-start-1 text-sm text-neutral-500 tabular-nums">{data.year}</span>
-                  <T
-                    cs={data.title_cs}
-                    en={data.title_en}
-                    class="col-start-2 row-start-1 font-medium text-balance group-hover:underline group-focus-visible:underline"
-                  />
-                  <T
-                    cs={data.location_cs}
-                    en={data.location_en}
-                    class="col-start-2 text-sm text-neutral-500 sm:col-start-3 sm:row-start-1"
-                  />
-                </>
-              );
-              return (
-                <li>
-                  {data.blocks.length > 0 ? (
-                    <a href={`/projects/${id}/`} class={`group ${row} py-3`}>
+        <ul
+          class:list={[
+            'divide-y divide-neutral-200 border-y border-neutral-200',
+            { 'mt-12 sm:mt-20': grid.length > 0 },
+          ]}
+        >
+          {listed.map(({ id, data }) => {
+            const hasBrief = Boolean(data.brief_cs || data.brief_en);
+            const cells = (
+              <>
+                <span class="col-start-1 row-start-1 text-sm text-neutral-500 tabular-nums">{data.year}</span>
+                <T
+                  as="h2"
+                  cs={data.title_cs}
+                  en={data.title_en}
+                  class="col-start-2 row-start-1 font-medium text-balance group-hover:underline group-focus-visible:underline"
+                />
+                <T
+                  cs={data.location_cs}
+                  en={data.location_en}
+                  class="col-start-2 text-sm text-neutral-500 sm:col-start-3 sm:row-start-1"
+                />
+              </>
+            );
+            return (
+              <li>
+                {data.blocks.length > 0 ? (
+                  <a href={`/projects/${id}/`} class={`group ${row} py-3`}>
+                    {cells}
+                    <span aria-hidden="true" class={marker}>→</span>
+                  </a>
+                ) : hasBrief ? (
+                  <details class="group/row">
+                    <summary class={`group ${row} cursor-pointer list-none py-3 [&::-webkit-details-marker]:hidden`}>
                       {cells}
-                      <span aria-hidden="true" class={marker}>→</span>
-                    </a>
-                  ) : hasBrief ? (
-                    <details class="group/row">
-                      <summary class={`group ${row} cursor-pointer list-none py-3 [&::-webkit-details-marker]:hidden`}>
-                        {cells}
-                        <span aria-hidden="true" class={`${marker} relative size-3 self-center`}>
-                          <span class="absolute inset-x-0 top-1/2 h-px bg-current" />
-                          <span class="absolute inset-y-0 left-1/2 w-px bg-current group-open/row:rotate-90 motion-safe:transition-transform" />
-                        </span>
-                      </summary>
-                      <div class={`${row} pb-5`}>
-                        <T
-                          as="p"
-                          cs={data.brief_cs}
-                          en={data.brief_en}
-                          class="col-start-2 max-w-prose text-sm whitespace-pre-line text-neutral-700 sm:col-end-4"
-                        />
-                      </div>
-                    </details>
-                  ) : (
-                    <div class={`${row} py-3`}>{cells}</div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+                      <span aria-hidden="true" class={`${marker} relative size-3 self-center`}>
+                        <span class="absolute inset-x-0 top-1/2 h-px bg-current" />
+                        <span class="absolute inset-y-0 left-1/2 w-px bg-current group-open/row:rotate-90 motion-safe:transition-transform" />
+                      </span>
+                    </summary>
+                    <div class={`${row} pb-5`}>
+                      <T
+                        as="p"
+                        cs={data.brief_cs}
+                        en={data.brief_en}
+                        class="col-start-2 max-w-prose text-sm whitespace-pre-line text-neutral-700 sm:col-end-4"
+                      />
+                    </div>
+                  </details>
+                ) : (
+                  <div class={`${row} py-3`}>{cells}</div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       )
     }
   </div>

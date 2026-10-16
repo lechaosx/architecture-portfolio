@@ -1,4 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { parse } from 'yaml';
+
+const site = parse(
+  readFileSync('src/content/singletons/site.md', 'utf8').split('---')[1],
+);
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -11,6 +17,23 @@ const section = (page: Page, heading: string | RegExp) =>
   });
 const box = async (page: Page, text: string) =>
   (await page.locator('main').getByText(text, { exact: true }).boundingBox())!;
+
+test('her name is the page title and opens the page, as the identity line does on the landing page', async ({
+  page,
+}) => {
+  const gapUnderHeader = async () => {
+    const header = (await page.locator('body > header').boundingBox())!;
+    return (await page.locator('main h1:visible').boundingBox())!.y - header.y - header.height;
+  };
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/e2e/landing-bare/');
+    const lineGap = await gapUnderHeader();
+    await page.goto('/e2e/about/');
+    expect(await gapUnderHeader(), `${width}px`).toBeCloseTo(lineGap, 0);
+  }
+  await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText(site.name);
+});
 
 test('the name and bio sit beside the portrait on wide screens, above it on phones', async ({
   page,
@@ -102,7 +125,7 @@ test('services are a plain list in the visitor’s language', async ({ page }) =
 
 test('with nothing optional filled, only the name and bio remain', async ({ page }) => {
   await page.goto('/e2e/about-bare/');
-  await expect(page.locator('main').getByRole('heading')).toHaveText(['About']);
+  await expect(page.locator('main').getByRole('heading')).toHaveText([site.name]);
   await expect(page.locator('main img')).toHaveCount(0);
   await expect(page.locator('main .prose:visible')).toBeVisible();
 });
