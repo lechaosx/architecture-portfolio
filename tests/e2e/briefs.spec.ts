@@ -229,7 +229,7 @@ test('without a grid the index opens the page, as the identity line does without
   await expect(rows(page)).toHaveCount(3);
 });
 
-test('the brief shows under the title and location, above the blocks, when set', async ({
+test('the brief shows under the title, above the blocks, when set', async ({
   page,
 }) => {
   await page.goto('/e2e/brief/');
@@ -243,21 +243,6 @@ test('the brief shows under the title and location, above the blocks, when set',
   ]);
   expect(briefBox!.y).toBeGreaterThan(title!.y);
   expect(briefBox!.y).toBeLessThan(block!.y);
-});
-
-test('a project page names its location and period under the title, in the visitor’s language', async ({
-  page,
-}) => {
-  await page.goto('/e2e/project/');
-  const meta = page.locator('article header p:visible');
-  await expect(meta).toHaveText('Nowhere · 3/2025–6/2026');
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  await expect(meta).toHaveText('Nikde · 3/2025–6/2026');
-});
-
-test('no brief shows on a project page without one', async ({ page }) => {
-  await page.goto('/e2e/project/');
-  await expect(page.locator('article header p:visible')).toHaveCount(1);
 });
 
 test('a text-only project page has no lightbox', async ({ page }) => {

@@ -1,0 +1,41 @@
+---
+import T from './T.astro';
+import type { Fact } from '../project-facts';
+
+// The label column fits the longest label in either language, so values line
+// up at the same place on every project; where the sheet is too narrow for
+// it, labels sit above their values.
+interface Props {
+  facts: Fact[];
+}
+
+const { facts } = Astro.props;
+const afterNames = (names: string[], text: string) => (names.length > 0 && text ? ` – ${text}` : text);
+---
+
+<div class="@container">
+  <dl class="grid gap-y-3 text-sm">
+    {
+      facts.map(({ label, lang, lines }) => (
+        <div {lang} class="grid items-baseline gap-y-0.5 @sm:grid-cols-[9rem_minmax(0,1fr)] @sm:gap-x-6">
+          <dt class="text-xs tracking-widest text-neutral-500 uppercase">
+            <T k={label} />
+          </dt>
+          <dd>
+            {lines.map(({ names, cs, en }) => (
+              <p>
+                {names.map((name, index) => (
+                  <>
+                    {index > 0 && ', '}
+                    <span class="whitespace-nowrap">{name}</span>
+                  </>
+                ))}
+                {(cs || en) && <T cs={afterNames(names, cs)} en={afterNames(names, en)} />}
+              </p>
+            ))}
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</div>

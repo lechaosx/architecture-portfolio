@@ -6,8 +6,9 @@ to: '2024'
 location_cs: Moravské Prusy
 location_en: Moravské Prusy
 brief_cs: Zpracování projektové dokumentace pro povolení stavby na základě
-  dodané architektonické studie. Projekt je v současné době ve fázi realizace.
+  dodané architektonické studie.
 brief_en: Preparation of project documentation for a building permit based on
-  the provided architectural study. The project is currently under construction.
+  the provided architectural study.
+status: construction
 draft: false
 ---

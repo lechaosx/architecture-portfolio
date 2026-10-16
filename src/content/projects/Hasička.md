@@ -7,15 +7,14 @@ location_cs: Doubravník
 location_en: Doubravník
 brief_cs: >-
   Zpracování architektonické studie rekonstrukce hasičské zbrojnice v obci
-  Doubravník. Projekt se v současné době nachází ve fázi realizace.
-
-
-  Spolupráce: Ing. Jiří Železný – hlavní projektant stavby.
+  Doubravník.
 brief_en: >-
   Development of the architectural study for the renovation of the fire station
-  in Doubravník. The project is currently under construction.
-
-
-  Collaboration: Ing. Jiří Železný – Lead Project Designer.
+  in Doubravník.
+status: construction
+collaborators:
+  - name: Ing. Jiří Železný
+    role_cs: hlavní projektant stavby
+    role_en: Lead Project Designer
 draft: false
 ---

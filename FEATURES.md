@@ -53,9 +53,9 @@ her list, has no free web licence.
 Running text — rich-text bodies, project briefs, About's Approach texts and row
 descriptions, and image descriptions — is justified with automatic hyphenation
 in the right language's rules; a brief's own line breaks still end their lines
-short. Labels, metadata and titles are not justified. On phones, index briefs
-and About descriptions span their row's full width, so justified lines keep a
-comfortable measure — [Implicit].
+short. Labels, metadata, credits and titles are not justified. On phones,
+index briefs and About descriptions span their row's full width, so justified
+lines keep a comfortable measure — [Implicit].
 
 ---
 
@@ -95,15 +95,41 @@ unrenderable fails the build and does not deploy.
 ### Projects: title and start; everything else optional — [Explicit]
 
 The CMS refuses to save a project without both titles and the start of its
-period ("Od"). The end, the brief and the content blocks are optional; so is
-the location — [Implicit]. A text block needs both languages, an image block
-at least one image.
+period ("Od"). The end, the brief, the credits, award and status and the
+content blocks are optional; so is the location — [Implicit]. A text block
+needs both languages, an image block at least one image, a collaborator a
+name.
 
 ### Brief — [Explicit]
 
 A project may have a short plain-text brief in both languages, with the author's
-line breaks kept. On the project page it sits under the title and location, above
-the content blocks — [Implicit].
+line breaks kept. It is the description only: credits, award and status have
+fields of their own — [Explicit]. On the project page it sits under the title
+beside the fact sheet, above the content blocks, in the colour and size of
+About's bio — [Explicit].
+
+### Project credits and status as fields, shown as a fact sheet — [Explicit]
+
+A project may name its design studio (one line) and design team (a list of
+names), both shared by the languages; its collaborators, each a name with a
+role per language; an award per language; and a status from a fixed list:
+Studie · Soutěžní návrh · Povolení stavby · Ve výstavbě · Realizováno (Study ·
+Competition entry · Building permit · Under construction · Completed) —
+[Explicit]. The project page shows them with its place and period, which move
+there from under the title, as a fact sheet of rows with small-caps labels:
+Místo, Období, Stav, Autorský ateliér, Autorský tým, Spolupráce (one line per
+person, "name – role") and Ocenění, each row only when filled. The brief and
+the sheet share the page in About's two equal columns and stack on phones,
+and the credits are not justified. An opened index row shows the brief and
+the same sheet without the place and period it already shows — [Explicit].
+Search engines and `llms.txt` get them too.
+
+The details — [Implicit]: without a brief the sheet keeps the first column,
+under the title. The labels' column is one fixed width, so values line up on
+every project; where the sheet is narrow, as on phones, labels sit above
+their values. A name never breaks across lines. A text or role filled in one
+language shows only in that language. A row with credits but no brief opens
+to its sheet.
 
 ### A project without content blocks has no page — [Explicit]
 
@@ -227,12 +253,12 @@ cards do not show the brief — [Implicit].
 
 The projects without images follow the grid, in the same order, as a compact
 index, so the images lead and the rest stays easy to scan; a row with a brief
-opens in place to show it. The index has no heading of its own: its projects
-weigh the same as the grid's and only lack images yet — [Explicit]. The layout
-— [Implicit]: the index follows the grid at the grid's own row gap, with thin
-rules above, between and below its rows; one aligned row of period, title and
-location per project, and a project with a page linking to it instead of
-opening. On phones a long period wraps after its dash, beside the title and
+or credits opens in place to show them. The index has no heading of its own:
+its projects weigh the same as the grid's and only lack images yet —
+[Explicit]. The layout — [Implicit]: the index follows the grid at the grid's
+own row gap, with thin rules above, between and below its rows; one aligned row
+of period, title and location per project, and a project with a page linking
+to it instead of opening. On phones a long period wraps after its dash, beside the title and
 location. Without image projects the index opens the page.
 
 ### Approach section — [Explicit]
@@ -484,10 +510,11 @@ no preview image.
 So that an assistant asked which architect to hire can quote her, every page
 carries structured data (schema.org) about the architect: name, credential,
 contact and where she works, services, and education and awards with their
-places and periods; a project page adds its project, its cover and its titled or
-described images, each linked at the size the lightbox opens it at. `/llms.txt`
-gathers the same facts, her work experience, her bio and every published
-project's texts and image captions in one Markdown file, Czech then English.
+places and periods; a project page adds its project with its credits, award
+and status, its cover and its titled or described images, each linked at the
+size the lightbox opens it at. `/llms.txt` gathers the same facts, her work
+experience, her bio and every published project's fact sheet, texts and image
+captions in one Markdown file, Czech then English.
 
 ### The landing page's tab title says what she is — [Explicit]
 

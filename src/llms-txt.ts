@@ -1,6 +1,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { ui, type UiKey } from './i18n';
 import { formatPeriod, type Period } from './period';
+import { projectFacts } from './project-facts';
 import { newestFirst, type Project } from './projects';
 
 // /llms.txt (https://llmstxt.org): the site's facts as one Markdown file,
@@ -65,6 +66,14 @@ function project(site: URL, { id, data }: Project) {
     ...(data.blocks.length > 0
       ? [new URL(`/projects/${id}/`, site).href]
       : []),
+    ...list(
+      projectFacts(data).map(
+        (fact) =>
+          `${label(fact.label)}: ${fact.lines
+            .map((line) => [line.names.join(', '), pair(line.cs, line.en)].filter(Boolean).join(' – '))
+            .join('; ')}`,
+      ),
+    ),
     ...both(data.brief_cs, data.brief_en),
     ...data.blocks.flatMap((block) =>
       block.type === 'text' ? both(block.body_cs, block.body_en) : [],

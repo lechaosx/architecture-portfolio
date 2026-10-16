@@ -48,6 +48,23 @@ const projects = defineCollection({
     location_en: z.string().optional(),
     brief_cs: z.string().optional(),
     brief_en: z.string().optional(),
+    status: z.enum(['study', 'competition', 'permit', 'construction', 'completed']).optional(),
+    studio: z.string().optional(),
+    team: z.array(z.string()).default([]),
+    collaborators: z.preprocess(
+      withoutEmptyCmsRows,
+      z
+        .array(
+          z.object({
+            name: z.string(),
+            role_cs: z.string().optional(),
+            role_en: z.string().optional(),
+          }),
+        )
+        .default([]),
+    ),
+    award_cs: z.string().optional(),
+    award_en: z.string().optional(),
     draft: z.boolean().default(false),
     blocks: z.preprocess(
       withoutEmptyCmsRows,
