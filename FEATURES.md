@@ -240,9 +240,9 @@ Call hours use a clock icon and a call-hours label for screen readers —
 The layout — [Implicit]: on wide screens one line, the © on the left, the
 contacts in the middle and the theme and language switches on the right; each
 contact has its icon, which also separates it from the next.
-All of it is in the footer's small grey type — [Explicit]. Where the line does
-not fit, the contacts come first, wrapping only between whole contacts, then
-the © and the switches in one row; everything starts on the page's left edge.
+All of it is in the footer's small grey type — [Explicit]. On phones and
+tablets the contacts stack one per line on the page's left edge, icons and text
+each in a column, then the © and the switches in one row — [Explicit].
 
 ### Custom 404 page — [Explicit]
 
