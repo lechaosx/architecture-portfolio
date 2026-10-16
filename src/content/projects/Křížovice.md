@@ -25,6 +25,8 @@ draft: false
 blocks:
   - type: gallery
     images:
+      - image: /uploads/C Situace.webp
+        title_cs: Situace místa
       - image: /uploads/Výkres krovu.webp
         title_cs: Výkres krovu
       - image: /uploads/Bourané konstrukce.webp
