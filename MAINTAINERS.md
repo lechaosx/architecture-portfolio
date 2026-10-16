@@ -28,10 +28,10 @@ npm run images       # regenerate responsive images (dev and build run it)
   on port 4322, so it runs beside `dev` and `preview`. To run Playwright
   directly, run `npm run pretest:e2e` first.
 - Lightbox and carousel tests use test-only pages in `tests/e2e/pages/`, served
-  under `/e2e/`, with images in `tests/e2e/images/`. The work list and the brief
-  and text-only project pages are tested through fixture projects, the landing
-  and About pages through fixture data; other landing, About, work and footer
-  tests use the real content.
+  under `/e2e/`, with images in `tests/e2e/images/`. The work page's index, the
+  brief and text-only project pages and a project page's neighbours are tested
+  through fixture projects, the landing and About pages through fixture data;
+  other landing, About, work and footer tests use the real content.
 - `/e2e/project/` is frozen: tests address its images by position (`#image-N`).
   For a new case, add a fixture entry in `tests/e2e/pages/[fixture].astro`
   instead of inserting images there.
@@ -47,7 +47,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/i18n.ts` | baked-in UI labels |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
 | `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro` | the pages, also rendered by the e2e fixtures |
-| `src/components/ContactCard.astro` | the black contact card closing the landing and About pages |
+| `src/components/ContactCard.astro` | the black contact card closing the landing, About and project pages |
 | `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |
 | `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD and `/llms.txt`, built from content |
