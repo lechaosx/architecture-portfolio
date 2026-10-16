@@ -62,7 +62,9 @@ npm run images       # regenerate responsive images (dev and build run it)
 
 **Change the content shape.** Edit `src/content.config.ts` and `.pages.yml` in
 the same change; the content-schema test fails if their fields or required flags
-differ. Translatable fields come as `_cs`/`_en` pairs in both places.
+differ. Translatable fields come as `_cs`/`_en` pairs in both places. Labels,
+help texts and option labels in `.pages.yml` are Czech, a pair's labels ending
+"(česky)" / "(anglicky)".
 
 **Add UI text.** Add a key with both languages to `src/i18n.ts` and render it
 with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` or
