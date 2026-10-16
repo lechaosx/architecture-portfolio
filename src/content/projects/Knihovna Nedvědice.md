@@ -8,19 +8,12 @@ location_en: Nedvědice
 brief_cs: >-
   Spolupráce na návrhu interiéru knihovny v Nedvědici, zahrnující dispoziční a
   materiálové řešení, návrh nábytku a úpravu navazujícího dvorního prostoru.
-
-
-  Spolupráce: Ing. Jiří Železný
-
-  Autorský ateliér: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
 brief_en: >-
   Collaboration on the interior design of the library in Nedvědice, including
   spatial layout, material selection, custom furniture design, and the design of
   the adjoining courtyard.
-
-
-  Collaboration: Ing. Jiří Železný
-
-  Design Studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
+studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
+collaborators:
+  - name: Ing. Jiří Železný
 draft: false
 ---

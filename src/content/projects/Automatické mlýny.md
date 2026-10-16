@@ -9,28 +9,22 @@ brief_cs: >-
   Týmová spolupráce na architektonickém návrhu rozšíření Gočárovy galerie v
   areálu Automatických mlýnů v Pardubicích v rámci otevřené anonymní jednofázové
   architektonické soutěže.
-
-
-  Ocenění: Odměna za dílčí podnět.
-
-
-  Autorský tým: Jan Žahour, Michal Škoda, Olivia Dimitrishina, Tereza Kalábková,
-  Libor Šenekel, Pavel Lauš, Adam Schwarz, Jakub Jurásek.
-
-  Autorský ateliér: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
 brief_en: >-
   Team collaboration on the architectural design for the extension of the Gočár
   Gallery at the Automatic Mills complex in Pardubice, as part of an open,
   anonymous, single-stage architectural design competition.
-
-
-  Award: Special recognition for a specific design contribution.
-
-
-  Design Team: Jan Žahour, Michal Škoda, Olivia Dimitrishina, Tereza Kalábková,
-  Libor Šenekel, Pavel Lauš, Adam Schwarz, Jakub Jurásek.
-
-
-  Design Studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
+status: competition
+studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
+team:
+  - Jan Žahour
+  - Michal Škoda
+  - Olivia Dimitrishina
+  - Tereza Kalábková
+  - Libor Šenekel
+  - Pavel Lauš
+  - Adam Schwarz
+  - Jakub Jurásek
+award_cs: Odměna za dílčí podnět
+award_en: Special recognition for a specific design contribution
 draft: false
 ---

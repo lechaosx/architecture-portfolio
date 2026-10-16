@@ -18,6 +18,8 @@ const project = {
   from: '2024',
   to: '2024',
   draft: false,
+  team: [],
+  collaborators: [],
   blocks: [],
 };
 
@@ -69,6 +71,14 @@ test('presents the architect and her projects, Czech first', () => {
             location_en: 'Brno, Czechia',
             brief_cs: 'Anotace.',
             brief_en: 'Brief.',
+            status: 'completed',
+            studio: 'Ateliér A',
+            team: ['Jan Novák', 'Eva Dvořáková'],
+            collaborators: [
+              { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
+              { name: 'Ing. Iva Tichá' },
+            ],
+            award_cs: 'Odměna',
             blocks: [
               { type: 'text', body_cs: 'Text projektu.', body_en: 'Project text.' },
               {
@@ -131,6 +141,12 @@ I am an **architect**.
 Brno, Česko / Brno, Czechia · 2024
 
 https://example.cz/projects/galerie/
+
+- Stav / Status: Realizováno / Completed
+- Autorský ateliér / Design studio: Ateliér A
+- Autorský tým / Design team: Jan Novák, Eva Dvořáková
+- Spolupráce / Collaboration: Ing. Petr Malý – vizualizace / Visualizations; Ing. Iva Tichá
+- Ocenění / Award: Odměna
 
 Anotace.
 

@@ -101,6 +101,7 @@ export function profilePage({ site, url }: { site: URL; url: string }) {
 export function creativeWork({
   site,
   url,
+  owner,
   project,
   description,
   images,
@@ -108,12 +109,18 @@ export function creativeWork({
 }: {
   site: URL;
   url: string;
-  project: Pick<Data<'projects'>, 'title_cs' | 'from' | 'to' | 'location_cs'>;
+  /** The architect's name, as the team may list her too. */
+  owner: string;
+  project: Pick<
+    Data<'projects'>,
+    'title_cs' | 'from' | 'to' | 'location_cs' | 'status' | 'studio' | 'team' | 'collaborators' | 'award_cs'
+  >;
   description?: string;
   images: GalleryImage[];
   responsiveImages: (ResponsiveImage | undefined)[];
 }) {
   const location = text(project.location_cs);
+  const studio = text(project.studio);
   return compact({
     '@type': 'CreativeWork',
     name: project.title_cs,
@@ -123,7 +130,20 @@ export function creativeWork({
     description,
     inLanguage: 'cs',
     url,
-    creator: { '@id': personId(site) },
+    creator: [
+      { '@id': personId(site) },
+      ...(studio ? [{ '@type': 'Organization', name: studio }] : []),
+      ...texts(project.team)
+        .filter((name) => name !== owner.trim())
+        .map((name) => ({ '@type': 'Person', name })),
+    ],
+    contributor: project.collaborators.map(({ name, role_cs }) => {
+      const contributor = { '@type': 'Person', name };
+      const roleName = text(role_cs);
+      return roleName ? { '@type': 'Role', roleName, contributor } : contributor;
+    }),
+    award: text(project.award_cs),
+    creativeWorkStatus: project.status && ui.cs[project.status],
     // The cover, the first image, even untitled; then the described ones.
     image: images.flatMap((item, index) => {
       const name = text(item.title_cs);

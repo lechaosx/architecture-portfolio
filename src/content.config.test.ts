@@ -150,6 +150,37 @@ describe('project content schema', () => {
     ).toMatchObject({ success: true, data: { brief_cs: 'Stručně', brief_en: 'Briefly' } });
   });
 
+  test('reads credits, award and status, dropping empty CMS rows', () => {
+    const credits = {
+      status: 'competition',
+      studio: 'Ateliér A',
+      team: ['Jan Novák', 'Eva Dvořáková'],
+      collaborators: [
+        { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
+        { name: 'Ing. Iva Tichá' },
+      ],
+      award_cs: 'Odměna',
+      award_en: 'Special mention',
+    };
+    expect(
+      projectSchema.safeParse({ ...project, ...credits, collaborators: [{}, ...credits.collaborators] }),
+    ).toMatchObject({ success: true, data: credits });
+  });
+
+  test('leaves the team and collaborators empty when they are not filled', () => {
+    expect(projectSchema.safeParse(project)).toMatchObject({
+      success: true,
+      data: { team: [], collaborators: [] },
+    });
+  });
+
+  test.each([
+    ['a status outside the list', { status: 'demolished' }],
+    ['a collaborator without a name', { collaborators: [{ role_cs: 'statika' }] }],
+  ])('rejects %s', (_, fields) => {
+    expect(projectSchema.safeParse({ ...project, ...fields }).success).toBe(false);
+  });
+
   test('treats an empty CMS block row as no content', () => {
     expect(
       projectSchema.safeParse({ ...project, blocks: [{}, imageSet] }),

@@ -49,6 +49,8 @@ export function getStaticPaths() {
     location_en: 'Nowhere',
     location_cs: 'Nikde',
     draft: false,
+    team: [],
+    collaborators: [],
     blocks: [
       { type: 'image_set', images: [item('cover.png')] },
       { type: 'text', body_en: text(6).en, body_cs: text(6).cs },
@@ -106,6 +108,15 @@ export function getStaticPaths() {
     to: undefined,
     blocks: [{ type: 'image_set', images: [item('wide.png')] }],
   });
+  const alphaProject = listed('alpha', {
+    title_en: 'Alpha brief',
+    from: '2025',
+    to: '2025',
+    blocks: [],
+    location_en: 'Prague',
+    brief_en: 'First line\nSecond line',
+    brief_cs: 'První řádek\nDruhý řádek',
+  });
   // Out of order, so the list's sort shows. Old brief has a period as wide as any.
   const briefProjects = [
     listed('old', { title_en: 'Old brief', from: '12/2019', to: '12/2020', blocks: [] }),
@@ -118,14 +129,30 @@ export function getStaticPaths() {
       brief_cs: 'Textový projekt.',
     }),
     gridProject,
-    listed('alpha', {
-      title_en: 'Alpha brief',
-      from: '2025',
-      to: '2025',
+    alphaProject,
+  ];
+
+  // Every credit, a role in Czech only, one without a role, and an award in
+  // Czech only.
+  const credits: Partial<typeof project> = {
+    status: 'competition',
+    studio: 'Studio North | Ing. arch. Jana Nováková',
+    team: ['Jan Novák', 'Eva Dvořáková'],
+    collaborators: [
+      { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
+      { name: 'Ing. Pavel Velký', role_cs: 'statika' },
+      { name: 'Ing. Iva Tichá' },
+    ],
+    award_cs: 'Odměna za dílčí podnět',
+  };
+  const creditProjects = [
+    { ...alphaProject, data: { ...alphaProject.data, ...credits } },
+    listed('credits-only', {
+      title_en: 'Credits only',
+      from: '2024',
+      to: '2024',
       blocks: [],
-      location_en: 'Prague',
-      brief_en: 'First line\nSecond line',
-      brief_cs: 'První řádek\nDruhý řádek',
+      studio: credits.studio,
     }),
   ];
 
@@ -227,9 +254,15 @@ export function getStaticPaths() {
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
+    { params: { fixture: 'work-credits' }, props: { projects: creditProjects } },
     projectWith('brief', project.blocks.slice(0, 1), {
       brief_en: 'A brief for the page.\nSecond line.',
       brief_cs: 'Anotace stránky.\nDruhý řádek.',
+    }),
+    projectWith('credits', project.blocks.slice(0, 1), {
+      brief_en: text(2).en,
+      brief_cs: text(2).cs,
+      ...credits,
     }),
     projectWith('text-only', [{ type: 'text', body_en: text(2).en, body_cs: text(2).cs }]),
     projectWith('vector-only', [{ type: 'gallery', images: [item('vector.svg')] }]),

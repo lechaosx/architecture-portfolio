@@ -36,8 +36,34 @@ content:
       - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec práce na projektu ve stejném tvaru; u projektu z jednoho roku stejný rok jako v poli „Od“. Pokud projekt stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
       - { name: location_cs, label: Místo (česky), type: string, required: false }
       - { name: location_en, label: Místo (anglicky), type: string, required: false }
-      - { name: brief_cs, label: Stručný popis (česky), type: text, required: false }
-      - { name: brief_en, label: Stručný popis (anglicky), type: text, required: false }
+      - { name: brief_cs, label: Stručný popis (česky), type: text, required: false, description: 'Popis projektu. Stav, autorský ateliér a tým, spolupráci a ocenění zadejte do jejich polí níže.' }
+      - { name: brief_en, label: Stručný popis (anglicky), type: text, required: false, description: 'Popis projektu. Stav, autorský ateliér a tým, spolupráci a ocenění zadejte do jejich polí níže.' }
+      - name: status
+        label: Stav
+        type: select
+        required: false
+        options:
+          placeholder: Vyberte stav
+          values:
+            - { name: study, label: Studie }
+            - { name: competition, label: Soutěžní návrh }
+            - { name: permit, label: Povolení stavby }
+            - { name: construction, label: Ve výstavbě }
+            - { name: completed, label: Realizováno }
+      - { name: studio, label: Autorský ateliér, type: string, required: false, description: 'Společný pro oba jazyky, např. „Fránek Architects | prof. Ing. arch. Zdeněk Fránek“.' }
+      - { name: team, label: Autorský tým, type: string, list: true, required: false, description: 'Jedno jméno na položku, společné pro oba jazyky.' }
+      - name: collaborators
+        label: Spolupráce
+        type: object
+        list: true
+        required: false
+        description: 'Jedna osoba na položku.'
+        fields:
+          - { name: name, label: Jméno, type: string, required: true, description: 'Společné pro oba jazyky, např. „Ing. Jiří Železný“.' }
+          - { name: role_cs, label: Role (česky), type: string, required: false, description: 'Např. „vizualizace“.' }
+          - { name: role_en, label: Role (anglicky), type: string, required: false, description: 'Např. „Visualizations“.' }
+      - { name: award_cs, label: Ocenění (česky), type: string, required: false, description: 'Např. „Odměna za dílčí podnět“.' }
+      - { name: award_en, label: Ocenění (anglicky), type: string, required: false }
       - { name: draft, label: Koncept (nezveřejňovat), type: boolean, default: false }
       - name: blocks
         label: Obsah stránky

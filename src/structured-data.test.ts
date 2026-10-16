@@ -108,7 +108,10 @@ describe('creativeWork', () => {
     to: '6/2024',
     location_cs: 'Brno',
     location_en: 'Brno',
+    team: [],
+    collaborators: [],
   };
+  const owner = 'Jana Nováková';
 
   // A drawing 4000px wide, with derivatives up to its own width.
   const drawing = (hash: string): ResponsiveImage => ({
@@ -129,6 +132,7 @@ describe('creativeWork', () => {
       creativeWork({
         site,
         url: 'https://example.cz/projects/galerie/',
+        owner,
         project,
         description: 'Anotace.',
         images: [
@@ -147,7 +151,7 @@ describe('creativeWork', () => {
       description: 'Anotace.',
       inLanguage: 'cs',
       url: 'https://example.cz/projects/galerie/',
-      creator: { '@id': 'https://example.cz/#person' },
+      creator: [{ '@id': 'https://example.cz/#person' }],
       image: [
         {
           '@type': 'ImageObject',
@@ -171,6 +175,7 @@ describe('creativeWork', () => {
     const { image } = creativeWork({
       site,
       url: 'https://example.cz/projects/galerie/',
+      owner,
       project,
       images: [{ image: '/uploads/cover.png', title_cs: 'Pohled' }],
       responsiveImages: [drawing('cover')],
@@ -190,12 +195,54 @@ describe('creativeWork', () => {
         creativeWork({
           site,
           url: 'https://example.cz/projects/galerie/',
+          owner,
           project: { ...project, location_cs: undefined, to: undefined },
           images: [],
           responsiveImages: [],
         }),
       ),
     ).toEqual(['@type', 'name', 'inLanguage', 'url', 'creator']);
+  });
+
+  test('credits the studio, the team and the collaborators, with the award and status, in Czech', () => {
+    expect(
+      creativeWork({
+        site,
+        url: 'https://example.cz/projects/galerie/',
+        owner,
+        project: {
+          ...project,
+          status: 'construction',
+          studio: 'Ateliér A | Ing. arch. Jan Novák',
+          team: ['Jan Novák', 'Jana Nováková', 'Eva Dvořáková'],
+          collaborators: [
+            { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
+            { name: 'Ing. Iva Tichá', role_en: 'Statics' },
+          ],
+          award_cs: 'Odměna',
+        },
+        images: [],
+        responsiveImages: [],
+      }),
+    ).toMatchObject({
+      // The architect is one of the team, and named once.
+      creator: [
+        { '@id': 'https://example.cz/#person' },
+        { '@type': 'Organization', name: 'Ateliér A | Ing. arch. Jan Novák' },
+        { '@type': 'Person', name: 'Jan Novák' },
+        { '@type': 'Person', name: 'Eva Dvořáková' },
+      ],
+      contributor: [
+        {
+          '@type': 'Role',
+          roleName: 'vizualizace',
+          contributor: { '@type': 'Person', name: 'Ing. Petr Malý' },
+        },
+        { '@type': 'Person', name: 'Ing. Iva Tichá' },
+      ],
+      award: 'Odměna',
+      creativeWorkStatus: 'Ve výstavbě',
+    });
   });
 });
 

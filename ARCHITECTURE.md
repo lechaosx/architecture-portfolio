@@ -65,9 +65,9 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
 - Metadata, structured-data and alt-text tests use fixture project pages; the
   `llms.txt` test checks it against the shipped projects and follows its links
   — [Implicit].
-- The work page's index and the brief and text-only project pages are tested
-  through fixture projects; other landing, About, work-page, footer and
-  transition tests use the shipped content — [Implicit].
+- The work page's index and the brief, credits and text-only project pages
+  are tested through fixture projects; other landing, About, work-page, footer
+  and transition tests use the shipped content — [Implicit].
 
 ---
 
@@ -210,6 +210,20 @@ cards with a cover and the index, so the share image that falls back to the
 newest cover always matches the first card, and `llms.txt` lists projects in
 the same order.
 
+### One fact-sheet model — [Implicit]
+
+`src/project-facts.ts` turns a project into its sheet's filled rows, each a
+label key and lines of names and text in both languages, marked with the one
+language a row is filled in. Names stay separate items so the sheet can keep
+each one whole on its line while `llms.txt` gets plain text.
+`ProjectFacts.astro` renders the rows on the project page and in the work
+index, the index opens a row that has any, and `llms.txt` lists them, so the
+three cannot disagree. The label column has a fixed width that fits the
+longest label in either language, so values line up across projects; a
+container query puts labels above values where the sheet is too narrow for
+that column, as the sheet is half the page on a project page and narrower in
+the index.
+
 ### Section headings own their row — [Implicit]
 
 `SectionHeading` draws the small caps and the rule over a section of About or
@@ -230,10 +244,10 @@ edges.
 
 ### The work index expands with native `<details>` — [Explicit]
 
-A row with a brief is a `<details>` whose `<summary>` is the row, so it opens
-without JavaScript, from the keyboard and on find-in-page. Only the **+**/**−**
-turns; the brief shows at once, with no height animation to wait for —
-[Implicit].
+A row with a brief or credits is a `<details>` whose `<summary>` is the row,
+so it opens without JavaScript, from the keyboard and on find-in-page. Only
+the **+**/**−** turns; the brief shows at once, with no height animation to
+wait for — [Implicit].
 
 ### Reveal on scroll: IntersectionObserver — [Implicit]
 
@@ -375,7 +389,10 @@ language-tagged ones. Her location is `Person.workLocation`, a `Place`.
 Credentials are named "programme, school (period)" and awards "award, placement
 (period)"; `award` is plain text. A project's `dateCreated` is the end of its
 period in ISO 8601 ("2024", "2024-06"), when her work on it was done, so an
-ongoing project has none.
+ongoing project has none. Its `creator` is her, then the studio as an
+`Organization` and the team as `Person`s, leaving out her own name; each
+collaborator is a `contributor`, wrapped in a `Role` when a Czech role is
+filled. Its award is `award` and its status `creativeWorkStatus`, as text.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 
@@ -419,7 +436,9 @@ into one `<p>` per paragraph (Approach texts and fact descriptions).
 ### Paired `_cs`/`_en` fields — [Implicit]
 
 One file and one CMS form per entry; language-neutral fields (images, period
-dates, email, phone) stay single. The project route is the filename-derived content
+dates, email, phone, a project's studio, team and collaborators' names) stay
+single. A project's status stores a stable value, labelled in `src/i18n.ts`
+under the same key. The project route is the filename-derived content
 ID, so the filename is the only source of the slug.
 
 ---

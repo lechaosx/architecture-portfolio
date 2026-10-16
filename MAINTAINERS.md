@@ -29,9 +29,9 @@ npm run images       # regenerate responsive images (dev and build run it)
   directly, run `npm run pretest:e2e` first.
 - Lightbox and carousel tests use test-only pages in `tests/e2e/pages/`, served
   under `/e2e/`, with images in `tests/e2e/images/`. The work page's index and
-  the brief and text-only project pages are tested through fixture projects,
-  the landing and About pages through fixture data; other landing, About, work
-  and footer tests use the real content.
+  the brief, credits and text-only project pages are tested through fixture
+  projects, the landing and About pages through fixture data; other landing,
+  About, work and footer tests use the real content.
 - `/e2e/project/` is frozen: tests address its images by position (`#image-N`).
   For a new case, add a fixture entry in `tests/e2e/pages/[fixture].astro`
   instead of inserting images there.
@@ -54,6 +54,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/pages/llms.txt.ts`, `src/pages/robots.txt.ts` | the `/llms.txt` and `/robots.txt` endpoints |
 | `src/components/Gallery.svelte`, `Lightbox*.svelte`, `lightbox-*.ts`, `gallery.ts` | the project lightbox |
 | `src/components/ProjectBlocks.astro` | project blocks |
+| `src/project-facts.ts`, `src/components/ProjectFacts.astro` | a project's fact sheet: place, period, status, credits and award |
 | `scripts/generate-responsive-images.ts` | image pipeline → `public/_responsive/` (gitignored) |
 | `tests/e2e/` | browser tests and their pages |
 | `.github/workflows/deploy.yml` | test, build, deploy |

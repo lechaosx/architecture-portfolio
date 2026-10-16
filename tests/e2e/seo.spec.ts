@@ -164,7 +164,7 @@ test.describe(() => {
       dateCreated: '2026-06',
       locationCreated: { '@type': 'Place', name: 'Nikde' },
       url: `${origin}/e2e/project/`,
-      creator: { '@id': `${origin}/#person` },
+      creator: [{ '@id': `${origin}/#person` }],
     });
     const images = work.image as Record<string, string>[];
     // The untitled cover comes first, as the lightbox's largest derivative.

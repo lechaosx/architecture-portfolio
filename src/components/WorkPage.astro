@@ -1,10 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
+import ProjectFacts from './ProjectFacts.astro';
 import ProjectGrid from './ProjectGrid.astro';
 import T from './T.astro';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { formatPeriod } from '../period';
+import { projectFacts } from '../project-facts';
 import { workProjects, type Project } from '../projects';
 import { getResponsiveImage } from '../server-images';
 
@@ -51,6 +53,7 @@ const marker = 'col-start-3 row-start-1 justify-self-end sm:col-start-4';
         >
           {listed.map(({ id, data }) => {
             const hasBrief = Boolean(data.brief_cs || data.brief_en);
+            const facts = projectFacts(data);
             const cells = (
               <>
                 <T {...formatPeriod(data)} class="col-start-1 row-span-2 row-start-1 text-sm text-neutral-500 tabular-nums" />
@@ -74,7 +77,7 @@ const marker = 'col-start-3 row-start-1 justify-self-end sm:col-start-4';
                     {cells}
                     <span aria-hidden="true" class={marker}>→</span>
                   </a>
-                ) : hasBrief ? (
+                ) : hasBrief || facts.length > 0 ? (
                   <details class="group/row">
                     <summary class={`group ${row} cursor-pointer list-none py-3 [&::-webkit-details-marker]:hidden`}>
                       {cells}
@@ -84,12 +87,17 @@ const marker = 'col-start-3 row-start-1 justify-self-end sm:col-start-4';
                       </span>
                     </summary>
                     <div class={`${row} pb-5`}>
-                      <T
-                        as="p"
-                        cs={data.brief_cs}
-                        en={data.brief_en}
-                        class="running-text col-span-full max-w-prose text-sm whitespace-pre-line text-neutral-700 sm:col-start-2 sm:col-end-4"
-                      />
+                      <div class="col-span-full max-w-prose space-y-5 sm:col-start-2 sm:col-end-4">
+                        {hasBrief && (
+                          <T
+                            as="p"
+                            cs={data.brief_cs}
+                            en={data.brief_en}
+                            class="running-text text-sm whitespace-pre-line text-neutral-700"
+                          />
+                        )}
+                        {facts.length > 0 && <ProjectFacts {facts} />}
+                      </div>
                     </div>
                   </details>
                 ) : (
