@@ -19,7 +19,7 @@ const languages = [
   languages.map(
     ({ lang, text }) =>
       text && (
-        <div {lang} class={cls}>
+        <div {lang} class:list={['running-text', cls]}>
           {text.split(/\s*\n\s*/).map((paragraph) => (
             <p>{paragraph}</p>
           ))}

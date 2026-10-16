@@ -12,7 +12,7 @@ const { cs, en } = Astro.props;
 const render = (md: string) => marked.parse(md, { async: false });
 // Splits into balanced columns only where each keeps a comfortable measure
 // (https://webtypography.net/2.1.2); `ch` follows the font's metrics and size.
-const cls = 'prose prose-neutral max-w-none columns-[35ch_2] gap-12 dark:prose-invert';
+const cls = 'running-text prose prose-neutral max-w-none columns-[35ch_2] gap-12 dark:prose-invert';
 ---
 
 <div lang="cs" class={cls} set:html={render(cs)} /><div

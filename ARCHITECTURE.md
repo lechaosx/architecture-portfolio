@@ -264,9 +264,14 @@ Choose units by what the value should scale with:
 ### Typography plugin, rendered with `marked` — [Implicit]
 
 `prose` styles the Markdown bodies. They are bilingual frontmatter fields, not
-the file body, so `Prose.astro` renders them with `marked`. `.prose` justifies
-and hyphenates, and each language's wrapper carries its `lang` so the browser
-picks the right dictionary — [Explicit].
+the file body, so `Prose.astro` renders them with `marked`.
+
+### One class for running text — [Implicit]
+
+`.running-text` in `global.css` justifies and hyphenates every piece of running
+text (`Prose.astro`, `Paragraphs.astro`, briefs, the lightbox back), and the
+element or its wrapper carries `lang` so the browser picks the right dictionary
+— [Explicit].
 
 ### Text columns follow the container — [Implicit]
 

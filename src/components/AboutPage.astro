@@ -117,12 +117,12 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
                             en={row.department_en}
                             class="text-sm text-balance text-neutral-500 empty:hidden"
                           />
-                          <Paragraphs
-                            cs={row.description_cs}
-                            en={row.description_en}
-                            class="mt-2 space-y-3 text-sm text-neutral-700"
-                          />
                         </div>
+                        <Paragraphs
+                          cs={row.description_cs}
+                          en={row.description_en}
+                          class="col-span-full mt-2 space-y-3 text-sm text-neutral-700 sm:col-start-2"
+                        />
                       </li>
                     ))}
                   </ul>

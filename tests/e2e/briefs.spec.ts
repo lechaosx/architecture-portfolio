@@ -87,6 +87,45 @@ test('a row with a brief expands in place to show it with the author line breaks
   await expect(brief).toBeVisible();
 });
 
+test('an opened brief hangs under the title on wide screens and spans the row on phones', async ({
+  page,
+}) => {
+  await page.goto('/e2e/work/');
+  const row = rows(page).nth(0);
+  await row.getByText('Alpha brief').click();
+  const brief = row.getByText('First line').filter({ visible: true });
+  for (const width of [1280, 640, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [briefBox, period, title, rowBox] = await Promise.all([
+      brief.boundingBox(),
+      row.getByText('2025').filter({ visible: true }).boundingBox(),
+      row.getByText('Alpha brief').boundingBox(),
+      row.boundingBox(),
+    ]);
+    if (width >= 640) {
+      expect(briefBox!.x, `${width}px`).toBeCloseTo(title!.x, 0);
+    } else {
+      expect(briefBox!.x, `${width}px`).toBeCloseTo(period!.x, 0);
+      expect(briefBox!.x + briefBox!.width, `${width}px`).toBeCloseTo(rowBox!.x + rowBox!.width, 0);
+    }
+  }
+});
+
+test('an author line break in a brief ends its line short', async ({ page }) => {
+  await page.goto('/e2e/work/');
+  const row = rows(page).nth(0);
+  await row.getByText('Alpha brief').click();
+  const [firstLine, width] = await row
+    .getByText('First line')
+    .filter({ visible: true })
+    .evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return [range.getClientRects()[0].width, element.clientWidth];
+    });
+  expect(firstLine).toBeLessThan(width / 2);
+});
+
 test('a row whose project has a page links to it, and a bare row does neither', async ({ page }) => {
   await page.goto('/e2e/work/');
   await expect(rows(page).nth(0).getByRole('link')).toHaveCount(0);

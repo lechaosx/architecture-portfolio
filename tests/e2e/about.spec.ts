@@ -115,6 +115,21 @@ test('a fact description keeps the author’s paragraphs in both languages', asy
   ], visibleText);
 });
 
+test('a fact description sits under the title on wide screens and spans the row on phones', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  for (const width of [1280, 640, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [description, period, title, department] = await Promise.all([
+      box(page, 'Permit drawings.'),
+      box(page, '2024–present'),
+      box(page, 'Architect'),
+      box(page, 'Housing team'),
+    ]);
+    expect(description.y, `${width}px`).toBeGreaterThan(department.y + department.height);
+    expect(description.x, `${width}px`).toBeCloseTo(width >= 640 ? title.x : period.x, 0);
+  }
+});
+
 test('services are a plain list in the visitor’s language', async ({ page }) => {
   await page.goto('/e2e/about/');
   await expect(section(page, 'Services').getByRole('listitem')).toHaveText(

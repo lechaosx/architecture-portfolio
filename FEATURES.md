@@ -50,8 +50,12 @@ her list, has no free web licence.
 
 ### Justified, hyphenated prose — [Explicit]
 
-Rich-text bodies and image descriptions are justified with automatic
-hyphenation in the right language's rules. Labels, metadata and titles are not.
+Running text — rich-text bodies, project briefs, About's Approach texts and row
+descriptions, and image descriptions — is justified with automatic hyphenation
+in the right language's rules; a brief's own line breaks still end their lines
+short. Labels, metadata and titles are not justified. On phones, index briefs
+and About descriptions span their row's full width, so justified lines keep a
+comfortable measure — [Implicit].
 
 ---
 

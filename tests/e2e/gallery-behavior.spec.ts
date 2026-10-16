@@ -773,6 +773,8 @@ test('the description is on the back of the drawing', async ({ page }) => {
   ).toBeVisible();
   const paragraph = text.locator('p');
   await expect(paragraph).toHaveCSS('text-align', 'justify');
+  await expect(paragraph).toHaveCSS('hyphens', 'auto');
+  expect(await paragraph.evaluate((element) => element.closest('[lang]')!.getAttribute('lang'))).toBe('en');
   expect((await paragraph.boundingBox())!.width).toBeLessThanOrEqual(672);
   const [textBox, closeBox, nextBox] = await Promise.all([
     text.locator('article').boundingBox(),
