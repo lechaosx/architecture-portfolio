@@ -232,6 +232,13 @@ container query puts labels above values where the sheet is too narrow for
 that column, as the sheet is half the page on a project page and narrower in
 the index.
 
+### Footer layout follows its content — [Implicit]
+
+A local ResizeObserver measures the contact items, copyright and switches to
+choose one complete row, a centered contact row above the controls, or stacked
+contacts. Intrinsic widths keep the transitions tied to the editable content
+and the active language.
+
 ### Section headings own their row — [Implicit]
 
 `SectionHeading` draws the small caps and the rule over a section of About or
@@ -311,7 +318,9 @@ column too narrow. Both render through `Prose.astro`, which holds the rule.
 The minimum uses `ch` to follow the font's metrics and size; it approximates
 character count for proportional text. Text fills the available width and
 reflows on resize without client-side JavaScript, allowing longer single lines
-until both columns fit.
+until both columns fit. About’s intro grid uses the same minimum for its text
+and portrait tracks, so the portrait occupies the rightmost equal column or
+fills the width below the text.
 
 ### Self-hosted Roboto via @fontsource — [Implicit]
 
@@ -434,7 +443,10 @@ visitors get the source language; the inline script then picks the visitor's.
 
 An `is:inline` head script sets `data-lang` and the tab title before first
 paint; a module script in `Base.astro` wires the toggle and syncs `<title>`, the
-meta description and image alt text.
+meta description and image alt text. On a toggle it synchronously notifies the
+footer to recompute its layout, then compensates scroll by the button’s
+change in position, preserving the activated control through translation
+reflow — [Implicit].
 
 ### Bilingual alt text: one attribute, swapped — [Implicit]
 

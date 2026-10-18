@@ -6,7 +6,6 @@ import T from './T.astro';
 import Paragraphs from './Paragraphs.astro';
 import Prose from './Prose.astro';
 import SectionHeading from './SectionHeading.astro';
-import { site } from '../singletons';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { getResponsiveImage } from '../server-images';
@@ -40,24 +39,22 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
   graph={[profilePage({ site: origin, url: new URL(Astro.url.pathname, origin).href })]}
 >
   <div class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
-    <div class="grid items-start gap-10 md:grid-cols-2 md:gap-12">
-      <div class:list={['reveal min-w-0', { 'md:col-span-2': !about.portrait }]}>
-        <h1 class="text-4xl font-medium tracking-tight text-balance sm:text-5xl">{site.name}</h1>
-        <div class="mt-8">
-          <Prose cs={about.body_cs} en={about.body_en} />
-        </div>
+    <T as="h1" k="about" class="sr-only" />
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,35ch),1fr))] items-start gap-12">
+      <div class="reveal min-w-0">
+        <Prose cs={about.body_cs} en={about.body_en} />
       </div>
       {
         about.portrait && (
           <img
             src={displayImageUrl(responsivePortrait, about.portrait)}
             srcset={responsiveSrcset(responsivePortrait, THUMBNAIL_WIDTHS)}
-            sizes="(min-width: 1152px) 528px, (min-width: 768px) calc((100vw - 96px) / 2), (min-width: 496px) 448px, calc(100vw - 48px)"
+            sizes="(min-width: 1152px) 528px, (min-width: 726px) calc((100vw - 96px) / 2), calc(100vw - 48px)"
             width={responsivePortrait?.source.width}
             height={responsivePortrait?.source.height}
             alt=""
             loading="lazy"
-            class="reveal w-full max-w-md bg-neutral-100 md:max-w-none"
+            class="reveal w-full bg-neutral-100"
           />
         )
       }

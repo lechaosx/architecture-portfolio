@@ -12,8 +12,9 @@ brief_en: >-
   Development of the architectural design for the Municipal Library in Boskovice
   as part of an open, single-stage architectural design competition.
 status: competition
-studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
+studio: Fránek Architects
 collaborators:
+  - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. arch. Libor Šenekel
     role_cs: vizualizace
     role_en: Visualizations

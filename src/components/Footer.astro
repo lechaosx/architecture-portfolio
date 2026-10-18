@@ -6,17 +6,16 @@ import T from './T.astro';
 
 const year = new Date().getFullYear();
 const { email, phone, hours_cs, hours_en } = contact;
-const item = 'flex items-center gap-2 whitespace-nowrap';
+const item = 'flex w-max items-center gap-2 whitespace-nowrap';
 const icon = 'size-3.5 shrink-0 text-neutral-500';
 ---
 
-{/* Contacts come first in the source and below lg; from lg one row reads
-    ©, contacts, switches. */}
 <footer class="border-t border-black text-sm text-neutral-600">
   <div
-    class="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-y-4 px-6 py-6 lg:grid-cols-[repeat(3,auto)] lg:justify-between lg:gap-x-12"
+    data-footer-layout="stack"
+    class="mx-auto grid max-w-6xl items-center gap-x-12 gap-y-4 px-6 py-6"
   >
-    <ul class="col-span-2 flex flex-col gap-x-6 gap-y-2 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:flex-row">
+    <ul class="footer-contacts flex w-max flex-col gap-x-6 gap-y-2">
       <li class={item}>
         <ContactIcon icon="email" class={icon} />
         <a href={`mailto:${email}`} class="text-link">{email}</a>
@@ -36,56 +35,107 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
       )}
     </ul>
 
-    <p class="lg:col-start-1 lg:row-start-1">© {year} {site.name}</p>
+    <div class="footer-details flex items-center justify-between">
+      <p class="footer-copyright w-max">© {year} {site.name}</p>
 
-    {/* Pulled out by the buttons' inner space, so the switches end on the page edge. */}
-    <div class="-mr-2 flex items-center gap-3 lg:col-start-3 lg:row-start-1">
-      <button
-        type="button"
-        data-theme-toggle
-        class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
-      >
-        <span class="relative block size-4">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="theme-icon-sun absolute inset-0 size-4"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-          </svg>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="theme-icon-moon absolute inset-0 size-4"
-            aria-hidden="true"
-          >
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
-          </svg>
-        </span>
-        <T k="switchTheme" class="sr-only" />
-      </button>
+      {/* Pulled out by the buttons' inner space, so the switches end on the page edge. */}
+      <div class="footer-switches -mr-2 flex items-center gap-3">
+        <button
+          type="button"
+          data-theme-toggle
+          class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
+        >
+          <span class="relative block size-4">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="theme-icon-sun absolute inset-0 size-4"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+            </svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="theme-icon-moon absolute inset-0 size-4"
+              aria-hidden="true"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+            </svg>
+          </span>
+          <T k="switchTheme" class="sr-only" />
+        </button>
 
-      <button
-        type="button"
-        data-lang-toggle
-        class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
-      >
-        <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
-          <span class="language-option-cs absolute inset-0" aria-hidden="true">CZ</span>
-          <span class="language-option-en absolute inset-0" aria-hidden="true">EN</span>
-        </span>
-        <T k="switchLanguage" class="sr-only" />
-      </button>
+        <button
+          type="button"
+          data-lang-toggle
+          class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
+        >
+          <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
+            <span class="language-option-cs absolute inset-0" aria-hidden="true">CZ</span>
+            <span class="language-option-en absolute inset-0" aria-hidden="true">EN</span>
+          </span>
+          <T k="switchLanguage" class="sr-only" />
+        </button>
+      </div>
     </div>
   </div>
 </footer>
+
+<style>
+  [data-footer-layout='contacts'] .footer-contacts,
+  [data-footer-layout='full'] .footer-contacts {
+    flex-direction: row;
+    justify-self: center;
+  }
+  [data-footer-layout='full'] {
+    grid-template-columns: repeat(3, auto);
+    justify-content: space-between;
+  }
+  [data-footer-layout='full'] .footer-details {
+    display: contents;
+  }
+  [data-footer-layout='full'] .footer-contacts {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  [data-footer-layout='full'] .footer-copyright {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  [data-footer-layout='full'] .footer-switches {
+    grid-column: 3;
+    grid-row: 1;
+  }
+</style>
+
+<script>
+  const row = document.querySelector<HTMLElement>('[data-footer-layout]')!;
+  const contacts = row.querySelector<HTMLElement>('ul')!;
+  const items = Array.from(contacts.children) as HTMLElement[];
+  const copyright = row.querySelector<HTMLElement>('.footer-copyright')!;
+  const switches = row.querySelector<HTMLElement>('.footer-switches')!;
+  function fitFooter() {
+    const style = getComputedStyle(row);
+    const available = row.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const contactWidth = items.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0)
+      + Math.max(0, items.length - 1) * parseFloat(getComputedStyle(contacts).columnGap);
+    const fullWidth = contactWidth + copyright.getBoundingClientRect().width
+      + switches.getBoundingClientRect().width + parseFloat(getComputedStyle(switches).marginRight)
+      + 2 * parseFloat(style.columnGap);
+    row.dataset.footerLayout = fullWidth <= available ? 'full' : contactWidth <= available ? 'contacts' : 'stack';
+  }
+  const observer = new ResizeObserver(fitFooter);
+  for (const element of [row, copyright, switches, ...items]) observer.observe(element);
+  document.addEventListener('site:languagechange', fitFooter);
+  fitFooter();
+</script>

@@ -20,7 +20,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   page,
 }) => {
   await page.goto('/e2e/credits/');
-  expect(await labels(page)).toEqual(['Location', 'Period', 'Status', 'Design studio', 'Design team', 'Collaboration']);
+  expect(await labels(page)).toEqual(['Location', 'Period', 'Phase', 'Design studio', 'Design team', 'Collaboration']);
   expect(await values(page)).toEqual([
     'Nowhere',
     '3/2025–6/2026',
@@ -36,7 +36,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   expect(await labels(page)).toEqual([
     'Místo',
     'Období',
-    'Stav',
+    'Fáze',
     'Autorský ateliér',
     'Autorský tým',
     'Spolupráce',
@@ -147,7 +147,7 @@ test('an opened index row shows the brief, then the sheet without the place and 
   const row = page.locator('main ul > li').nth(0);
   await row.getByText('Alpha brief').click();
   const opened = row.locator('details > div');
-  expect(await labels(opened)).toEqual(['Status', 'Design studio', 'Design team', 'Collaboration']);
+  expect(await labels(opened)).toEqual(['Phase', 'Design studio', 'Design team', 'Collaboration']);
 
   const briefText = row.getByText('First line').filter({ visible: true });
   const [briefBox, sheetBox] = await Promise.all([briefText.boundingBox(), sheet(row).boundingBox()]);

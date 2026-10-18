@@ -14,7 +14,7 @@ brief_en: >-
   Gallery at the Automatic Mills complex in Pardubice, as part of an open,
   anonymous, single-stage architectural design competition.
 status: competition
-studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
+studio: Fránek Architects
 team:
   - Jan Žahour
   - Michal Škoda
@@ -24,6 +24,8 @@ team:
   - Pavel Lauš
   - Adam Schwarz
   - Jakub Jurásek
+collaborators:
+  - name: prof. Ing. arch. Zdeněk Fránek
 award_cs: Odměna za dílčí podnět
 award_en: Special recognition for a specific design contribution
 draft: false

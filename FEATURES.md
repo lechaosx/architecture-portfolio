@@ -123,7 +123,7 @@ Studie · Soutěžní návrh · Povolení stavby · Ve výstavbě · Realizován
 Competition entry · Building permit · Under construction · Completed) —
 [Explicit]. The project page shows them with its place and period, which move
 there from under the title, as a fact sheet of rows with small-caps labels:
-Místo, Období, Stav, Autorský ateliér, Autorský tým, Spolupráce (one line per
+Místo, Období, Fáze or Stav, Autorský ateliér, Autorský tým, Spolupráce (one line per
 person, "name – role") and Ocenění, each row only when filled. The brief and
 the sheet share the page in About's two equal columns and stack on phones,
 and the credits are not justified. An opened index row shows the brief and
@@ -136,6 +136,13 @@ every project; where the sheet is narrow, as on phones, labels sit above
 their values. A name never breaks across lines. A text or role filled in one
 language shows only in that language. A row with credits but no brief opens
 to its sheet.
+
+### Project phase and status — [Implicit]
+
+Study, competition entry and building permit use the label **Fáze / Phase**;
+under construction and completed use **Stav / Status**. The design-studio
+field holds the atelier name; individual collaborators belong in Spolupráce
+with an optional role — [Explicit].
 
 ### A project without content blocks has no page — [Explicit]
 
@@ -196,8 +203,9 @@ page, so there is no separate Contact page — [Explicit].
 
 The small-caps heading over a black rule marks a section inside a page and
 never titles one. The landing page opens with her images, Work with its covers
-and About with her name; the menu, which shows the current page inverted, says
-where the visitor is. Work's title is there only for screen readers and search.
+and About with her bio; the menu, which shows the current page inverted, says
+where the visitor is. Work and About titles are there only for screen readers
+and search.
 
 ### Landing page — [Explicit]
 
@@ -226,10 +234,11 @@ auto-advance added, its images cropped to fill the frame — [Implicit].
 
 ### About page — [Explicit]
 
-Her name opens the page as an assertive title. The name and bio sit beside the
-portrait in equal columns on wide screens and above it on phones. Then
-Approach, then the facts, which end the page. Everything but the contacts is
-edited in the one **O mně** entry.
+The bio opens the page, with an accessible About heading; the name already
+appears in the header. The portrait sits in an equal-width column on the
+right when both columns keep a comfortable text measure; otherwise the bio
+and portrait each fill the page width, text first. Approach and the facts
+follow, all edited in the one **O mně** entry.
 
 The bio follows the project text's column rule: balanced columns where each
 keeps a comfortable width, else one — [Explicit]. Beside the portrait it is
@@ -241,7 +250,7 @@ Services, work experience, education and awards are each a quiet plain-text
 list under its own section heading. A row reads period, then title and place,
 with the department or category under it in grey and its description, if
 filled, below. Services are a plain list. An empty group shows no heading, so
-with nothing filled About is the name and bio. Rows keep the order they are
+with nothing filled About is the bio. Rows keep the order they are
 entered in.
 
 The layout — [Implicit]: the groups pair up in two columns on wide screens, on
@@ -296,9 +305,11 @@ Call hours use a clock icon and a call-hours label for screen readers —
 The layout — [Implicit]: on wide screens one line, the © on the left, the
 contacts in the middle and the theme and language switches on the right; each
 contact has its icon, which also separates it from the next.
-All of it is in the footer's small grey type — [Explicit]. On phones and
-tablets the contacts stack one per line on the page's left edge, icons and text
-each in a column, then the © and the switches in one row — [Explicit].
+All of it is in the footer's small grey type — [Explicit]. When the complete
+row no longer fits, the contacts stay centered on the first line, with © and
+the switches on the second. Only when that contact line does not fit do the
+contacts stack on the page's left edge, icons and text each in a column,
+followed by © and the switches in one row — [Explicit].
 
 ### Custom 404 page — [Explicit]
 
@@ -324,6 +335,12 @@ For visitors, the language comes from a saved choice, else the browser, else
 English. The footer button shows the language it switches _to_, switches without
 a reload and saves the choice. It sits in the footer, not the nav, because with
 auto-detection it is a fallback, and in the nav it confused the architect.
+
+### Language switching keeps the button in place — [Explicit]
+
+Switching languages preserves the activated button’s position in the viewport
+as translated content changes height, so the visitor can switch back without
+chasing the control.
 
 ### Czech in the page as served — [Explicit]
 

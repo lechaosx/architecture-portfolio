@@ -26,7 +26,7 @@ test('lists the filled credits, award and status in sheet order, names kept as i
       award_en: 'Special mention',
     }),
   ).toEqual([
-    { label: 'status', lines: [{ names: [], cs: 'Soutěžní návrh', en: 'Competition entry' }] },
+    { label: 'phase', lines: [{ names: [], cs: 'Soutěžní návrh', en: 'Competition entry' }] },
     {
       label: 'studio',
       lines: [{ names: [], cs: 'Ateliér A | Ing. arch. Jan Novák', en: 'Ateliér A | Ing. arch. Jan Novák' }],
@@ -59,4 +59,14 @@ test('a text filled in one language shows only in that language', () => {
 
 test('has no rows when nothing is filled', () => {
   expect(projectFacts(project)).toEqual([]);
+});
+
+test.each([
+  ['study', 'phase', 'Studie', 'Study'],
+  ['competition', 'phase', 'Soutěžní návrh', 'Competition entry'],
+  ['permit', 'phase', 'Povolení stavby', 'Building permit'],
+  ['construction', 'status', 'Ve výstavbě', 'Under construction'],
+  ['completed', 'status', 'Realizováno', 'Completed'],
+] as const)('%s uses the appropriate phase or status label in both languages', (status, label, cs, en) => {
+  expect(projectFacts({ ...project, status })).toEqual([{ label, lines: [{ names: [], cs, en }] }]);
 });

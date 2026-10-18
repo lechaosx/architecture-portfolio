@@ -226,7 +226,9 @@ const structuredData = jsonLd([
       document.addEventListener('click', (event) => {
         if (!(event.target instanceof Element)) return;
         const root = document.documentElement;
-        if (event.target.closest('[data-lang-toggle]')) {
+        const languageButton = event.target.closest('[data-lang-toggle]');
+        if (languageButton) {
+          const buttonTop = languageButton.getBoundingClientRect().top;
           const lang = root.dataset.lang === 'cs' ? 'en' : 'cs';
           try {
             localStorage.setItem('lang', lang);
@@ -234,6 +236,11 @@ const structuredData = jsonLd([
           root.dataset.lang = lang;
           root.lang = lang;
           applyLang();
+          document.dispatchEvent(new Event('site:languagechange'));
+          window.scrollBy({
+            top: languageButton.getBoundingClientRect().top - buttonTop,
+            behavior: 'instant',
+          });
         } else if (event.target.closest('[data-theme-toggle]')) {
           const theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
           try {

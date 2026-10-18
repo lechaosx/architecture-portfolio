@@ -12,8 +12,9 @@ brief_en: >-
   Collaboration on the interior design of the library in Nedvědice, including
   spatial layout, material selection, custom furniture design, and the design of
   the adjoining courtyard.
-studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
+studio: Fránek Architects
 collaborators:
+  - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. Jiří Železný
 draft: false
 ---

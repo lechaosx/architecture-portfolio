@@ -18,8 +18,9 @@ brief_en: >-
   public authorities and utility providers, obtaining the necessary approvals
   and statements, and submitting the building permit application to the relevant
   building authority.
-studio: Fránek Architects | prof. Ing. arch. Zdeněk Fránek
+studio: Fránek Architects
 collaborators:
+  - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. Jiří Železný
 draft: false
 ---

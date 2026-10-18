@@ -52,7 +52,10 @@ export function projectFacts(
           ...pair('period', period?.cs, period?.en),
         ]
       : []),
-    ...(status ? [{ label: 'status' as const, lines: [text(ui.cs[status], ui.en[status])] }] : []),
+    ...(status ? [{
+      label: status === 'construction' || status === 'completed' ? 'status' as const : 'phase' as const,
+      lines: [text(ui.cs[status], ui.en[status])],
+    }] : []),
     ...(studio ? [{ label: 'studio' as const, lines: [text(studio)] }] : []),
     ...(team.length > 0 ? [{ label: 'team' as const, lines: [{ names: team, cs: '', en: '' }] }] : []),
     ...(collaborators.length > 0

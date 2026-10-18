@@ -1,10 +1,4 @@
-import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { parse } from 'yaml';
-
-const site = parse(
-  readFileSync('src/content/singletons/site.md', 'utf8').split('---')[1],
-);
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -18,24 +12,18 @@ const section = (page: Page, heading: string | RegExp) =>
 const box = async (page: Page, text: string) =>
   (await page.locator('main').getByText(text, { exact: true }).filter({ visible: true }).boundingBox())!;
 
-test('her name is the page title and opens the page, as the identity line does on the landing page', async ({
-  page,
-}) => {
-  const gapUnderHeader = async () => {
-    const header = (await page.locator('body > header').boundingBox())!;
-    return (await page.locator('main h1:visible').boundingBox())!.y - header.y - header.height;
-  };
-  for (const width of [1280, 390]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto('/e2e/landing-bare/');
-    const lineGap = await gapUnderHeader();
-    await page.goto('/e2e/about/');
-    expect(await gapUnderHeader(), `${width}px`).toBeCloseTo(lineGap, 0);
-  }
-  await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText(site.name);
+test('the bio opens About without repeating the wordmark as a visible title', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  await expect(page.locator('main h1:visible')).toHaveText('About');
+  await expect(page.locator('main h1:visible')).toHaveClass(/sr-only/);
+  const header = (await page.locator('body > header').boundingBox())!;
+  const bio = (await page.locator('main .prose:visible').boundingBox())!;
+  expect(bio.y - header.y - header.height).toBeCloseTo(64, 0);
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await expect(page.locator('main h1:visible')).toHaveText('O mně');
 });
 
-test('the name and bio sit beside the portrait on wide screens, above it on phones', async ({
+test('the bio sits beside the portrait on wide screens, above it on phones', async ({
   page,
 }) => {
   await page.goto('/e2e/about/');
@@ -143,11 +131,32 @@ test('services are a plain list in the visitor’s language', async ({ page }) =
   );
 });
 
-test('with nothing optional filled, only the name and bio remain', async ({ page }) => {
+test('with nothing optional filled, only the bio and accessible page title remain', async ({ page }) => {
   await page.goto('/e2e/about-bare/');
-  await expect(page.locator('main').getByRole('heading')).toHaveText([site.name]);
+  await expect(page.locator('main').getByRole('heading').filter({ visible: true })).toHaveText(['About']);
   await expect(page.locator('main img')).toHaveCount(0);
   await expect(page.locator('main .prose:visible')).toBeVisible();
+});
+
+test('the portrait shares the readable column width through the tablet and zoom transition', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  await page.evaluate(() => document.fonts.ready);
+  for (const width of [700, 725, 726, 740, 767, 768, 800, 1280]) {
+    await page.setViewportSize({ width, height: 1280 });
+    const bio = page.locator('main .prose:visible');
+    const [b, p] = await Promise.all([bio.boundingBox(), page.locator('main img').first().boundingBox()]);
+    const textColumns = await bio.locator('p').first().evaluate((p) => p.getClientRects().length);
+    expect(textColumns, `${width}px`).toBe(1);
+    expect(p!.width, `${width}px`).toBeCloseTo(b!.width, 0);
+    if (width >= 726) {
+      expect(p!.y, `${width}px`).toBeCloseTo(b!.y, 0);
+      expect(p!.x, `${width}px`).toBeGreaterThan(b!.x + b!.width);
+    } else {
+      expect(b!.width, `${width}px`).toBeCloseTo(width - 48, 0);
+      expect(p!.y, `${width}px`).toBeGreaterThan(b!.y + b!.height);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
 });
 
 test('Approach is two columns on wide screens and one on phones', async ({ page }) => {
@@ -225,6 +234,23 @@ test('the bio splits into columns only where each keeps a comfortable width', as
       if (layout.columns > 1) {
         expect(layout.columnWidth, context).toBeGreaterThanOrEqual(layout.minimumColumnWidth);
       }
+    }
+  }
+});
+
+test('loaded portraits keep their natural aspect ratio at every intro layout', async ({ page }) => {
+  for (const path of ['/about/', '/e2e/about/']) {
+    await page.goto(path);
+    const portrait = page.locator('main img').first();
+    for (const width of [700, 740, 1280]) {
+      await page.setViewportSize({ width, height: 1280 });
+      await portrait.scrollIntoViewIfNeeded();
+      await portrait.evaluate((image: HTMLImageElement) => image.decode());
+      const ratios = await portrait.evaluate((image: HTMLImageElement) => {
+        const box = image.getBoundingClientRect();
+        return { rendered: box.width / box.height, natural: image.naturalWidth / image.naturalHeight };
+      });
+      expect(ratios.rendered, `${path} at ${width}px`).toBeCloseTo(ratios.natural, 3);
     }
   }
 });

@@ -36,7 +36,7 @@ test('primary navigation reaches every page and marks the current section', asyn
   await expect(page).toHaveURL(/\/about\/$/);
   await expect(aboutLink).toHaveAttribute('aria-current', 'page');
   await expect(workLink).not.toHaveAttribute('aria-current');
-  await expect(page.getByRole('heading', { level: 1, name: site.name })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'About', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Approach' })).toBeVisible();
 
   await page.locator('header nav > a').first().click();
@@ -288,7 +288,7 @@ test('screen readers hear the footer hours as call hours, in the visitor’s lan
   expect(await item('cs').ariaSnapshot()).toContain(`Čas pro telefonické hovory: ${contact.hours_cs}`);
 });
 
-test('on phones and tablets the footer stacks the contacts in a column, then © and the switches in one row', async ({
+test('when the contact line does not fit the footer stacks the contacts in a column, then © and the switches in one row', async ({
   page,
 }) => {
   await page.goto('/work/');
@@ -296,7 +296,7 @@ test('on phones and tablets the footer stacks the contacts in a column, then © 
   const icons = footer.getByRole('listitem').locator('svg');
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
-    for (const width of [320, 360, 390, 640, 768, 1023]) {
+    for (const width of [320, 360, 390]) {
       const at = `${lang} at ${width}px`;
       await page.setViewportSize({ width, height: 700 });
       expect(
@@ -611,3 +611,60 @@ for (const path of [
     });
   });
 }
+
+test('the footer centers a complete contact line above copyright and switches when the full row does not fit', async ({ page }) => {
+  await page.goto('/work/');
+  await page.evaluate(() => document.fonts.ready);
+  const { copyright, email, phone, hours, theme, language } = footerParts(page);
+  for (const lang of ['en', 'cs'] as const) {
+    if (lang === 'cs') await language.click();
+    for (const width of [600, 640, 768, 800]) {
+      await page.setViewportSize({ width, height: 900 });
+      const at = `${lang} at ${width}px`;
+      await expect.poll(async () => new Set(await Promise.all([email, phone, hours(lang)].map(middle))).size, { message: at }).toBe(1);
+      const [contacts, c] = await Promise.all([page.locator('footer ul').boundingBox(), copyright.boundingBox()]);
+      expect(contacts!.x + contacts!.width / 2, at).toBeCloseTo(width / 2, 0);
+      expect(c!.y, at).toBeGreaterThan(contacts!.y + contacts!.height);
+      expect(await middle(theme), at).toBe(await middle(copyright));
+    }
+  }
+});
+
+test('language changes keep the activated footer button in place through unequal translation heights', async ({ page }) => {
+  await page.setViewportSize({ width: 600, height: 700 });
+  await page.goto('/e2e/about/');
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    document.documentElement.style.overflowAnchor = 'none';
+    document.body.style.paddingBottom = '600px';
+    document.querySelector('main .prose[lang="cs"]')!.textContent = 'Delší český text. '.repeat(400);
+    document.querySelector('main .prose[lang="en"]')!.textContent = 'Shorter English text. '.repeat(60);
+  });
+  const button = page.locator('[data-lang-toggle]');
+  for (const keyboard of [false, true]) {
+    await button.evaluate((element) => scrollTo(0, scrollY + element.getBoundingClientRect().y - 350));
+    await button.focus();
+    const before = (await button.boundingBox())!.y;
+    if (keyboard) await page.keyboard.press('Enter');
+    else await button.click();
+    await expect(page.locator('html')).toHaveAttribute('lang', keyboard ? 'en' : 'cs');
+    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    expect(Math.abs((await button.boundingBox())!.y - before)).toBeLessThanOrEqual(1);
+  }
+});
+
+test('the footer adapts when translating the contact line changes whether it fits', async ({ page }) => {
+  await page.setViewportSize({ width: 486, height: 700 });
+  await page.goto('/work/');
+  await page.evaluate(() => document.fonts.ready);
+  const { email, phone, hours, language } = footerParts(page);
+  expect(await middle(phone)).toBeGreaterThan(await middle(email));
+  await language.scrollIntoViewIfNeeded();
+  const top = (await language.boundingBox())!.y;
+  await language.click();
+  await expect.poll(async () => new Set(await Promise.all([email, phone, hours('cs')].map(middle))).size).toBe(1);
+  expect((await language.boundingBox())!.y).toBeCloseTo(top, 0);
+  await language.click();
+  expect(await middle(phone)).toBeGreaterThan(await middle(email));
+  expect((await language.boundingBox())!.y).toBeCloseTo(top, 0);
+});
