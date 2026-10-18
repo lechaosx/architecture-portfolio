@@ -290,10 +290,21 @@ export function getStaticPaths() {
     projectWith('set-first', [
       { type: 'image_set', images: [item('wide.png'), item('cover.png')] },
     ]),
+    projectWith('carousel-lightbox', [
+      { type: 'image_set', images: images.map((image) => ({ image })) },
+    ]),
     projectWith('gallery-first', [
       { type: 'gallery', images: [item('square-1.png'), item('square-2.png')] },
     ]),
     { params: { fixture: 'carousel' }, props: { images } },
+    {
+      params: { fixture: 'carousel-long' },
+      props: {
+        images: Array.from({ length: 18 }, (_, index) =>
+          `${images[index % images.length]}?slide=${index}`,
+        ),
+      },
+    },
     { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project } } },
   ];
 }

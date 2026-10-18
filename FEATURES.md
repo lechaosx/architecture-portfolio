@@ -394,12 +394,16 @@ from where things are on screen, and a drag grabs whatever is moving where it
 is; when a visitor swipes a carousel, its dots follow. Where the rule leaves
 room — [Implicit]:
 
-- A fast run of changes travels to the last image without showing or loading
-  the ones skipped.
 - A blend waits for its drawing to load rather than blending to black.
 - Opening and closing take input too: closing hands the page back at once, and
   opening again turns the close around.
 - The address follows every change, rate-limited only during a held key.
+
+### Rapid image navigation skips unseen images — [Explicit]
+
+Rapid arrows or dots go to the final image without showing or loading the
+images skipped, in the carousel and the lightbox alike. Images already partly
+visible keep moving continuously towards the new destination.
 
 ### Carousels wrap through adjacent images — [Explicit]
 

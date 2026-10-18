@@ -135,7 +135,8 @@ test('arrows and dots navigate and wrap', async ({ page }) => {
   const { dots, next, previous } = parts(page);
   const last = (await dots.count()) - 1;
   expect(last).toBeGreaterThan(1);
-  await expect(page.locator(carousel).getByRole('button', { name: /Open image/ })).toHaveCount(last + 1);
+  await expect(page.locator(carousel).getByRole('button', { name: /Open image/, includeHidden: true })).toHaveCount(last + 1);
+  await expect(page.locator(carousel).getByRole('button', { name: /Open image/ })).toHaveCount(1);
   await expect.poll(() => currentSlide(page)).toBe(0);
 
   await next.click();
@@ -300,12 +301,17 @@ test.describe('the carousel takes every input at once', () => {
     await page.waitForTimeout(60);
     const handle = await previous.elementHandle();
     const movement = await track.evaluate((element, button) => {
-      const before = element.scrollLeft;
+      const image = element.querySelector('img')!;
+      const before = image.getBoundingClientRect().left - element.getBoundingClientRect().left;
       (button as HTMLElement).click();
-      return { before, after: element.scrollLeft, width: element.clientWidth };
+      return {
+        before,
+        after: image.getBoundingClientRect().left - element.getBoundingClientRect().left,
+        width: element.clientWidth,
+      };
     }, handle);
-    expect(movement.before / movement.width).toBeGreaterThan(1);
-    expect(movement.before / movement.width).toBeLessThan(2);
+    expect(movement.before / movement.width).toBeGreaterThan(-1);
+    expect(movement.before / movement.width).toBeLessThan(0);
     expect(movement.after).toBe(movement.before);
     expect(await currentSlide(page)).toBe(0);
     expect(await restsAt(page)).toBe(0);
@@ -383,4 +389,136 @@ test.describe('the carousel takes every input at once', () => {
     expect(await restsAt(page)).toBe(0);
     expect(await currentSlide(page)).toBe(0);
   });
+});
+
+for (const navigation of ['arrows', 'dots'] as const) {
+  test(`rapid ${navigation} skip images that never came into view or needed loading`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    const requests: string[] = [];
+    page.on('request', (request) => requests.push(request.url()));
+    await page.goto('/e2e/carousel-long/');
+    const { dots, next, track } = parts(page);
+    const buttons = navigation === 'dots' ? [dots.nth(12), dots.nth(16)] : Array(16).fill(next);
+    const handles = await Promise.all(buttons.map((button) => button.elementHandle()));
+    const shown = await track.evaluate(async (element, buttons) => {
+      for (const button of buttons) (button as HTMLElement).click();
+      const shown = new Set<number>();
+      let still = 0;
+      let previous = NaN;
+      while (still < 10) {
+        await new Promise(requestAnimationFrame);
+        const bounds = element.getBoundingClientRect();
+        for (const image of element.querySelectorAll('img')) {
+          const frame = image.getBoundingClientRect();
+          if (frame.width && frame.right > bounds.left + 1 && frame.left < bounds.right - 1) {
+            shown.add(Number(new URL(image.src).searchParams.get('slide')));
+          }
+        }
+        still = previous === element.scrollLeft ? still + 1 : 0;
+        previous = element.scrollLeft;
+      }
+      return [...shown];
+    }, handles);
+    expect(await currentSlide(page)).toBe(16);
+    expect(shown.sort((a, b) => a - b)).toEqual([0, 16]);
+    expect(requests.some((url) => new URL(url).searchParams.get('slide') === '12')).toBe(false);
+  });
+}
+
+test('retargeting keeps the visible pair and skips the remaining images', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/e2e/carousel-long/');
+  const movement = await page.locator(track).evaluate(async (element) => {
+    const dots = document.querySelectorAll<HTMLElement>('[data-carousel-dot]');
+    dots[4].click();
+    for (let frame = 0; frame < 4; frame++) await new Promise(requestAnimationFrame);
+    const image = [...element.querySelectorAll('img')].find((image) =>
+      new URL(image.src).searchParams.get('slide') === '4',
+    )!;
+    const offset = () => image.getBoundingClientRect().left - element.getBoundingClientRect().left;
+    const before = offset();
+    dots[16].click();
+    const after = offset();
+    await new Promise(requestAnimationFrame);
+    return { before, after, nextFrame: offset(), width: element.clientWidth };
+  });
+  expect(movement.before).toBeGreaterThan(0);
+  expect(movement.before).toBeLessThan(movement.width);
+  expect(movement.after).toBe(movement.before);
+  expect(movement.nextFrame).toBeLessThan(movement.before);
+  expect(movement.nextFrame).toBeGreaterThan(movement.before - movement.width / 2);
+  await expect.poll(() => page.locator(track).evaluate((element) => {
+    const left = element.getBoundingClientRect().left;
+    return [...element.querySelectorAll('img')].find((image) =>
+      image.getBoundingClientRect().width && Math.abs(image.getBoundingClientRect().left - left) < 1,
+    )?.getAttribute('src');
+  })).toContain('slide=16');
+});
+
+test('a native horizontal gesture can travel more than one image', async ({ page, browserName }) => {
+  await page.goto('/e2e/carousel-long/');
+  const { track } = parts(page);
+  const bounds = (await track.boundingBox())!;
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.wheel(bounds.width * 3, 0);
+  // Firefox caps a single wheel delta to one viewport even without JavaScript.
+  const first = browserName === 'firefox' ? 1 : 3;
+  await expect.poll(() => currentSlide(page)).toBe(first);
+  for (let step = first; step < 3; step++) {
+    await page.mouse.wheel(bounds.width, 0);
+    await expect.poll(() => currentSlide(page)).toBe(step + 1);
+  }
+  await expect.poll(() => track.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return [...element.querySelectorAll('img')].find((image) => {
+      const frame = image.getBoundingClientRect();
+      return frame.width > 0 && Math.abs(frame.left - bounds.left) < 1;
+    })?.getAttribute('src');
+  })).toContain('slide=3');
+});
+
+test('native scrolling takes over a skipped turn without losing its visible anchor', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/e2e/carousel-long/');
+  const { dots, track } = parts(page);
+  await dots.nth(16).click();
+  await page.waitForTimeout(60);
+  const bounds = (await track.boundingBox())!;
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.wheel(bounds.width * 3, 0);
+  await expect.poll(() => currentSlide(page)).not.toBe(16);
+  await expect.poll(() => track.evaluate((element) => {
+    const index = [...document.querySelectorAll('[data-carousel-dot]')]
+      .findIndex((dot) => dot.getAttribute('aria-current') === 'true');
+    const left = element.getBoundingClientRect().left;
+    return [...element.querySelectorAll('img')].some((image) => {
+      const frame = image.getBoundingClientRect();
+      return frame.width && Math.abs(frame.left - left) < 1
+        && Number(new URL(image.src).searchParams.get('slide')) === index;
+    });
+  })).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('a skipped-to image remains the real lightbox thumbnail', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1400 });
+  await page.clock.install();
+  await page.goto('/e2e/carousel-lightbox/');
+  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  const { next } = parts(page);
+  await next.evaluate((button: HTMLButtonElement) => { button.click(); button.click(); });
+  await page.clock.runFor(1000);
+  const thumbnail = page.getByRole('button', { name: /^Open image 3\b/ });
+  await thumbnail.click();
+  await expect(page).toHaveURL(/#image-3$/);
+  await expect.poll(() => page.locator('.lightbox-slide-current .lightbox-front > img')
+    .evaluate((image) => (image as HTMLImageElement).complete)).toBe(true);
+  await page.clock.runFor(1000);
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.clock.runFor(100);
+  await expect(thumbnail).toHaveCSS('opacity', '0');
+  await page.clock.runFor(1000);
+  await expect(thumbnail).toHaveCSS('opacity', '1');
 });

@@ -89,26 +89,31 @@ const slides = await Promise.all(
       root.querySelectorAll<HTMLElement>('[data-carousel-dot]'),
     );
     const wrap = (index: number) => ((index % count) + count) % count;
-    const clone = (slide: Element) => {
-      const copy = slide.cloneNode(true) as HTMLElement;
-      copy.inert = true;
-      copy.setAttribute('aria-hidden', 'true');
-      copy.style.viewTransitionName = 'none';
-      // The lightbox's thumbnail registry must point to original slides.
-      copy.removeAttribute('data-lightbox-index');
-      return copy;
-    };
-    const first = track.firstElementChild!;
-    const last = track.lastElementChild!;
-    track.prepend(clone(last));
-    track.append(clone(first));
+    // Empty snap cells let native gestures travel a full turn either way,
+    // without rendering or loading every image along the way.
+    track.style.position = 'relative';
+    for (let at = 0; at <= 2 * count; at++) {
+      const cell = document.createElement('div');
+      cell.setAttribute('aria-hidden', 'true');
+      cell.style.pointerEvents = 'none';
+      track.append(cell);
+    }
+    for (const slide of originals) {
+      slide.style.position = 'absolute';
+      slide.style.top = '0';
+      // Moving an image must not change a native gesture's snap target.
+      slide.style.scrollSnapAlign = 'none';
+    }
 
-    // The current slide is state; the smooth scroll only chases it. Only the
-    // visitor's own scrolling of the track moves it from the scroll position.
+    type Frame = { at: number; index: number };
+    let frames: Frame[] = [];
     let current = 0;
     let visitorScrolling = false;
-    let position = 0;
-    let target = 0;
+    let visitorMoved = false;
+    let position = count;
+    let target = count;
+    let direction = 1;
+    let pending = false;
     let animation: number | undefined;
     let lastFrame = 0;
     const sync = () => {
@@ -116,17 +121,42 @@ const slides = await Promise.all(
         dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
       );
     };
-    // Boundary copies make equivalent positions one full turn apart look
-    // identical, including a partially visible pair of slides.
+    const render = (next: Frame[]) => {
+      frames = next;
+      originals.forEach((slide, index) => {
+        const frame = frames.find((frame) => frame.index === index);
+        slide.hidden = !frame;
+        slide.inert = !frame;
+        if (frame) slide.style.left = `${100 * frame.at}%`;
+      });
+    };
+    const visible = () => frames.filter((frame) => Math.abs(frame.at - position) < 1);
     const draw = () => {
-      track.scrollLeft = (wrap(position) + 1) * track.clientWidth;
+      track.scrollLeft = position * track.clientWidth;
     };
     const settle = () => {
-      position = target = current;
+      position = target = count;
+      render([{ at: count, index: current }]);
       draw();
       track.style.scrollSnapType = '';
     };
     const animate = (time: number) => {
+      if (pending) {
+        pending = false;
+        // Keep the visible pair in place; replace only a wholly offscreen
+        // frame. Coalescing input here never activates a same-task skip.
+        position = track.scrollLeft / track.clientWidth;
+        const shown = visible();
+        const shift = count - Math.floor(position);
+        position += shift;
+        shown.forEach((frame) => frame.at += shift);
+        const existing = shown.find((frame) => frame.index === current);
+        target = existing?.at ?? (direction > 0
+          ? Math.ceil(position + 1)
+          : Math.floor(position - 1));
+        render(existing ? shown : [...shown, { at: target, index: current }]);
+        draw();
+      }
       position += (target - position) * (1 - Math.exp(-(time - lastFrame) / 65));
       lastFrame = time;
       if (Math.abs(target - position) < 0.0001) {
@@ -138,32 +168,37 @@ const slides = await Promise.all(
       }
     };
     const goTo = (index: number) => {
-      if (animation === undefined) {
-        position = current + position - Math.round(position);
-        target = index;
-      } else {
-        target += index - current;
-      }
+      direction = Math.sign(index - current) || direction;
       current = wrap(index);
       visitorScrolling = false;
       sync();
       if (reducedMotion.matches) {
         if (animation !== undefined) cancelAnimationFrame(animation);
         animation = undefined;
+        pending = false;
         settle();
-      } else if (animation === undefined) {
+      } else {
+        pending = true;
         track.style.scrollSnapType = 'none';
-        lastFrame = performance.now();
-        animation = requestAnimationFrame(animate);
+        if (animation === undefined) {
+          lastFrame = performance.now();
+          animation = requestAnimationFrame(animate);
+        }
       }
     };
     const takeOver = () => {
       if (animation !== undefined) {
         cancelAnimationFrame(animation);
         animation = undefined;
+        render(visible());
         track.style.scrollSnapType = '';
       }
-      position = target = track.scrollLeft / track.clientWidth - 1;
+      pending = false;
+      if (!visitorScrolling) visitorMoved = false;
+      // The compositor may already have scrolled before delivering wheel.
+      const at = track.scrollLeft / track.clientWidth;
+      visitorMoved ||= at !== position;
+      position = at;
       visitorScrolling = true;
     };
 
@@ -176,13 +211,6 @@ const slides = await Promise.all(
     dots.forEach((dot, index) =>
       dot.addEventListener('click', () => goTo(index)),
     );
-    // Inert copies send pointer clicks to the track; activate their original.
-    track.addEventListener('click', (event) => {
-      if (event.target !== track) return;
-      const x = event.clientX - track.getBoundingClientRect().left;
-      const index = Math.floor((track.scrollLeft + x) / track.clientWidth) - 1;
-      originals[wrap(index)].click();
-    });
     for (const event of ['pointerdown', 'keydown', 'focusin']) {
       track.addEventListener(event, takeOver, {
         passive: true,
@@ -200,14 +228,24 @@ const slides = await Promise.all(
       'scroll',
       () => {
         if (!visitorScrolling) return;
-        position = target = track.scrollLeft / track.clientWidth - 1;
-        current = wrap(Math.round(position));
+        const previous = position;
+        position = track.scrollLeft / track.clientWidth;
+        visitorMoved ||= position !== previous;
+        const next = [...new Set([Math.floor(position), Math.ceil(position)])].map((at) => {
+          const nearest = frames.reduce((near, frame) =>
+            Math.abs(frame.at - at) < Math.abs(near.at - at) ? frame : near,
+          );
+          return { at, index: wrap(nearest.index + at - nearest.at) };
+        });
+        render(next);
+        current = next.find((frame) => frame.at === Math.round(position))!.index;
         sync();
       },
       { passive: true },
     );
     track.addEventListener('scrollend', () => {
-      if (animation !== undefined || !visitorScrolling) return;
+      // Recentring can queue a scrollend before a new gesture starts moving.
+      if (animation !== undefined || !visitorScrolling || !visitorMoved) return;
       visitorScrolling = false;
       settle();
     });
