@@ -612,7 +612,7 @@ for (const path of [
   });
 }
 
-test('the footer centers a complete contact line above copyright and switches when the full row does not fit', async ({ page }) => {
+test('the footer spreads a complete contact line across the width above copyright and switches when the full row does not fit', async ({ page }) => {
   await page.goto('/work/');
   await page.evaluate(() => document.fonts.ready);
   const { copyright, email, phone, hours, theme, language } = footerParts(page);
@@ -622,8 +622,14 @@ test('the footer centers a complete contact line above copyright and switches wh
       await page.setViewportSize({ width, height: 900 });
       const at = `${lang} at ${width}px`;
       await expect.poll(async () => new Set(await Promise.all([email, phone, hours(lang)].map(middle))).size, { message: at }).toBe(1);
-      const [contacts, c] = await Promise.all([page.locator('footer ul').boundingBox(), copyright.boundingBox()]);
-      expect(contacts!.x + contacts!.width / 2, at).toBeCloseTo(width / 2, 0);
+      const [contacts, c, firstContact, lastContact] = await Promise.all([
+        page.locator('footer ul').boundingBox(),
+        copyright.boundingBox(),
+        page.locator('footer li').first().boundingBox(),
+        page.locator('footer li').last().boundingBox(),
+      ]);
+      expect(firstContact!.x, at).toBeCloseTo(c!.x, 0);
+      expect(lastContact!.x + lastContact!.width, at).toBeCloseTo(width - c!.x, 0);
       expect(c!.y, at).toBeGreaterThan(contacts!.y + contacts!.height);
       expect(await middle(theme), at).toBe(await middle(copyright));
     }

@@ -217,10 +217,10 @@ auto-advance added, its images cropped to fill the frame — [Implicit].
 
 ### About page — [Explicit]
 
-The bio opens the page, with an accessible About heading; the name already
+The intro opens the page, with an accessible About heading; the name already
 appears in the header. The portrait sits in an equal-width column on the
 right when both columns keep a comfortable text measure; otherwise the bio
-and portrait each fill the page width, text first. Approach and the facts
+and portrait each fill the page width, portrait first. Approach and the facts
 follow, all edited in the one **O mně** entry.
 
 The bio follows the project text's column rule: balanced columns where each
@@ -288,7 +288,7 @@ The layout — [Implicit]: on wide screens one line, the © on the left, the
 contacts in the middle and the theme and language switches on the right; each
 contact has its icon, which also separates it from the next.
 All of it is in the footer's small grey type — [Explicit]. When the complete
-row no longer fits, the contacts stay centered on the first line, with © and
+row no longer fits, the contacts spread across the full first line, with © and
 the switches on the second. Only when that contact line does not fit do the
 contacts stack on the page's left edge, icons and text each in a column,
 followed by © and the switches in one row — [Explicit].

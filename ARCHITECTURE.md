@@ -312,9 +312,9 @@ column too narrow. Both render through `Prose.astro`, which holds the rule.
 The minimum uses `ch` to follow the font's metrics and size; it approximates
 character count for proportional text. Text fills the available width and
 reflows on resize without client-side JavaScript, allowing longer single lines
-until both columns fit. About’s intro grid uses the same minimum for its text
-and portrait tracks, so the portrait occupies the rightmost equal column or
-fills the width below the text.
+until both columns fit. About’s intro uses flex items with the same minimum
+width, so the portrait occupies the rightmost equal column. Reverse wrapping
+places the full-width portrait above the bio when they no longer fit together.
 
 ### Self-hosted Roboto via @fontsource — [Implicit]
 

@@ -23,7 +23,7 @@ test('the bio opens About without repeating the wordmark as a visible title', as
   await expect(page.locator('main h1:visible')).toHaveText('O mně');
 });
 
-test('the bio sits beside the portrait on wide screens, above it on phones', async ({
+test('the bio sits beside the portrait on wide screens, below it on phones', async ({
   page,
 }) => {
   await page.goto('/e2e/about/');
@@ -39,7 +39,7 @@ test('the bio sits beside the portrait on wide screens, above it on phones', asy
     await page.setViewportSize({ width, height: 800 });
     const [bPhone, pPhone] = await Promise.all([bio, portrait].map(async (l) => (await l.boundingBox())!));
     expect(pPhone.x, `${width}px`).toBeCloseTo(bPhone.x);
-    expect(pPhone.y, `${width}px`).toBeGreaterThan(bPhone.y + bPhone.height);
+    expect(bPhone.y, `${width}px`).toBeGreaterThan(pPhone.y + pPhone.height);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       `${width}px`,
@@ -153,7 +153,7 @@ test('the portrait shares the readable column width through the tablet and zoom 
       expect(p!.x, `${width}px`).toBeGreaterThan(b!.x + b!.width);
     } else {
       expect(b!.width, `${width}px`).toBeCloseTo(width - 48, 0);
-      expect(p!.y, `${width}px`).toBeGreaterThan(b!.y + b!.height);
+      expect(b!.y, `${width}px`).toBeGreaterThan(p!.y + p!.height);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }

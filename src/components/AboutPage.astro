@@ -40,8 +40,8 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
 >
   <div class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
     <T as="h1" k="about" class="sr-only" />
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,35ch),1fr))] items-start gap-12">
-      <div class="reveal min-w-0">
+    <div class="flex flex-wrap-reverse items-end gap-12">
+      <div class="reveal min-w-0 flex-[1_1_35ch]">
         <Prose cs={about.body_cs} en={about.body_en} />
       </div>
       {
@@ -54,7 +54,7 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
             height={responsivePortrait?.source.height}
             alt=""
             loading="lazy"
-            class="reveal w-full bg-neutral-100"
+            class="reveal min-w-0 flex-[1_1_35ch] bg-neutral-100"
           />
         )
       }
