@@ -5,16 +5,15 @@ from: "2023"
 to: "2023"
 location_cs: Křížovice
 location_en: Křížovice
-brief_cs: >-
-  Zpracování architektonické studie rekonstrukce podkroví rodinného domu s cílem
-  vytvořit čtyři samostatné pokoje pro čtyři chlapce a společnou klubovnu, která
-  poskytuje prostor pro společné hry, setkávání s přáteli a další dobrodružství
-  této čtveřice.
-brief_en: >-
-  Development of an architectural study for the renovation of a family home's
-  attic, with the aim of creating four individual bedrooms for four boys and a
-  shared playroom designed for games, gatherings with friends, and new
+brief_cs: Zpracování architektonické studie rekonstrukce podkroví rodinného domu
+  s cílem vytvořit čtyři samostatné pokoje pro čtyři chlapce a společnou
+  klubovnu, která poskytuje prostor pro společné hry, setkávání s přáteli a
+  další dobrodružství této čtveřice.
+brief_en: Development of an architectural study for the renovation of a family
+  home's attic, with the aim of creating four individual bedrooms for four boys
+  and a shared playroom designed for games, gatherings with friends, and new
   adventures for the four brothers.
+design_in_progress: false
 collaborators:
   - name: Ing. Jiří Železný
 draft: false
@@ -25,17 +24,25 @@ blocks:
         title_cs: Situace místa
         title_en: Site plan
       - image: /uploads/Výkres krovu.webp
+        comparison_set: půdorays
         title_cs: Výkres krovu
         title_en: Roof framing drawing
       - image: /uploads/Bourané konstrukce.webp
+        comparison_set: půdorays
         title_cs: Bourané konstrukce
         title_en: Elements to be demolished
       - image: /uploads/Půdorys nového stavu.webp
+        comparison_set: půdorays
         title_cs: Půdorys navrženého stavu
         title_en: Proposed floor plan
       - image: /uploads/Řez techn.webp
+        comparison_set: řez
         title_cs: Řez - technický
         title_en: Technical section
+      - image: /uploads/D.1.1.8 Řez A-A´ ARCHI.webp
+        comparison_set: řez
+        title_cs: Řez - architektonický
+        title_en: Section – architectural
       - image: /uploads/Pohled V+Z.webp
         title_cs: Pohledy
         title_en: Elevations
