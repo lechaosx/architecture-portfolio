@@ -154,11 +154,12 @@ test.describe(() => {
     await expect(meta(page, 'name="robots"')).toHaveAttribute('content', 'noindex');
   });
 
-  test('project metadata preserves team roles without inferring ownership', async ({ page }) => {
+  test('project metadata preserves collaborator roles without inferring ownership', async ({ page }) => {
     await page.goto('/e2e/credits/');
     const work = node(await graph(page), 'CreativeWork')!;
     expect(work).not.toHaveProperty('creator');
     expect(work.contributor).toEqual([
+      { '@id': `${origin}/#person` },
       { '@type': 'Role', roleName: 'Autor návrhu · koordinace', contributor: { '@type': 'Person', name: 'Jan Novák' } },
       { '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@type': 'Person', name: 'Eva Dvořáková' } },
       { '@type': 'Role', roleName: 'vizualizace', contributor: { '@type': 'Person', name: 'Ing. Petr Malý' } },
@@ -170,8 +171,8 @@ test.describe(() => {
     const actual = node(await graph(page), 'CreativeWork')!;
     expect(actual).not.toHaveProperty('creator');
     expect(actual.contributor).toEqual([
-      { '@type': 'Person', name: 'Ing. Jiří Železný' },
       { '@id': `${origin}/#person` },
+      { '@type': 'Person', name: 'Ing. Jiří Železný' },
     ]);
   });
 

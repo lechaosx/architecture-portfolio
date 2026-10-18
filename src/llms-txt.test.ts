@@ -18,7 +18,7 @@ const project = {
   from: '2024',
   to: '2024',
   draft: false,
-  context: [], intervention: [], scope: [], design_in_progress: false, team: [],
+  context: [], intervention: [], scope: [], design_in_progress: false, collaborators: [],
   blocks: [],
 };
 
@@ -81,7 +81,7 @@ test('presents the architect and her projects, Czech first', () => {
             brief_en: 'Brief.',
             realization: 'built',
             studio: 'Ateliér A',
-            team: [
+            collaborators: [
               { name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' },
               { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
               { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
@@ -154,7 +154,7 @@ https://example.cz/projects/galerie/
 - Informace o projektu / Project information: Realizováno / Built
 
 - Ateliér / Studio: Ateliér A
-- Tým projektu / Project team: Jan Novák – Autor návrhu / Design author; Eva Dvořáková – Autor návrhu / Design author; Ing. Petr Malý – vizualizace / Visualizations; Ing. Iva Tichá
+- Spolupráce / Collaborators: Jan Novák – Autor návrhu / Design author; Eva Dvořáková – Autor návrhu / Design author; Ing. Petr Malý – vizualizace / Visualizations; Ing. Iva Tichá
 - Ocenění / Award: Odměna
 
 Anotace.

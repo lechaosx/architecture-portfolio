@@ -5,8 +5,6 @@ from: '2024'
 to: '2024'
 location_cs: Česká republika, Brno
 location_en: Czech republic, Brno
-team:
-  - name: Tereza Kalábková
 draft: false
 blocks:
   - type: image_set

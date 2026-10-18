@@ -223,7 +223,7 @@ test('without a grid the index opens the page, as the identity line does without
   await expect(rows(page)).toHaveCount(3);
 });
 
-test('the brief shows under the title, above the blocks, when set', async ({
+test('the brief sits beside the title and above the blocks on wide screens', async ({
   page,
 }) => {
   await page.goto('/e2e/brief/');
@@ -235,7 +235,8 @@ test('the brief shows under the title, above the blocks, when set', async ({
     brief.boundingBox(),
     page.locator('article [data-lightbox-index="0"]').boundingBox(),
   ]);
-  expect(briefBox!.y).toBeGreaterThan(title!.y);
+  expect(briefBox!.x).toBeGreaterThanOrEqual(title!.x + title!.width);
+  expect(briefBox!.y).toBeCloseTo(title!.y, 0);
   expect(briefBox!.y).toBeLessThan(block!.y);
 });
 
@@ -247,7 +248,7 @@ test('a text-only project page has no lightbox', async ({ page }) => {
 });
 
 
-test('expanded contribution shares the title column and keeps readable text columns', async ({ page }) => {
+test('expanded contribution shares the title column as one readable column', async ({ page }) => {
   await page.goto('/e2e/work-readable/');
   const row = page.locator('main > div > ul > li').first();
   await row.locator('summary').click();
@@ -260,19 +261,28 @@ test('expanded contribution shares the title column and keeps readable text colu
       const contentBox = await content.boundingBox();
       expect(contentBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
       expect(contentBox!.width, `${language} ${width}px`).toBeCloseTo(title!.width, 0);
-      const metrics = await content.locator('p:visible').evaluate((element) => {
-        const style = getComputedStyle(element);
-        const ruler = document.createElement('span');
-        ruler.style.cssText = `display:block;width:1ch;font:${style.font}`;
-        element.append(ruler);
-        const ch = ruler.getBoundingClientRect().width;
-        ruler.remove();
-        return { width: element.getBoundingClientRect().width, column: parseFloat(style.columnWidth), gap: parseFloat(style.columnGap), ch };
+      const paragraph = content.locator('p:visible');
+      const metrics = await paragraph.evaluate((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const lines = Array.from(range.getClientRects()).filter((rect) => rect.width > 0);
+        const starts = new Map<number, number>();
+        for (const line of lines) {
+          const y = Math.round(line.y);
+          starts.set(y, Math.min(starts.get(y) ?? Infinity, line.x));
+        }
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        context.font = getComputedStyle(element).font;
+        return {
+          columns: new Set([...starts.values()].map(Math.round)).size,
+          width: element.getBoundingClientRect().width,
+          ch: context.measureText('0').width,
+        };
       });
-      expect(Number.isFinite(metrics.column), `${language} ${width}px`).toBe(true);
-      const count = Math.min(2, Math.max(1, Math.floor((metrics.width + metrics.gap) / (metrics.column + metrics.gap))));
-      const actualColumn = (metrics.width - metrics.gap * (count - 1)) / count;
-      expect(actualColumn / metrics.ch, `${language} ${width}px`).toBeLessThanOrEqual(75);
+      expect(metrics.width, `${language} ${width}px`).toBeCloseTo(title!.width, 0);
+      expect(metrics.columns, `${language} ${width}px`).toBe(1);
+      expect(metrics.width / metrics.ch, `${language} ${width}px`).toBeLessThanOrEqual(75);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     }
   }

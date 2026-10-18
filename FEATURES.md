@@ -103,12 +103,12 @@ unrenderable fails the build and does not deploy.
 The CMS refuses to save a project without both titles and the start of its
 involvement period. The end, contribution, credits, award, classification and
 content blocks are optional; so is the location — [Implicit]. A text block
-needs both languages, an image block at least one image, a team member a
+needs both languages, an image block at least one image, a collaborator a
 name.
 
 ### Personal contribution and the whole project — [Explicit]
 
-The short text appears without a preset heading on the project page and in an expanded index entry, preserving its line breaks; its content identifies her responsibilities and outputs. The existing content blocks describe the whole project, including projects entirely designed by her. Dates describe her involvement, independently of project progress.
+The short text appears without a preset heading on the project page and in an expanded index entry, preserving its line breaks; its content identifies her responsibilities and outputs. On a project page, the intact brief sits beside the title and badges when two readable tracks fit, then stacks beneath them on smaller screens; its line length stays limited — [Implicit]. The existing content blocks describe the whole project, including projects entirely designed by her. Dates describe her involvement, independently of project progress.
 
 ### Project context and progress badges — [Explicit]
 
@@ -116,7 +116,7 @@ Quiet, non-interactive badges near the title describe the whole project: academi
 
 ### Project classification and credits — [Explicit]
 
-The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, project team and award. The single **Tým projektu / Project team** section includes Tereza and every credited person, each with an optional bilingual role, including design authorship where confirmed. Studio holds the practice name; unverified roles remain unstated.
+The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, collaborators and award. **Spolupráce / Collaborators** lists the other people involved, with optional bilingual roles, including design authorship where confirmed; Tereza’s involvement is implicit in her portfolio and described in the brief. Studio holds the practice name; unverified roles remain unstated.
 
 Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole. An index entry with contribution, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 
@@ -127,9 +127,7 @@ An optional external project link appears in the fact sheet on the project page 
 ### Project fact rows form two groups when they fit — [Explicit]
 
 The fact sheet balances whole rows into two groups side by side when both
-remain comfortably readable; narrower sheets use one group. On a project
-page both the brief and sheet fill the available width; the brief uses up to two
-readable text columns, returning to one on narrower screens.
+remain comfortably readable; narrower sheets use one group. The fact sheet fills the project page width below its introduction.
 
 ### A project without content blocks has no page — [Explicit]
 
@@ -260,7 +258,7 @@ its projects weigh the same as the grid's and only lack images yet —
 [Explicit]. The layout — [Implicit]: the index follows the grid at the grid's
 own row gap, with thin rules above, between and below its rows; one aligned row
 of period, title and location per project, and a project with a page linking
-to it instead of opening. On phones the period sits above the title and location so names and contribution keep a readable width. Expanded contribution and facts share the title column at every width; contribution text uses up to two readable columns within it. Without image projects the index opens the page.
+to it instead of opening. On phones the period sits above the title and location so names and contribution keep a readable width. Expanded contribution and facts share the title column at every width; the contribution stays in one readable text column. Without image projects the index opens the page.
 
 ### Approach section — [Explicit]
 

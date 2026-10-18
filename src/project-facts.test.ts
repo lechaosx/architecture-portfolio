@@ -6,7 +6,7 @@ const project = {
   to: '2024',
   location_cs: 'Brno',
   location_en: 'Brno',
-  team: [],
+  collaborators: [],
   context: [],
   intervention: [],
   scope: [],
@@ -18,7 +18,7 @@ test('lists the filled credits, award and status in sheet order, names kept as i
     projectFacts({
       ...project,
       studio: 'Ateliér A | Ing. arch. Jan Novák',
-      team: [
+      collaborators: [
         { name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' },
         { name: 'Eva Dvořáková', role_cs: 'Autor návrhu · koordinace', role_en: 'Design author · Coordination' },
         { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
@@ -34,7 +34,7 @@ test('lists the filled credits, award and status in sheet order, names kept as i
       lines: [{ names: [], cs: 'Ateliér A | Ing. arch. Jan Novák', en: 'Ateliér A | Ing. arch. Jan Novák' }],
     },
     {
-      label: 'projectTeam',
+      label: 'collaborators',
       lines: [
         { names: ['Jan Novák'], cs: 'Autor návrhu', en: 'Design author' },
         { names: ['Eva Dvořáková'], cs: 'Autor návrhu · koordinace', en: 'Design author · Coordination' },

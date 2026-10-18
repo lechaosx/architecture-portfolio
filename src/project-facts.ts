@@ -40,13 +40,13 @@ export function projectFacts(
     | 'intervention'
     | 'scope'
     | 'studio'
-    | 'team'
+    | 'collaborators'
     | 'award_cs'
     | 'award_en'
   >,
   { placeAndPeriod = false } = {},
 ): Fact[] {
-  const { studio, team } = project;
+  const { studio, collaborators } = project;
   const period = formatPeriod(project);
   return [
     ...(placeAndPeriod
@@ -59,9 +59,9 @@ export function projectFacts(
       project[label]?.length ? [{ label, lines: [], badges: project[label] }] : [],
     ),
     ...(studio ? [{ label: 'studio' as const, lines: [text(studio)] }] : []),
-    ...(team.length ? [{
-      label: 'projectTeam' as const,
-      lines: team.map(({ name, role_cs, role_en }) => ({
+    ...(collaborators.length ? [{
+      label: 'collaborators' as const,
+      lines: collaborators.map(({ name, role_cs, role_en }) => ({
         names: [name],
         cs: role_cs ?? '',
         en: role_en ?? '',

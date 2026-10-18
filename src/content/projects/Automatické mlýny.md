@@ -16,7 +16,7 @@ brief_en: >-
 context:
   - competition
 studio: Fránek Architects
-team:
+collaborators:
   - name: Jan Žahour
     role_cs: Autor návrhu
     role_en: Design author
@@ -24,9 +24,6 @@ team:
     role_cs: Autor návrhu
     role_en: Design author
   - name: Olivia Dimitrishina
-    role_cs: Autor návrhu
-    role_en: Design author
-  - name: Tereza Kalábková
     role_cs: Autor návrhu
     role_en: Design author
   - name: Libor Šenekel

@@ -101,7 +101,6 @@ export function profilePage({ site, url }: { site: URL; url: string }) {
 export function creativeWork({
   site,
   url,
-  owner,
   project,
   description,
   images,
@@ -109,21 +108,17 @@ export function creativeWork({
 }: {
   site: URL;
   url: string;
-  /** The architect's name, as the team may list her too. */
-  owner: string;
   project: Pick<
     Data<'projects'>,
-    'title_cs' | 'location_cs' | 'realization' | 'team' | 'award_cs'
+    'title_cs' | 'location_cs' | 'realization' | 'collaborators' | 'award_cs'
   >;
   description?: string;
   images: GalleryImage[];
   responsiveImages: (ResponsiveImage | undefined)[];
 }) {
   const location = text(project.location_cs);
-  const contributors = project.team.map(({ name, role_cs }) => {
-    const person = name.trim() === owner.trim()
-      ? { '@id': personId(site) }
-      : { '@type': 'Person', name: name.trim() };
+  const contributors = project.collaborators.map(({ name, role_cs }) => {
+    const person = { '@type': 'Person', name: name.trim() };
     const roleName = text(role_cs);
     return roleName ? { '@type': 'Role', roleName, contributor: person } : person;
   });
@@ -134,7 +129,7 @@ export function creativeWork({
     description,
     inLanguage: 'cs',
     url,
-    contributor: contributors,
+    contributor: [{ '@id': personId(site) }, ...contributors],
     award: text(project.award_cs),
     creativeWorkStatus: project.realization && ui.cs[project.realization],
     // The cover, the first image, even untitled; then the described ones.

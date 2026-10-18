@@ -5,8 +5,6 @@ from: '2025'
 to: '2025'
 location_cs: Kyjov, Česká republika
 location_en: Kyjov, Czech Republic
-team:
-  - name: Tereza Kalábková
 draft: false
 blocks:
   - type: image_set

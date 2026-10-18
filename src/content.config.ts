@@ -78,7 +78,7 @@ const projects = defineCollection({
     design_in_progress: z.boolean().default(false),
     realization: z.enum(['planned', 'construction', 'built']).optional(),
     studio: z.string().optional(),
-    team: z.preprocess(
+    collaborators: z.preprocess(
       withoutEmptyCmsRows,
       z
         .array(

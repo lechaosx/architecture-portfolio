@@ -5,7 +5,6 @@ import ProjectBlocks from './ProjectBlocks.astro';
 import ProjectFacts from './ProjectFacts.astro';
 import T from './T.astro';
 import ProjectBadges from './ProjectBadges.astro';
-import { site as owner } from '../singletons';
 import { credentialedName } from '../site-title';
 import { getResponsiveImage } from '../server-images';
 import { projectDescription } from '../project-description';
@@ -44,7 +43,6 @@ const site = new URL('/', Astro.site);
     creativeWork({
       site,
       url: new URL(Astro.url.pathname, site).href,
-      owner: owner.name,
       project: d,
       description: description.cs,
       images,
@@ -58,24 +56,28 @@ const site = new URL('/', Astro.site);
     </a>
 
     <header class="mt-6 mb-8">
-      <T
-        as="h1"
-        cs={d.title_cs}
-        en={d.title_en}
-        class="text-3xl font-medium sm:text-4xl"
-      />
-      <ProjectBadges badges={projectBadges(d)} class="mt-4" />
-      <div class="mt-8 space-y-8">
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,35ch),1fr))] gap-x-12 gap-y-8">
+        <div>
+          <T
+            as="h1"
+            cs={d.title_cs}
+            en={d.title_en}
+            class="text-3xl font-medium sm:text-4xl"
+          />
+          <ProjectBadges badges={projectBadges(d)} class="mt-4" />
+        </div>
         {
           (d.brief_cs || d.brief_en) && (
             <T
               as="p"
               cs={d.brief_cs}
               en={d.brief_en}
-              class="running-text columns-[35ch_2] gap-12 leading-7 whitespace-pre-line text-neutral-700"
+              class="running-text max-w-prose leading-7 whitespace-pre-line text-neutral-700"
             />
           )
         }
+      </div>
+      <div class="mt-8">
         <ProjectFacts facts={projectFacts(d, { placeAndPeriod: true })} />
       </div>
     </header>

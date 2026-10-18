@@ -14,11 +14,10 @@ brief_en: >-
 context:
   - competition
 studio: Fránek Architects
-team:
+collaborators:
   - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. arch. Libor Šenekel
     role_cs: vizualizace
     role_en: Visualizations
-  - name: Tereza Kalábková
 draft: false
 ---

@@ -5,8 +5,6 @@ from: '2026'
 to: '2026'
 location_cs: Brno, Medlánky
 location_en: Brno, Medlánky
-team:
-  - name: Tereza Kalábková
 draft: false
 blocks:
   - type: image_set

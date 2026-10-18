@@ -16,11 +16,11 @@ const values = (scope: Page | Locator) =>
   sheet(scope).locator('dd p, dd li').filter({ visible: true }).allInnerTexts();
 const brief = (page: Page) => page.locator('article header .running-text').filter({ visible: true });
 
-test('a project page’s fact sheet shows its filled rows in the visitor’s language, one team member a line', async ({
+test('a project page’s fact sheet shows its filled rows in the visitor’s language, one collaborator a line', async ({
   page,
 }) => {
   await page.goto('/e2e/credits/');
-  expect(await labels(page)).toEqual(['Location', 'My involvement', 'Intervention', 'Scope', 'Studio', 'Project team']);
+  expect(await labels(page)).toEqual(['Location', 'My involvement', 'Intervention', 'Scope', 'Studio', 'Collaborators']);
   expect(await values(page)).toEqual([
     'Nowhere',
     '3/2025–6/2026',
@@ -43,7 +43,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
     'Zásah',
     'Zaměření',
     'Ateliér',
-    'Tým projektu',
+    'Spolupráce',
     'Ocenění',
   ]);
   expect(await values(page)).toEqual([
@@ -98,12 +98,12 @@ test('an optional project website appears on the project page and expands a link
   }
 });
 
-test('the full-width brief uses readable columns above the fact sheet', async ({ page }) => {
+test('the intact brief sits beside the title when readable tracks fit and stacks beneath it otherwise', async ({ page }) => {
   await page.goto('/e2e/credits/');
   await page.evaluate(() => document.fonts.ready);
   for (const language of ['en', 'cs']) {
     if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
-    for (const [width, columns] of [[1280, 2], [800, 2], [390, 1]] as const) {
+    for (const width of [1280, 800, 700, 390]) {
       await page.setViewportSize({ width, height: 900 });
       const [title, briefBox, sheetBox, header] = await Promise.all([
         page.locator('article h1:visible').boundingBox(),
@@ -111,10 +111,16 @@ test('the full-width brief uses readable columns above the fact sheet', async ({
         sheet(page).boundingBox(),
         page.locator('article header').boundingBox(),
       ]);
-      expect(briefBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
-      expect(briefBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
+      if (width >= 800) {
+        expect(briefBox!.x, `${language} ${width}px`).toBeGreaterThanOrEqual(title!.x + title!.width);
+        expect(briefBox!.y, `${language} ${width}px`).toBeCloseTo(title!.y, 0);
+      } else {
+        expect(briefBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
+        expect(briefBox!.y, `${language} ${width}px`).toBeGreaterThan(title!.y + title!.height);
+      }
+      expect(briefBox!.width, `${language} ${width}px`).toBeLessThanOrEqual(header!.width);
       expect(sheetBox!.y, `${language} ${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
-      expect(sheetBox!.x, `${language} ${width}px`).toBeCloseTo(briefBox!.x, 0);
+      expect(sheetBox!.x, `${language} ${width}px`).toBeCloseTo(header!.x, 0);
       expect(sheetBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
       const lines = await brief(page).evaluate((element) => {
         const range = document.createRange();
@@ -134,8 +140,10 @@ test('the full-width brief uses readable columns above the fact sheet', async ({
           longest: Math.max(...lines.map((line) => line.right - line.x)) / context.measureText('0').width,
         };
       });
-      expect(lines.columns, `${language} ${width}px`).toBe(columns);
-      expect(lines.longest, `${language} ${width}px`).toBeLessThanOrEqual(75);
+      await expect(page.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      expect(lines.columns, `${language} ${width}px`).toBe(1);
+      expect(lines.longest, `${language} ${width}px`).toBeLessThanOrEqual(65.1);
     }
   }
 });
@@ -149,6 +157,7 @@ test('without a brief the sheet fills the width under the title', async ({ page 
     page.locator('article header').boundingBox(),
   ]);
   expect(sheetBox!.x).toBeCloseTo(title!.x, 0);
+  expect(title!.width).toBeCloseTo(header!.width, 0);
   expect(sheetBox!.width).toBeCloseTo(header!.width, 0);
 });
 
@@ -224,7 +233,7 @@ test('an opened index row shows the brief, then the sheet without the place and 
   const row = page.locator('main > div > ul > li').nth(0);
   await row.getByText('Alpha brief').click();
   const opened = row.locator('details > div');
-  expect(await labels(opened)).toEqual(['Intervention', 'Scope', 'Studio', 'Project team']);
+  expect(await labels(opened)).toEqual(['Intervention', 'Scope', 'Studio', 'Collaborators']);
 
   await expect(row.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
   const briefText = row.getByText('First line').filter({ visible: true });
@@ -234,7 +243,7 @@ test('an opened index row shows the brief, then the sheet without the place and 
   expect(sheetBox!.x).toBeCloseTo(briefBox!.x, 0);
 
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  expect(await labels(opened)).toEqual(['Zásah', 'Zaměření', 'Ateliér', 'Tým projektu', 'Ocenění']);
+  expect(await labels(opened)).toEqual(['Zásah', 'Zaměření', 'Ateliér', 'Spolupráce', 'Ocenění']);
   await expect(row.getByText('První řádek').filter({ visible: true })).toBeVisible();
   await expect(row.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
 });
@@ -249,7 +258,7 @@ test('an index row with credits and no brief opens to its sheet', async ({ page 
 });
 
 
-test('project context and progress are quiet bilingual badges above the unlabelled brief', async ({ page }) => {
+test('project context and progress are quiet bilingual badges below the title', async ({ page }) => {
   await page.goto('/e2e/credits/');
   const header = page.locator('article header');
   for (const [language, badges] of [
@@ -259,12 +268,13 @@ test('project context and progress are quiet bilingual badges above the unlabell
     if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
     await expect(brief(page)).toBeVisible();
     await expect(header.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
-    const badgeList = header.locator(':scope > ul');
+    const badgeList = header.locator('h1:visible').locator('..').locator(':scope > ul');
     expect(await badgeList.locator('li:visible').allInnerTexts()).toEqual(badges);
     await expect(badgeList.getByRole('link')).toHaveCount(0);
     await expect(badgeList.getByRole('button')).toHaveCount(0);
-    const [badgesBox, contributionBox] = await Promise.all([badgeList.boundingBox(), brief(page).boundingBox()]);
-    expect(badgesBox!.y + badgesBox!.height).toBeLessThan(contributionBox!.y);
+    const [badgesBox, titleBox] = await Promise.all([badgeList.boundingBox(), header.locator('h1:visible').boundingBox()]);
+    expect(badgesBox!.x).toBeCloseTo(titleBox!.x, 0);
+    expect(badgesBox!.y).toBeGreaterThanOrEqual(titleBox!.y + titleBox!.height);
   }
 });
 

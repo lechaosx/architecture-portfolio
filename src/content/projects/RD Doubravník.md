@@ -10,10 +10,9 @@ brief_cs: >-
 brief_en: >-
   Development of the architectural study for a family house in Doubravník.
 realization: construction
-team:
+collaborators:
   - name: Ing. Jiří Železný
     role_cs: hlavní projektant stavby
     role_en: Lead Project Designer
-  - name: Tereza Kalábková
 draft: false
 ---

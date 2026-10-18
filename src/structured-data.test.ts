@@ -108,9 +108,8 @@ describe('creativeWork', () => {
     to: '6/2024',
     location_cs: 'Brno',
     location_en: 'Brno',
-    team: [],
+    collaborators: [],
   };
-  const owner = 'Jana Nováková';
 
   // A drawing 4000px wide, with derivatives up to its own width.
   const drawing = (hash: string): ResponsiveImage => ({
@@ -131,7 +130,6 @@ describe('creativeWork', () => {
       creativeWork({
         site,
         url: 'https://example.cz/projects/galerie/',
-        owner,
         project,
         description: 'Anotace.',
         images: [
@@ -149,6 +147,7 @@ describe('creativeWork', () => {
       description: 'Anotace.',
       inLanguage: 'cs',
       url: 'https://example.cz/projects/galerie/',
+      contributor: [{ '@id': 'https://example.cz/#person' }],
       image: [
         {
           '@type': 'ImageObject',
@@ -172,7 +171,6 @@ describe('creativeWork', () => {
     const { image } = creativeWork({
       site,
       url: 'https://example.cz/projects/galerie/',
-      owner,
       project,
       images: [{ image: '/uploads/cover.png', title_cs: 'Pohled' }],
       responsiveImages: [drawing('cover')],
@@ -192,27 +190,24 @@ describe('creativeWork', () => {
         creativeWork({
           site,
           url: 'https://example.cz/projects/galerie/',
-          owner,
           project: { ...project, location_cs: undefined },
           images: [],
           responsiveImages: [],
         }),
       ),
-    ).toEqual(['@type', 'name', 'inLanguage', 'url']);
+    ).toEqual(['@type', 'name', 'inLanguage', 'url', 'contributor']);
   });
 
-  test('credits the whole project team with supplied roles', () => {
+  test('credits the architect and collaborators with supplied roles', () => {
     expect(
       creativeWork({
         site,
         url: 'https://example.cz/projects/galerie/',
-        owner,
         project: {
           ...project,
           realization: 'construction',
-          team: [
+          collaborators: [
             { name: 'Jan Novák', role_cs: 'Autor návrhu · koordinace', role_en: 'Design author · Coordination' },
-            { name: 'Jana Nováková', role_cs: 'Autor návrhu', role_en: 'Design author' },
             { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
             { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
             { name: 'Ing. Iva Tichá', role_en: 'Statics' },
@@ -224,8 +219,8 @@ describe('creativeWork', () => {
       }),
     ).toMatchObject({
       contributor: [
+        { '@id': 'https://example.cz/#person' },
         { '@type': 'Role', roleName: 'Autor návrhu · koordinace', contributor: { '@type': 'Person', name: 'Jan Novák' } },
-        { '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@id': 'https://example.cz/#person' } },
         { '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@type': 'Person', name: 'Eva Dvořáková' } },
         {
           '@type': 'Role',
@@ -258,39 +253,29 @@ describe('jsonLd', () => {
 
 
 test('personal involvement does not establish project authorship or creation date', () => {
-  const project = { title_cs: 'Projekt', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', team: [{ name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' }] };
-  const node = creativeWork({ site, url: 'https://example.cz/project/', owner: owner.name,
+  const project = { title_cs: 'Projekt', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', collaborators: [{ name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' }] };
+  const node = creativeWork({ site, url: 'https://example.cz/project/',
     project,
     images: [], responsiveImages: [] });
   expect(node).not.toHaveProperty('dateCreated');
-  expect(node.contributor).toEqual([{ '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@type': 'Person', name: 'Jan Novák' } }]);
+  expect(node.contributor).toEqual([{ '@id': 'https://example.cz/#person' }, { '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@type': 'Person', name: 'Jan Novák' } }]);
   expect(node).not.toHaveProperty('creator');
 });
 
 
-test('a team owner with surrounding whitespace is credited once', () => {
+test('credits the architect implicitly and trims supplied collaborator names and roles', () => {
   const node = creativeWork({
-    site, url: 'https://example.cz/project/', owner: owner.name,
-    project: { title_cs: 'Projekt', team: [{ name: `  ${owner.name}  `, role_cs: 'Autor návrhu', role_en: 'Design author' }] },
-    images: [], responsiveImages: [],
-  });
-  expect(node.contributor).toEqual([{ '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@id': 'https://example.cz/#person' } }]);
-  expect(node).not.toHaveProperty('creator');
-});
-
-
-test('team membership credits contribution without inferring authorship', () => {
-  const node = creativeWork({
-    site, url: 'https://example.cz/project/', owner: owner.name,
-    project: { title_cs: 'Projekt', team: [
-      { name: `  ${owner.name}  `, role_cs: 'dokumentace', role_en: 'Documentation' },
+    site, url: 'https://example.cz/project/',
+    project: { title_cs: 'Projekt', collaborators: [
+      { name: '  Jan Novák  ', role_cs: '  dokumentace  ', role_en: 'Documentation' },
       { name: 'Petr' },
     ] },
     images: [], responsiveImages: [],
   });
   expect(node).not.toHaveProperty('creator');
   expect(node.contributor).toEqual([
-    { '@type': 'Role', roleName: 'dokumentace', contributor: { '@id': 'https://example.cz/#person' } },
+    { '@id': 'https://example.cz/#person' },
+    { '@type': 'Role', roleName: 'dokumentace', contributor: { '@type': 'Person', name: 'Jan Novák' } },
     { '@type': 'Person', name: 'Petr' },
   ]);
 });

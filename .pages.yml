@@ -87,13 +87,13 @@ content:
             - { name: construction, label: Ve výstavbě }
             - { name: built, label: Realizováno }
       - { name: project_url, label: Odkaz na projekt, type: string, required: false, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
-      - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména osob patří do týmu projektu.' }
-      - name: team
-        label: Tým projektu
+      - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména ostatních lidí patří do spolupráce.' }
+      - name: collaborators
+        label: Spolupráce
         type: object
         list: true
         required: false
-        description: 'Všichni členové týmu včetně Terezy Kalábkové, jedna osoba na položku. Uveďte známou roli v obou jazycích; neznámou nechte prázdnou.'
+        description: 'Ostatní lidé, kteří na projektu spolupracovali, jedna osoba na položku. Moje zapojení patří do pole Moje práce. Uveďte známou roli v obou jazycích; neznámou nechte prázdnou.'
         fields:
           - { name: name, label: Jméno, type: string, required: true, description: 'Společné pro oba jazyky, např. „Ing. Jiří Železný“.' }
           - { name: role_cs, label: Role (česky), type: string, required: false, description: 'Např. „Autor návrhu“ nebo „vizualizace“.' }

@@ -220,7 +220,7 @@ the same order.
 
 ### One project metadata model — [Implicit]
 
-`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Each `team` record keeps its name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 
@@ -306,7 +306,7 @@ targets or image alt text.
 
 ### Text columns follow the container — [Implicit]
 
-Native CSS columns balance project text and the About bio across at most two
+Native CSS columns balance project narrative and the About bio across at most two
 columns, using a font-relative minimum width so a split never makes either
 column too narrow. Both render through `Prose.astro`, which holds the rule.
 The minimum uses `ch` to follow the font's metrics and size; it approximates
@@ -315,6 +315,8 @@ reflows on resize without client-side JavaScript, allowing longer single lines
 until both columns fit. About’s intro uses flex items with the same minimum
 width, so the portrait occupies the rightmost equal column. Reverse wrapping
 places the full-width portrait above the bio when they no longer fit together.
+The project introduction uses the same minimum for its title and intact brief;
+the brief has a readable maximum width and the fact sheet spans both tracks below.
 
 ### Self-hosted Roboto via @fontsource — [Implicit]
 
@@ -407,7 +409,7 @@ which `Base` inlines as one `@graph` per page. Text is plain Czech, because
 Google documents only plain-text values for these properties, not
 language-tagged ones. Her location is `Person.workLocation`, a `Place`.
 Credentials are named "programme, school (period)" and awards "award, placement
-(period)"; `award` is plain text. A project's `contributor` credits every supplied team member, preserving supplied roles using schema.org `Role` and linking the owner to her Person node when named. Free-text roles do not establish a separate creator relationship. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
+(period)"; `award` is plain text. A project’s `contributor` links the architect’s Person node and lists collaborators, preserving supplied roles using schema.org `Role`. Free-text roles do not establish a separate creator relationship. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 
@@ -454,7 +456,7 @@ into one `<p>` per paragraph (Approach texts and fact descriptions).
 ### Paired `_cs`/`_en` fields — [Implicit]
 
 One file and one CMS form per entry; language-neutral fields (images, period
-dates, email, phone, a project's studio and team members' names) stay
+dates, email, phone, a project's studio and collaborators’ names) stay
 single. Project classification stores stable values, labelled in `src/i18n.ts`
 under the same keys. The project route is the filename-derived content
 ID, so the filename is the only source of the slug.

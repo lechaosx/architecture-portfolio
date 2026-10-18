@@ -49,7 +49,7 @@ export function getStaticPaths() {
     location_en: 'Nowhere',
     location_cs: 'Nikde',
     draft: false,
-    context: [], intervention: [], scope: [], design_in_progress: false, team: [],
+    context: [], intervention: [], scope: [], design_in_progress: false, collaborators: [],
     blocks: [
       { type: 'image_set', images: [item('cover.png')] },
       { type: 'text', body_en: text(6).en, body_cs: text(6).cs },
@@ -140,7 +140,7 @@ export function getStaticPaths() {
     intervention: ['renovation', 'extension'],
     scope: ['architecture', 'interior'],
     studio: 'Studio North | Ing. arch. Jana Nováková',
-    team: [
+    collaborators: [
       { name: 'Jan Novák', role_cs: 'Autor návrhu · koordinace', role_en: 'Design author · Coordination' },
       { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
       { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
