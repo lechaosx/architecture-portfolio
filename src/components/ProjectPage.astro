@@ -63,16 +63,14 @@ const site = new URL('/', Astro.site);
         en={d.title_en}
         class="text-3xl font-medium sm:text-4xl"
       />
-      {/* About's bio and portrait columns; without a brief the sheet stays
-          in the first, under the title. */}
-      <div class="mt-8 grid items-baseline gap-10 md:grid-cols-2 md:gap-12">
+      <div class="mt-8 space-y-8">
         {
           (d.brief_cs || d.brief_en) && (
             <T
               as="p"
               cs={d.brief_cs}
               en={d.brief_en}
-              class="running-text leading-7 whitespace-pre-line text-neutral-700"
+              class="running-text max-w-prose leading-7 whitespace-pre-line text-neutral-700"
             />
           )
         }

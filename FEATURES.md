@@ -110,9 +110,8 @@ name.
 
 A project may have a short plain-text brief in both languages, with the author's
 line breaks kept. It is the description only: credits, award and status have
-fields of their own — [Explicit]. On the project page it sits under the title
-beside the fact sheet, above the content blocks, in the colour and size of
-About's bio — [Explicit].
+fields of their own — [Explicit]. On the project page it sits under the title,
+above the content blocks, in the colour and size of About's bio — [Explicit].
 
 ### Project credits and status as fields, shown as a fact sheet — [Explicit]
 
@@ -124,18 +123,23 @@ Competition entry · Building permit · Under construction · Completed) —
 [Explicit]. The project page shows them with its place and period, which move
 there from under the title, as a fact sheet of rows with small-caps labels:
 Místo, Období, Fáze or Stav, Autorský ateliér, Autorský tým, Spolupráce (one line per
-person, "name – role") and Ocenění, each row only when filled. The brief and
-the sheet share the page in About's two equal columns and stack on phones,
-and the credits are not justified. An opened index row shows the brief and
-the same sheet without the place and period it already shows — [Explicit].
+person, "name – role") and Ocenění, each row only when filled. The credits are
+not justified. An opened index row shows the brief and the same sheet without
+the place and period it already shows — [Explicit].
 Search engines and `llms.txt` get them too.
 
-The details — [Implicit]: without a brief the sheet keeps the first column,
-under the title. The labels' column is one fixed width, so values line up on
-every project; where the sheet is narrow, as on phones, labels sit above
+The details — [Implicit]: the labels' column is one fixed width, so values line
+up on every project; where the sheet is narrow, as on phones, labels sit above
 their values. A name never breaks across lines. A text or role filled in one
 language shows only in that language. A row with credits but no brief opens
 to its sheet.
+
+### Project fact rows form two groups when they fit — [Explicit]
+
+The fact sheet balances whole rows into two groups side by side when both
+remain comfortably readable; narrower sheets use one group. On a project
+page the sheet fills the available width below the brief, whose text keeps a
+comfortable reading measure — [Implicit].
 
 ### Project phase and status — [Implicit]
 
@@ -378,6 +382,10 @@ already on screen fades in late.
 Charcoal background and off-white text; photos and drawings are never inverted.
 Follows the system preference until the visitor uses the footer toggle (moon or
 sun, showing the mode it switches to), which is remembered.
+
+The dark palette has softer structural rules and separate greys for body text
+and secondary information, with stronger contrast for current controls —
+[Implicit].
 
 ### Reduced motion — [Implicit]
 

@@ -227,10 +227,10 @@ each one whole on its line while `llms.txt` gets plain text.
 `ProjectFacts.astro` renders the rows on the project page and in the work
 index, the index opens a row that has any, and `llms.txt` lists them, so the
 three cannot disagree. The label column has a fixed width that fits the
-longest label in either language, so values line up across projects; a
-container query puts labels above values where the sheet is too narrow for
-that column, as the sheet is half the page on a project page and narrower in
-the index.
+longest label in either language, so values line up across projects. Native
+columns balance whole rows into at most two groups; their minimum width fits
+the label/value layout, so the same container query can put labels above
+values in narrower sheets, including the work index.
 
 ### Footer layout follows its content — [Implicit]
 
@@ -333,11 +333,12 @@ hand-written CSS reads them.
 
 ### Dark mode remaps palette tokens — [Implicit]
 
-Overriding `--color-*` under `html[data-theme="dark"]` flips every utility
-without `dark:` classes, and leaves images alone, as a CSS filter would not. The
-typography plugin's literal colours need `dark:prose-invert`. An inline script
-picks the theme before first paint; `<html>` ships `data-theme="light"` for
-no-JS.
+Overriding `--color-*` under `html[data-theme="dark"]` gives the dark theme its
+own monochrome palette. Structural borders use `--color-rule` so quiet
+dividers and high-contrast controls can differ. The typography plugin uses
+`dark:prose-invert`, with its body colour tied to the adjacent text. An inline
+script picks the theme before first paint; `<html>` ships `data-theme="light"`
+for no-JS.
 
 ---
 

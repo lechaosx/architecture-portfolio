@@ -11,6 +11,7 @@
 
 @theme {
   --font-sans: "Roboto Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-rule: var(--color-black);
 }
 
 :root {
@@ -137,15 +138,19 @@ html:active-view-transition-type(project-close)::view-transition-old(.project-co
    tokens changes the whole page without affecting images. */
 html[data-theme="dark"] {
   color-scheme: dark;
-  --color-white: oklch(20.5% 0 0);
-  --color-black: oklch(92.2% 0 0);
-  --color-neutral-100: oklch(26.9% 0 0);
-  --color-neutral-200: oklch(32.1% 0 0);
-  --color-neutral-500: oklch(70.8% 0 0);
-  --color-neutral-600: oklch(78% 0 0);
-  /* prose-invert's body colour, so text beside prose matches it. */
-  --color-neutral-700: oklch(87% 0 0);
-  --color-neutral-900: oklch(90% 0 0);
+  --color-white: #202020;
+  --color-black: #e7e7e7;
+  --color-neutral-100: #292929;
+  --color-neutral-200: #3a3a3a;
+  --color-neutral-500: #a3a3a3;
+  --color-neutral-600: #b7b7b7;
+  --color-neutral-700: #cdcdcd;
+  --color-neutral-900: #e0e0e0;
+  --color-rule: #565656;
+}
+
+html[data-theme="dark"] .prose {
+  --tw-prose-invert-body: var(--color-neutral-700);
 }
 
 /* The page's surface and text, resolved here so lightbox parts can follow the

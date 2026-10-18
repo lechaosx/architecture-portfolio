@@ -62,38 +62,56 @@ test('a project without credits shows only its place and period', async ({ page 
   await expect(brief(page)).toHaveCount(0);
 });
 
-test('the brief and the sheet share the width in equal columns on wide screens and stack on phones', async ({
+test('the brief sits above the full-width fact sheet at every screen size', async ({
   page,
 }) => {
   await page.goto('/e2e/credits/');
-  await page.setViewportSize({ width: 1280, height: 900 });
-  let [title, briefBox, sheetBox] = await Promise.all([
-    page.locator('article h1:visible').boundingBox(),
-    brief(page).boundingBox(),
-    sheet(page).boundingBox(),
-  ]);
-  expect(briefBox!.x).toBeCloseTo(title!.x, 0);
-  expect(sheetBox!.x).toBeGreaterThan(briefBox!.x + briefBox!.width);
-  expect(sheetBox!.width).toBeCloseTo(briefBox!.width, 0);
-  expect(Math.abs(sheetBox!.y - briefBox!.y)).toBeLessThan(16);
-
-  await page.setViewportSize({ width: 390, height: 900 });
-  [briefBox, sheetBox] = await Promise.all([brief(page).boundingBox(), sheet(page).boundingBox()]);
-  expect(sheetBox!.y).toBeGreaterThan(briefBox!.y + briefBox!.height);
-  expect(sheetBox!.x).toBeCloseTo(briefBox!.x, 0);
-  expect(sheetBox!.width).toBeCloseTo(briefBox!.width, 0);
+  for (const width of [1280, 834, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [title, briefBox, sheetBox, header] = await Promise.all([
+      page.locator('article h1:visible').boundingBox(),
+      brief(page).boundingBox(),
+      sheet(page).boundingBox(),
+      page.locator('article header').boundingBox(),
+    ]);
+    expect(briefBox!.x, `${width}px`).toBeCloseTo(title!.x, 0);
+    expect(sheetBox!.y, `${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
+    expect(sheetBox!.x, `${width}px`).toBeCloseTo(briefBox!.x, 0);
+    expect(sheetBox!.width, `${width}px`).toBeCloseTo(header!.width, 0);
+  }
 });
 
-test('without a brief the sheet keeps its column, under the title', async ({ page }) => {
+test('without a brief the sheet fills the width under the title', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/e2e/project/');
-  const [title, sheetBox, article] = await Promise.all([
+  const [title, sheetBox, header] = await Promise.all([
     page.locator('article h1:visible').boundingBox(),
     sheet(page).boundingBox(),
-    page.locator('article').boundingBox(),
+    page.locator('article header').boundingBox(),
   ]);
   expect(sheetBox!.x).toBeCloseTo(title!.x, 0);
-  expect(sheetBox!.width).toBeLessThan(article!.width / 2);
+  expect(sheetBox!.width).toBeCloseTo(header!.width, 0);
+});
+
+test('fact rows form two intact groups when both fit and one group on narrower screens', async ({ page }) => {
+  await page.goto('/e2e/credits/');
+  for (const language of ['en', 'cs']) {
+    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    for (const [width, groups] of [[1280, 2], [980, 1], [834, 1], [390, 1]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      const rows = await sheet(page).locator(':scope > div').filter({ visible: true }).evaluateAll((rows) =>
+        rows.map((row) => ({
+          left: Math.round(row.getBoundingClientRect().left),
+          fragments: row.getClientRects().length,
+        })),
+      );
+      expect(new Set(rows.map(({ left }) => left)).size, `${language}, ${width}px`).toBe(groups);
+      expect(rows.every(({ fragments }) => fragments === 1), `${language}, ${width}px`).toBe(true);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
+        message: `${language}, ${width}px`,
+      }).toBe(width);
+    }
+  }
 });
 
 test('labels sit beside their values where the sheet has room, above them on phones', async ({ page }) => {
