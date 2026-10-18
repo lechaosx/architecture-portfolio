@@ -3,7 +3,7 @@ import { workProjects, type Project } from './projects';
 
 const project = (id: string, year: number): Project => ({
   id,
-  data: { title_cs: id, title_en: id, from: String(year), to: String(year), draft: false, context: [], intervention: [], scope: [], design_in_progress: false, team: [], collaborators: [], blocks: [] },
+  data: { title_cs: id, title_en: id, from: String(year), to: String(year), draft: false, context: [], intervention: [], scope: [], design_in_progress: false, team: [], blocks: [] },
 });
 
 test('projects list ongoing first, then latest first, then by English title', () => {

@@ -10,5 +10,7 @@ brief_cs: Zpracování projektové dokumentace pro povolení stavby na základě
 brief_en: Preparation of project documentation for a building permit based on
   the provided architectural study.
 realization: construction
+team:
+  - name: Tereza Kalábková
 draft: false
 ---

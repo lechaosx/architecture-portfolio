@@ -17,15 +17,22 @@ context:
   - competition
 studio: Fránek Architects
 team:
-  - Jan Žahour
-  - Michal Škoda
-  - Olivia Dimitrishina
-  - Tereza Kalábková
-  - Libor Šenekel
-  - Pavel Lauš
-  - Adam Schwarz
-  - Jakub Jurásek
-collaborators:
+  - name: Jan Žahour
+    author: true
+  - name: Michal Škoda
+    author: true
+  - name: Olivia Dimitrishina
+    author: true
+  - name: Tereza Kalábková
+    author: true
+  - name: Libor Šenekel
+    author: true
+  - name: Pavel Lauš
+    author: true
+  - name: Adam Schwarz
+    author: true
+  - name: Jakub Jurásek
+    author: true
   - name: prof. Ing. arch. Zdeněk Fránek
 award_cs: Odměna za dílčí podnět
 award_en: Special recognition for a specific design contribution

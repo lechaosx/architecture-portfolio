@@ -113,14 +113,20 @@ export function creativeWork({
   owner: string;
   project: Pick<
     Data<'projects'>,
-    'title_cs' | 'brief_cs' | 'brief_en' | 'location_cs' | 'realization' | 'team' | 'collaborators' | 'award_cs'
+    'title_cs' | 'location_cs' | 'realization' | 'team' | 'award_cs'
   >;
   description?: string;
   images: GalleryImage[];
   responsiveImages: (ResponsiveImage | undefined)[];
 }) {
   const location = text(project.location_cs);
-  const team = texts(project.team);
+  const credit = ({ name, role_cs }: Data<'projects'>['team'][number], property: 'creator' | 'contributor') => {
+    const person = name.trim() === owner.trim()
+      ? { '@id': personId(site) }
+      : { '@type': 'Person', name: name.trim() };
+    const roleName = text(role_cs);
+    return roleName ? { '@type': 'Role', roleName, [property]: person } : person;
+  };
   return compact({
     '@type': 'CreativeWork',
     name: project.title_cs,
@@ -128,18 +134,8 @@ export function creativeWork({
     description,
     inLanguage: 'cs',
     url,
-    creator: team.map((name) => name === owner.trim()
-      ? { '@id': personId(site) }
-      : { '@type': 'Person', name }),
-    contributor: [
-      ...((text(project.brief_cs) || text(project.brief_en)) && !team.includes(owner.trim()) && !project.collaborators.some(({ name }) => name.trim() === owner.trim())
-        ? [{ '@id': personId(site) }] : []),
-      ...project.collaborators.map(({ name, role_cs }) => {
-        const contributor = name.trim() === owner.trim() ? { '@id': personId(site) } : { '@type': 'Person', name };
-        const roleName = text(role_cs);
-        return roleName ? { '@type': 'Role', roleName, contributor } : contributor;
-      }),
-    ],
+    creator: project.team.filter(({ author }) => author).map((member) => credit(member, 'creator')),
+    contributor: project.team.filter(({ author }) => !author).map((member) => credit(member, 'contributor')),
     award: text(project.award_cs),
     creativeWorkStatus: project.realization && ui.cs[project.realization],
     // The cover, the first image, even untitled; then the described ones.

@@ -155,8 +155,9 @@ describe('project content schema', () => {
     const credits = {
       context: ['competition'],
       studio: 'Ateliér A',
-      team: ['Jan Novák', 'Eva Dvořáková'],
-      collaborators: [
+      team: [
+        { name: 'Jan Novák', author: true },
+        { name: 'Eva Dvořáková', author: true },
         { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
         { name: 'Ing. Iva Tichá' },
       ],
@@ -164,14 +165,14 @@ describe('project content schema', () => {
       award_en: 'Special mention',
     };
     expect(
-      projectSchema.safeParse({ ...project, ...credits, collaborators: [{}, ...credits.collaborators] }),
+      projectSchema.safeParse({ ...project, ...credits, team: [{}, ...credits.team] }),
     ).toMatchObject({ success: true, data: credits });
   });
 
-  test('leaves the team and collaborators empty when they are not filled', () => {
+  test('leaves the team empty when it is not filled', () => {
     expect(projectSchema.safeParse(project)).toMatchObject({
       success: true,
-      data: { team: [], collaborators: [] },
+      data: { team: [] },
     });
   });
 
@@ -182,7 +183,9 @@ describe('project content schema', () => {
     ['an intervention outside the list', { intervention: ['study'] }],
     ['a scope outside the list', { scope: ['housing'] }],
     ['non-boolean design activity', { design_in_progress: 'yes' }],
-    ['a collaborator without a name', { collaborators: [{ role_cs: 'statika' }] }],
+    ['a team member without a name', { team: [{ role_cs: 'statika', role_en: 'Structures' }] }],
+    ['a non-boolean author flag', { team: [{ name: 'Jana', author: 'yes' }] }],
+    ['an old string team member', { team: ['Jana'] }],
   ])('rejects %s', (_, fields) => {
     expect(projectSchema.safeParse({ ...project, ...fields }).success).toBe(false);
   });
@@ -378,9 +381,9 @@ const bilingualCases: BilingualCase[] = [
     path: [], pair, optional: pair !== 'title',
   })),
   {
-    name: 'collaborator role', collection: 'projects',
-    content: { ...project, collaborators: [{ name: 'Jana' }, { name: 'Petr' }] },
-    path: ['collaborators', 1], pair: 'role', optional: true,
+    name: 'team member role', collection: 'projects',
+    content: { ...project, team: [{ name: 'Jana' }, { name: 'Petr' }] },
+    path: ['team', 1], pair: 'role', optional: true,
   },
   {
     name: 'project text', collection: 'projects',
@@ -494,5 +497,16 @@ test('CMS controlled choices and multiplicity match project metadata validation'
       const value = multiple ? [option.name] : option.name;
       expect(projectSchema.parse({ ...project, [name]: value })).toHaveProperty(name, value);
     }
+  }
+});
+
+
+test('all project teams include the portfolio owner once', () => {
+  const owner = frontmatter('src/content/singletons/site.md').name;
+  const projects = readdirSync('src/content/projects').filter((file) => file.endsWith('.md'));
+  for (const file of projects) {
+    const data = projectSchema.parse(frontmatter(`src/content/projects/${file}`));
+    if (!('team' in data)) throw new TypeError('Expected project content');
+    expect(data.team.filter(({ name }) => name.trim() === owner), file).toHaveLength(1);
   }
 });

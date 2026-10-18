@@ -1,5 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
-import { onlyIn, type Lang, type UiKey } from './i18n';
+import { onlyIn, ui, type Lang, type UiKey } from './i18n';
 import { formatPeriod } from './period';
 
 type Data = CollectionEntry<'projects'>['data'];
@@ -10,7 +10,6 @@ type Data = CollectionEntry<'projects'>['data'];
  */
 export interface FactLine extends Record<Lang, string> {
   names: string[];
-  label?: UiKey;
 }
 
 /**
@@ -40,13 +39,12 @@ export function projectFacts(
     | 'scope'
     | 'studio'
     | 'team'
-    | 'collaborators'
     | 'award_cs'
     | 'award_en'
   >,
   { placeAndPeriod = false } = {},
 ): Fact[] {
-  const { studio, team, collaborators } = project;
+  const { studio, team } = project;
   const period = formatPeriod(project);
   return [
     ...(placeAndPeriod
@@ -59,12 +57,13 @@ export function projectFacts(
       project[label]?.length ? [{ label, lines: [], badges: project[label] }] : [],
     ),
     ...(studio ? [{ label: 'studio' as const, lines: [text(studio)] }] : []),
-    ...(team.length || collaborators.length ? [{
+    ...(team.length ? [{
       label: 'projectTeam' as const,
-      lines: [
-        ...(team.length ? [{ label: 'team' as const, names: team, cs: '', en: '' }] : []),
-        ...collaborators.map(({ name, role_cs = '', role_en = '' }) => ({ names: [name], cs: role_cs, en: role_en })),
-      ],
+      lines: team.map(({ name, author, role_cs, role_en }) => ({
+        names: [name],
+        cs: [author && ui.cs.designAuthor, role_cs].filter(Boolean).join(' · '),
+        en: [author && ui.en.designAuthor, role_en].filter(Boolean).join(' · '),
+      })),
     }] : []),
     ...pair('award', project.award_cs, project.award_en),
   ];

@@ -154,6 +154,26 @@ test.describe(() => {
     await expect(meta(page, 'name="robots"')).toHaveAttribute('content', 'noindex');
   });
 
+  test('project metadata preserves team authorship and optional roles without inferring ownership', async ({ page }) => {
+    await page.goto('/e2e/credits/');
+    const work = node(await graph(page), 'CreativeWork')!;
+    expect(work.creator).toEqual([
+      { '@type': 'Role', roleName: 'koordinace', creator: { '@type': 'Person', name: 'Jan Novák' } },
+      { '@type': 'Person', name: 'Eva Dvořáková' },
+    ]);
+    expect(work.contributor).toContainEqual({
+      '@type': 'Role', roleName: 'vizualizace', contributor: { '@type': 'Person', name: 'Ing. Petr Malý' },
+    });
+
+    await page.goto('/projects/křížovice/');
+    const actual = node(await graph(page), 'CreativeWork')!;
+    expect(actual).not.toHaveProperty('creator');
+    expect(actual.contributor).toEqual([
+      { '@type': 'Person', name: 'Ing. Jiří Železný' },
+      { '@id': `${origin}/#person` },
+    ]);
+  });
+
   test('a project page is a creative work by the architect, with its described images', async ({
     page,
   }) => {

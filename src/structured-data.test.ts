@@ -109,7 +109,6 @@ describe('creativeWork', () => {
     location_cs: 'Brno',
     location_en: 'Brno',
     team: [],
-    collaborators: [],
   };
   const owner = 'Jana Nováková';
 
@@ -202,7 +201,7 @@ describe('creativeWork', () => {
     ).toEqual(['@type', 'name', 'inLanguage', 'url']);
   });
 
-  test('credits the studio, the team and the collaborators, with the award and status, in Czech', () => {
+  test('preserves explicit authorship and supplied roles in the unified project team', () => {
     expect(
       creativeWork({
         site,
@@ -211,8 +210,10 @@ describe('creativeWork', () => {
         project: {
           ...project,
           realization: 'construction',
-          team: ['Jan Novák', 'Jana Nováková', 'Eva Dvořáková'],
-          collaborators: [
+          team: [
+            { name: 'Jan Novák', author: true, role_cs: 'koordinace', role_en: 'Coordination' },
+            { name: 'Jana Nováková', author: true },
+            { name: 'Eva Dvořáková', author: true },
             { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
             { name: 'Ing. Iva Tichá', role_en: 'Statics' },
           ],
@@ -224,7 +225,7 @@ describe('creativeWork', () => {
     ).toMatchObject({
       // The architect is one of the team, and named once.
       creator: [
-        { '@type': 'Person', name: 'Jan Novák' },
+        { '@type': 'Role', roleName: 'koordinace', creator: { '@type': 'Person', name: 'Jan Novák' } },
         { '@id': 'https://example.cz/#person' },
         { '@type': 'Person', name: 'Eva Dvořáková' },
       ],
@@ -260,22 +261,39 @@ describe('jsonLd', () => {
 
 
 test('personal involvement does not establish project authorship or creation date', () => {
-  const project = { title_cs: 'Projekt', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', team: ['Jan Novák'], collaborators: [] };
+  const project = { title_cs: 'Projekt', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', team: [{ name: 'Jan Novák', author: true }] };
   const node = creativeWork({ site, url: 'https://example.cz/project/', owner: owner.name,
     project,
     images: [], responsiveImages: [] });
   expect(node).not.toHaveProperty('dateCreated');
   expect(node.creator).toEqual([{ '@type': 'Person', name: 'Jan Novák' }]);
-  expect(node.contributor).toContainEqual({ '@id': 'https://example.cz/#person' });
+  expect(node).not.toHaveProperty('contributor');
 });
 
 
 test('a design-team owner with surrounding whitespace is credited once', () => {
   const node = creativeWork({
     site, url: 'https://example.cz/project/', owner: owner.name,
-    project: { title_cs: 'Projekt', brief_cs: 'Návrh.', team: [`  ${owner.name}  `], collaborators: [] },
+    project: { title_cs: 'Projekt', team: [{ name: `  ${owner.name}  `, author: true }] },
     images: [], responsiveImages: [],
   });
   expect(node.creator).toEqual([{ '@id': 'https://example.cz/#person' }]);
   expect(node).not.toHaveProperty('contributor');
+});
+
+
+test('team membership credits contribution without inferring authorship', () => {
+  const node = creativeWork({
+    site, url: 'https://example.cz/project/', owner: owner.name,
+    project: { title_cs: 'Projekt', team: [
+      { name: `  ${owner.name}  `, role_cs: 'dokumentace', role_en: 'Documentation' },
+      { name: 'Petr', author: false },
+    ] },
+    images: [], responsiveImages: [],
+  });
+  expect(node).not.toHaveProperty('creator');
+  expect(node.contributor).toEqual([
+    { '@type': 'Role', roleName: 'dokumentace', contributor: { '@id': 'https://example.cz/#person' } },
+    { '@type': 'Person', name: 'Petr' },
+  ]);
 });

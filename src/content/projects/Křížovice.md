@@ -15,8 +15,9 @@ brief_en: >-
   attic, with the aim of creating four individual bedrooms for four boys and a
   shared playroom designed for games, gatherings with friends, and new
   adventures for the four brothers.
-collaborators:
+team:
   - name: Ing. Jiří Železný
+  - name: Tereza Kalábková
 draft: false
 blocks:
   - type: gallery

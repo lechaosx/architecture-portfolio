@@ -12,9 +12,10 @@ brief_en: >-
   Development of the architectural study for the renovation of the fire station
   in Doubravník.
 realization: construction
-collaborators:
+team:
   - name: Ing. Jiří Železný
     role_cs: hlavní projektant stavby
     role_en: Lead Project Designer
+  - name: Tereza Kalábková
 draft: false
 ---

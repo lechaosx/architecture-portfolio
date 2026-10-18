@@ -24,9 +24,8 @@ const afterNames = (names: string[], text: string) => (names.length > 0 && text 
           </dt>
           <dd>
             {badges && <ProjectBadges {badges} />}
-            {lines.map(({ names, cs, en, label }) => (
+            {lines.map(({ names, cs, en }) => (
               <p>
-                {label && <><T k={label} />: </>}
                 {names.map((name, index) => (
                   <>
                     {index > 0 && ', '}

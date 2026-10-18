@@ -19,8 +19,9 @@ brief_en: >-
   and statements, and submitting the building permit application to the relevant
   building authority.
 studio: Fránek Architects
-collaborators:
+team:
   - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. Jiří Železný
+  - name: Tereza Kalábková
 draft: false
 ---

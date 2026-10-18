@@ -103,7 +103,7 @@ unrenderable fails the build and does not deploy.
 The CMS refuses to save a project without both titles and the start of its
 involvement period. The end, contribution, credits, award, classification and
 content blocks are optional; so is the location — [Implicit]. A text block
-needs both languages, an image block at least one image, a collaborator a
+needs both languages, an image block at least one image, a team member a
 name.
 
 ### Personal contribution and the whole project — [Explicit]
@@ -116,7 +116,7 @@ Quiet, non-interactive badges near the title describe the whole project: academi
 
 ### Project classification and credits — [Explicit]
 
-The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, project team and award. The single **Tým projektu / Project team** section identifies the supplied **Autorský tým / Design team**, followed by other team members with their supplied roles; unknown roles remain unstated. Studio holds the practice name, and authorship is explicit even on independent projects.
+The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, project team and award. The single **Tým projektu / Project team** section includes Tereza and every credited person, each with an optional bilingual role and a visible designation for confirmed design authors. Studio holds the practice name; unverified roles and authorship remain unstated.
 
 Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole. An index entry with contribution, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 

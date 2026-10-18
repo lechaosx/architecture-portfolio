@@ -86,16 +86,16 @@ content:
             - { name: planned, label: Plánovaná realizace }
             - { name: construction, label: Ve výstavbě }
             - { name: built, label: Realizováno }
-      - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména osob patří do autorského týmu nebo spolupráce.' }
-      - { name: team, label: Autorský tým, type: string, list: true, required: false, description: 'Autoři architektonického návrhu, jedno jméno na položku. U vlastního návrhu uveďte i sebe.' }
-      - name: collaborators
-        label: Další členové týmu a jejich role
+      - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména osob patří do týmu projektu.' }
+      - name: team
+        label: Tým projektu
         type: object
         list: true
         required: false
-        description: 'Další členové týmu, jedna osoba na položku. Uveďte skutečnou roli; neznámou nechte prázdnou.'
+        description: 'Všichni členové týmu včetně Terezy Kalábkové, jedna osoba na položku. Uveďte známou roli v obou jazycích; neznámou nechte prázdnou.'
         fields:
           - { name: name, label: Jméno, type: string, required: true, description: 'Společné pro oba jazyky, např. „Ing. Jiří Železný“.' }
+          - { name: author, label: Autor/ka architektonického návrhu, type: boolean, required: false, description: 'Označte potvrzené autory architektonického návrhu. Autorství se zobrazuje u jména a používá se také v metadatech projektu.' }
           - { name: role_cs, label: Role (česky), type: string, required: false, description: 'Např. „vizualizace“.' }
           - { name: role_en, label: Role (anglicky), type: string, required: false, description: 'Např. „Visualizations“. Vyplňte oba jazyky, nebo nechte obě pole prázdná. Chybějící překlad zabrání zveřejnění změn.' }
       - { name: award_cs, label: Ocenění (česky), type: string, required: false, description: 'Např. „Odměna za dílčí podnět“.' }

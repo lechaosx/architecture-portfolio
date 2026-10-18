@@ -16,7 +16,7 @@ const values = (scope: Page | Locator) =>
   sheet(scope).locator('dd p, dd li').filter({ visible: true }).allInnerTexts();
 const brief = (page: Page) => page.locator('article header .running-text').filter({ visible: true });
 
-test('a project page’s fact sheet shows its filled rows in the visitor’s language, one collaborator a line', async ({
+test('a project page’s fact sheet shows its filled rows in the visitor’s language, one team member a line', async ({
   page,
 }) => {
   await page.goto('/e2e/credits/');
@@ -29,7 +29,8 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
     'Architecture',
     'Interior',
     'Studio North | Ing. arch. Jana Nováková',
-    'Design team: Jan Novák, Eva Dvořáková',
+    'Jan Novák – Design author · Coordination',
+    'Eva Dvořáková – Design author',
     'Ing. Petr Malý – Visualizations',
     'Ing. Pavel Velký',
     'Ing. Iva Tichá',
@@ -53,7 +54,8 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
     'Architektura',
     'Interiér',
     'Studio North | Ing. arch. Jana Nováková',
-    'Autorský tým: Jan Novák, Eva Dvořáková',
+    'Jan Novák – Autor návrhu · koordinace',
+    'Eva Dvořáková – Autor návrhu',
     'Ing. Petr Malý – vizualizace',
     'Ing. Pavel Velký – statika',
     'Ing. Iva Tichá',

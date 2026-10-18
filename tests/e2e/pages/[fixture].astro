@@ -50,7 +50,6 @@ export function getStaticPaths() {
     location_cs: 'Nikde',
     draft: false,
     context: [], intervention: [], scope: [], design_in_progress: false, team: [],
-    collaborators: [],
     blocks: [
       { type: 'image_set', images: [item('cover.png')] },
       { type: 'text', body_en: text(6).en, body_cs: text(6).cs },
@@ -141,8 +140,9 @@ export function getStaticPaths() {
     intervention: ['renovation', 'extension'],
     scope: ['architecture', 'interior'],
     studio: 'Studio North | Ing. arch. Jana Nováková',
-    team: ['Jan Novák', 'Eva Dvořáková'],
-    collaborators: [
+    team: [
+      { name: 'Jan Novák', author: true, role_cs: 'koordinace', role_en: 'Coordination' },
+      { name: 'Eva Dvořáková', author: true },
       { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
       { name: 'Ing. Pavel Velký', role_cs: 'statika' },
       { name: 'Ing. Iva Tichá' },

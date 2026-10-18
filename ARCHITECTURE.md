@@ -220,7 +220,7 @@ the same order.
 
 ### One project metadata model — [Implicit]
 
-`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Names, explicit author-team attribution and bilingual roles stay distinct; one static Astro badge component renders title and fact-sheet categories without client state. Native columns balance intact fact rows, with labels above values in narrow sheets.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Each `team` record keeps its name, optional bilingual role and optional explicit design-author flag; one static Astro badge component renders title and fact-sheet categories without client state. Native columns balance intact fact rows, with labels above values in narrow sheets.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 
@@ -407,7 +407,7 @@ which `Base` inlines as one `@graph` per page. Text is plain Czech, because
 Google documents only plain-text values for these properties, not
 language-tagged ones. Her location is `Person.workLocation`, a `Place`.
 Credentials are named "programme, school (period)" and awards "award, placement
-(period)"; `award` is plain text. A project's `creator` contains only explicitly listed design-team people, linking the owner to her Person node when named; supplied collaborators retain their roles. A supplied personal contribution can identify the owner as a contributor. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
+(period)"; `award` is plain text. A project's `creator` contains only team members explicitly marked as design authors; other members are contributors. Both relationships preserve supplied roles using schema.org `Role`, and link the owner to her Person node when named. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 
@@ -454,7 +454,7 @@ into one `<p>` per paragraph (Approach texts and fact descriptions).
 ### Paired `_cs`/`_en` fields — [Implicit]
 
 One file and one CMS form per entry; language-neutral fields (images, period
-dates, email, phone, a project's studio, team and collaborators' names) stay
+dates, email, phone, a project's studio and team members' names) stay
 single. Project classification stores stable values, labelled in `src/i18n.ts`
 under the same keys. The project route is the filename-derived content
 ID, so the filename is the only source of the slug.

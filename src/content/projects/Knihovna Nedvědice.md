@@ -13,8 +13,9 @@ brief_en: >-
   spatial layout, material selection, custom furniture design, and the design of
   the adjoining courtyard.
 studio: Fránek Architects
-collaborators:
+team:
   - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. Jiří Železný
+  - name: Tereza Kalábková
 draft: false
 ---
