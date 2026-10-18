@@ -68,6 +68,11 @@ differ. Translatable fields come as `_cs`/`_en` pairs in both places. Labels,
 help texts and option labels in `.pages.yml` are Czech, a pair's labels ending
 "(česky)" / "(anglicky)".
 
+**Translate content.** Fill both `_cs`/`_en` fields, including captions, roles
+and nested descriptions, or leave both empty when optional. Whitespace is empty.
+The build reports incomplete pairs at their field paths and prevents deployment;
+Pages CMS can save them, so check the deployment result after editing.
+
 **Add UI text.** Add a key with both languages to `src/i18n.ts` and render it
 with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` or
 `<Prose cs={…} en={…} />`, never as a bare string.

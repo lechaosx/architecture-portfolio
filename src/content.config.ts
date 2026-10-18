@@ -22,6 +22,29 @@ const validPeriod = (value: Period, context: z.RefinementCtx) => {
   }
 };
 
+const bilingualPairs = (value: unknown, context: z.RefinementCtx, path: Array<string | number> = []) => {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => bilingualPairs(item, context, [...path, index]));
+  } else if (value !== null && typeof value === 'object') {
+    const fields = value as Record<string, unknown>;
+    for (const [key, text] of Object.entries(fields)) {
+      const language = /_(cs|en)$/.exec(key)?.[1];
+      if (language && typeof text === 'string' && text.trim()) {
+        const counterpart = `${key.slice(0, -3)}_${language === 'cs' ? 'en' : 'cs'}`;
+        const translation = fields[counterpart];
+        if (typeof translation !== 'string' || !translation.trim()) {
+          context.addIssue({
+            code: 'custom',
+            path: [...path, counterpart],
+            message: `Fill ${counterpart} when ${key} is filled, or leave both empty.`,
+          });
+        }
+      }
+      if (text !== null && typeof text === 'object') bilingualPairs(text, context, [...path, key]);
+    }
+  }
+};
+
 const projectImage = z.object({
   // Image paths live under /public (served from root), so plain strings.
   image: z.string(),
@@ -92,7 +115,7 @@ const projects = defineCollection({
         )
         .default([]),
     ),
-  }).superRefine(validPeriod),
+  }).superRefine(validPeriod).superRefine(bilingualPairs),
 });
 
 // Each singleton is one Markdown file, read as the one entry of its own
@@ -106,14 +129,14 @@ const site = defineCollection({
     credential: z.string().optional(),
     description_cs: z.string(),
     description_en: z.string(),
-  }),
+  }).superRefine(bilingualPairs),
 });
 
 const landing = defineCollection({
   loader: glob({ pattern: 'landing.md', base: singletons }),
   schema: z.object({
     images: z.array(z.string()).default([]),
-  }),
+  }).superRefine(bilingualPairs),
 });
 
 const factRow = z.object({
@@ -156,7 +179,7 @@ const about = defineCollection({
     ),
     education: facts,
     awards: facts,
-  }),
+  }).superRefine(bilingualPairs),
 });
 
 const contact = defineCollection({
@@ -168,7 +191,7 @@ const contact = defineCollection({
     location_en: z.string().optional(),
     hours_cs: z.string().optional(),
     hours_en: z.string().optional(),
-  }),
+  }).superRefine(bilingualPairs),
 });
 
 export const collections = { projects, site, landing, about, contact };

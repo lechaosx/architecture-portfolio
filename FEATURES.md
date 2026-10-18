@@ -108,7 +108,7 @@ name.
 
 ### Personal contribution and the whole project — [Explicit]
 
-The short text is labelled **Moje práce / My contribution** on the project page and in an expanded index entry, appearing with its heading only in supplied languages and preserving its line breaks. It describes her responsibilities and outputs; the existing content blocks describe the whole project, including projects entirely designed by her. Dates describe her involvement, independently of project progress.
+The short text is labelled **Moje práce / My contribution** on the project page and in an expanded index entry, appearing with its heading when filled and preserving its line breaks. It describes her responsibilities and outputs; the existing content blocks describe the whole project, including projects entirely designed by her. Dates describe her involvement, independently of project progress.
 
 ### Project context and progress badges — [Explicit]
 
@@ -118,7 +118,7 @@ Quiet, non-interactive badges near the title describe the whole project: academi
 
 The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, project team and award. The single **Tým projektu / Project team** section identifies the supplied **Autorský tým / Design team**, followed by other team members with their supplied roles; unknown roles remain unstated. Studio holds the practice name, and authorship is explicit even on independent projects.
 
-Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole, and language-specific text appears only in its supplied language. An index entry with contribution, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
+Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole. An index entry with contribution, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 
 ### Project fact rows form two groups when they fit — [Explicit]
 
@@ -200,8 +200,8 @@ newest projects with images as the work page's cards, which end the page. No
 headline or introductory paragraph.
 
 The layout — [Implicit]: the line sits under the images like a caption, in the
-section headings' small caps, the services in grey; a place filled in one
-language shows only in that language. **O mně →** ends the line on the right,
+section headings' small caps, the services in grey; the place appears when
+filled. **O mně →** ends the line on the right,
 like **Všechny práce →** ends its heading row, both underlined on hover and
 focus. Three cards fill one row of the grid and open their projects with the
 same cover transition as on Work.
@@ -310,6 +310,13 @@ redirects.
 Every visible string exists in both languages, CMS content and baked-in labels
 alike, including screen-reader labels. Project covers are decorative to
 assistive technology because the adjacent title already names them.
+
+### Filled content needs both translations — [Explicit]
+
+An optional text can be omitted in both languages; filling either language
+requires the other, including nested image captions, credits and About facts.
+Whitespace alone counts as empty. Missing translations fail the build and
+prevent deployment; the CMS explains the rule beside optional translated fields.
 
 ### Auto-detected, with a manual switch in the footer — [Explicit]
 

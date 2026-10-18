@@ -474,7 +474,14 @@ The shape is declared in `src/content.config.ts` (build) and `.pages.yml`
 (editor) and kept in sync by hand. Pages CMS fields are optional unless
 `required: true`, so `src/content.config.test.ts` checks that both declare the
 same fields, required in the same places, at every level, and that each
-singleton file is valid.
+committed content file is valid.
+
+### Conditional bilingual validation — [Explicit]
+
+A shared collection refinement checks `_cs`/`_en` string pairs throughout
+nested content and reports the missing counterpart's field path. Pages CMS
+cannot validate dependencies between the flat fields, so its help explains the
+rule and the build enforces it before deployment; optional pairs can both be empty.
 
 ### A period is two date strings — [Explicit] (module [Implicit])
 

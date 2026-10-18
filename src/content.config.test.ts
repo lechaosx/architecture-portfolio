@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro/zod';
 import { collections } from './content.config';
@@ -351,6 +351,119 @@ test('contact reads where she is and when she is reachable, one line per languag
 test.each(['site', 'landing', 'about', 'contact'] as const)('the committed %s singleton is valid', (name) => {
   const content = frontmatter(`src/content/singletons/${name}.md`);
   expect(staticSchema(name).safeParse(content).success).toBe(true);
+});
+
+test.each(readdirSync('src/content/projects').filter((file) => file.endsWith('.md')))(
+  'the committed project %s is valid',
+  (file) => {
+    expect(projectSchema.safeParse(frontmatter(`src/content/projects/${file}`))).toMatchObject({ success: true });
+  },
+);
+
+const aboutContent = { body_cs: 'O mně', body_en: 'About me' };
+const fact = { place_cs: 'Ateliér', place_en: 'Studio', title_cs: 'Stáž', title_en: 'Internship' };
+
+interface BilingualCase {
+  name: string;
+  collection: keyof typeof collections;
+  content: Record<string, unknown>;
+  path: Array<string | number>;
+  pair: string;
+  optional: boolean;
+}
+
+const bilingualCases: BilingualCase[] = [
+  ...['title', 'location', 'brief', 'award'].map((pair) => ({
+    name: `project ${pair}`, collection: 'projects' as const, content: project,
+    path: [], pair, optional: pair !== 'title',
+  })),
+  {
+    name: 'collaborator role', collection: 'projects',
+    content: { ...project, collaborators: [{ name: 'Jana' }, { name: 'Petr' }] },
+    path: ['collaborators', 1], pair: 'role', optional: true,
+  },
+  {
+    name: 'project text', collection: 'projects',
+    content: { ...project, blocks: [imageSet, { type: 'text', body_cs: 'Popis', body_en: 'Description' }] },
+    path: ['blocks', 1], pair: 'body', optional: false,
+  },
+  ...['gallery', 'image_set'].flatMap((type) => ['title', 'description'].map((pair) => ({
+    name: `${type} image ${pair}`, collection: 'projects' as const,
+    content: { ...project, blocks: [imageSet, { type, images: [{ image: '/uploads/first.jpg' }, { image: '/uploads/second.jpg' }] }] },
+    path: ['blocks', 1, 'images', 1], pair, optional: true,
+  }))),
+  {
+    name: 'site description', collection: 'site',
+    content: { name: 'Jana', description_cs: 'Portfolio', description_en: 'Portfolio' },
+    path: [], pair: 'description', optional: false,
+  },
+  {
+    name: 'About body', collection: 'about', content: aboutContent,
+    path: [], pair: 'body', optional: false,
+  },
+  ...['label', 'text'].map((pair) => ({
+    name: `Approach ${pair}`, collection: 'about' as const,
+    content: { ...aboutContent, approaches: [{ label_cs: 'Místo', label_en: 'Place', text_cs: 'Kontext', text_en: 'Context', icon: 'place' }] },
+    path: ['approaches', 0], pair, optional: false,
+  })),
+  {
+    name: 'service name', collection: 'about',
+    content: { ...aboutContent, services: [{ name_cs: 'Interiéry', name_en: 'Interiors' }] },
+    path: ['services', 0], pair: 'name', optional: false,
+  },
+  ...['experience', 'education', 'awards'].flatMap((field) =>
+    ['place', 'title', 'department', 'description'].map((pair) => ({
+      name: `${field} ${pair}`, collection: 'about' as const,
+      content: { ...aboutContent, [field]: [fact, fact] },
+      path: [field, 1], pair, optional: pair === 'department' || pair === 'description',
+    })),
+  ),
+  ...['location', 'hours'].map((pair) => ({
+    name: `contact ${pair}`, collection: 'contact' as const,
+    content: { email: 'jana@example.cz' }, path: [], pair, optional: true,
+  })),
+];
+
+function withPair({ content, path, pair }: BilingualCase, cs: unknown, en: unknown) {
+  const input = structuredClone(content);
+  let row: Record<string | number, unknown> = input;
+  for (const key of path) row = row[key] as Record<string | number, unknown>;
+  for (const [language, value] of [['cs', cs], ['en', en]]) {
+    if (value === undefined) delete row[`${pair}_${language}`];
+    else row[`${pair}_${language}`] = value;
+  }
+  return input;
+}
+
+describe.each(bilingualCases)('$name translations', (entry) => {
+  test.each(['cs', 'en'])('a filled %s value requires a meaningful counterpart', (language) => {
+    for (const missing of [undefined, '', ' \n\t ']) {
+      const result = staticSchema(entry.collection).safeParse(withPair(
+        entry,
+        language === 'cs' ? 'Český text' : missing,
+        language === 'en' ? 'English text' : missing,
+      ));
+      expect(result.success, `${language}, counterpart ${JSON.stringify(missing)}`).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues).toEqual(expect.arrayContaining([
+          expect.objectContaining({ path: [...entry.path, `${entry.pair}_${language === 'cs' ? 'en' : 'cs'}`] }),
+        ]));
+      }
+    }
+  });
+
+  test('accepts both translations without changing their text', () => {
+    const input = withPair(entry, ' Český text ', ' English text ');
+    expect(staticSchema(entry.collection).safeParse(input)).toMatchObject({ success: true, data: input });
+  });
+
+  if (entry.optional) {
+    test('allows an optional pair to be absent or empty in both languages', () => {
+      for (const [cs, en] of [[undefined, undefined], ['', ''], [' \n\t', ' '], [undefined, ''], ['', undefined]]) {
+        expect(staticSchema(entry.collection).safeParse(withPair(entry, cs, en)).success).toBe(true);
+      }
+    });
+  }
 });
 
 
