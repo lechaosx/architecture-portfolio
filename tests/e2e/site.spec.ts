@@ -299,11 +299,11 @@ test('when the contact line does not fit the footer stacks the contacts in a col
     for (const width of [320, 360, 390]) {
       const at = `${lang} at ${width}px`;
       await page.setViewportSize({ width, height: 700 });
-      expect(
-        await page.evaluate(
+      await expect.poll(
+        () => page.evaluate(
           () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
         ),
-        at,
+        { message: at },
       ).toBe(true);
       for (const item of [email, phone, hours(lang)]) {
         expect(await item.evaluate((element) => element.getClientRects().length), at).toBe(1);
@@ -667,4 +667,21 @@ test('the footer adapts when translating the contact line changes whether it fit
   await language.click();
   expect(await middle(phone)).toBeGreaterThan(await middle(email));
   expect((await language.boundingBox())!.y).toBeCloseTo(top, 0);
+});
+
+test('hours filled in only one language leave no extra gap in the other contact line', async ({ page }) => {
+  await page.goto('/work/');
+  await page.evaluate(() => document.fonts.ready);
+  const { footer, email, phone, hours, language } = footerParts(page);
+  await footer.getByRole('listitem').filter({ hasText: contact.hours_en }).evaluate((item) => {
+    item.setAttribute('lang', 'cs');
+  });
+  await page.setViewportSize({ width: 350, height: 700 });
+  await expect(hours('en')).toBeHidden();
+  await expect.poll(async () => await middle(phone) - await middle(email)).toBe(0);
+  await language.click();
+  await expect(hours('cs')).toBeVisible();
+  expect(await middle(phone)).toBeGreaterThan(await middle(email));
+  await language.click();
+  await expect.poll(async () => await middle(phone) - await middle(email)).toBe(0);
 });

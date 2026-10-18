@@ -127,8 +127,9 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
   function fitFooter() {
     const style = getComputedStyle(row);
     const available = row.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    const contactWidth = items.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0)
-      + Math.max(0, items.length - 1) * parseFloat(getComputedStyle(contacts).columnGap);
+    const widths = items.map((item) => item.getBoundingClientRect().width).filter((width) => width > 0);
+    const contactWidth = widths.reduce((sum, width) => sum + width, 0)
+      + Math.max(0, widths.length - 1) * parseFloat(getComputedStyle(contacts).columnGap);
     const fullWidth = contactWidth + copyright.getBoundingClientRect().width
       + switches.getBoundingClientRect().width + parseFloat(getComputedStyle(switches).marginRight)
       + 2 * parseFloat(style.columnGap);
