@@ -263,13 +263,6 @@ export function getStaticPaths() {
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
     { params: { fixture: 'work-readable' }, props: { projects: [{ ...alphaProject, data: { ...alphaProject.data, brief_en: text(12).en, brief_cs: text(12).cs } }] } },
     { params: { fixture: 'work-credits' }, props: { projects: creditProjects } },
-    ...(['cs', 'en'] as const).flatMap((language) => {
-      const contribution = { [`brief_${language}`]: language === 'cs' ? 'Moje vlastní práce.' : 'My own contribution.' };
-      return [
-        projectWith(`project-${language}-contribution`, project.blocks.slice(0, 1), contribution),
-        { params: { fixture: `work-${language}-contribution` }, props: { projects: [listed('single-language', { ...contribution, blocks: [] })] } },
-      ];
-    }),
     projectWith('brief', project.blocks.slice(0, 1), {
       brief_en: 'A brief for the page.\nSecond line.',
       brief_cs: 'Anotace stránky.\nDruhý řádek.',

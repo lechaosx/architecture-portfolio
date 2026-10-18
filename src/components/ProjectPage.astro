@@ -12,7 +12,6 @@ import { projectDescription } from '../project-description';
 import { creativeWork } from '../structured-data';
 import { projectBadges, projectFacts } from '../project-facts';
 import type { Project } from '../projects';
-import { onlyIn } from '../i18n';
 
 interface Props {
   project: Project;
@@ -69,15 +68,12 @@ const site = new URL('/', Astro.site);
       <div class="mt-8 space-y-8">
         {
           (d.brief_cs || d.brief_en) && (
-            <section lang={onlyIn(d.brief_cs, d.brief_en)} class="space-y-3">
-              <T as="h2" k="contribution" class="text-xs tracking-widest text-neutral-500 uppercase" />
-              <T
-                as="p"
-                cs={d.brief_cs}
-                en={d.brief_en}
-                class="running-text max-w-prose leading-7 whitespace-pre-line text-neutral-700"
-              />
-            </section>
+            <T
+              as="p"
+              cs={d.brief_cs}
+              en={d.brief_en}
+              class="running-text columns-[35ch_2] gap-12 leading-7 whitespace-pre-line text-neutral-700"
+            />
           )
         }
         <ProjectFacts facts={projectFacts(d, { placeAndPeriod: true })} />

@@ -148,8 +148,6 @@ https://example.cz/projects/galerie/
 - Tým projektu / Project team: Autorský tým / Design team: Jan Novák, Eva Dvořáková; Ing. Petr Malý – vizualizace / Visualizations; Ing. Iva Tichá
 - Ocenění / Award: Odměna
 
-#### Moje práce / My contribution
-
 Anotace.
 
 Brief.

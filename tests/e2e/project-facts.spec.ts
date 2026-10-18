@@ -68,22 +68,45 @@ test('a project without credits shows only its place and period', async ({ page 
   await expect(brief(page)).toHaveCount(0);
 });
 
-test('the brief sits above the full-width fact sheet at every screen size', async ({
-  page,
-}) => {
+test('the full-width brief uses readable columns above the fact sheet', async ({ page }) => {
   await page.goto('/e2e/credits/');
-  for (const width of [1280, 834, 390]) {
-    await page.setViewportSize({ width, height: 900 });
-    const [title, briefBox, sheetBox, header] = await Promise.all([
-      page.locator('article h1:visible').boundingBox(),
-      brief(page).boundingBox(),
-      sheet(page).boundingBox(),
-      page.locator('article header').boundingBox(),
-    ]);
-    expect(briefBox!.x, `${width}px`).toBeCloseTo(title!.x, 0);
-    expect(sheetBox!.y, `${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
-    expect(sheetBox!.x, `${width}px`).toBeCloseTo(briefBox!.x, 0);
-    expect(sheetBox!.width, `${width}px`).toBeCloseTo(header!.width, 0);
+  await page.evaluate(() => document.fonts.ready);
+  for (const language of ['en', 'cs']) {
+    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    for (const [width, columns] of [[1280, 2], [800, 2], [390, 1]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      const [title, briefBox, sheetBox, header] = await Promise.all([
+        page.locator('article h1:visible').boundingBox(),
+        brief(page).boundingBox(),
+        sheet(page).boundingBox(),
+        page.locator('article header').boundingBox(),
+      ]);
+      expect(briefBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
+      expect(briefBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
+      expect(sheetBox!.y, `${language} ${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
+      expect(sheetBox!.x, `${language} ${width}px`).toBeCloseTo(briefBox!.x, 0);
+      expect(sheetBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
+      const lines = await brief(page).evaluate((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const lines: { x: number; y: number; right: number }[] = [];
+        for (const rect of range.getClientRects()) {
+          // Chromium gives a generated hyphen its own adjoining rectangle.
+          const line = lines.find((line) => Math.abs(line.y - rect.y) < 1 && Math.abs(line.right - rect.x) < 1);
+          if (line) line.right = rect.right;
+          else lines.push({ x: rect.x, y: rect.y, right: rect.right });
+        }
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        context.font = getComputedStyle(element).font;
+        return {
+          columns: new Set(lines.map((line) => Math.round(line.x))).size,
+          longest: Math.max(...lines.map((line) => line.right - line.x)) / context.measureText('0').width,
+        };
+      });
+      expect(lines.columns, `${language} ${width}px`).toBe(columns);
+      expect(lines.longest, `${language} ${width}px`).toBeLessThanOrEqual(75);
+    }
   }
 });
 
@@ -173,13 +196,17 @@ test('an opened index row shows the brief, then the sheet without the place and 
   const opened = row.locator('details > div');
   expect(await labels(opened)).toEqual(['Intervention', 'Scope', 'Studio', 'Project team']);
 
+  await expect(row.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
   const briefText = row.getByText('First line').filter({ visible: true });
+  await expect(briefText).toBeVisible();
   const [briefBox, sheetBox] = await Promise.all([briefText.boundingBox(), sheet(row).boundingBox()]);
   expect(sheetBox!.y).toBeGreaterThan(briefBox!.y + briefBox!.height);
   expect(sheetBox!.x).toBeCloseTo(briefBox!.x, 0);
 
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
   expect(await labels(opened)).toEqual(['Zásah', 'Zaměření', 'Ateliér', 'Tým projektu', 'Ocenění']);
+  await expect(row.getByText('První řádek').filter({ visible: true })).toBeVisible();
+  await expect(row.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
 });
 
 test('an index row with credits and no brief opens to its sheet', async ({ page }) => {
@@ -192,20 +219,21 @@ test('an index row with credits and no brief opens to its sheet', async ({ page 
 });
 
 
-test('project context and progress are quiet bilingual badges above the labelled contribution', async ({ page }) => {
+test('project context and progress are quiet bilingual badges above the unlabelled brief', async ({ page }) => {
   await page.goto('/e2e/credits/');
   const header = page.locator('article header');
-  for (const [language, contribution, badges] of [
-    ['en', 'My contribution', ['Academic project', 'Competition entry', 'Design in progress', 'Construction planned']],
-    ['cs', 'Moje práce', ['Školní projekt', 'Soutěžní návrh', 'Probíhá projektování', 'Plánovaná realizace']],
+  for (const [language, badges] of [
+    ['en', ['Academic project', 'Competition entry', 'Design in progress', 'Construction planned']],
+    ['cs', ['Školní projekt', 'Soutěžní návrh', 'Probíhá projektování', 'Plánovaná realizace']],
   ] as const) {
     if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
-    await expect(header.getByRole('heading', { name: contribution, exact: true })).toBeVisible();
+    await expect(brief(page)).toBeVisible();
+    await expect(header.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
     const badgeList = header.locator(':scope > ul');
     expect(await badgeList.locator('li:visible').allInnerTexts()).toEqual(badges);
     await expect(badgeList.getByRole('link')).toHaveCount(0);
     await expect(badgeList.getByRole('button')).toHaveCount(0);
-    const [badgesBox, contributionBox] = await Promise.all([badgeList.boundingBox(), header.getByRole('heading', { name: contribution, exact: true }).boundingBox()]);
+    const [badgesBox, contributionBox] = await Promise.all([badgeList.boundingBox(), brief(page).boundingBox()]);
     expect(badgesBox!.y + badgesBox!.height).toBeLessThan(contributionBox!.y);
   }
 });
@@ -224,19 +252,3 @@ test('a metadata-only index row expands to its context badges', async ({ page })
   await expect(row.getByText('Commissioned project', { exact: true })).toBeVisible();
   await expect(row.getByRole('heading', { name: 'My contribution', exact: true })).toHaveCount(0);
 });
-
-
-for (const surface of ['project', 'work']) {
-  for (const suppliedLanguage of ['cs', 'en']) {
-    test(`a ${surface} contribution supplied only in ${suppliedLanguage} has its heading only in that language`, async ({ page }) => {
-      await page.goto(`/e2e/${surface}-${suppliedLanguage}-contribution/`);
-      if (surface === 'work') await page.locator('summary').click();
-      const heading = page.getByRole('heading', { name: /^(My contribution|Moje práce)$/ });
-      if (suppliedLanguage === 'en') await expect(heading).toHaveText('My contribution');
-      else await expect(heading).toHaveCount(0);
-      await page.locator('[data-lang-toggle]').click();
-      if (suppliedLanguage === 'cs') await expect(heading).toHaveText('Moje práce');
-      else await expect(heading).toHaveCount(0);
-    });
-  }
-}

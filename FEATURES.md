@@ -108,7 +108,7 @@ name.
 
 ### Personal contribution and the whole project — [Explicit]
 
-The short text is labelled **Moje práce / My contribution** on the project page and in an expanded index entry, appearing with its heading when filled and preserving its line breaks. It describes her responsibilities and outputs; the existing content blocks describe the whole project, including projects entirely designed by her. Dates describe her involvement, independently of project progress.
+The short text appears without a preset heading on the project page and in an expanded index entry, preserving its line breaks; its content identifies her responsibilities and outputs. The existing content blocks describe the whole project, including projects entirely designed by her. Dates describe her involvement, independently of project progress.
 
 ### Project context and progress badges — [Explicit]
 
@@ -124,8 +124,8 @@ Only filled facts appear, with location and personal involvement added on the pr
 
 The fact sheet balances whole rows into two groups side by side when both
 remain comfortably readable; narrower sheets use one group. On a project
-page the sheet fills the available width below the brief, whose text keeps a
-comfortable reading measure — [Implicit].
+page both the brief and sheet fill the available width; the brief uses up to two
+readable text columns, returning to one on narrower screens.
 
 ### A project without content blocks has no page — [Explicit]
 

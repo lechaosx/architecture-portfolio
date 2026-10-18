@@ -75,7 +75,7 @@ function project(site: URL, { id, data }: Project) {
             .join('; ')}`,
       ),
     ),
-    ...(data.brief_cs || data.brief_en ? [`#### ${label('contribution')}`, ...both(data.brief_cs, data.brief_en)] : []),
+    ...both(data.brief_cs, data.brief_en),
     ...data.blocks.flatMap((block) =>
       block.type === 'text' ? both(block.body_cs, block.body_en) : [],
     ),
