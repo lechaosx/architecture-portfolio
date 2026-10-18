@@ -116,7 +116,7 @@ Quiet, non-interactive badges near the title describe the whole project: academi
 
 ### Project classification and credits — [Explicit]
 
-The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, project team and award. The single **Tým projektu / Project team** section includes Tereza and every credited person, each with an optional bilingual role and a visible designation for confirmed design authors. Studio holds the practice name; unverified roles and authorship remain unstated.
+The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, project team and award. The single **Tým projektu / Project team** section includes Tereza and every credited person, each with an optional bilingual role, including design authorship where confirmed. Studio holds the practice name; unverified roles remain unstated.
 
 Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole. An index entry with contribution, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 

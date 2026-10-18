@@ -19,8 +19,8 @@ test('lists the filled credits, award and status in sheet order, names kept as i
       ...project,
       studio: 'Ateliér A | Ing. arch. Jan Novák',
       team: [
-        { name: 'Jan Novák', author: true },
-        { name: 'Eva Dvořáková', author: true, role_cs: 'koordinace', role_en: 'Coordination' },
+        { name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' },
+        { name: 'Eva Dvořáková', role_cs: 'Autor návrhu · koordinace', role_en: 'Design author · Coordination' },
         { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
         { name: 'Ing. Pavel Velký', role_cs: 'statika' },
         { name: 'Ing. Iva Tichá' },

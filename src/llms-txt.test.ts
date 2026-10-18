@@ -73,8 +73,8 @@ test('presents the architect and her projects, Czech first', () => {
             realization: 'built',
             studio: 'Ateliér A',
             team: [
-              { name: 'Jan Novák', author: true },
-              { name: 'Eva Dvořáková', author: true },
+              { name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' },
+              { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
               { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
               { name: 'Ing. Iva Tichá' },
             ],

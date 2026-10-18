@@ -79,7 +79,7 @@ with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` o
 
 **Add a project by hand.** Copy an existing file in `src/content/projects/`, put
 images in `public/uploads/` and reference them as `/uploads/<file>`. The owner
-normally does this in the CMS. `brief_cs` / `brief_en` describe her personal contribution, `from` / `to` her involvement; project narrative belongs in `blocks`. Optional `context`, `intervention` and `scope` lists use the choices in `.pages.yml`; `design_in_progress` is independent of the single `realization` value. Select only confirmed facts. The single `team` list contains everyone, including Tereza, as records with `name`, optional paired `role_cs` / `role_en`, and optional `author: true` for confirmed design authors; unknown roles and authorship stay unfilled.
+normally does this in the CMS. `brief_cs` / `brief_en` describe her personal contribution, `from` / `to` her involvement; project narrative belongs in `blocks`. Optional `context`, `intervention` and `scope` lists use the choices in `.pages.yml`; `design_in_progress` is independent of the single `realization` value. Select only confirmed facts. The single `team` list contains everyone, including Tereza, as records with `name` and optional paired `role_cs` / `role_en`. Confirmed authorship is a role such as `Autor návrhu` / `Design author`; unknown roles stay unfilled.
 
 **Change the domain.** Edit `public/CNAME` and `site` in `astro.config.mjs`,
 then the domain under GitHub **Settings → Pages** and its DNS.

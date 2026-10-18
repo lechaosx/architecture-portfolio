@@ -95,9 +95,8 @@ content:
         description: 'Všichni členové týmu včetně Terezy Kalábkové, jedna osoba na položku. Uveďte známou roli v obou jazycích; neznámou nechte prázdnou.'
         fields:
           - { name: name, label: Jméno, type: string, required: true, description: 'Společné pro oba jazyky, např. „Ing. Jiří Železný“.' }
-          - { name: author, label: Autor/ka architektonického návrhu, type: boolean, required: false, description: 'Označte potvrzené autory architektonického návrhu. Autorství se zobrazuje u jména a používá se také v metadatech projektu.' }
-          - { name: role_cs, label: Role (česky), type: string, required: false, description: 'Např. „vizualizace“.' }
-          - { name: role_en, label: Role (anglicky), type: string, required: false, description: 'Např. „Visualizations“. Vyplňte oba jazyky, nebo nechte obě pole prázdná. Chybějící překlad zabrání zveřejnění změn.' }
+          - { name: role_cs, label: Role (česky), type: string, required: false, description: 'Např. „Autor návrhu“ nebo „vizualizace“.' }
+          - { name: role_en, label: Role (anglicky), type: string, required: false, description: 'Např. „Design author“ nebo „Visualizations“. Vyplňte oba jazyky, nebo nechte obě pole prázdná. Chybějící překlad zabrání zveřejnění změn.' }
       - { name: award_cs, label: Ocenění (česky), type: string, required: false, description: 'Např. „Odměna za dílčí podnět“.' }
       - { name: award_en, label: Ocenění (anglicky), type: string, required: false, description: *translations }
       - { name: draft, label: Koncept (nezveřejňovat), type: boolean, default: false }

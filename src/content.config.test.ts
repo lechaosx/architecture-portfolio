@@ -156,8 +156,8 @@ describe('project content schema', () => {
       context: ['competition'],
       studio: 'Ateliér A',
       team: [
-        { name: 'Jan Novák', author: true },
-        { name: 'Eva Dvořáková', author: true },
+        { name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' },
+        { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
         { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
         { name: 'Ing. Iva Tichá' },
       ],
@@ -184,7 +184,6 @@ describe('project content schema', () => {
     ['a scope outside the list', { scope: ['housing'] }],
     ['non-boolean design activity', { design_in_progress: 'yes' }],
     ['a team member without a name', { team: [{ role_cs: 'statika', role_en: 'Structures' }] }],
-    ['a non-boolean author flag', { team: [{ name: 'Jana', author: 'yes' }] }],
     ['an old string team member', { team: ['Jana'] }],
   ])('rejects %s', (_, fields) => {
     expect(projectSchema.safeParse({ ...project, ...fields }).success).toBe(false);

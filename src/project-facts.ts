@@ -1,5 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
-import { onlyIn, ui, type Lang, type UiKey } from './i18n';
+import { onlyIn, type Lang, type UiKey } from './i18n';
 import { formatPeriod } from './period';
 
 type Data = CollectionEntry<'projects'>['data'];
@@ -59,10 +59,10 @@ export function projectFacts(
     ...(studio ? [{ label: 'studio' as const, lines: [text(studio)] }] : []),
     ...(team.length ? [{
       label: 'projectTeam' as const,
-      lines: team.map(({ name, author, role_cs, role_en }) => ({
+      lines: team.map(({ name, role_cs, role_en }) => ({
         names: [name],
-        cs: [author && ui.cs.designAuthor, role_cs].filter(Boolean).join(' · '),
-        en: [author && ui.en.designAuthor, role_en].filter(Boolean).join(' · '),
+        cs: role_cs ?? '',
+        en: role_en ?? '',
       })),
     }] : []),
     ...pair('award', project.award_cs, project.award_en),

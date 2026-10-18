@@ -220,7 +220,7 @@ the same order.
 
 ### One project metadata model — [Implicit]
 
-`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Each `team` record keeps its name, optional bilingual role and optional explicit design-author flag; one static Astro badge component renders title and fact-sheet categories without client state. Native columns balance intact fact rows, with labels above values in narrow sheets.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Each `team` record keeps its name and optional bilingual role; one static Astro badge component renders title and fact-sheet categories without client state. Native columns balance intact fact rows, with labels above values in narrow sheets.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 
@@ -407,7 +407,7 @@ which `Base` inlines as one `@graph` per page. Text is plain Czech, because
 Google documents only plain-text values for these properties, not
 language-tagged ones. Her location is `Person.workLocation`, a `Place`.
 Credentials are named "programme, school (period)" and awards "award, placement
-(period)"; `award` is plain text. A project's `creator` contains only team members explicitly marked as design authors; other members are contributors. Both relationships preserve supplied roles using schema.org `Role`, and link the owner to her Person node when named. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
+(period)"; `award` is plain text. A project's `contributor` credits every supplied team member, preserving supplied roles using schema.org `Role` and linking the owner to her Person node when named. Free-text roles do not establish a separate creator relationship. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 

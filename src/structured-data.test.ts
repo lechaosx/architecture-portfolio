@@ -201,7 +201,7 @@ describe('creativeWork', () => {
     ).toEqual(['@type', 'name', 'inLanguage', 'url']);
   });
 
-  test('preserves explicit authorship and supplied roles in the unified project team', () => {
+  test('credits the whole project team with supplied roles', () => {
     expect(
       creativeWork({
         site,
@@ -211,9 +211,9 @@ describe('creativeWork', () => {
           ...project,
           realization: 'construction',
           team: [
-            { name: 'Jan Novák', author: true, role_cs: 'koordinace', role_en: 'Coordination' },
-            { name: 'Jana Nováková', author: true },
-            { name: 'Eva Dvořáková', author: true },
+            { name: 'Jan Novák', role_cs: 'Autor návrhu · koordinace', role_en: 'Design author · Coordination' },
+            { name: 'Jana Nováková', role_cs: 'Autor návrhu', role_en: 'Design author' },
+            { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
             { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
             { name: 'Ing. Iva Tichá', role_en: 'Statics' },
           ],
@@ -223,13 +223,10 @@ describe('creativeWork', () => {
         responsiveImages: [],
       }),
     ).toMatchObject({
-      // The architect is one of the team, and named once.
-      creator: [
-        { '@type': 'Role', roleName: 'koordinace', creator: { '@type': 'Person', name: 'Jan Novák' } },
-        { '@id': 'https://example.cz/#person' },
-        { '@type': 'Person', name: 'Eva Dvořáková' },
-      ],
       contributor: [
+        { '@type': 'Role', roleName: 'Autor návrhu · koordinace', contributor: { '@type': 'Person', name: 'Jan Novák' } },
+        { '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@id': 'https://example.cz/#person' } },
+        { '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@type': 'Person', name: 'Eva Dvořáková' } },
         {
           '@type': 'Role',
           roleName: 'vizualizace',
@@ -261,24 +258,24 @@ describe('jsonLd', () => {
 
 
 test('personal involvement does not establish project authorship or creation date', () => {
-  const project = { title_cs: 'Projekt', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', team: [{ name: 'Jan Novák', author: true }] };
+  const project = { title_cs: 'Projekt', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', team: [{ name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' }] };
   const node = creativeWork({ site, url: 'https://example.cz/project/', owner: owner.name,
     project,
     images: [], responsiveImages: [] });
   expect(node).not.toHaveProperty('dateCreated');
-  expect(node.creator).toEqual([{ '@type': 'Person', name: 'Jan Novák' }]);
-  expect(node).not.toHaveProperty('contributor');
+  expect(node.contributor).toEqual([{ '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@type': 'Person', name: 'Jan Novák' } }]);
+  expect(node).not.toHaveProperty('creator');
 });
 
 
-test('a design-team owner with surrounding whitespace is credited once', () => {
+test('a team owner with surrounding whitespace is credited once', () => {
   const node = creativeWork({
     site, url: 'https://example.cz/project/', owner: owner.name,
-    project: { title_cs: 'Projekt', team: [{ name: `  ${owner.name}  `, author: true }] },
+    project: { title_cs: 'Projekt', team: [{ name: `  ${owner.name}  `, role_cs: 'Autor návrhu', role_en: 'Design author' }] },
     images: [], responsiveImages: [],
   });
-  expect(node.creator).toEqual([{ '@id': 'https://example.cz/#person' }]);
-  expect(node).not.toHaveProperty('contributor');
+  expect(node.contributor).toEqual([{ '@type': 'Role', roleName: 'Autor návrhu', contributor: { '@id': 'https://example.cz/#person' } }]);
+  expect(node).not.toHaveProperty('creator');
 });
 
 
@@ -287,7 +284,7 @@ test('team membership credits contribution without inferring authorship', () => 
     site, url: 'https://example.cz/project/', owner: owner.name,
     project: { title_cs: 'Projekt', team: [
       { name: `  ${owner.name}  `, role_cs: 'dokumentace', role_en: 'Documentation' },
-      { name: 'Petr', author: false },
+      { name: 'Petr' },
     ] },
     images: [], responsiveImages: [],
   });

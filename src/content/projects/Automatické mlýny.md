@@ -18,21 +18,29 @@ context:
 studio: Fránek Architects
 team:
   - name: Jan Žahour
-    author: true
+    role_cs: Autor návrhu
+    role_en: Design author
   - name: Michal Škoda
-    author: true
+    role_cs: Autor návrhu
+    role_en: Design author
   - name: Olivia Dimitrishina
-    author: true
+    role_cs: Autor návrhu
+    role_en: Design author
   - name: Tereza Kalábková
-    author: true
+    role_cs: Autor návrhu
+    role_en: Design author
   - name: Libor Šenekel
-    author: true
+    role_cs: Autor návrhu
+    role_en: Design author
   - name: Pavel Lauš
-    author: true
+    role_cs: Autor návrhu
+    role_en: Design author
   - name: Adam Schwarz
-    author: true
+    role_cs: Autor návrhu
+    role_en: Design author
   - name: Jakub Jurásek
-    author: true
+    role_cs: Autor návrhu
+    role_en: Design author
   - name: prof. Ing. arch. Zdeněk Fránek
 award_cs: Odměna za dílčí podnět
 award_en: Special recognition for a specific design contribution
