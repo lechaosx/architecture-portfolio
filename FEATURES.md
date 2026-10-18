@@ -384,6 +384,12 @@ room — [Implicit]:
   opening again turns the close around.
 - The address follows every change, rate-limited only during a held key.
 
+### Carousels wrap through adjacent images — [Explicit]
+
+Moving forward from the last image continues into the first; moving backward
+from the first continues into the last. Arrows, automatic advance and native
+horizontal scrolling share this circular order.
+
 ---
 
 ## Project pages and the lightbox

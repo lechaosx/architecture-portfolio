@@ -193,6 +193,14 @@ slide per item, which the track sizes, and only the landing page turns on
 auto-advance. It shares the interaction language with the lightbox but not its
 implementation.
 
+### Circular carousel motion — [Implicit]
+
+The scroll strip has inert copies of its boundary slides, keeping duplicate
+controls out of keyboard navigation and the accessibility tree. A small
+frame animation follows a circular position so wrapping and retargeting stay
+continuous; native scrolling takes over on visitor input and returns to an
+equivalent original slide when it settles.
+
 ### Project blocks render in Astro — [Explicit]
 
 `ProjectBlocks.astro` renders the blocks on the server; each image button

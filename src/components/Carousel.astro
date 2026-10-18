@@ -83,27 +83,88 @@ const slides = await Promise.all(
   for (const root of document.querySelectorAll<HTMLElement>('[data-carousel]')) {
     const track = root.querySelector<HTMLElement>('[data-carousel-track]');
     if (!track) continue;
-    const count = track.children.length;
+    const originals = Array.from(track.children) as HTMLElement[];
+    const count = originals.length;
     const dots = Array.from(
       root.querySelectorAll<HTMLElement>('[data-carousel-dot]'),
     );
+    const wrap = (index: number) => ((index % count) + count) % count;
+    const clone = (slide: Element) => {
+      const copy = slide.cloneNode(true) as HTMLElement;
+      copy.inert = true;
+      copy.setAttribute('aria-hidden', 'true');
+      copy.style.viewTransitionName = 'none';
+      // The lightbox's thumbnail registry must point to original slides.
+      copy.removeAttribute('data-lightbox-index');
+      return copy;
+    };
+    const first = track.firstElementChild!;
+    const last = track.lastElementChild!;
+    track.prepend(clone(last));
+    track.append(clone(first));
+
     // The current slide is state; the smooth scroll only chases it. Only the
     // visitor's own scrolling of the track moves it from the scroll position.
     let current = 0;
     let visitorScrolling = false;
+    let position = 0;
+    let target = 0;
+    let animation: number | undefined;
+    let lastFrame = 0;
     const sync = () => {
       dots.forEach((dot, index) =>
         dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
       );
     };
+    // Boundary copies make equivalent positions one full turn apart look
+    // identical, including a partially visible pair of slides.
+    const draw = () => {
+      track.scrollLeft = (wrap(position) + 1) * track.clientWidth;
+    };
+    const settle = () => {
+      position = target = current;
+      draw();
+      track.style.scrollSnapType = '';
+    };
+    const animate = (time: number) => {
+      position += (target - position) * (1 - Math.exp(-(time - lastFrame) / 65));
+      lastFrame = time;
+      if (Math.abs(target - position) < 0.0001) {
+        animation = undefined;
+        settle();
+      } else {
+        draw();
+        animation = requestAnimationFrame(animate);
+      }
+    };
     const goTo = (index: number) => {
-      current = ((index % count) + count) % count;
+      if (animation === undefined) {
+        position = current + position - Math.round(position);
+        target = index;
+      } else {
+        target += index - current;
+      }
+      current = wrap(index);
       visitorScrolling = false;
       sync();
-      track.scrollTo({
-        left: current * track.clientWidth,
-        behavior: reducedMotion.matches ? 'auto' : 'smooth',
-      });
+      if (reducedMotion.matches) {
+        if (animation !== undefined) cancelAnimationFrame(animation);
+        animation = undefined;
+        settle();
+      } else if (animation === undefined) {
+        track.style.scrollSnapType = 'none';
+        lastFrame = performance.now();
+        animation = requestAnimationFrame(animate);
+      }
+    };
+    const takeOver = () => {
+      if (animation !== undefined) {
+        cancelAnimationFrame(animation);
+        animation = undefined;
+        track.style.scrollSnapType = '';
+      }
+      position = target = track.scrollLeft / track.clientWidth - 1;
+      visitorScrolling = true;
     };
 
     root
@@ -115,8 +176,15 @@ const slides = await Promise.all(
     dots.forEach((dot, index) =>
       dot.addEventListener('click', () => goTo(index)),
     );
+    // Inert copies send pointer clicks to the track; activate their original.
+    track.addEventListener('click', (event) => {
+      if (event.target !== track) return;
+      const x = event.clientX - track.getBoundingClientRect().left;
+      const index = Math.floor((track.scrollLeft + x) / track.clientWidth) - 1;
+      originals[wrap(index)].click();
+    });
     for (const event of ['pointerdown', 'keydown', 'focusin']) {
-      track.addEventListener(event, () => (visitorScrolling = true), {
+      track.addEventListener(event, takeOver, {
         passive: true,
       });
     }
@@ -124,7 +192,7 @@ const slides = await Promise.all(
     track.addEventListener(
       'wheel',
       (event) => {
-        if (event.deltaX || event.shiftKey) visitorScrolling = true;
+        if (event.deltaX || event.shiftKey) takeOver();
       },
       { passive: true },
     );
@@ -132,12 +200,22 @@ const slides = await Promise.all(
       'scroll',
       () => {
         if (!visitorScrolling) return;
-        current = Math.round(track.scrollLeft / track.clientWidth);
+        position = target = track.scrollLeft / track.clientWidth - 1;
+        current = wrap(Math.round(position));
         sync();
       },
       { passive: true },
     );
+    track.addEventListener('scrollend', () => {
+      if (animation !== undefined || !visitorScrolling) return;
+      visitorScrolling = false;
+      settle();
+    });
+    settle();
     sync();
+    reducedMotion.addEventListener('change', () => {
+      if (reducedMotion.matches) goTo(current);
+    });
 
     if (root.dataset.autoAdvance === undefined) continue;
     let timer: number | undefined;
