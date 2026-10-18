@@ -20,7 +20,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   page,
 }) => {
   await page.goto('/e2e/credits/');
-  expect(await labels(page)).toEqual(['Location', 'Period', 'Phase', 'Design studio', 'Design team', 'Collaboration']);
+  expect(await labels(page)).toEqual(['Location', 'Period', 'Phase', 'Studio', 'Design team', 'Collaborators']);
   expect(await values(page)).toEqual([
     'Nowhere',
     '3/2025–6/2026',
@@ -37,7 +37,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
     'Místo',
     'Období',
     'Fáze',
-    'Autorský ateliér',
+    'Ateliér',
     'Autorský tým',
     'Spolupráce',
     'Ocenění',
@@ -116,7 +116,7 @@ test('fact rows form two intact groups when both fit and one group on narrower s
 
 test('labels sit beside their values where the sheet has room, above them on phones', async ({ page }) => {
   await page.goto('/e2e/credits/');
-  const row = sheet(page).locator('div').filter({ hasText: 'Design studio' });
+  const row = sheet(page).locator('div').filter({ hasText: 'Studio' });
   const label = row.locator('dt');
   const value = row.locator('dd');
   for (const [width, beside] of [
@@ -165,12 +165,15 @@ test('an opened index row shows the brief, then the sheet without the place and 
   const row = page.locator('main ul > li').nth(0);
   await row.getByText('Alpha brief').click();
   const opened = row.locator('details > div');
-  expect(await labels(opened)).toEqual(['Phase', 'Design studio', 'Design team', 'Collaboration']);
+  expect(await labels(opened)).toEqual(['Phase', 'Studio', 'Design team', 'Collaborators']);
 
   const briefText = row.getByText('First line').filter({ visible: true });
   const [briefBox, sheetBox] = await Promise.all([briefText.boundingBox(), sheet(row).boundingBox()]);
   expect(sheetBox!.y).toBeGreaterThan(briefBox!.y + briefBox!.height);
   expect(sheetBox!.x).toBeCloseTo(briefBox!.x, 0);
+
+  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  expect(await labels(opened)).toEqual(['Fáze', 'Ateliér', 'Autorský tým', 'Spolupráce', 'Ocenění']);
 });
 
 test('an index row with credits and no brief opens to its sheet', async ({ page }) => {
@@ -178,6 +181,6 @@ test('an index row with credits and no brief opens to its sheet', async ({ page 
   const row = page.locator('main ul > li').nth(1);
   await expect(sheet(row)).toBeHidden();
   await row.getByText('Credits only').click();
-  expect(await labels(row)).toEqual(['Design studio']);
+  expect(await labels(row)).toEqual(['Studio']);
   expect(await values(row)).toEqual(['Studio North | Ing. arch. Jana Nováková']);
 });

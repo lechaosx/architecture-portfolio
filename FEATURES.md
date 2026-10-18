@@ -122,11 +122,15 @@ Studie · Soutěžní návrh · Povolení stavby · Ve výstavbě · Realizován
 Competition entry · Building permit · Under construction · Completed) —
 [Explicit]. The project page shows them with its place and period, which move
 there from under the title, as a fact sheet of rows with small-caps labels:
-Místo, Období, Fáze or Stav, Autorský ateliér, Autorský tým, Spolupráce (one line per
+Místo, Období, Fáze or Stav, Ateliér, Autorský tým, Spolupráce (one line per
 person, "name – role") and Ocenění, each row only when filled. The credits are
 not justified. An opened index row shows the brief and the same sheet without
 the place and period it already shows — [Explicit].
 Search engines and `llms.txt` get them too.
+
+Credit labels distinguish the practice (**Ateliér / Studio**), the authors
+(**Autorský tým / Design team**) and other contributors (**Spolupráce /
+Collaborators**), whose roles may be provided — [Explicit].
 
 The details — [Implicit]: the labels' column is one fixed width, so values line
 up on every project; where the sheet is narrow, as on phones, labels sit above

@@ -143,9 +143,9 @@ Brno, Česko / Brno, Czechia · 2024
 https://example.cz/projects/galerie/
 
 - Stav / Status: Realizováno / Completed
-- Autorský ateliér / Design studio: Ateliér A
+- Ateliér / Studio: Ateliér A
 - Autorský tým / Design team: Jan Novák, Eva Dvořáková
-- Spolupráce / Collaboration: Ing. Petr Malý – vizualizace / Visualizations; Ing. Iva Tichá
+- Spolupráce / Collaborators: Ing. Petr Malý – vizualizace / Visualizations; Ing. Iva Tichá
 - Ocenění / Award: Odměna
 
 Anotace.
