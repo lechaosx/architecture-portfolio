@@ -28,37 +28,71 @@ content:
       - { name: title_cs, label: Název (česky), type: string, required: true }
       - { name: title_en, label: Název (anglicky), type: string, required: true }
       - name: from
-        label: Od
+        label: Moje zapojení od
         type: string
         required: true
         pattern: &date { regex: '^((0?[1-9]|1[0-2])/)?[0-9]{4}$|^$', message: 'Zadejte rok, např. 2023, nebo měsíc a rok, např. 3/2023.' }
-        description: 'Začátek práce na projektu: rok, např. 2023, nebo měsíc a rok, např. 3/2023.'
-      - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec práce na projektu ve stejném tvaru; u projektu z jednoho roku stejný rok jako v poli „Od“. Pokud projekt stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
+        description: 'Začátek mé práce na projektu: rok, např. 2023, nebo měsíc a rok, např. 3/2023.'
+      - { name: to, label: Moje zapojení do, type: string, required: false, pattern: *date, description: 'Konec mé práce na projektu; u jednoho roku stejný rok jako začátek. Pokud moje zapojení trvá, nechte prázdné. Nejde o datum dokončení stavby.' }
       - { name: location_cs, label: Místo (česky), type: string, required: false }
       - { name: location_en, label: Místo (anglicky), type: string, required: false }
-      - { name: brief_cs, label: Stručný popis (česky), type: text, required: false, description: 'Popis projektu. Fázi nebo stav, ateliér a tým, spolupráci a ocenění zadejte do jejich polí níže.' }
-      - { name: brief_en, label: Stručný popis (anglicky), type: text, required: false, description: 'Popis projektu. Fázi nebo stav, ateliér a tým, spolupráci a ocenění zadejte do jejich polí níže.' }
-      - name: status
-        label: Fáze nebo stav
-        description: Studie, soutěžní návrh a povolení se zobrazí jako fáze; výstavba a realizace jako stav.
+      - { name: brief_cs, label: Moje práce (česky), type: text, required: false, description: 'Co jsem osobně navrhla, zpracovala nebo koordinovala. Popis celého projektu patří do obsahu stránky.' }
+      - { name: brief_en, label: Moje práce (anglicky), type: text, required: false, description: 'Co jsem osobně navrhla, zpracovala nebo koordinovala. Popis celého projektu patří do obsahu stránky.' }
+      - name: context
+        label: Kontext projektu
+        description: 'Původ celého projektu. Lze kombinovat, např. školní soutěž. Zakázkový projekt může být zakázkou ateliéru, nemusí jít o mého přímého klienta.'
         type: select
         required: false
         options:
-          placeholder: Vyberte fázi nebo stav
+          multiple: true
           values:
-            - { name: study, label: Studie }
+            - { name: academic, label: Školní projekt }
             - { name: competition, label: Soutěžní návrh }
-            - { name: permit, label: Povolení stavby }
+            - { name: commissioned, label: Zakázkový projekt }
+            - { name: self_initiated, label: Vlastní iniciativa }
+      - name: intervention
+        label: Zásah
+        type: select
+        required: false
+        options:
+          multiple: true
+          values:
+            - { name: new_build, label: Novostavba }
+            - { name: renovation, label: Rekonstrukce }
+            - { name: extension, label: Přístavba }
+            - { name: adaptive_reuse, label: Změna využití }
+      - name: scope
+        label: Zaměření projektu
+        type: select
+        required: false
+        options:
+          multiple: true
+          values:
+            - { name: architecture, label: Architektura }
+            - { name: interior, label: Interiér }
+            - { name: landscape, label: Krajinářská architektura }
+            - { name: public_space, label: Veřejný prostor }
+            - { name: urban_design, label: Urbanismus }
+      - { name: design_in_progress, label: Probíhá projektování, type: boolean, default: false, description: 'Projektování celého projektu právě probíhá, nezávisle na mém zapojení a stavu realizace.' }
+      - name: realization
+        label: Realizace
+        description: 'Stav celého projektu. Nevyplněné pole znamená pouze neuvedený stav.'
+        type: select
+        required: false
+        options:
+          placeholder: Stav neuveden
+          values:
+            - { name: planned, label: Plánovaná realizace }
             - { name: construction, label: Ve výstavbě }
-            - { name: completed, label: Realizováno }
+            - { name: built, label: Realizováno }
       - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména osob patří do autorského týmu nebo spolupráce.' }
-      - { name: team, label: Autorský tým, type: string, list: true, required: false, description: 'Jedno jméno na položku, společné pro oba jazyky.' }
+      - { name: team, label: Autorský tým, type: string, list: true, required: false, description: 'Autoři architektonického návrhu, jedno jméno na položku. U vlastního návrhu uveďte i sebe.' }
       - name: collaborators
-        label: Spolupráce
+        label: Další členové týmu a jejich role
         type: object
         list: true
         required: false
-        description: 'Jedna osoba na položku.'
+        description: 'Další členové týmu, jedna osoba na položku. Uveďte skutečnou roli; neznámou nechte prázdnou.'
         fields:
           - { name: name, label: Jméno, type: string, required: true, description: 'Společné pro oba jazyky, např. „Ing. Jiří Železný“.' }
           - { name: role_cs, label: Role (česky), type: string, required: false, description: 'Např. „vizualizace“.' }

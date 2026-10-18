@@ -1,7 +1,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { ui, type UiKey } from './i18n';
 import { formatPeriod, type Period } from './period';
-import { projectFacts } from './project-facts';
+import { projectBadges, projectFacts } from './project-facts';
 import { newestFirst, type Project } from './projects';
 
 // /llms.txt (https://llmstxt.org): the site's facts as one Markdown file,
@@ -60,21 +60,22 @@ function project(site: URL, { id, data }: Project) {
   );
   return [
     `### ${pair(data.title_cs, data.title_en)}`,
-    [pair(data.location_cs, data.location_en), period(data)]
+    [pair(data.location_cs, data.location_en), `${label('involvement')}: ${period(data)}`]
       .filter(Boolean)
       .join(' · '),
     ...(data.blocks.length > 0
       ? [new URL(`/projects/${id}/`, site).href]
       : []),
+    ...list(projectBadges(data).length ? [`${label('projectInformation')}: ${projectBadges(data).map(label).join(' · ')}`] : []),
     ...list(
       projectFacts(data).map(
         (fact) =>
-          `${label(fact.label)}: ${fact.lines
-            .map((line) => [line.names.join(', '), pair(line.cs, line.en)].filter(Boolean).join(' – '))
+          `${label(fact.label)}: ${(fact.badges ?? []).map(label).join(' · ')}${fact.lines
+            .map((line) => `${line.label ? `${label(line.label)}: ` : ''}${[line.names.join(', '), pair(line.cs, line.en)].filter(Boolean).join(' – ')}`)
             .join('; ')}`,
       ),
     ),
-    ...both(data.brief_cs, data.brief_en),
+    ...(data.brief_cs || data.brief_en ? [`#### ${label('contribution')}`, ...both(data.brief_cs, data.brief_en)] : []),
     ...data.blocks.flatMap((block) =>
       block.type === 'text' ? both(block.body_cs, block.body_en) : [],
     ),

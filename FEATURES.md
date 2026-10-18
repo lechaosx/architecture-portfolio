@@ -54,7 +54,7 @@ Running text — rich-text bodies, project briefs, About's Approach texts and ro
 descriptions, and image descriptions — is justified with automatic hyphenation
 in the right language's rules; a brief's own line breaks still end their lines
 short. Labels, metadata, credits and titles are not justified. On phones,
-index briefs and About descriptions span their row's full width, so justified
+About descriptions span their row's full width, so justified
 lines keep a comfortable measure — [Implicit].
 
 ### Czech one-letter words never end a line — [Explicit]
@@ -101,42 +101,24 @@ unrenderable fails the build and does not deploy.
 ### Projects: title and start; everything else optional — [Explicit]
 
 The CMS refuses to save a project without both titles and the start of its
-period ("Od"). The end, the brief, the credits, award and status and the
+involvement period. The end, contribution, credits, award, classification and
 content blocks are optional; so is the location — [Implicit]. A text block
 needs both languages, an image block at least one image, a collaborator a
 name.
 
-### Brief — [Explicit]
+### Personal contribution and the whole project — [Explicit]
 
-A project may have a short plain-text brief in both languages, with the author's
-line breaks kept. It is the description only: credits, award and status have
-fields of their own — [Explicit]. On the project page it sits under the title,
-above the content blocks, in the colour and size of About's bio — [Explicit].
+The short text is labelled **Moje práce / My contribution** on the project page and in an expanded index entry, appearing with its heading only in supplied languages and preserving its line breaks. It describes her responsibilities and outputs; the existing content blocks describe the whole project, including projects entirely designed by her. Dates describe her involvement, independently of project progress.
 
-### Project credits and status as fields, shown as a fact sheet — [Explicit]
+### Project context and progress badges — [Explicit]
 
-A project may name its design studio (one line) and design team (a list of
-names), both shared by the languages; its collaborators, each a name with a
-role per language; an award per language; and a status from a fixed list:
-Studie · Soutěžní návrh · Povolení stavby · Ve výstavbě · Realizováno (Study ·
-Competition entry · Building permit · Under construction · Completed) —
-[Explicit]. The project page shows them with its place and period, which move
-there from under the title, as a fact sheet of rows with small-caps labels:
-Místo, Období, Fáze or Stav, Ateliér, Autorský tým, Spolupráce (one line per
-person, "name – role") and Ocenění, each row only when filled. The credits are
-not justified. An opened index row shows the brief and the same sheet without
-the place and period it already shows — [Explicit].
-Search engines and `llms.txt` get them too.
+Quiet, non-interactive badges near the title describe the whole project: academic, competition, commissioned or self-initiated context; current design activity; and planned construction, construction in progress or built realization. Contexts may overlap, design activity is independent of realization, and realization has at most one value. Unfilled information makes no claim about cancellation, completion, contractual relationships or authorship.
 
-Credit labels distinguish the practice (**Ateliér / Studio**), the authors
-(**Autorský tým / Design team**) and other contributors (**Spolupráce /
-Collaborators**), whose roles may be provided — [Explicit].
+### Project classification and credits — [Explicit]
 
-The details — [Implicit]: the labels' column is one fixed width, so values line
-up on every project; where the sheet is narrow, as on phones, labels sit above
-their values. A name never breaks across lines. A text or role filled in one
-language shows only in that language. A row with credits but no brief opens
-to its sheet.
+The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, project team and award. The single **Tým projektu / Project team** section identifies the supplied **Autorský tým / Design team**, followed by other team members with their supplied roles; unknown roles remain unstated. Studio holds the practice name, and authorship is explicit even on independent projects.
+
+Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole, and language-specific text appears only in its supplied language. An index entry with contribution, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 
 ### Project fact rows form two groups when they fit — [Explicit]
 
@@ -144,13 +126,6 @@ The fact sheet balances whole rows into two groups side by side when both
 remain comfortably readable; narrower sheets use one group. On a project
 page the sheet fills the available width below the brief, whose text keeps a
 comfortable reading measure — [Implicit].
-
-### Project phase and status — [Implicit]
-
-Study, competition entry and building permit use the label **Fáze / Phase**;
-under construction and completed use **Stav / Status**. The design-studio
-field holds the atelier name; individual collaborators belong in Spolupráce
-with an optional role — [Explicit].
 
 ### A project without content blocks has no page — [Explicit]
 
@@ -275,14 +250,13 @@ cards do not show the brief — [Implicit].
 ### Work page: an index of projects without images, expanding in place — [Explicit]
 
 The projects without images follow the grid, in the same order, as a compact
-index, so the images lead and the rest stays easy to scan; a row with a brief
-or credits opens in place to show them. The index has no heading of its own:
+index, so the images lead and the rest stays easy to scan; a row with contribution,
+facts or badges opens in place to show them. The index has no heading of its own:
 its projects weigh the same as the grid's and only lack images yet —
 [Explicit]. The layout — [Implicit]: the index follows the grid at the grid's
 own row gap, with thin rules above, between and below its rows; one aligned row
 of period, title and location per project, and a project with a page linking
-to it instead of opening. On phones a long period wraps after its dash, beside the title and
-location. Without image projects the index opens the page.
+to it instead of opening. On phones the period sits above the title and location so names and contribution keep a readable width. Expanded contribution and facts share the title column at every width; contribution text uses up to two readable columns within it. Without image projects the index opens the page.
 
 ### Approach section — [Explicit]
 

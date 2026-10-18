@@ -13,20 +13,23 @@ const sheet = (scope: Page | Locator) => scope.locator('dl');
 const labels = (scope: Page | Locator) =>
   sheet(scope).locator('dt span').filter({ visible: true }).allTextContents();
 const values = (scope: Page | Locator) =>
-  sheet(scope).locator('dd p').filter({ visible: true }).allInnerTexts();
+  sheet(scope).locator('dd p, dd li').filter({ visible: true }).allInnerTexts();
 const brief = (page: Page) => page.locator('article header .running-text').filter({ visible: true });
 
 test('a project page’s fact sheet shows its filled rows in the visitor’s language, one collaborator a line', async ({
   page,
 }) => {
   await page.goto('/e2e/credits/');
-  expect(await labels(page)).toEqual(['Location', 'Period', 'Phase', 'Studio', 'Design team', 'Collaborators']);
+  expect(await labels(page)).toEqual(['Location', 'My involvement', 'Intervention', 'Scope', 'Studio', 'Project team']);
   expect(await values(page)).toEqual([
     'Nowhere',
     '3/2025–6/2026',
-    'Competition entry',
+    'Renovation',
+    'Extension',
+    'Architecture',
+    'Interior',
     'Studio North | Ing. arch. Jana Nováková',
-    'Jan Novák, Eva Dvořáková',
+    'Design team: Jan Novák, Eva Dvořáková',
     'Ing. Petr Malý – Visualizations',
     'Ing. Pavel Velký',
     'Ing. Iva Tichá',
@@ -35,19 +38,22 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
   expect(await labels(page)).toEqual([
     'Místo',
-    'Období',
-    'Fáze',
+    'Moje zapojení',
+    'Zásah',
+    'Zaměření',
     'Ateliér',
-    'Autorský tým',
-    'Spolupráce',
+    'Tým projektu',
     'Ocenění',
   ]);
   expect(await values(page)).toEqual([
     'Nikde',
     '3/2025–6/2026',
-    'Soutěžní návrh',
+    'Rekonstrukce',
+    'Přístavba',
+    'Architektura',
+    'Interiér',
     'Studio North | Ing. arch. Jana Nováková',
-    'Jan Novák, Eva Dvořáková',
+    'Autorský tým: Jan Novák, Eva Dvořáková',
     'Ing. Petr Malý – vizualizace',
     'Ing. Pavel Velký – statika',
     'Ing. Iva Tichá',
@@ -57,7 +63,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
 
 test('a project without credits shows only its place and period', async ({ page }) => {
   await page.goto('/e2e/project/');
-  expect(await labels(page)).toEqual(['Location', 'Period']);
+  expect(await labels(page)).toEqual(['Location', 'My involvement']);
   expect(await values(page)).toEqual(['Nowhere', '3/2025–6/2026']);
   await expect(brief(page)).toHaveCount(0);
 });
@@ -162,10 +168,10 @@ test('an opened index row shows the brief, then the sheet without the place and 
   page,
 }) => {
   await page.goto('/e2e/work-credits/');
-  const row = page.locator('main ul > li').nth(0);
+  const row = page.locator('main > div > ul > li').nth(0);
   await row.getByText('Alpha brief').click();
   const opened = row.locator('details > div');
-  expect(await labels(opened)).toEqual(['Phase', 'Studio', 'Design team', 'Collaborators']);
+  expect(await labels(opened)).toEqual(['Intervention', 'Scope', 'Studio', 'Project team']);
 
   const briefText = row.getByText('First line').filter({ visible: true });
   const [briefBox, sheetBox] = await Promise.all([briefText.boundingBox(), sheet(row).boundingBox()]);
@@ -173,14 +179,64 @@ test('an opened index row shows the brief, then the sheet without the place and 
   expect(sheetBox!.x).toBeCloseTo(briefBox!.x, 0);
 
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
-  expect(await labels(opened)).toEqual(['Fáze', 'Ateliér', 'Autorský tým', 'Spolupráce', 'Ocenění']);
+  expect(await labels(opened)).toEqual(['Zásah', 'Zaměření', 'Ateliér', 'Tým projektu', 'Ocenění']);
 });
 
 test('an index row with credits and no brief opens to its sheet', async ({ page }) => {
   await page.goto('/e2e/work-credits/');
-  const row = page.locator('main ul > li').nth(1);
+  const row = page.locator('main > div > ul > li').nth(1);
   await expect(sheet(row)).toBeHidden();
   await row.getByText('Credits only').click();
   expect(await labels(row)).toEqual(['Studio']);
   expect(await values(row)).toEqual(['Studio North | Ing. arch. Jana Nováková']);
 });
+
+
+test('project context and progress are quiet bilingual badges above the labelled contribution', async ({ page }) => {
+  await page.goto('/e2e/credits/');
+  const header = page.locator('article header');
+  for (const [language, contribution, badges] of [
+    ['en', 'My contribution', ['Academic project', 'Competition entry', 'Design in progress', 'Construction planned']],
+    ['cs', 'Moje práce', ['Školní projekt', 'Soutěžní návrh', 'Probíhá projektování', 'Plánovaná realizace']],
+  ] as const) {
+    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    await expect(header.getByRole('heading', { name: contribution, exact: true })).toBeVisible();
+    const badgeList = header.locator(':scope > ul');
+    expect(await badgeList.locator('li:visible').allInnerTexts()).toEqual(badges);
+    await expect(badgeList.getByRole('link')).toHaveCount(0);
+    await expect(badgeList.getByRole('button')).toHaveCount(0);
+    const [badgesBox, contributionBox] = await Promise.all([badgeList.boundingBox(), header.getByRole('heading', { name: contribution, exact: true }).boundingBox()]);
+    expect(badgesBox!.y + badgesBox!.height).toBeLessThan(contributionBox!.y);
+  }
+});
+
+test('missing project classifications render no badges or contribution heading', async ({ page }) => {
+  await page.goto('/e2e/project/');
+  await expect(page.locator('article header > ul')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'My contribution', exact: true })).toHaveCount(0);
+});
+
+test('a metadata-only index row expands to its context badges', async ({ page }) => {
+  await page.goto('/e2e/work-credits/');
+  const row = page.locator('li').filter({ has: page.getByRole('heading', { name: 'Badges only' }) });
+  await row.getByText('Badges only', { exact: true }).click();
+  await expect(row.getByText('Self-initiated project', { exact: true })).toBeVisible();
+  await expect(row.getByText('Commissioned project', { exact: true })).toBeVisible();
+  await expect(row.getByRole('heading', { name: 'My contribution', exact: true })).toHaveCount(0);
+});
+
+
+for (const surface of ['project', 'work']) {
+  for (const suppliedLanguage of ['cs', 'en']) {
+    test(`a ${surface} contribution supplied only in ${suppliedLanguage} has its heading only in that language`, async ({ page }) => {
+      await page.goto(`/e2e/${surface}-${suppliedLanguage}-contribution/`);
+      if (surface === 'work') await page.locator('summary').click();
+      const heading = page.getByRole('heading', { name: /^(My contribution|Moje práce)$/ });
+      if (suppliedLanguage === 'en') await expect(heading).toHaveText('My contribution');
+      else await expect(heading).toHaveCount(0);
+      await page.locator('[data-lang-toggle]').click();
+      if (suppliedLanguage === 'cs') await expect(heading).toHaveText('Moje práce');
+      else await expect(heading).toHaveCount(0);
+    });
+  }
+}

@@ -9,7 +9,7 @@ brief_cs: >-
   Zpracování architektonické studie rodinného domu v Doubravníku.
 brief_en: >-
   Development of the architectural study for a family house in Doubravník.
-status: construction
+realization: construction
 collaborators:
   - name: Ing. Jiří Železný
     role_cs: hlavní projektant stavby

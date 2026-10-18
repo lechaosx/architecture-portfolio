@@ -161,11 +161,11 @@ test.describe(() => {
     const work = node(await graph(page), 'CreativeWork')!;
     expect(work).toMatchObject({
       name: 'Testovací projekt',
-      dateCreated: '2026-06',
       locationCreated: { '@type': 'Place', name: 'Nikde' },
       url: `${origin}/e2e/project/`,
-      creator: [{ '@id': `${origin}/#person` }],
     });
+    expect(work).not.toHaveProperty('dateCreated');
+    expect(work).not.toHaveProperty('creator');
     const images = work.image as Record<string, string>[];
     // The untitled cover comes first, as the lightbox's largest derivative.
     expect(images[0]).toEqual({

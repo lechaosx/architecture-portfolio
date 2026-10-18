@@ -87,7 +87,7 @@ test('a row with a brief expands in place to show it with the author line breaks
   await expect(brief).toBeVisible();
 });
 
-test('an opened brief hangs under the title on wide screens and spans the row on phones', async ({
+test('an opened brief stays in the title column at every screen size', async ({
   page,
 }) => {
   await page.goto('/e2e/work/');
@@ -96,18 +96,12 @@ test('an opened brief hangs under the title on wide screens and spans the row on
   const brief = row.getByText('First line').filter({ visible: true });
   for (const width of [1280, 640, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    const [briefBox, period, title, rowBox] = await Promise.all([
+    const [briefBox, title] = await Promise.all([
       brief.boundingBox(),
-      row.getByText('2025').filter({ visible: true }).boundingBox(),
       row.getByText('Alpha brief').boundingBox(),
-      row.boundingBox(),
     ]);
-    if (width >= 640) {
-      expect(briefBox!.x, `${width}px`).toBeCloseTo(title!.x, 0);
-    } else {
-      expect(briefBox!.x, `${width}px`).toBeCloseTo(period!.x, 0);
-      expect(briefBox!.x + briefBox!.width, `${width}px`).toBeCloseTo(rowBox!.x + rowBox!.width, 0);
-    }
+    expect(briefBox!.x, `${width}px`).toBeCloseTo(title!.x, 0);
+    expect(briefBox!.width, `${width}px`).toBeCloseTo(title!.width, 0);
   }
 });
 
@@ -157,7 +151,7 @@ test('an expandable or linked row underlines its title on hover, a bare row does
   }
 });
 
-test('the index lines up in columns on wide screens and stacks the location on phones', async ({
+test('the index aligns columns on wide screens and stacks period, title and location on phones', async ({
   page,
 }) => {
   await page.goto('/e2e/work/');
@@ -176,8 +170,6 @@ test('the index lines up in columns on wide screens and stacks the location on p
   expect(location.x).toBeGreaterThan(title.x + title.width);
   expect(Math.abs(location.y + location.height - title.y - title.height)).toBeLessThan(title.height / 2);
 
-  // The longest period, on one line where there is room, and beside its title
-  // without pushing the location away from it where there is not.
   const period = (n: number, text: string) => rows(page).nth(n).getByText(text).filter({ visible: true });
   const gapUnderTitle = async (n: number, title: string) => {
     const titleBox = (await rows(page).nth(n).getByText(title).boundingBox())!;
@@ -187,10 +179,12 @@ test('the index lines up in columns on wide screens and stacks the location on p
     await page.setViewportSize({ width, height: 800 });
     const longest = (await period(2, '12/2019–12/2020').boundingBox())!;
     const oldTitle = (await rows(page).nth(2).getByText('Old brief').boundingBox())!;
-    expect(longest.x + longest.width, `${width}px`).toBeLessThan(oldTitle.x);
     if (width >= 640) {
+      expect(longest.x + longest.width, `${width}px`).toBeLessThan(oldTitle.x);
       expect(longest.height).toBeCloseTo((await period(1, '2025').boundingBox())!.height, 0);
     } else {
+      expect(longest.y + longest.height, `${width}px`).toBeLessThanOrEqual(oldTitle.y);
+      expect(longest.x, `${width}px`).toBeCloseTo(oldTitle.x, 0);
       expect(await gapUnderTitle(2, 'Old brief'), `${width}px`).toBeCloseTo(await gapUnderTitle(1, 'Beta text'), 0);
     }
   }
@@ -250,4 +244,49 @@ test('a text-only project page has no lightbox', async ({ page }) => {
   await expect(page.locator('article .prose:visible')).toHaveCount(1);
   await expect(page.locator('dialog')).toHaveCount(0);
   await expect(page.locator('[data-lightbox-index]')).toHaveCount(0);
+});
+
+
+test('expanded contribution shares the title column and keeps readable text columns', async ({ page }) => {
+  await page.goto('/e2e/work-readable/');
+  const row = page.locator('main > div > ul > li').first();
+  await row.locator('summary').click();
+  for (const language of ['en', 'cs']) {
+    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    for (const width of [1440, 1280, 800, 390, 320]) {
+      await page.setViewportSize({ width, height: 1000 });
+      const title = await row.locator('h2:visible').boundingBox();
+      const content = row.locator('details > div > div');
+      const contentBox = await content.boundingBox();
+      expect(contentBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
+      expect(contentBox!.width, `${language} ${width}px`).toBeCloseTo(title!.width, 0);
+      const metrics = await content.locator('p:visible').evaluate((element) => {
+        const style = getComputedStyle(element);
+        const ruler = document.createElement('span');
+        ruler.style.cssText = `display:block;width:1ch;font:${style.font}`;
+        element.append(ruler);
+        const ch = ruler.getBoundingClientRect().width;
+        ruler.remove();
+        return { width: element.getBoundingClientRect().width, column: parseFloat(style.columnWidth), gap: parseFloat(style.columnGap), ch };
+      });
+      expect(Number.isFinite(metrics.column), `${language} ${width}px`).toBe(true);
+      const count = Math.min(2, Math.max(1, Math.floor((metrics.width + metrics.gap) / (metrics.column + metrics.gap))));
+      const actualColumn = (metrics.width - metrics.gap * (count - 1)) / count;
+      expect(actualColumn / metrics.ch, `${language} ${width}px`).toBeLessThanOrEqual(75);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    }
+  }
+});
+
+
+test('expanded real project credits fit every screen without breaking names', async ({ page }) => {
+  for (const width of [1280, 800, 390, 320]) {
+    for (const language of ['en', 'cs']) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto('/work/');
+      if (await page.locator('html').getAttribute('data-lang') !== language) await page.locator('[data-lang-toggle]').click();
+      await page.locator('details').evaluateAll((rows) => rows.forEach((row) => row.setAttribute('open', '')));
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `${language} ${width}px`).toBe(width);
+    }
+  }
 });

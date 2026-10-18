@@ -55,7 +55,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/pages/llms.txt.ts`, `src/pages/robots.txt.ts` | the `/llms.txt` and `/robots.txt` endpoints |
 | `src/components/Gallery.svelte`, `Lightbox*.svelte`, `lightbox-*.ts`, `gallery.ts` | the project lightbox |
 | `src/components/ProjectBlocks.astro` | project blocks |
-| `src/project-facts.ts`, `src/components/ProjectFacts.astro` | a project's fact sheet: place, period, status, credits and award |
+| `src/project-facts.ts`, `src/components/ProjectFacts.astro` | project badges and facts: involvement, classification, credits and award |
 | `scripts/generate-responsive-images.ts` | image pipeline → `public/_responsive/` (gitignored) |
 | `tests/e2e/` | browser tests and their pages |
 | `.github/workflows/deploy.yml` | test, build, deploy |
@@ -74,7 +74,7 @@ with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` o
 
 **Add a project by hand.** Copy an existing file in `src/content/projects/`, put
 images in `public/uploads/` and reference them as `/uploads/<file>`. The owner
-normally does this in the CMS.
+normally does this in the CMS. `brief_cs` / `brief_en` describe her personal contribution, `from` / `to` her involvement; project narrative belongs in `blocks`. Optional `context`, `intervention` and `scope` lists use the choices in `.pages.yml`; `design_in_progress` is independent of the single `realization` value. Select only confirmed facts, and list actual design authors in `team`, including the owner when applicable; other team members keep their supplied roles in `collaborators`.
 
 **Change the domain.** Edit `public/CNAME` and `site` in `astro.config.mjs`,
 then the domain under GitHub **Settings → Pages** and its DNS.

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { projectFacts } from './project-facts';
+import { projectBadges, projectFacts } from './project-facts';
 
 const project = {
   from: '2024',
@@ -8,13 +8,16 @@ const project = {
   location_en: 'Brno',
   team: [],
   collaborators: [],
+  context: [],
+  intervention: [],
+  scope: [],
+  design_in_progress: false,
 };
 
 test('lists the filled credits, award and status in sheet order, names kept as items', () => {
   expect(
     projectFacts({
       ...project,
-      status: 'competition',
       studio: 'Ateliér A | Ing. arch. Jan Novák',
       team: ['Jan Novák', 'Eva Dvořáková'],
       collaborators: [
@@ -26,15 +29,14 @@ test('lists the filled credits, award and status in sheet order, names kept as i
       award_en: 'Special mention',
     }),
   ).toEqual([
-    { label: 'phase', lines: [{ names: [], cs: 'Soutěžní návrh', en: 'Competition entry' }] },
     {
       label: 'studio',
       lines: [{ names: [], cs: 'Ateliér A | Ing. arch. Jan Novák', en: 'Ateliér A | Ing. arch. Jan Novák' }],
     },
-    { label: 'team', lines: [{ names: ['Jan Novák', 'Eva Dvořáková'], cs: '', en: '' }] },
     {
-      label: 'collaborators',
+      label: 'projectTeam',
       lines: [
+        { label: 'team', names: ['Jan Novák', 'Eva Dvořáková'], cs: '', en: '' },
         { names: ['Ing. Petr Malý'], cs: 'vizualizace', en: 'Visualizations' },
         { names: ['Ing. Pavel Velký'], cs: 'statika', en: '' },
         { names: ['Ing. Iva Tichá'], cs: '', en: '' },
@@ -47,7 +49,7 @@ test('lists the filled credits, award and status in sheet order, names kept as i
 test('leads with the place and period where asked', () => {
   expect(projectFacts({ ...project, location_en: undefined, to: undefined }, { placeAndPeriod: true })).toEqual([
     { label: 'location', lang: 'cs', lines: [{ names: [], cs: 'Brno', en: '' }] },
-    { label: 'period', lines: [{ names: [], cs: '2024–dosud', en: '2024–present' }] },
+    { label: 'involvement', lines: [{ names: [], cs: '2024–dosud', en: '2024–present' }] },
   ]);
 });
 
@@ -61,12 +63,14 @@ test('has no rows when nothing is filled', () => {
   expect(projectFacts(project)).toEqual([]);
 });
 
-test.each([
-  ['study', 'phase', 'Studie', 'Study'],
-  ['competition', 'phase', 'Soutěžní návrh', 'Competition entry'],
-  ['permit', 'phase', 'Povolení stavby', 'Building permit'],
-  ['construction', 'status', 'Ve výstavbě', 'Under construction'],
-  ['completed', 'status', 'Realizováno', 'Completed'],
-] as const)('%s uses the appropriate phase or status label in both languages', (status, label, cs, en) => {
-  expect(projectFacts({ ...project, status })).toEqual([{ label, lines: [{ names: [], cs, en }] }]);
+test('title badges include only supplied context and independent progress', () => {
+  expect(projectBadges(project)).toEqual([]);
+  expect(projectBadges({ ...project, context: ['academic', 'competition'], design_in_progress: true, realization: 'planned' })).toEqual(['academic', 'competition', 'design_in_progress', 'planned']);
+});
+
+test('intervention and scope are badges in the fact sheet, separate from progress', () => {
+  expect(projectFacts({ ...project, intervention: ['renovation', 'extension'], scope: ['architecture', 'interior'] })).toEqual([
+    { label: 'intervention', lines: [], badges: ['renovation', 'extension'] },
+    { label: 'scope', lines: [], badges: ['architecture', 'interior'] },
+  ]);
 });

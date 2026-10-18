@@ -1,5 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
-import { onlyIn, ui, type Lang, type UiKey } from './i18n';
+import { onlyIn, type Lang, type UiKey } from './i18n';
 import { formatPeriod } from './period';
 
 type Data = CollectionEntry<'projects'>['data'];
@@ -10,6 +10,7 @@ type Data = CollectionEntry<'projects'>['data'];
  */
 export interface FactLine extends Record<Lang, string> {
   names: string[];
+  label?: UiKey;
 }
 
 /**
@@ -20,6 +21,7 @@ export interface Fact {
   label: UiKey;
   lang?: Lang;
   lines: FactLine[];
+  badges?: UiKey[];
 }
 
 const text = (cs = '', en = cs) => ({ names: [], cs, en });
@@ -34,7 +36,8 @@ export function projectFacts(
     | 'to'
     | 'location_cs'
     | 'location_en'
-    | 'status'
+    | 'intervention'
+    | 'scope'
     | 'studio'
     | 'team'
     | 'collaborators'
@@ -43,33 +46,34 @@ export function projectFacts(
   >,
   { placeAndPeriod = false } = {},
 ): Fact[] {
-  const { status, studio, team, collaborators } = project;
+  const { studio, team, collaborators } = project;
   const period = formatPeriod(project);
   return [
     ...(placeAndPeriod
       ? [
           ...pair('location', project.location_cs, project.location_en),
-          ...pair('period', period?.cs, period?.en),
+          ...pair('involvement', period?.cs, period?.en),
         ]
       : []),
-    ...(status ? [{
-      label: status === 'construction' || status === 'completed' ? 'status' as const : 'phase' as const,
-      lines: [text(ui.cs[status], ui.en[status])],
-    }] : []),
+    ...(['intervention', 'scope'] as const).flatMap((label) =>
+      project[label]?.length ? [{ label, lines: [], badges: project[label] }] : [],
+    ),
     ...(studio ? [{ label: 'studio' as const, lines: [text(studio)] }] : []),
-    ...(team.length > 0 ? [{ label: 'team' as const, lines: [{ names: team, cs: '', en: '' }] }] : []),
-    ...(collaborators.length > 0
-      ? [
-          {
-            label: 'collaborators' as const,
-            lines: collaborators.map(({ name, role_cs = '', role_en = '' }) => ({
-              names: [name],
-              cs: role_cs,
-              en: role_en,
-            })),
-          },
-        ]
-      : []),
+    ...(team.length || collaborators.length ? [{
+      label: 'projectTeam' as const,
+      lines: [
+        ...(team.length ? [{ label: 'team' as const, names: team, cs: '', en: '' }] : []),
+        ...collaborators.map(({ name, role_cs = '', role_en = '' }) => ({ names: [name], cs: role_cs, en: role_en })),
+      ],
+    }] : []),
     ...pair('award', project.award_cs, project.award_en),
+  ];
+}
+
+export function projectBadges(project: Pick<Data, 'context' | 'design_in_progress' | 'realization'>): UiKey[] {
+  return [
+    ...(project.context ?? []),
+    ...(project.design_in_progress ? ['design_in_progress' as const] : []),
+    ...(project.realization ? [project.realization] : []),
   ];
 }

@@ -1,0 +1,11 @@
+---
+import T from './T.astro';
+import type { UiKey } from '../i18n';
+interface Props { badges: UiKey[]; class?: string }
+const { badges, class: className } = Astro.props;
+---
+{badges.length > 0 && (
+  <ul class:list={['flex flex-wrap gap-2 text-xs text-neutral-600', className]}>
+    {badges.map((badge) => <li class="rounded-sm bg-neutral-100 px-2 py-1"><T k={badge} /></li>)}
+  </ul>
+)}

@@ -218,19 +218,13 @@ cards with a cover and the index, so the share image that falls back to the
 newest cover always matches the first card, and `llms.txt` lists projects in
 the same order.
 
-### One fact-sheet model — [Implicit]
+### One project metadata model — [Implicit]
 
-`src/project-facts.ts` turns a project into its sheet's filled rows, each a
-label key and lines of names and text in both languages, marked with the one
-language a row is filled in. Names stay separate items so the sheet can keep
-each one whole on its line while `llms.txt` gets plain text.
-`ProjectFacts.astro` renders the rows on the project page and in the work
-index, the index opens a row that has any, and `llms.txt` lists them, so the
-three cannot disagree. The label column has a fixed width that fits the
-longest label in either language, so values line up across projects. Native
-columns balance whole rows into at most two groups; their minimum width fits
-the label/value layout, so the same container query can put labels above
-values in narrower sheets, including the work index.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Names, explicit author-team attribution and bilingual roles stay distinct; one static Astro badge component renders title and fact-sheet categories without client state. Native columns balance intact fact rows, with labels above values in narrow sheets.
+
+### Controlled project classification — [Explicit] (shape [Implicit])
+
+Context, intervention and scope are optional controlled lists; current design activity is a separate boolean, and realization is one optional enum. Pages CMS uses multi-selects for the lists and a single select for realization, matching content validation. The existing contribution and credit fields retain their contents and attribution independently of classification.
 
 ### Footer layout follows its content — [Implicit]
 
@@ -259,7 +253,7 @@ edges.
 
 ### The work index expands with native `<details>` — [Explicit]
 
-A row with a brief or credits is a `<details>` whose `<summary>` is the row,
+A row with a contribution, facts or badges is a `<details>` whose `<summary>` is the row,
 so it opens without JavaScript, from the keyboard and on find-in-page. Only
 the **+**/**−** turns; the brief shows at once, with no height animation to
 wait for — [Implicit].
@@ -413,12 +407,7 @@ which `Base` inlines as one `@graph` per page. Text is plain Czech, because
 Google documents only plain-text values for these properties, not
 language-tagged ones. Her location is `Person.workLocation`, a `Place`.
 Credentials are named "programme, school (period)" and awards "award, placement
-(period)"; `award` is plain text. A project's `dateCreated` is the end of its
-period in ISO 8601 ("2024", "2024-06"), when her work on it was done, so an
-ongoing project has none. Its `creator` is her, then the studio as an
-`Organization` and the team as `Person`s, leaving out her own name; each
-collaborator is a `contributor`, wrapped in a `Role` when a Czech role is
-filled. Its award is `award` and its status `creativeWorkStatus`, as text.
+(period)"; `award` is plain text. A project's `creator` contains only explicitly listed design-team people, linking the owner to her Person node when named; supplied collaborators retain their roles. A supplied personal contribution can identify the owner as a contributor. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 
@@ -466,8 +455,8 @@ into one `<p>` per paragraph (Approach texts and fact descriptions).
 
 One file and one CMS form per entry; language-neutral fields (images, period
 dates, email, phone, a project's studio, team and collaborators' names) stay
-single. A project's status stores a stable value, labelled in `src/i18n.ts`
-under the same key. The project route is the filename-derived content
+single. Project classification stores stable values, labelled in `src/i18n.ts`
+under the same keys. The project route is the filename-derived content
 ID, so the filename is the only source of the slug.
 
 ---

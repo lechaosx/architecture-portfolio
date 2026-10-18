@@ -13,6 +13,7 @@ interface CmsField {
   required?: boolean;
   pattern?: { regex: string; message: string };
   list?: boolean | { min?: number };
+  options?: { multiple?: boolean; values?: Array<{ name: string }> };
   fields?: CmsField[];
   blocks?: Array<{ name: string; fields?: CmsField[] }>;
 }
@@ -152,7 +153,7 @@ describe('project content schema', () => {
 
   test('reads credits, award and status, dropping empty CMS rows', () => {
     const credits = {
-      status: 'competition',
+      context: ['competition'],
       studio: 'Ateliér A',
       team: ['Jan Novák', 'Eva Dvořáková'],
       collaborators: [
@@ -175,7 +176,12 @@ describe('project content schema', () => {
   });
 
   test.each([
-    ['a status outside the list', { status: 'demolished' }],
+    ['a context outside the list', { context: ['professional'] }],
+    ['a realization outside the list', { realization: 'cancelled' }],
+    ['multiple realization states', { realization: ['planned', 'built'] }],
+    ['an intervention outside the list', { intervention: ['study'] }],
+    ['a scope outside the list', { scope: ['housing'] }],
+    ['non-boolean design activity', { design_in_progress: 'yes' }],
     ['a collaborator without a name', { collaborators: [{ role_cs: 'statika' }] }],
   ])('rejects %s', (_, fields) => {
     expect(projectSchema.safeParse({ ...project, ...fields }).success).toBe(false);
@@ -345,4 +351,35 @@ test('contact reads where she is and when she is reachable, one line per languag
 test.each(['site', 'landing', 'about', 'contact'] as const)('the committed %s singleton is valid', (name) => {
   const content = frontmatter(`src/content/singletons/${name}.md`);
   expect(staticSchema(name).safeParse(content).success).toBe(true);
+});
+
+
+test('keeps project origin, design activity and realization independent', () => {
+  const metadata = {
+    context: ['academic', 'competition', 'commissioned', 'self_initiated'],
+    intervention: ['new_build', 'renovation', 'extension', 'adaptive_reuse'],
+    scope: ['architecture', 'interior', 'landscape', 'public_space', 'urban_design'],
+    design_in_progress: true,
+    realization: 'construction',
+  };
+  expect(projectSchema.safeParse({ ...project, ...metadata })).toMatchObject({ success: true, data: metadata });
+});
+
+test('unspecified classifications make no claims about the project', () => {
+  const result = projectSchema.parse(project);
+  expect(result).toMatchObject({ context: [], intervention: [], scope: [], design_in_progress: false });
+  expect(result).not.toHaveProperty('realization');
+});
+
+
+test('CMS controlled choices and multiplicity match project metadata validation', () => {
+  for (const name of ['context', 'intervention', 'scope', 'realization']) {
+    const field = projectEditorFields.find((field) => field.name === name)!;
+    const multiple = name !== 'realization';
+    expect(field.options?.multiple === true).toBe(multiple);
+    for (const option of field.options?.values ?? []) {
+      const value = multiple ? [option.name] : option.name;
+      expect(projectSchema.parse({ ...project, [name]: value })).toHaveProperty(name, value);
+    }
+  }
 });

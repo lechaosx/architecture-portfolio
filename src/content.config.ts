@@ -48,7 +48,11 @@ const projects = defineCollection({
     location_en: z.string().optional(),
     brief_cs: z.string().optional(),
     brief_en: z.string().optional(),
-    status: z.enum(['study', 'competition', 'permit', 'construction', 'completed']).optional(),
+    context: z.array(z.enum(['academic', 'competition', 'commissioned', 'self_initiated'])).default([]),
+    intervention: z.array(z.enum(['new_build', 'renovation', 'extension', 'adaptive_reuse'])).default([]),
+    scope: z.array(z.enum(['architecture', 'interior', 'landscape', 'public_space', 'urban_design'])).default([]),
+    design_in_progress: z.boolean().default(false),
+    realization: z.enum(['planned', 'construction', 'built']).optional(),
     studio: z.string().optional(),
     team: z.array(z.string()).default([]),
     collaborators: z.preprocess(

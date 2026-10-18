@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { DATE, formatPeriod, isoDate, latestFirst, periodIssues } from './period';
+import { DATE, formatPeriod, latestFirst, periodIssues } from './period';
 
 test.each([
   ['2023', true],
@@ -15,14 +15,6 @@ test.each([
   [' 2023', false],
 ])('a date is a year or a month and year: %j', (text, valid) => {
   expect(DATE.test(text)).toBe(valid);
-});
-
-test.each([
-  ['2023', '2023'],
-  ['3/2023', '2023-03'],
-  ['12/2023', '2023-12'],
-])('%s is %s in ISO 8601', (text, iso) => {
-  expect(isoDate(text)).toBe(iso);
 });
 
 describe('formatPeriod', () => {

@@ -4,13 +4,15 @@ import Gallery from './Gallery.svelte';
 import ProjectBlocks from './ProjectBlocks.astro';
 import ProjectFacts from './ProjectFacts.astro';
 import T from './T.astro';
+import ProjectBadges from './ProjectBadges.astro';
 import { site as owner } from '../singletons';
 import { credentialedName } from '../site-title';
 import { getResponsiveImage } from '../server-images';
 import { projectDescription } from '../project-description';
 import { creativeWork } from '../structured-data';
-import { projectFacts } from '../project-facts';
+import { projectBadges, projectFacts } from '../project-facts';
 import type { Project } from '../projects';
+import { onlyIn } from '../i18n';
 
 interface Props {
   project: Project;
@@ -63,15 +65,19 @@ const site = new URL('/', Astro.site);
         en={d.title_en}
         class="text-3xl font-medium sm:text-4xl"
       />
+      <ProjectBadges badges={projectBadges(d)} class="mt-4" />
       <div class="mt-8 space-y-8">
         {
           (d.brief_cs || d.brief_en) && (
-            <T
-              as="p"
-              cs={d.brief_cs}
-              en={d.brief_en}
-              class="running-text max-w-prose leading-7 whitespace-pre-line text-neutral-700"
-            />
+            <section lang={onlyIn(d.brief_cs, d.brief_en)} class="space-y-3">
+              <T as="h2" k="contribution" class="text-xs tracking-widest text-neutral-500 uppercase" />
+              <T
+                as="p"
+                cs={d.brief_cs}
+                en={d.brief_en}
+                class="running-text max-w-prose leading-7 whitespace-pre-line text-neutral-700"
+              />
+            </section>
           )
         }
         <ProjectFacts facts={projectFacts(d, { placeAndPeriod: true })} />

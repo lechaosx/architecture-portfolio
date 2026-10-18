@@ -27,12 +27,6 @@ const end = (period: Period) => {
   return year * 12 + (month ?? 12);
 };
 
-/** The date in ISO 8601: "2023", "2023-03". */
-export const isoDate = (text: string) => {
-  const { year, month } = parse(text);
-  return month ? `${year}-${String(month).padStart(2, '0')}` : String(year);
-};
-
 /** What a content edit got wrong about a period that the CMS cannot check, by field. */
 export function periodIssues(period: Period) {
   const issues: { field: keyof Period; message: string }[] = [];
