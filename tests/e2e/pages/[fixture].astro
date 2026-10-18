@@ -8,6 +8,7 @@ import AboutPage from '../../../src/components/AboutPage.astro';
 import LandingPage from '../../../src/components/LandingPage.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
 import ProjectPage from '../../../src/components/ProjectPage.astro';
+import Paragraphs from '../../../src/components/Paragraphs.astro';
 import WorkPage from '../../../src/components/WorkPage.astro';
 
 export function getStaticPaths() {
@@ -24,6 +25,10 @@ export function getStaticPaths() {
   const text = (sentences: number) => ({
     en: Array(sentences).fill(sentence.en).join(' '),
     cs: Array(sentences).fill(sentence.cs).join(' '),
+  });
+  const words = (count: number) => ({
+    cs: text(100).cs.split(/\s+/).slice(0, count).join(' '),
+    en: text(100).en.split(/\s+/).slice(0, count).join(' '),
   });
   const described = (sentences: number) => ({
     description_en: text(sentences).en,
@@ -258,6 +263,7 @@ export function getStaticPaths() {
     { params: { fixture: 'landing-bare' }, props: landing([]) },
     { params: { fixture: 'about' }, props: { about } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
+    { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, body_cs: words(150).cs, body_en: words(150).en } } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
@@ -276,6 +282,14 @@ export function getStaticPaths() {
       collaborators: [{ name: 'Jan Novák', role_cs: 'Statika', role_en: 'Structural design' }],
     }),
     projectWith('project-link', project.blocks.slice(0, 1), { project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' }),
+    { params: { fixture: 'paragraphs-length' }, props: { paragraphs: { cs: `${words(75).cs}\n${words(74).cs}`, en: `${words(75).en}\n${words(75).en}` } } },
+    projectWith('brief-length', project.blocks.slice(0, 1), { brief_cs: words(149).cs, brief_en: words(150).en }),
+    projectWith('prose-long', [{ type: 'image_set', images: [item('wide.png')] }, { type: 'text', body_cs: words(150).cs, body_en: words(150).en }]),
+    projectWith('prose-length', [
+      { type: 'text', body_cs: words(149).cs, body_en: words(149).en },
+      { type: 'text', body_cs: words(150).cs, body_en: words(150).en },
+      { type: 'text', body_cs: `${words(149).cs} ![${words(150).cs}](/e2e/images/placeholder-1.svg)`, body_en: `${words(149).en} ![${words(150).en}](/e2e/images/placeholder-1.svg)` },
+    ]),
     projectWith('brief', project.blocks.slice(0, 1), {
       brief_en: 'A brief for the page.\nSecond line.',
       brief_cs: 'Anotace stránky.\nDruhý řádek.',
@@ -332,11 +346,15 @@ export function getStaticPaths() {
   ];
 }
 
-const { about, contact, images, landing, project, projects } = Astro.props;
+const { about, contact, images, landing, paragraphs, project, projects } = Astro.props;
 ---
 
 {
-  project ? (
+  paragraphs ? (
+    <Base title={{ cs: 'Text', en: 'Text' }}>
+      <div class="mx-auto max-w-6xl px-6 pt-12"><Paragraphs {...paragraphs} class="space-y-4" /></div>
+    </Base>
+  ) : project ? (
     <ProjectPage {project} />
   ) : landing ? (
     <LandingPage {landing} {projects} {about} {contact} />

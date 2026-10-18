@@ -108,7 +108,7 @@ name.
 
 ### Project brief and personal role — [Explicit]
 
-The brief introduces the project and her involvement in natural prose; an optional **Moje role / My role** fact summarizes her responsibilities in the same free-text format as collaborators’ roles, with her name implicit. On a project page, the title and badges span the width above the intact brief on the left and facts on the right; narrower screens stack brief then facts, while an absent brief leaves the facts the full width — [Explicit]. The brief keeps a readable line length, preserves its line breaks and appears without a preset heading — [Implicit].
+The brief introduces the project and her involvement in natural prose; an optional **Moje role / My role** fact summarizes her responsibilities in the same free-text format as collaborators’ roles, with her name implicit. On a project page, the title and badges precede the brief, with full-width facts beneath it; an absent brief leaves the facts directly below the title — [Explicit]. The brief follows the general prose column rule, preserves its line breaks and appears without a preset heading — [Implicit].
 
 ### Project context and progress badges — [Explicit]
 
@@ -118,7 +118,7 @@ Quiet, non-interactive badges near the title describe the whole project: academi
 
 The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, her role, collaborators and award. **Spolupráce / Collaborators** lists the other people involved, each name above an optional smaller, muted bilingual role, including design authorship where confirmed; Tereza’s involvement is implicit in her portfolio and described in the brief and optional personal role. Studio holds the practice name; unverified roles remain unstated.
 
-Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole. An index entry with a brief, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
+Only filled facts appear, with location and **Období zapojení / Involvement period** added on the project page; the index already shows those in its row. Names remain whole. An index entry with a brief, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 
 ### Optional project website — [Explicit]
 
@@ -225,8 +225,8 @@ right when both columns keep a comfortable text measure; otherwise the bio
 and portrait each fill the page width, portrait first. Approach and the facts
 follow, all edited in the one **O mně** entry.
 
-The bio follows the project text's column rule: balanced columns where each
-keeps a comfortable width, else one — [Explicit]. Beside the portrait it is
+The bio follows the general prose rule: longer text can form balanced columns
+where each keeps a comfortable width — [Explicit]. Beside the portrait it is
 one column; without one it spans the page — [Implicit].
 
 ### Experience, education and awards as facts — [Explicit]
@@ -258,7 +258,7 @@ its projects weigh the same as the grid's and only lack images yet —
 [Explicit]. The layout — [Implicit]: the index follows the grid at the grid's
 own row gap, with thin rules above, between and below its rows; one aligned row
 of period, title and location per project, and a project with a page linking
-to it instead of opening. On phones the period sits above the title and location so names and briefs keep a readable width. Expanded brief and facts share the title column at every width; the brief stays in one readable text column. Without image projects the index opens the page.
+to it instead of opening. On phones the period sits above the title and location so names and briefs keep a readable width. Expanded brief and facts share the title column at every width; the brief follows the general prose column rule within that width. Without image projects the index opens the page.
 
 ### Approach section — [Explicit]
 
@@ -422,13 +422,13 @@ in both themes.
 The footer follows the blocks, as on every page, and a project page carries no
 links to the previous or next project.
 
-### Project text fills the width with comfortable columns — [Explicit]
+### Prose columns depend on text length and available width — [Explicit]
 
-Text blocks fill the same available width as the images, splitting into balanced
-columns to keep lines comfortable to read. Columns appear only when each can
-retain a comfortable minimum width; intermediate widths allow longer single
-lines to preserve the full-width layout — [Implicit]. The minimum follows
-[Rutter's multiple-column reading guidance](https://webtypography.net/2.1.2)
+Every prose block uses one full-width column until it contains enough text to
+benefit from two; longer blocks split only when both columns retain a comfortable
+minimum width. Each translation decides independently, and project briefs appear
+above the full-width facts. The length threshold and font-relative minimum follow
+the same rule across rich text, briefs, About descriptions and image descriptions
 — [Implicit].
 
 ### One lightbox per page, full-screen, controls in the corners — [Explicit]

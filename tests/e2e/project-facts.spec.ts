@@ -21,7 +21,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   page,
 }) => {
   await page.goto('/e2e/credits/');
-  expect(await labels(page)).toEqual(['Location', 'My involvement', 'Intervention', 'Scope', 'Studio', 'Collaborators']);
+  expect(await labels(page)).toEqual(['Location', 'Involvement period', 'Intervention', 'Scope', 'Studio', 'Collaborators']);
   expect(await values(page)).toEqual([
     'Nowhere',
     '3/2025–6/2026',
@@ -40,7 +40,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
   expect(await labels(page)).toEqual([
     'Místo',
-    'Moje zapojení',
+    'Období zapojení',
     'Zásah',
     'Zaměření',
     'Ateliér',
@@ -66,7 +66,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
 
 test('a project without credits shows only its place and period', async ({ page }) => {
   await page.goto('/e2e/project/');
-  expect(await labels(page)).toEqual(['Location', 'My involvement']);
+  expect(await labels(page)).toEqual(['Location', 'Involvement period']);
   expect(await values(page)).toEqual(['Nowhere', '3/2025–6/2026']);
   await expect(brief(page)).toHaveCount(0);
   await expect(sheet(page).getByRole('link')).toHaveCount(0);
@@ -169,7 +169,7 @@ test('an optional project website appears on the project page and expands a link
   }
 });
 
-test('the title spans the introduction above an intact brief and adjacent facts, stacking on narrow screens', async ({ page }) => {
+test('the brief precedes full-width facts below the title at every screen size', async ({ page }) => {
   await page.goto('/e2e/credits/');
   await page.evaluate(() => document.fonts.ready);
   for (const language of ['en', 'cs']) {
@@ -185,19 +185,14 @@ test('the title spans the introduction above an intact brief and adjacent facts,
       expect(title!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
       expect(briefBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
       expect(briefBox!.y, `${language} ${width}px`).toBeGreaterThan(title!.y + title!.height);
-      if (width >= 800) {
-        expect(sheetBox!.x, `${language} ${width}px`).toBeGreaterThanOrEqual(briefBox!.x + briefBox!.width);
-        expect(sheetBox!.y, `${language} ${width}px`).toBeCloseTo(briefBox!.y, 0);
-      } else {
-        expect(sheetBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
-        expect(sheetBox!.y, `${language} ${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
-        expect(sheetBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
-      }
+      expect(sheetBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
+      expect(sheetBox!.y, `${language} ${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
+      expect(sheetBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
       expect(briefBox!.width, `${language} ${width}px`).toBeLessThanOrEqual(header!.width);
       const factColumns = await sheet(page).locator(':scope > div:visible').evaluateAll((rows) =>
         new Set(rows.map((row) => Math.round(row.getBoundingClientRect().left))).size,
       );
-      expect(factColumns, `${language} ${width}px`).toBe(1);
+      expect(factColumns, `${language} ${width}px`).toBe(width === 1280 ? 2 : 1);
       const lines = await brief(page).evaluate((element) => {
         const range = document.createRange();
         range.selectNodeContents(element);
@@ -208,18 +203,11 @@ test('the title spans the introduction above an intact brief and adjacent facts,
           if (line) line.right = rect.right;
           else lines.push({ x: rect.x, y: rect.y, right: rect.right });
         }
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d')!;
-        context.font = getComputedStyle(element).font;
-        return {
-          columns: new Set(lines.map((line) => Math.round(line.x))).size,
-          longest: Math.max(...lines.map((line) => line.right - line.x)) / context.measureText('0').width,
-        };
+        return new Set(lines.map((line) => Math.round(line.x))).size;
       });
       await expect(page.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
-      expect(lines.columns, `${language} ${width}px`).toBe(1);
-      expect(lines.longest, `${language} ${width}px`).toBeLessThanOrEqual(65.1);
+      expect(lines, `${language} ${width}px`).toBe(1);
     }
   }
 });
@@ -297,6 +285,26 @@ test('values line up at the same place on every project, in either language', as
   );
   await page.getByRole('button', { name: 'Switch to Czech' }).click();
   expect(await valueLeft()).toBeCloseTo(credited, 0);
+});
+
+test('wide fact labels fit on one line in either language', async ({ page }) => {
+  await page.goto('/e2e/credits/');
+  for (const language of ['en', 'cs']) {
+    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    await page.evaluate(() => document.fonts.ready);
+    for (const width of [1280, 800]) {
+      await page.setViewportSize({ width, height: 900 });
+      const labels = await sheet(page).locator('dt span:visible').evaluateAll((labels) => labels.map((label) => {
+        const range = document.createRange();
+        range.selectNodeContents(label);
+        return {
+          text: label.textContent,
+          lines: new Set(Array.from(range.getClientRects()).filter((rect) => rect.width > 0).map((rect) => Math.round(rect.top))).size,
+        };
+      }));
+      for (const label of labels) expect(label.lines, `${language} ${width}px ${label.text}`).toBe(1);
+    }
+  }
 });
 
 test('credits are short lines, not justified', async ({ page }) => {

@@ -205,7 +205,7 @@ test('Approach items stay still on hover, since they are not links', async ({ pa
 test('the bio splits into columns only where each keeps a comfortable width', async ({
   page,
 }) => {
-  for (const path of ['/e2e/about/', '/e2e/about-bare/']) {
+  for (const path of ['/e2e/about/', '/e2e/about-bare/', '/e2e/about-long-bare/']) {
     await page.goto(path);
     await page.evaluate(() => document.fonts.ready);
     const bio = page.locator('main .prose:visible');
@@ -230,7 +230,7 @@ test('the bio splits into columns only where each keeps a comfortable width', as
       });
 
       const context = `${path} at ${width}px`;
-      expect(layout.columns, context).toBe(layout.fits ? 2 : 1);
+      expect(layout.columns, context).toBe(path === '/e2e/about-long-bare/' && layout.fits ? 2 : 1);
       if (layout.columns > 1) {
         expect(layout.columnWidth, context).toBeGreaterThanOrEqual(layout.minimumColumnWidth);
       }

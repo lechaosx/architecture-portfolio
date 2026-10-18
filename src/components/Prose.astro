@@ -1,6 +1,7 @@
 ---
 import { Marked, marked } from 'marked';
 import { bindOneLetterWords } from '../one-letter-words';
+import { canSplitProse } from '../prose';
 
 // CMS frontmatter holds both Markdown strings; global.css hides the inactive
 // language after `marked` renders them.
@@ -21,13 +22,25 @@ const czech = new Marked({
     },
   },
 });
-// Splits into balanced columns only where each keeps a comfortable measure
-// (https://webtypography.net/2.1.2); `ch` follows the font's metrics and size.
-const cls = 'running-text prose prose-neutral max-w-none columns-[35ch_2] gap-12 dark:prose-invert';
+const languages = [
+  { lang: 'cs', html: czech.parse(cs, { async: false }) },
+  { lang: 'en', html: marked.parse(en, { async: false }) },
+];
+const visibleText = (html: string) => html
+  .replace(/<br\s*\/?>|<\/(?:p|div|h[1-6]|li|blockquote|pre)>/gi, ' ')
+  .replace(/<[^>]*>/g, '')
+  .replace(/&(?:nbsp|#160|#xa0);/gi, ' ');
 ---
 
-<div lang="cs" class={cls} set:html={czech.parse(cs, { async: false })} /><div
-  lang="en"
-  class={cls}
-  set:html={marked.parse(en, { async: false })}
-/>
+{
+  languages.map(({ lang, html }) => (
+    <div
+      {lang}
+      class:list={[
+        'running-text prose prose-neutral max-w-none dark:prose-invert',
+        { 'prose-columns': canSplitProse(visibleText(html)) },
+      ]}
+      set:html={html}
+    />
+  ))
+}

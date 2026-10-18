@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Gallery from './Gallery.svelte';
 import ProjectBlocks from './ProjectBlocks.astro';
 import ProjectFacts from './ProjectFacts.astro';
+import PlainProse from './PlainProse.astro';
 import T from './T.astro';
 import ProjectBadges from './ProjectBadges.astro';
 import { credentialedName } from '../site-title';
@@ -65,15 +66,16 @@ const site = new URL('/', Astro.site);
         class="text-3xl font-medium sm:text-4xl"
       />
       <ProjectBadges badges={projectBadges(d)} class="mt-4" />
-      <div class="mt-8 grid grid-cols-[repeat(auto-fit,minmax(min(100%,35ch),1fr))] gap-x-12 gap-y-8">
-        {hasBrief && (
-          <T
-            as="p"
+      {hasBrief && (
+        <div class="mt-8">
+          <PlainProse
             cs={d.brief_cs}
             en={d.brief_en}
-            class="running-text max-w-prose leading-7 whitespace-pre-line text-neutral-700"
+            class="leading-7 text-neutral-700"
           />
-        )}
+        </div>
+      )}
+      <div class="mt-8">
         <ProjectFacts {facts} />
       </div>
     </header>

@@ -411,7 +411,7 @@ test('Czech running text never ends a line on a one-letter word; English text an
 test('project prose fills the available width with comfortable columns', async ({
   page,
 }) => {
-  await page.goto('/e2e/project/');
+  await page.goto('/e2e/prose-long/');
   await page.evaluate(() => document.fonts.ready);
 
   for (const lang of ['en', 'cs']) {

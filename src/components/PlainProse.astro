@@ -1,0 +1,24 @@
+---
+import { bindOneLetterWords } from '../one-letter-words';
+import { canSplitProse } from '../prose';
+
+interface Props {
+  cs?: string;
+  en?: string;
+  class?: string;
+}
+
+const { cs, en, class: cls } = Astro.props;
+---
+
+{
+  [{ lang: 'cs', text: cs }, { lang: 'en', text: en }].map(({ lang, text }) =>
+    text?.trim() && (
+      <p
+        {lang}
+        class:list={['running-text whitespace-pre-line', cls, { 'prose-columns': canSplitProse(text) }]}
+        set:text={lang === 'cs' ? bindOneLetterWords(text) : text}
+      />
+    ),
+  )
+}

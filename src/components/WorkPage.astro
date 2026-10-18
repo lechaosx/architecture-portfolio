@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import ProjectFacts from './ProjectFacts.astro';
+import PlainProse from './PlainProse.astro';
 import ProjectGrid from './ProjectGrid.astro';
 import T from './T.astro';
 import ProjectBadges from './ProjectBadges.astro';
@@ -91,11 +92,10 @@ const marker = 'col-start-2 row-start-2 justify-self-end sm:col-start-4 sm:row-s
                       <div class="col-start-1 space-y-5 sm:col-start-2">
                         <ProjectBadges {badges} />
                         {hasBrief && (
-                          <T
-                            as="p"
+                          <PlainProse
                             cs={data.brief_cs}
                             en={data.brief_en}
-                            class="running-text text-sm whitespace-pre-line text-neutral-700"
+                            class="text-sm text-neutral-700"
                           />
                         )}
                         {facts.length > 0 && <ProjectFacts {facts} />}

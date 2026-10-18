@@ -164,7 +164,7 @@ I am an **architect**.
 
 ### Galerie / Gallery
 
-Brno, Česko / Brno, Czechia · Moje zapojení / My involvement: 2024
+Brno, Česko / Brno, Czechia · Období zapojení / Involvement period: 2024
 
 https://example.cz/projects/galerie/
 

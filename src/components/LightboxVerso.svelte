@@ -3,6 +3,7 @@
   import { on } from 'svelte/events';
   import { ui, type Lang } from '../i18n';
   import { bindOneLetterWords } from '../one-letter-words';
+  import { canSplitProse } from '../prose';
   import { cardColumn, cardScale as fitCard, type Size } from './gallery';
 
   // The back of a lightbox image's card: the page's surface in the image's
@@ -78,7 +79,7 @@
   {#if title}
     <h2 class="mb-3 text-2xl leading-tight sm:mb-4 sm:text-3xl">{typeset(title)}</h2>
   {/if}
-  <p class="running-text text-base leading-relaxed">
+  <p class="running-text text-base leading-relaxed" class:prose-columns={canSplitProse(description)}>
     {typeset(description)}
   </p>
 {/snippet}

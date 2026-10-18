@@ -1,5 +1,6 @@
 ---
 import { bindOneLetterWords } from '../one-letter-words';
+import { canSplitProse } from '../prose';
 
 // Plain text with the author's paragraphs, one element per language like
 // T.astro. Pages CMS writes one typed line break as a single newline and two as
@@ -21,7 +22,7 @@ const languages = [
   languages.map(
     ({ lang, text }) =>
       text && (
-        <div {lang} class:list={['running-text', cls]}>
+        <div {lang} class:list={['running-text', cls, { 'prose-columns': canSplitProse(text) }]}>
           {text.split(/\s*\n\s*/).map((paragraph) => (
             <p>{paragraph}</p>
           ))}

@@ -292,33 +292,27 @@ the file body, so `Prose.astro` renders them with `marked`.
 ### One class for running text — [Implicit]
 
 `.running-text` in `global.css` justifies and hyphenates every piece of running
-text (`Prose.astro`, `Paragraphs.astro`, briefs, the lightbox back), and the
+text (`Prose.astro`, `Paragraphs.astro`, `PlainProse.astro`, the lightbox back), and the
 element or its wrapper carries `lang` so the browser picks the right dictionary
 — [Explicit].
 
 ### One-letter words bound where Czech text is rendered — [Implicit]
 
-`T.astro`, `Prose.astro`, `Paragraphs.astro` and the lightbox back put a no-break
+`T.astro`, `Prose.astro`, `Paragraphs.astro`, `PlainProse.astro` and the lightbox back put a no-break
 space after Czech one-letter words (`src/one-letter-words.ts`), so the content
 files, metadata, alt text, JSON-LD and `/llms.txt` keep the text as written.
 `Prose.astro` binds the text `marked` renders as HTML, never its markup, link
 targets or image alt text.
 
-### Text columns follow the container — [Implicit]
+### Prose length enables native columns — [Implicit]
 
-Native CSS columns balance project narrative and the About bio across at most two
-columns, using a font-relative minimum width so a split never makes either
-column too narrow. Both render through `Prose.astro`, which holds the rule.
-The minimum uses `ch` to follow the font's metrics and size; it approximates
-character count for proportional text. Text fills the available width and
-reflows on resize without client-side JavaScript, allowing longer single lines
-until both columns fit. About’s intro uses flex items with the same minimum
-width, so the portrait occupies the rightmost equal column. Reverse wrapping
-places the full-width portrait above the bio when they no longer fit together.
-Below its full-width title and badges, the project introduction uses the same
-minimum for its intact brief and fact sheet; the brief has a readable maximum
-width and precedes the facts when they stack. Without a brief, facts use the
-full width and their native column rule.
+A shared word-count decision enables the same native CSS column rule in every
+prose renderer; Markdown is counted after rendering so markup and image metadata
+do not inflate its length. Short blocks fill their container, while longer blocks
+balance across at most two columns only when each keeps a font-relative minimum
+width, without client-side measurement. About’s equal-width text and portrait
+tracks retain their own responsive layout; project facts occupy the full width
+below the brief, and the lightbox retains its card’s existing column limit.
 
 ### Self-hosted Roboto via @fontsource — [Implicit]
 

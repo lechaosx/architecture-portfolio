@@ -7,6 +7,11 @@
   hyphens: auto;
 }
 
+.prose-columns {
+  columns: 35ch 2;
+  column-gap: 3rem;
+}
+
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
