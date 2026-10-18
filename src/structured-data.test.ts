@@ -10,36 +10,37 @@ import type { ResponsiveImage } from './images';
 
 const site = new URL('https://example.cz/');
 const owner = { name: 'Jana Nováková', credential: 'Ing. arch.' };
-const emptyAbout = { services: [], education: [], awards: [] };
-const contact = { email: 'jana@example.cz' };
+const emptyAbout = { services: [], awards: [] };
+const contact = { email: 'jana@example.cz', location_cs: 'Brno' };
 
 describe('person', () => {
   test('describes the architect from the content, in Czech', () => {
+    const about = {
+      services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
+      education: [
+        {
+          place_cs: 'Fakulta stavební VUT v Brně',
+          place_en: 'Faculty of Civil Engineering, BUT',
+          department_cs: 'Ústav architektury',
+          department_en: 'Institute of Architecture',
+          from: '2024',
+          to: '2026',
+          title_cs: 'Architektura a rozvoj sídel',
+          title_en: 'Architecture and Urban Development',
+        },
+        { place_cs: 'SPŠ stavební', place_en: 'Building school', title_cs: 'Maturita', title_en: 'School-leaving exam' },
+      ],
+      awards: [
+        { place_cs: 'Cena Bohuslava Fuchse', place_en: 'Bohuslav Fuchs Award', from: '2025', to: '2025', title_cs: '2. místo', title_en: '2nd place' },
+        { place_cs: 'Soutěž', place_en: 'Competition', from: '9/2025', title_cs: 'Finále', title_en: 'Final' },
+      ],
+    };
     expect(
       person({
         site,
         owner,
-        about: {
-          services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
-          education: [
-            {
-              place_cs: 'Fakulta stavební VUT v Brně',
-              place_en: 'Faculty of Civil Engineering, BUT',
-              department_cs: 'Ústav architektury',
-              department_en: 'Institute of Architecture',
-              from: '2024',
-              to: '2026',
-              title_cs: 'Architektura a rozvoj sídel',
-              title_en: 'Architecture and Urban Development',
-            },
-            { place_cs: 'SPŠ stavební', place_en: 'Building school', title_cs: 'Maturita', title_en: 'School-leaving exam' },
-          ],
-          awards: [
-            { place_cs: 'Cena Bohuslava Fuchse', place_en: 'Bohuslav Fuchs Award', from: '2025', to: '2025', title_cs: '2. místo', title_en: '2nd place' },
-            { place_cs: 'Soutěž', place_en: 'Competition', from: '9/2025', title_cs: 'Finále', title_en: 'Final' },
-          ],
-        },
-        contact: { ...contact, phone: '+420 777 000 000', location_cs: 'Brno' },
+        about,
+        contact: { ...contact, phone: '+420 777 000 000' },
         portrait: '/_responsive/hash/1280.webp',
       }),
     ).toEqual({
@@ -52,19 +53,10 @@ describe('person', () => {
       email: 'jana@example.cz',
       telephone: '+420 777 000 000',
       image: 'https://example.cz/_responsive/hash/1280.webp',
-      workLocation: { '@type': 'Place', name: 'Brno' },
       makesOffer: [
         { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rodinné domy' } },
       ],
-      hasCredential: [
-        {
-          '@type': 'EducationalOccupationalCredential',
-          name: 'Architektura a rozvoj sídel, Fakulta stavební VUT v Brně (2024–2026)',
-        },
-        { '@type': 'EducationalOccupationalCredential', name: 'Maturita, SPŠ stavební' },
-      ],
       award: ['Cena Bohuslava Fuchse, 2. místo (2025)', 'Soutěž, Finále (9/2025–dosud)'],
-      knowsLanguage: ['cs', 'en'],
     });
   });
 
@@ -76,9 +68,9 @@ describe('person', () => {
         ...emptyAbout,
         awards: [{ place_cs: ' ', place_en: 'Competition', title_cs: '', title_en: 'Award' }],
       },
-      contact: { ...contact, location_cs: ' ' },
+      contact,
     });
-    expect(Object.keys(node)).toEqual(['@type', '@id', 'name', 'jobTitle', 'url', 'email', 'knowsLanguage']);
+    expect(Object.keys(node)).toEqual(['@type', '@id', 'name', 'jobTitle', 'url', 'email']);
   });
 });
 
@@ -143,7 +135,7 @@ describe('creativeWork', () => {
     ).toEqual({
       '@type': 'CreativeWork',
       name: 'Galerie',
-      locationCreated: { '@type': 'Place', name: 'Brno' },
+      contentLocation: { '@type': 'Place', name: 'Brno' },
       description: 'Anotace.',
       inLanguage: 'cs',
       url: 'https://example.cz/projects/galerie/',

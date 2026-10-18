@@ -14,7 +14,7 @@ type Data<Collection extends 'site' | 'about' | 'contact' | 'projects'> =
 const text = (value?: string) => value?.trim() || undefined;
 const texts = (values: (string | undefined)[]) =>
   values.flatMap((value) => text(value) ?? []);
-type FactRow = Data<'about'>['education'][number];
+type FactRow = Data<'about'>['awards'][number];
 /** The row's filled parts in the given order, then its period in brackets. */
 const factNames = (rows: FactRow[], parts: (row: FactRow) => (string | undefined)[]) =>
   rows.flatMap((row) => {
@@ -45,11 +45,10 @@ export function person({
 }: {
   site: URL;
   owner: Pick<Data<'site'>, 'name' | 'credential'>;
-  about: Pick<Data<'about'>, 'services' | 'education' | 'awards'>;
-  contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location_cs'>;
+  about: Pick<Data<'about'>, 'services' | 'awards'>;
+  contact: Pick<Data<'contact'>, 'email' | 'phone'>;
   portrait?: string;
 }) {
-  const location = text(contact.location_cs);
   return compact({
     '@type': 'Person',
     '@id': personId(site),
@@ -60,19 +59,13 @@ export function person({
     email: contact.email,
     telephone: text(contact.phone),
     image: portrait && absolute(portrait, site),
-    workLocation: location && { '@type': 'Place', name: location },
     makesOffer: texts(about.services.map((service) => service.name_cs)).map(
       (name) => ({
         '@type': 'Offer',
         itemOffered: { '@type': 'Service', name },
       }),
     ),
-    hasCredential: factNames(about.education, (row) => [row.title_cs, row.place_cs]).map((name) => ({
-      '@type': 'EducationalOccupationalCredential',
-      name,
-    })),
     award: factNames(about.awards, (row) => [row.place_cs, row.title_cs]),
-    knowsLanguage: ['cs', 'en'],
   });
 }
 
@@ -127,7 +120,7 @@ export function creativeWork({
   return compact({
     '@type': 'CreativeWork',
     name: project.title_cs,
-    locationCreated: location && { '@type': 'Place', name: location },
+    contentLocation: location && { '@type': 'Place', name: location },
     description,
     inLanguage: 'cs',
     url,

@@ -116,7 +116,7 @@ Quiet, non-interactive badges near the title describe the whole project: academi
 
 ### Project classification and credits — [Explicit]
 
-The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, her role, collaborators and award. **Spolupráce / Collaborators** lists the other people involved, each name above an optional smaller, muted bilingual role, including design authorship where confirmed; Tereza’s involvement is implicit in her portfolio and described in the brief and optional personal role. Studio holds the practice name; unverified roles remain unstated.
+The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, her role, collaborators and award. **Spolupráce / Collaborators** lists the other people involved, each name above an optional smaller, muted bilingual role, including design authorship where confirmed; Tereza’s involvement is implicit in her portfolio and described in the brief and optional personal role. Studio holds the practice name; an individual role requires explicit credit for that person rather than a collective team credit.
 
 Only filled facts appear, with location and **Období zapojení / Involvement period** added on the project page; the index already shows those in its row. Names remain whole. An index entry with a brief, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 
@@ -537,10 +537,9 @@ no preview image.
 
 So that an assistant asked which architect to hire can quote her, every page
 carries structured data (schema.org) about the architect: name, credential,
-contact and where she works, services, and education and awards with their
-places and periods; a project page adds its project with its credits, award
-and status, its cover and its titled or described images, each linked at the
-size the lightbox opens it at. `/llms.txt` gathers the same facts, her work
+contact, services and awards; a project page adds its project location, credits,
+award and status, its cover and its titled or described images, each linked at
+the size the lightbox opens it at. `/llms.txt` gathers these facts, her education, work
 experience, her bio and every published project's fact sheet, texts and image
 captions in one Markdown file, Czech then English.
 

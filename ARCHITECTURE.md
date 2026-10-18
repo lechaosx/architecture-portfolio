@@ -403,9 +403,13 @@ onto white, because LinkedIn is reported to drop WebP previews.
 Pure functions in `src/structured-data.ts` turn content into schema.org nodes,
 which `Base` inlines as one `@graph` per page. Text is plain Czech, because
 Google documents only plain-text values for these properties, not
-language-tagged ones. Her location is `Person.workLocation`, a `Place`.
-Credentials are named "programme, school (period)" and awards "award, placement
-(period)"; `award` is plain text. A project’s `contributor` links the architect’s Person node and lists collaborators, preserving supplied personal and collaborator roles using schema.org `Role`. Free-text roles do not establish a separate creator relationship. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
+language-tagged ones. Awards are plain text named "award, placement (period)".
+
+### Structured data preserves supplied meaning — [Implicit]
+
+Project sites use `contentLocation`; `contributor` links the architect’s Person node and lists collaborators, preserving supplied personal and collaborator roles through schema.org `Role`, while realization supplies `creativeWorkStatus`.
+Studies, a generic contact area and website languages do not establish awarded credentials, a workplace or personal language proficiency.
+Personal involvement dates do not establish a project creation date, and free-text roles and studio credits do not establish a creator relationship.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 

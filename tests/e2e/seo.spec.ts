@@ -105,12 +105,15 @@ test.describe(() => {
   test('every page describes the architect as structured data', async ({ page }) => {
     for (const path of ['/', '/work/', '/about/', '/e2e/project/']) {
       await page.goto(path);
-      expect(node(await graph(page), 'Person')).toMatchObject({
+      const architect = node(await graph(page), 'Person');
+      expect(architect).toMatchObject({
         '@id': `${origin}/#person`,
         name: site.name,
         url: `${origin}/`,
-        knowsLanguage: ['cs', 'en'],
       });
+      expect(architect).not.toHaveProperty('knowsLanguage');
+      expect(architect).not.toHaveProperty('hasCredential');
+      expect(architect).not.toHaveProperty('workLocation');
     }
   });
 
@@ -183,7 +186,7 @@ test.describe(() => {
     const work = node(await graph(page), 'CreativeWork')!;
     expect(work).toMatchObject({
       name: 'Testovací projekt',
-      locationCreated: { '@type': 'Place', name: 'Nikde' },
+      contentLocation: { '@type': 'Place', name: 'Nikde' },
       url: `${origin}/e2e/project/`,
     });
     expect(work).not.toHaveProperty('dateCreated');
