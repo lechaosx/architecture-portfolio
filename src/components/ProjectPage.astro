@@ -18,6 +18,8 @@ interface Props {
 
 const { project } = Astro.props;
 const d = project.data;
+const hasBrief = Boolean(d.brief_cs?.trim() || d.brief_en?.trim());
+const facts = projectFacts(d, { placeAndPeriod: true });
 
 const images = d.blocks.flatMap((block) =>
   block.type === 'text' ? [] : block.images,
@@ -56,29 +58,23 @@ const site = new URL('/', Astro.site);
     </a>
 
     <header class="mt-6 mb-8">
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,35ch),1fr))] gap-x-12 gap-y-8">
-        <div>
+      <T
+        as="h1"
+        cs={d.title_cs}
+        en={d.title_en}
+        class="text-3xl font-medium sm:text-4xl"
+      />
+      <ProjectBadges badges={projectBadges(d)} class="mt-4" />
+      <div class="mt-8 grid grid-cols-[repeat(auto-fit,minmax(min(100%,35ch),1fr))] gap-x-12 gap-y-8">
+        {hasBrief && (
           <T
-            as="h1"
-            cs={d.title_cs}
-            en={d.title_en}
-            class="text-3xl font-medium sm:text-4xl"
+            as="p"
+            cs={d.brief_cs}
+            en={d.brief_en}
+            class="running-text max-w-prose leading-7 whitespace-pre-line text-neutral-700"
           />
-          <ProjectBadges badges={projectBadges(d)} class="mt-4" />
-        </div>
-        {
-          (d.brief_cs || d.brief_en) && (
-            <T
-              as="p"
-              cs={d.brief_cs}
-              en={d.brief_en}
-              class="running-text max-w-prose leading-7 whitespace-pre-line text-neutral-700"
-            />
-          )
-        }
-      </div>
-      <div class="mt-8">
-        <ProjectFacts facts={projectFacts(d, { placeAndPeriod: true })} />
+        )}
+        <ProjectFacts {facts} />
       </div>
     </header>
 

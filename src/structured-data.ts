@@ -110,13 +110,15 @@ export function creativeWork({
   url: string;
   project: Pick<
     Data<'projects'>,
-    'title_cs' | 'location_cs' | 'realization' | 'collaborators' | 'award_cs'
+    'title_cs' | 'location_cs' | 'realization' | 'role_cs' | 'collaborators' | 'award_cs'
   >;
   description?: string;
   images: GalleryImage[];
   responsiveImages: (ResponsiveImage | undefined)[];
 }) {
   const location = text(project.location_cs);
+  const architect = { '@id': personId(site) };
+  const roleName = text(project.role_cs);
   const contributors = project.collaborators.map(({ name, role_cs }) => {
     const person = { '@type': 'Person', name: name.trim() };
     const roleName = text(role_cs);
@@ -129,7 +131,7 @@ export function creativeWork({
     description,
     inLanguage: 'cs',
     url,
-    contributor: [{ '@id': personId(site) }, ...contributors],
+    contributor: [roleName ? { '@type': 'Role', roleName, contributor: architect } : architect, ...contributors],
     award: text(project.award_cs),
     creativeWorkStatus: project.realization && ui.cs[project.realization],
     // The cover, the first image, even untitled; then the described ones.

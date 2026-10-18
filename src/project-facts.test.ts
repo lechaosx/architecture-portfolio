@@ -64,6 +64,25 @@ test('has no rows when nothing is filled', () => {
   expect(projectFacts(project)).toEqual([]);
 });
 
+test('keeps my role separate from the studio and other contributors’ roles', () => {
+  expect(projectFacts({
+    ...project,
+    studio: 'Ateliér A',
+    role_cs: 'Návrh, dokumentace', role_en: 'Design, documentation',
+    collaborators: [{ name: 'Jan Novák', role_cs: 'Statika', role_en: 'Structural design' }],
+  })).toEqual([
+    { label: 'studio', lines: [{ names: [], cs: 'Ateliér A', en: 'Ateliér A' }] },
+    { label: 'myRole', lines: [{ names: [], cs: 'Návrh, dokumentace', en: 'Design, documentation' }] },
+    { label: 'collaborators', lines: [{ names: ['Jan Novák'], cs: 'Statika', en: 'Structural design' }] },
+  ]);
+});
+
+test('an empty or whitespace-only personal role adds no fact row', () => {
+  for (const role of [undefined, '', ' \n\t ']) {
+    expect(projectFacts({ ...project, role_cs: role, role_en: role })).toEqual([]);
+  }
+});
+
 test('a project website keeps the complete target and displays its hostname', () => {
   const project_url = 'https://example.org/projects/library?view=plan#drawings';
   expect(projectFacts({ ...project, project_url })).toEqual([{

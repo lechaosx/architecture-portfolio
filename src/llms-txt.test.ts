@@ -31,6 +31,23 @@ test('exports the full external project URL with its bilingual label', () => {
   expect(output).toContain(`Odkaz na projekt / Project website: ${project_url}`);
 });
 
+test('exports a personal role separately from the brief and collaborator roles', () => {
+  const output = llmsTxt({
+    site, name, about, contact, description: {},
+    projects: [{ id: 'library', data: {
+      ...project,
+      brief_cs: 'Knihovna s veřejnou zahradou. Navrhla jsem její interiér.',
+      brief_en: 'A library with a public garden. I designed its interior.',
+      role_cs: 'Návrh interiéru', role_en: 'Interior design',
+      collaborators: [{ name: 'Jan Novák', role_cs: 'Statika', role_en: 'Structural design' }],
+    } }],
+  });
+  expect(output).toContain('Moje role / My role: Návrh interiéru / Interior design');
+  expect(output).toContain('Spolupráce / Collaborators: Jan Novák – Statika / Structural design');
+  expect(output).toContain('Knihovna s veřejnou zahradou. Navrhla jsem její interiér.');
+  expect(output).toContain('A library with a public garden. I designed its interior.');
+});
+
 test('presents the architect and her projects, Czech first', () => {
   expect(
     llmsTxt({

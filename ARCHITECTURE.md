@@ -220,11 +220,11 @@ the same order.
 
 ### One project metadata model — [Implicit]
 
-`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Optional top-level `role_cs` / `role_en` describe the architect’s responsibilities, while each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets and collaborators in a semantic people list with secondary roles.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 
-Context, intervention and scope are optional controlled lists; current design activity is a separate boolean, and realization is one optional enum. Pages CMS uses multi-selects for the lists and a single select for realization, matching content validation. The existing contribution and credit fields retain their contents and attribution independently of classification.
+Context, intervention and scope are optional controlled lists; current design activity is a separate boolean, and realization is one optional enum. Pages CMS uses multi-selects for the lists and a single select for realization, matching content validation. The brief, personal role and credits describe involvement independently of classification.
 
 ### Footer layout follows its content — [Implicit]
 
@@ -253,7 +253,7 @@ edges.
 
 ### The work index expands with native `<details>` — [Explicit]
 
-A row with a contribution, facts or badges is a `<details>` whose `<summary>` is the row,
+A row with a brief, facts or badges is a `<details>` whose `<summary>` is the row,
 so it opens without JavaScript, from the keyboard and on find-in-page. Only
 the **+**/**−** turns; the brief shows at once, with no height animation to
 wait for — [Implicit].
@@ -315,8 +315,10 @@ reflows on resize without client-side JavaScript, allowing longer single lines
 until both columns fit. About’s intro uses flex items with the same minimum
 width, so the portrait occupies the rightmost equal column. Reverse wrapping
 places the full-width portrait above the bio when they no longer fit together.
-The project introduction uses the same minimum for its title and intact brief;
-the brief has a readable maximum width and the fact sheet spans both tracks below.
+Below its full-width title and badges, the project introduction uses the same
+minimum for its intact brief and fact sheet; the brief has a readable maximum
+width and precedes the facts when they stack. Without a brief, facts use the
+full width and their native column rule.
 
 ### Self-hosted Roboto via @fontsource — [Implicit]
 
@@ -409,7 +411,7 @@ which `Base` inlines as one `@graph` per page. Text is plain Czech, because
 Google documents only plain-text values for these properties, not
 language-tagged ones. Her location is `Person.workLocation`, a `Place`.
 Credentials are named "programme, school (period)" and awards "award, placement
-(period)"; `award` is plain text. A project’s `contributor` links the architect’s Person node and lists collaborators, preserving supplied roles using schema.org `Role`. Free-text roles do not establish a separate creator relationship. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
+(period)"; `award` is plain text. A project’s `contributor` links the architect’s Person node and lists collaborators, preserving supplied personal and collaborator roles using schema.org `Role`. Free-text roles do not establish a separate creator relationship. Personal involvement dates do not establish a project creation date, and the studio credit does not establish authorship; realization supplies `creativeWorkStatus`.
 
 ### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
 

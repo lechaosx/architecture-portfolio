@@ -37,8 +37,8 @@ content:
       - { name: to, label: Moje zapojení do, type: string, required: false, pattern: *date, description: 'Konec mé práce na projektu; u jednoho roku stejný rok jako začátek. Pokud moje zapojení trvá, nechte prázdné. Nejde o datum dokončení stavby.' }
       - { name: location_cs, label: Místo (česky), type: string, required: false }
       - { name: location_en, label: Místo (anglicky), type: string, required: false, description: &translations 'Vyplňte oba jazyky, nebo nechte obě pole prázdná. Chybějící překlad zabrání zveřejnění změn.' }
-      - { name: brief_cs, label: Moje práce (česky), type: text, required: false, description: 'Co jsem osobně navrhla, zpracovala nebo koordinovala. Popis celého projektu patří do obsahu stránky.' }
-      - { name: brief_en, label: Moje práce (anglicky), type: text, required: false, description: *translations }
+      - { name: brief_cs, label: Brief (česky), type: text, required: false, description: 'Stručné představení projektu a mého zapojení do něj. Podrobnější popis patří do obsahu stránky.' }
+      - { name: brief_en, label: Brief (anglicky), type: text, required: false, description: *translations }
       - name: context
         label: Kontext projektu
         description: 'Původ celého projektu. Lze kombinovat, např. školní soutěž. Zakázkový projekt může být zakázkou ateliéru, nemusí jít o mého přímého klienta.'
@@ -88,12 +88,14 @@ content:
             - { name: built, label: Realizováno }
       - { name: project_url, label: Odkaz na projekt, type: string, required: false, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
       - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména ostatních lidí patří do spolupráce.' }
+      - { name: role_cs, label: Moje role (česky), type: string, required: false, description: 'Stručný přehled mé práce, např. „Návrh interiéru, dokumentace“. Stejný formát jako role ostatních spolupracovníků; souvislosti patří do briefu. Nepovinné.' }
+      - { name: role_en, label: Moje role (anglicky), type: string, required: false, description: *translations }
       - name: collaborators
         label: Spolupráce
         type: object
         list: true
         required: false
-        description: 'Ostatní lidé, kteří na projektu spolupracovali, jedna osoba na položku. Moje zapojení patří do pole Moje práce. Uveďte známou roli v obou jazycích; neznámou nechte prázdnou.'
+        description: 'Ostatní lidé, kteří na projektu spolupracovali, jedna osoba na položku. Mou práci popisuje brief a nepovinné pole Moje role. Uveďte známou roli v obou jazycích; neznámou nechte prázdnou.'
         fields:
           - { name: name, label: Jméno, type: string, required: true, description: 'Společné pro oba jazyky, např. „Ing. Jiří Železný“.' }
           - { name: role_cs, label: Role (česky), type: string, required: false, description: 'Např. „Autor návrhu“ nebo „vizualizace“.' }

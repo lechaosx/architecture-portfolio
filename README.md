@@ -22,8 +22,9 @@ Tests, build and other commands: [MAINTAINERS.md](MAINTAINERS.md).
 Projects are Markdown files in `src/content/projects/`, the landing page's
 images, the About page, the contacts in the footer and the site
 settings are in `src/content/singletons/`, and images in `public/uploads/`.
-Project contribution and involvement describe her work; project classifications,
-realization and credits describe the whole project. See [MAINTAINERS.md](MAINTAINERS.md)
+Each project brief introduces the project and her involvement. Optional personal
+roles summarize her responsibilities; collaborators credit other people. Project
+classifications and realization describe the whole project. See [MAINTAINERS.md](MAINTAINERS.md)
 for the editing fields.
 
 The owner edits all of it through [Pages CMS](https://pagescms.org): the repo is

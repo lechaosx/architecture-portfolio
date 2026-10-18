@@ -223,7 +223,7 @@ test('without a grid the index opens the page, as the identity line does without
   await expect(rows(page)).toHaveCount(3);
 });
 
-test('the brief sits beside the title and above the blocks on wide screens', async ({
+test('the brief sits beneath the full-width title and above the blocks', async ({
   page,
 }) => {
   await page.goto('/e2e/brief/');
@@ -235,8 +235,8 @@ test('the brief sits beside the title and above the blocks on wide screens', asy
     brief.boundingBox(),
     page.locator('article [data-lightbox-index="0"]').boundingBox(),
   ]);
-  expect(briefBox!.x).toBeGreaterThanOrEqual(title!.x + title!.width);
-  expect(briefBox!.y).toBeCloseTo(title!.y, 0);
+  expect(briefBox!.x).toBeCloseTo(title!.x, 0);
+  expect(briefBox!.y).toBeGreaterThan(title!.y + title!.height);
   expect(briefBox!.y).toBeLessThan(block!.y);
 });
 

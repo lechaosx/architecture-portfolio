@@ -101,14 +101,14 @@ unrenderable fails the build and does not deploy.
 ### Projects: title and start; everything else optional — [Explicit]
 
 The CMS refuses to save a project without both titles and the start of its
-involvement period. The end, contribution, credits, award, classification and
+involvement period. The end, brief, personal role, credits, award, classification and
 content blocks are optional; so is the location — [Implicit]. A text block
 needs both languages, an image block at least one image, a collaborator a
 name.
 
-### Personal contribution and the whole project — [Explicit]
+### Project brief and personal role — [Explicit]
 
-The short text appears without a preset heading on the project page and in an expanded index entry, preserving its line breaks; its content identifies her responsibilities and outputs. On a project page, the intact brief sits beside the title and badges when two readable tracks fit, then stacks beneath them on smaller screens; its line length stays limited — [Implicit]. The existing content blocks describe the whole project, including projects entirely designed by her. Dates describe her involvement, independently of project progress.
+The brief introduces the project and her involvement in natural prose; an optional **Moje role / My role** fact summarizes her responsibilities in the same free-text format as collaborators’ roles, with her name implicit. On a project page, the title and badges span the width above the intact brief on the left and facts on the right; narrower screens stack brief then facts, while an absent brief leaves the facts the full width — [Explicit]. The brief keeps a readable line length, preserves its line breaks and appears without a preset heading — [Implicit].
 
 ### Project context and progress badges — [Explicit]
 
@@ -116,9 +116,9 @@ Quiet, non-interactive badges near the title describe the whole project: academi
 
 ### Project classification and credits — [Explicit]
 
-The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, collaborators and award. **Spolupráce / Collaborators** lists the other people involved, with optional bilingual roles, including design authorship where confirmed; Tereza’s involvement is implicit in her portfolio and described in the brief. Studio holds the practice name; unverified roles remain unstated.
+The fact sheet can show intervention (new build, renovation, extension, adaptive reuse), scope (architecture, interior, landscape, public space, urban design), studio, her role, collaborators and award. **Spolupráce / Collaborators** lists the other people involved, each name above an optional smaller, muted bilingual role, including design authorship where confirmed; Tereza’s involvement is implicit in her portfolio and described in the brief and optional personal role. Studio holds the practice name; unverified roles remain unstated.
 
-Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole. An index entry with contribution, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
+Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole. An index entry with a brief, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 
 ### Optional project website — [Explicit]
 
@@ -252,13 +252,13 @@ cards do not show the brief — [Implicit].
 ### Work page: an index of projects without images, expanding in place — [Explicit]
 
 The projects without images follow the grid, in the same order, as a compact
-index, so the images lead and the rest stays easy to scan; a row with contribution,
+index, so the images lead and the rest stays easy to scan; a row with a brief,
 facts or badges opens in place to show them. The index has no heading of its own:
 its projects weigh the same as the grid's and only lack images yet —
 [Explicit]. The layout — [Implicit]: the index follows the grid at the grid's
 own row gap, with thin rules above, between and below its rows; one aligned row
 of period, title and location per project, and a project with a page linking
-to it instead of opening. On phones the period sits above the title and location so names and contribution keep a readable width. Expanded contribution and facts share the title column at every width; the contribution stays in one readable text column. Without image projects the index opens the page.
+to it instead of opening. On phones the period sits above the title and location so names and briefs keep a readable width. Expanded brief and facts share the title column at every width; the brief stays in one readable text column. Without image projects the index opens the page.
 
 ### Approach section — [Explicit]
 

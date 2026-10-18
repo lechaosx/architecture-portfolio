@@ -264,6 +264,17 @@ export function getStaticPaths() {
     { params: { fixture: 'work-readable' }, props: { projects: [{ ...alphaProject, data: { ...alphaProject.data, brief_en: text(12).en, brief_cs: text(12).cs } }] } },
     { params: { fixture: 'work-credits' }, props: { projects: creditProjects } },
     { params: { fixture: 'work-project-link' }, props: { projects: [listed('link-only', { title_cs: 'Externí projekt', title_en: 'External project', blocks: [], project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' })] } },
+    { params: { fixture: 'work-role-only' }, props: { projects: [listed('role-only', {
+      title_cs: 'Pouze moje role', title_en: 'My role only', blocks: [],
+      role_cs: 'Návrh interiéru, dokumentace', role_en: 'Interior design, documentation',
+    })] } },
+    projectWith('project-role', project.blocks.slice(0, 1), {
+      brief_cs: 'Knihovna s veřejnou zahradou. Navrhla jsem její interiér.',
+      brief_en: 'A library with a public garden. I designed its interior.',
+      role_cs: 'Návrh interiéru, dokumentace', role_en: 'Interior design, documentation',
+      studio: 'Studio North',
+      collaborators: [{ name: 'Jan Novák', role_cs: 'Statika', role_en: 'Structural design' }],
+    }),
     projectWith('project-link', project.blocks.slice(0, 1), { project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' }),
     projectWith('brief', project.blocks.slice(0, 1), {
       brief_en: 'A brief for the page.\nSecond line.',
@@ -274,6 +285,8 @@ export function getStaticPaths() {
       brief_cs: text(2).cs,
       ...credits,
     }),
+    projectWith('credits-no-brief', project.blocks.slice(0, 1), credits),
+    projectWith('credits-blank-brief', project.blocks.slice(0, 1), { ...credits, brief_cs: ' \n ', brief_en: ' ' }),
     projectWith('text-only', [{ type: 'text', body_en: text(2).en, body_cs: text(2).cs }]),
     projectWith('vector-only', [{ type: 'gallery', images: [item('vector.svg')] }]),
     projectWith('náměstí', [{ type: 'text', body_en: text(1).en, body_cs: text(1).cs }]),

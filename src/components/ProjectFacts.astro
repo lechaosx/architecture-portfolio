@@ -11,7 +11,6 @@ interface Props {
 }
 
 const { facts } = Astro.props;
-const afterNames = (names: string[], text: string) => (names.length > 0 && text ? ` – ${text}` : text);
 ---
 
 <div class="@container">
@@ -24,17 +23,22 @@ const afterNames = (names: string[], text: string) => (names.length > 0 && text 
           </dt>
           <dd>
             {badges && <ProjectBadges {badges} />}
-            {lines.map(({ names, cs, en }) => (
-              <p>
-                {names.map((name, index) => (
-                  <>
-                    {index > 0 && ', '}
-                    <span class="whitespace-nowrap">{name}</span>
-                  </>
+            {label === 'collaborators' ? (
+              <ul class="space-y-2">
+                {lines.map(({ names, cs, en }) => (
+                  <li>
+                    <span class="block whitespace-nowrap">{names.join(', ')}</span>
+                    {(cs.trim() || en.trim()) && (
+                      <T as="span" {cs} {en} class="block text-xs text-neutral-500" />
+                    )}
+                  </li>
                 ))}
+              </ul>
+            ) : lines.map(({ cs, en }) => (
+              <p>
                 {(cs || en) && (href
                   ? <a {href} class="text-link [overflow-wrap:anywhere]"><T {cs} {en} /></a>
-                  : <T cs={afterNames(names, cs)} en={afterNames(names, en)} />)}
+                  : <T {cs} {en} />)}
               </p>
             ))}
           </dd>

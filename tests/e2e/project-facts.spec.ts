@@ -12,11 +12,12 @@ const sheet = (scope: Page | Locator) => scope.locator('dl');
 // Text content, as labels are uppercase only on screen.
 const labels = (scope: Page | Locator) =>
   sheet(scope).locator('dt span').filter({ visible: true }).allTextContents();
-const values = (scope: Page | Locator) =>
-  sheet(scope).locator('dd p, dd li').filter({ visible: true }).allInnerTexts();
+const values = async (scope: Page | Locator) =>
+  (await sheet(scope).locator('dd > p, dd > ul > li').filter({ visible: true }).allInnerTexts())
+    .map((text) => text.split('\n').map((line) => line.trim()).filter(Boolean).join('\n'));
 const brief = (page: Page) => page.locator('article header .running-text').filter({ visible: true });
 
-test('a project page’s fact sheet shows its filled rows in the visitor’s language, one collaborator a line', async ({
+test('a project page’s fact sheet shows its filled rows in the visitor’s language, one item per collaborator', async ({
   page,
 }) => {
   await page.goto('/e2e/credits/');
@@ -29,9 +30,9 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
     'Architecture',
     'Interior',
     'Studio North | Ing. arch. Jana Nováková',
-    'Jan Novák – Design author · Coordination',
-    'Eva Dvořáková – Design author',
-    'Ing. Petr Malý – Visualizations',
+    'Jan Novák\nDesign author · Coordination',
+    'Eva Dvořáková\nDesign author',
+    'Ing. Petr Malý\nVisualizations',
     'Ing. Pavel Velký',
     'Ing. Iva Tichá',
   ]);
@@ -54,10 +55,10 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
     'Architektura',
     'Interiér',
     'Studio North | Ing. arch. Jana Nováková',
-    'Jan Novák – Autor návrhu · koordinace',
-    'Eva Dvořáková – Autor návrhu',
-    'Ing. Petr Malý – vizualizace',
-    'Ing. Pavel Velký – statika',
+    'Jan Novák\nAutor návrhu · koordinace',
+    'Eva Dvořáková\nAutor návrhu',
+    'Ing. Petr Malý\nvizualizace',
+    'Ing. Pavel Velký\nstatika',
     'Ing. Iva Tichá',
     'Odměna za dílčí podnět',
   ]);
@@ -70,6 +71,76 @@ test('a project without credits shows only its place and period', async ({ page 
   await expect(brief(page)).toHaveCount(0);
   await expect(sheet(page).getByRole('link')).toHaveCount(0);
 });
+
+for (const path of ['/e2e/project-role/', '/e2e/work-role-only/']) {
+  test(`my role is bilingual and visible on ${path}`, async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('lang', 'en'));
+    await page.goto(path);
+    const index = path.includes('work-');
+    if (index) {
+      await page.getByRole('heading', { name: 'My role only' }).click();
+      await expect(page.locator('details')).toHaveAttribute('open', '');
+    } else {
+      const work = await page.locator('script[type="application/ld+json"]').evaluate((element) =>
+        JSON.parse(element.textContent!)['@graph'].find((node: Record<string, unknown>) => node['@type'] === 'CreativeWork'),
+      );
+      expect(work.contributor[0]).toEqual({
+        '@type': 'Role', roleName: 'Návrh interiéru, dokumentace',
+        contributor: { '@id': new URL('/#person', work.url).href },
+      });
+      expect(work).not.toHaveProperty('creator');
+    }
+    for (const [language, label, role, collaborator] of [
+      ['en', 'My role', 'Interior design, documentation', 'Jan Novák\nStructural design'],
+      ['cs', 'Moje role', 'Návrh interiéru, dokumentace', 'Jan Novák\nStatika'],
+    ] as const) {
+      if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      await expect(sheet(page).getByText(label, { exact: true })).toBeVisible();
+      await expect(sheet(page).getByText(role, { exact: true })).toBeVisible();
+      if (index) {
+        expect(await labels(page)).toEqual([label]);
+      } else {
+        expect(await values(page)).toContain(collaborator);
+        await expect(brief(page)).toContainText(language === 'en' ? 'A library with a public garden.' : 'Knihovna s veřejnou zahradou.');
+        await expect(sheet(page).getByText('Tereza Kalábková', { exact: true })).toHaveCount(0);
+      }
+      for (const width of [1280, 800, 390]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      }
+    }
+  });
+}
+
+for (const path of ['/e2e/credits/', '/e2e/work-credits/']) {
+  test(`collaborators are people with optional secondary roles on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    if (path.includes('work-')) await page.getByText('Alpha brief', { exact: true }).click();
+    for (const [language, label, role] of [
+      ['en', 'Collaborators', 'Design author · Coordination'],
+      ['cs', 'Spolupráce', 'Autor návrhu · koordinace'],
+    ] as const) {
+      if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      const list = sheet(page).locator(':scope > div').filter({ has: page.getByText(label, { exact: true }) }).getByRole('list');
+      await expect(list.getByRole('listitem')).toHaveCount(5);
+      const person = list.getByRole('listitem').filter({ has: page.getByText('Jan Novák', { exact: true }) });
+      const name = person.getByText('Jan Novák', { exact: true });
+      const roleText = person.getByText(role, { exact: true });
+      await expect(name).toBeVisible();
+      await expect(roleText).toBeVisible();
+      const [nameBox, roleBox] = await Promise.all([name.boundingBox(), roleText.boundingBox()]);
+      expect(roleBox!.y).toBeGreaterThanOrEqual(nameBox!.y + nameBox!.height);
+      const style = (element: Element) => ({ size: parseFloat(getComputedStyle(element).fontSize), color: getComputedStyle(element).color });
+      const [nameStyle, roleStyle] = await Promise.all([name.evaluate(style), roleText.evaluate(style)]);
+      expect(roleStyle.size).toBeLessThan(nameStyle.size);
+      expect(roleStyle.color).not.toBe(nameStyle.color);
+      const unfilled = list.getByRole('listitem').filter({ has: page.getByText('Ing. Iva Tichá', { exact: true }) });
+      expect(await unfilled.innerText()).toBe('Ing. Iva Tichá');
+      const [itemBox, bareName] = await Promise.all([unfilled.boundingBox(), unfilled.getByText('Ing. Iva Tichá', { exact: true }).boundingBox()]);
+      expect(itemBox!.height).toBeCloseTo(bareName!.height, 0);
+    }
+  });
+}
 
 test('an optional project website appears on the project page and expands a link-only index entry', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lang', 'en'));
@@ -98,7 +169,7 @@ test('an optional project website appears on the project page and expands a link
   }
 });
 
-test('the intact brief sits beside the title when readable tracks fit and stacks beneath it otherwise', async ({ page }) => {
+test('the title spans the introduction above an intact brief and adjacent facts, stacking on narrow screens', async ({ page }) => {
   await page.goto('/e2e/credits/');
   await page.evaluate(() => document.fonts.ready);
   for (const language of ['en', 'cs']) {
@@ -111,17 +182,22 @@ test('the intact brief sits beside the title when readable tracks fit and stacks
         sheet(page).boundingBox(),
         page.locator('article header').boundingBox(),
       ]);
+      expect(title!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
+      expect(briefBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
+      expect(briefBox!.y, `${language} ${width}px`).toBeGreaterThan(title!.y + title!.height);
       if (width >= 800) {
-        expect(briefBox!.x, `${language} ${width}px`).toBeGreaterThanOrEqual(title!.x + title!.width);
-        expect(briefBox!.y, `${language} ${width}px`).toBeCloseTo(title!.y, 0);
+        expect(sheetBox!.x, `${language} ${width}px`).toBeGreaterThanOrEqual(briefBox!.x + briefBox!.width);
+        expect(sheetBox!.y, `${language} ${width}px`).toBeCloseTo(briefBox!.y, 0);
       } else {
-        expect(briefBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
-        expect(briefBox!.y, `${language} ${width}px`).toBeGreaterThan(title!.y + title!.height);
+        expect(sheetBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
+        expect(sheetBox!.y, `${language} ${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
+        expect(sheetBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
       }
       expect(briefBox!.width, `${language} ${width}px`).toBeLessThanOrEqual(header!.width);
-      expect(sheetBox!.y, `${language} ${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
-      expect(sheetBox!.x, `${language} ${width}px`).toBeCloseTo(header!.x, 0);
-      expect(sheetBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
+      const factColumns = await sheet(page).locator(':scope > div:visible').evaluateAll((rows) =>
+        new Set(rows.map((row) => Math.round(row.getBoundingClientRect().left))).size,
+      );
+      expect(factColumns, `${language} ${width}px`).toBe(1);
       const lines = await brief(page).evaluate((element) => {
         const range = document.createRange();
         range.selectNodeContents(element);
@@ -161,26 +237,32 @@ test('without a brief the sheet fills the width under the title', async ({ page 
   expect(sheetBox!.width).toBeCloseTo(header!.width, 0);
 });
 
-test('fact rows form two intact groups when both fit and one group on narrower screens', async ({ page }) => {
-  await page.goto('/e2e/credits/');
-  for (const language of ['en', 'cs']) {
-    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
-    for (const [width, groups] of [[1280, 2], [980, 1], [834, 1], [390, 1]] as const) {
-      await page.setViewportSize({ width, height: 900 });
-      const rows = await sheet(page).locator(':scope > div').filter({ visible: true }).evaluateAll((rows) =>
-        rows.map((row) => ({
-          left: Math.round(row.getBoundingClientRect().left),
-          fragments: row.getClientRects().length,
-        })),
-      );
-      expect(new Set(rows.map(({ left }) => left)).size, `${language}, ${width}px`).toBe(groups);
-      expect(rows.every(({ fragments }) => fragments === 1), `${language}, ${width}px`).toBe(true);
-      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
-        message: `${language}, ${width}px`,
-      }).toBe(width);
+for (const path of ['/e2e/credits-no-brief/', '/e2e/credits-blank-brief/']) {
+  test(`an absent or blank brief leaves full-width facts on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await expect(brief(page)).toHaveCount(0);
+    for (const language of ['en', 'cs']) {
+      if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      for (const [width, groups] of [[1280, 2], [980, 1], [834, 1], [390, 1]] as const) {
+        await page.setViewportSize({ width, height: 900 });
+        const rows = await sheet(page).locator(':scope > div').filter({ visible: true }).evaluateAll((rows) =>
+          rows.map((row) => ({
+            left: Math.round(row.getBoundingClientRect().left),
+            fragments: row.getClientRects().length,
+          })),
+        );
+        const [sheetBox, header] = await Promise.all([sheet(page).boundingBox(), page.locator('article header').boundingBox()]);
+        expect(sheetBox!.x, `${language}, ${width}px`).toBeCloseTo(header!.x, 0);
+        expect(sheetBox!.width, `${language}, ${width}px`).toBeCloseTo(header!.width, 0);
+        expect(new Set(rows.map(({ left }) => left)).size, `${language}, ${width}px`).toBe(groups);
+        expect(rows.every(({ fragments }) => fragments === 1), `${language}, ${width}px`).toBe(true);
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
+          message: `${language}, ${width}px`,
+        }).toBe(width);
+      }
     }
-  }
-});
+  });
+}
 
 test('labels sit beside their values where the sheet has room, above them on phones', async ({ page }) => {
   await page.goto('/e2e/credits/');

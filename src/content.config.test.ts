@@ -386,7 +386,7 @@ interface BilingualCase {
 }
 
 const bilingualCases: BilingualCase[] = [
-  ...['title', 'location', 'brief', 'award'].map((pair) => ({
+  ...['title', 'location', 'brief', 'role', 'award'].map((pair) => ({
     name: `project ${pair}`, collection: 'projects' as const, content: project,
     path: [], pair, optional: pair !== 'title',
   })),

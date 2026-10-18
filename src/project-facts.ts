@@ -4,10 +4,6 @@ import { formatPeriod } from './period';
 
 type Data = CollectionEntry<'projects'>['data'];
 
-/**
- * A line of a fact sheet row: names, each kept whole and joined by commas,
- * then a text in each language, after a dash where both are there.
- */
 export interface FactLine extends Record<Lang, string> {
   names: string[];
 }
@@ -40,6 +36,8 @@ export function projectFacts(
     | 'intervention'
     | 'scope'
     | 'studio'
+    | 'role_cs'
+    | 'role_en'
     | 'collaborators'
     | 'award_cs'
     | 'award_en'
@@ -59,6 +57,7 @@ export function projectFacts(
       project[label]?.length ? [{ label, lines: [], badges: project[label] }] : [],
     ),
     ...(studio ? [{ label: 'studio' as const, lines: [text(studio)] }] : []),
+    ...pair('myRole', project.role_cs?.trim(), project.role_en?.trim()),
     ...(collaborators.length ? [{
       label: 'collaborators' as const,
       lines: collaborators.map(({ name, role_cs, role_en }) => ({

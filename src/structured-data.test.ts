@@ -233,6 +233,28 @@ describe('creativeWork', () => {
       creativeWorkStatus: 'Ve výstavbě',
     });
   });
+
+  test('attaches a supplied personal role to the implicit architect without inferring authorship', () => {
+    const node = creativeWork({
+      site, url: 'https://example.cz/project/',
+      project: { ...project, role_cs: '  Návrh, dokumentace  ' },
+      images: [], responsiveImages: [],
+    });
+    expect(node.contributor).toEqual([{
+      '@type': 'Role', roleName: 'Návrh, dokumentace',
+      contributor: { '@id': 'https://example.cz/#person' },
+    }]);
+    expect(node).not.toHaveProperty('creator');
+  });
+
+  test('a blank personal role preserves the implicit architect credit', () => {
+    const node = creativeWork({
+      site, url: 'https://example.cz/project/',
+      project: { ...project, role_cs: ' \n ' },
+      images: [], responsiveImages: [],
+    });
+    expect(node.contributor).toEqual([{ '@id': 'https://example.cz/#person' }]);
+  });
 });
 
 describe('jsonLd', () => {
