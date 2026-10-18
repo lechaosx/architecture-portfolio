@@ -68,6 +68,34 @@ test('a project without credits shows only its place and period', async ({ page 
   expect(await labels(page)).toEqual(['Location', 'My involvement']);
   expect(await values(page)).toEqual(['Nowhere', '3/2025–6/2026']);
   await expect(brief(page)).toHaveCount(0);
+  await expect(sheet(page).getByRole('link')).toHaveCount(0);
+});
+
+test('an optional project website appears on the project page and expands a link-only index entry', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lang', 'en'));
+  const hostname = 'architecture-and-urban-design.example.org';
+  const target = `https://${hostname}/projects/library?view=plan#drawings`;
+  for (const path of ['/e2e/project-link/', '/e2e/work-project-link/']) {
+    await page.goto(path);
+    if (path.includes('work-')) {
+      await page.getByRole('heading', { name: 'External project' }).click();
+      await expect(page.locator('details')).toHaveAttribute('open', '');
+    }
+    for (const [language, label] of [['en', 'Project website'], ['cs', 'Odkaz na projekt']] as const) {
+      if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      await expect(sheet(page).getByText(label, { exact: true })).toBeVisible();
+      const link = sheet(page).getByRole('link', { name: hostname, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute('href', target);
+      for (const width of [1280, 800, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        const box = await link.boundingBox();
+        expect(box!.x).toBeGreaterThanOrEqual(0);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      }
+    }
+  }
 });
 
 test('the full-width brief uses readable columns above the fact sheet', async ({ page }) => {

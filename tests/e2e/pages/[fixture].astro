@@ -263,6 +263,8 @@ export function getStaticPaths() {
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
     { params: { fixture: 'work-readable' }, props: { projects: [{ ...alphaProject, data: { ...alphaProject.data, brief_en: text(12).en, brief_cs: text(12).cs } }] } },
     { params: { fixture: 'work-credits' }, props: { projects: creditProjects } },
+    { params: { fixture: 'work-project-link' }, props: { projects: [listed('link-only', { title_cs: 'Externí projekt', title_en: 'External project', blocks: [], project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' })] } },
+    projectWith('project-link', project.blocks.slice(0, 1), { project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' }),
     projectWith('brief', project.blocks.slice(0, 1), {
       brief_en: 'A brief for the page.\nSecond line.',
       brief_cs: 'Anotace stránky.\nDruhý řádek.',

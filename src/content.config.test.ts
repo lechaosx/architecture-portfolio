@@ -176,6 +176,17 @@ describe('project content schema', () => {
     });
   });
 
+  test.each([undefined, '', 'https://example.org/projects/library?view=plan#drawings', 'http://example.org/library'])('accepts an optional project website: %s', (project_url) => {
+    expect(projectSchema.safeParse({ ...project, project_url })).toMatchObject({
+      success: true,
+      data: { project_url },
+    });
+  });
+
+  test.each(['not a URL', '/projects/library/', 'example.org/library', 'https:example.org', 'https:/example.org', 'javascript:alert(1)', 'data:text/html,hello', 'mailto:architect@example.org', 'ftp://example.org/library'])('rejects a non-web project URL: %s', (project_url) => {
+    expect(projectSchema.safeParse({ ...project, project_url }).success).toBe(false);
+  });
+
   test.each([
     ['a context outside the list', { context: ['professional'] }],
     ['a realization outside the list', { realization: 'cancelled' }],

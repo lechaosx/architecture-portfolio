@@ -70,7 +70,7 @@ function project(site: URL, { id, data }: Project) {
     ...list(
       projectFacts(data).map(
         (fact) =>
-          `${label(fact.label)}: ${(fact.badges ?? []).map(label).join(' · ')}${fact.lines
+          `${label(fact.label)}: ${(fact.badges ?? []).map(label).join(' · ')}${fact.href ?? fact.lines
             .map((line) => `${[line.names.join(', '), pair(line.cs, line.en)].filter(Boolean).join(' – ')}`)
             .join('; ')}`,
       ),

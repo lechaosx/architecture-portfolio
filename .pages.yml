@@ -86,6 +86,7 @@ content:
             - { name: planned, label: Plánovaná realizace }
             - { name: construction, label: Ve výstavbě }
             - { name: built, label: Realizováno }
+      - { name: project_url, label: Odkaz na projekt, type: string, required: false, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
       - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména osob patří do týmu projektu.' }
       - name: team
         label: Tým projektu

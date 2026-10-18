@@ -81,6 +81,10 @@ with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` o
 images in `public/uploads/` and reference them as `/uploads/<file>`. The owner
 normally does this in the CMS. `brief_cs` / `brief_en` describe her personal contribution, `from` / `to` her involvement; project narrative belongs in `blocks`. Optional `context`, `intervention` and `scope` lists use the choices in `.pages.yml`; `design_in_progress` is independent of the single `realization` value. Select only confirmed facts. The single `team` list contains everyone, including Tereza, as records with `name` and optional paired `role_cs` / `role_en`. Confirmed authorship is a role such as `Autor návrhu` / `Design author`; unknown roles stay unfilled.
 
+**Link to a project's external page.** Set optional `project_url` to its complete
+HTTP or HTTPS address, shared by both languages, or leave it empty. Invalid web
+addresses fail content validation during the build.
+
 **Change the domain.** Edit `public/CNAME` and `site` in `astro.config.mjs`,
 then the domain under GitHub **Settings → Pages** and its DNS.
 

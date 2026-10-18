@@ -21,6 +21,7 @@ export interface Fact {
   lang?: Lang;
   lines: FactLine[];
   badges?: UiKey[];
+  href?: string;
 }
 
 const text = (cs = '', en = cs) => ({ names: [], cs, en });
@@ -35,6 +36,7 @@ export function projectFacts(
     | 'to'
     | 'location_cs'
     | 'location_en'
+    | 'project_url'
     | 'intervention'
     | 'scope'
     | 'studio'
@@ -66,6 +68,11 @@ export function projectFacts(
       })),
     }] : []),
     ...pair('award', project.award_cs, project.award_en),
+    ...(project.project_url ? [{
+      label: 'projectWebsite' as const,
+      href: project.project_url,
+      lines: [text(new URL(project.project_url).hostname)],
+    }] : []),
   ];
 }
 

@@ -64,6 +64,16 @@ test('has no rows when nothing is filled', () => {
   expect(projectFacts(project)).toEqual([]);
 });
 
+test('a project website keeps the complete target and displays its hostname', () => {
+  const project_url = 'https://example.org/projects/library?view=plan#drawings';
+  expect(projectFacts({ ...project, project_url })).toEqual([{
+    label: 'projectWebsite',
+    href: project_url,
+    lines: [{ names: [], cs: 'example.org', en: 'example.org' }],
+  }]);
+  expect(projectFacts({ ...project, project_url: '' })).toEqual([]);
+});
+
 test('title badges include only supplied context and independent progress', () => {
   expect(projectBadges(project)).toEqual([]);
   expect(projectBadges({ ...project, context: ['academic', 'competition'], design_in_progress: true, realization: 'planned' })).toEqual(['academic', 'competition', 'design_in_progress', 'planned']);

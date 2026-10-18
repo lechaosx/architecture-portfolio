@@ -69,6 +69,7 @@ const projects = defineCollection({
     to: date.optional(),
     location_cs: z.string().optional(),
     location_en: z.string().optional(),
+    project_url: z.union([z.url({ protocol: /^https?$/ }), z.literal('')]).optional(),
     brief_cs: z.string().optional(),
     brief_en: z.string().optional(),
     context: z.array(z.enum(['academic', 'competition', 'commissioned', 'self_initiated'])).default([]),

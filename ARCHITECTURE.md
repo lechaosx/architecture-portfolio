@@ -220,7 +220,7 @@ the same order.
 
 ### One project metadata model — [Implicit]
 
-`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Each `team` record keeps its name and optional bilingual role; one static Astro badge component renders title and fact-sheet categories without client state. Native columns balance intact fact rows, with labels above values in narrow sheets.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Each `team` record keeps its name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 

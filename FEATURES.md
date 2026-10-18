@@ -120,6 +120,10 @@ The fact sheet can show intervention (new build, renovation, extension, adaptive
 
 Only filled facts appear, with location and personal involvement added on the project page; the index already shows those in its row. Names remain whole. An index entry with contribution, facts or badges expands in place; search and machine-readable output preserve the same distinctions.
 
+### Optional project website — [Explicit]
+
+An optional external project link appears in the fact sheet on the project page and in an expanded index entry, including entries with no other details. Its hostname identifies the destination; the same address serves both languages and is preserved in machine-readable output.
+
 ### Project fact rows form two groups when they fit — [Explicit]
 
 The fact sheet balances whole rows into two groups side by side when both

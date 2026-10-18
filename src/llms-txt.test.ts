@@ -22,6 +22,15 @@ const project = {
   blocks: [],
 };
 
+test('exports the full external project URL with its bilingual label', () => {
+  const project_url = 'https://example.org/projects/library?view=plan#drawings';
+  const output = llmsTxt({
+    site, name, about, contact, description: {},
+    projects: [{ id: 'library', data: { ...project, project_url } }],
+  });
+  expect(output).toContain(`Odkaz na projekt / Project website: ${project_url}`);
+});
+
 test('presents the architect and her projects, Czech first', () => {
   expect(
     llmsTxt({
