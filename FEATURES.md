@@ -134,12 +134,13 @@ remain comfortably readable; narrower sheets use one group. The fact sheet fills
 It is a brief entry: it appears only in the work page's index. A project with text
 blocks but no images has a page, with no lightbox — [Implicit].
 
-### The cover is the first image in the project — [Explicit]
+### Optional project thumbnail — [Explicit]
 
-There is no separate cover field: a project's cover is its first image in page
-order, across gallery and full-width image-set blocks. The project page is the
-header and then the blocks in the architect's order, the first block under the
-same gap whatever its type, and its first image loads eagerly — [Implicit].
+The architect can choose **Náhled projektu** for the project's cards and link
+previews; leaving it empty uses the first image in page order. The chosen image
+may be outside the page's blocks and does not change their order or the lightbox.
+The project page keeps the blocks in the architect's order and loads its first
+page image eagerly — [Implicit].
 
 ### Project URL is the editable filename — [Explicit]
 
@@ -198,8 +199,8 @@ Top to bottom: her chosen images, large, filling the content width just under
 the header; one quiet line saying what she is and where ("Architektka · Brno",
 the place from the contacts), followed by her services when there are any,
 with **O mně →**; then **Vybrané práce** with **Všechny práce →** over the three
-newest projects with images as the work page's cards, which end the page. No
-headline or introductory paragraph.
+newest projects with covers and pages as the work page's cards, which end the page.
+No headline or introductory paragraph.
 
 The layout — [Implicit]: the line sits under the images like a caption, in the
 section headings' small caps, the services in grey; the place appears when
@@ -244,21 +245,21 @@ column of its own, on phones too.
 
 ### Work page: a grid of square covers — [Explicit]
 
-Three columns of each project's first image as a square crop, with title, period
-and location; hover enlarges the whole tile. Two and then one column on narrower
-screens — [Implicit]. The grid holds the projects with at least one image; the grid
-cards do not show the brief — [Implicit].
+Three columns of project covers as square crops, with title, period and location;
+hover enlarges the whole tile. Two and then one column on narrower screens —
+[Implicit]. The grid holds projects with content blocks and a cover, including
+text-only pages with a chosen thumbnail; the cards do not show the brief — [Implicit].
 
-### Work page: an index of projects without images, expanding in place — [Explicit]
+### Work page: an index of projects without cards, expanding in place — [Explicit]
 
-The projects without images follow the grid, in the same order, as a compact
-index, so the images lead and the rest stays easy to scan; a row with a brief,
+Projects without a cover or without content blocks follow the grid, in the same
+order, as a compact index, so the images lead and the rest stays easy to scan; a row with a brief,
 facts or badges opens in place to show them. The index has no heading of its own:
-its projects weigh the same as the grid's and only lack images yet —
+its projects weigh the same as the grid's —
 [Explicit]. The layout — [Implicit]: the index follows the grid at the grid's
 own row gap, with thin rules above, between and below its rows; one aligned row
 of period, title and location per project, and a project with a page linking
-to it instead of opening. On phones the period sits above the title and location so names and briefs keep a readable width. Expanded brief and facts share the title column at every width; the brief follows the general prose column rule within that width. Without image projects the index opens the page.
+to it instead of opening. On phones the period sits above the title and location so names and briefs keep a readable width. Expanded brief and facts share the title column at every width; the brief follows the general prose column rule within that width. Without cards the index opens the page.
 
 ### Approach section — [Explicit]
 
@@ -351,12 +352,11 @@ Motion rides the native scrollbar and stays subtle.
 ### Page transitions — [Implicit]
 
 Where the browser supports cross-document View Transitions, pages crossfade and
-a project's first image moves between its card, on the work or landing page, and
-its project page,
-changing crop on the way; elsewhere, ordinary navigation. The moving image is
-one image, starting from the card's hover zoom — [Explicit]. It moves only when
-the first block is an image block, so the image is at the top of the page; when
-the first block is text, the pages just crossfade — [Implicit].
+a project's cover moves between its card, on the work or landing page, and its
+project page, changing crop on the way; elsewhere, ordinary navigation. The moving
+image starts from the card's hover zoom — [Explicit]. It moves only when the cover
+matches the first image in an image block at the top of the page; other thumbnail
+choices and pages starting with text crossfade — [Implicit].
 
 ### Fade-in on scroll, as decoration only — [Implicit] / [Explicit]
 
@@ -525,7 +525,7 @@ A project page's description in search results and link previews is its brief,
 else the start of its first text block; other pages use the site's SEO
 description.
 
-### Share image: the first image — [Implicit]
+### Share image: the project cover — [Implicit]
 
 A project's link preview shows its cover, the work page's the first cover in its
 grid, the landing page's its first landing image that is not an SVG, else the

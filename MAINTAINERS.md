@@ -32,6 +32,8 @@ npm run images       # regenerate responsive images (dev and build run it)
   the brief, credits and text-only project pages are tested through fixture
   projects, the landing and About pages through fixture data; other landing,
   About, work and footer tests use the real content.
+- Thumbnail fixtures also render at `/projects/e2e-thumbnail-…/` so their cards
+  navigate through the production project-page component.
 - `/e2e/project/` is frozen: tests address its images by position (`#image-N`).
   For a new case, add a fixture entry in `tests/e2e/pages/[fixture].astro`
   instead of inserting images there.
@@ -80,6 +82,11 @@ with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` o
 **Add a project by hand.** Copy an existing file in `src/content/projects/`, put
 images in `public/uploads/` and reference them as `/uploads/<file>`. The owner
 normally does this in the CMS. `brief_cs` / `brief_en` introduce the project and her involvement in natural prose; optional top-level `role_cs` / `role_en` summarize her responsibilities in the same free-text format as collaborators’ roles. `from` / `to` describe her involvement period; longer project narrative belongs in `blocks`. Optional `context`, `intervention` and `scope` lists use the choices in `.pages.yml`; `design_in_progress` is independent of the single `realization` value. Select only confirmed facts. The optional `collaborators` list contains the other people involved, excluding Tereza, as records with `name` and optional paired `role_cs` / `role_en`. Her name is implicit; her work belongs in the brief and optional personal role. Fill an individual role only when it is explicitly supplied for that person; a collective team credit does not establish individual roles. Unknown roles stay unfilled.
+
+**Choose a project thumbnail.** In Pages CMS, select **Náhled projektu**, or set
+optional top-level `thumbnail: /uploads/<file>` by hand. Clear it to use the first
+image in the page's blocks again. The image can be independent of the page content;
+a project still needs content blocks to have a page and a card.
 
 **Link to a project's external page.** Set optional `project_url` to its complete
 HTTP or HTTPS address, shared by both languages, or leave it empty. Invalid web

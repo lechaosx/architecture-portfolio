@@ -11,6 +11,10 @@ export default mergeConfig(config, {
       hooks: {
         'astro:config:setup': ({ injectRoute }) => {
           injectRoute({
+            pattern: '/projects/e2e-thumbnail-[fixture]',
+            entrypoint: './tests/e2e/pages/thumbnail-project.astro',
+          });
+          injectRoute({
             pattern: '/e2e/[fixture]',
             entrypoint: './tests/e2e/pages/[fixture].astro',
           });

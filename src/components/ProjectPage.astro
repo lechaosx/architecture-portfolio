@@ -11,7 +11,7 @@ import { getResponsiveImage } from '../server-images';
 import { projectDescription } from '../project-description';
 import { creativeWork } from '../structured-data';
 import { projectBadges, projectFacts } from '../project-facts';
-import type { Project } from '../projects';
+import { projectCover, type Project } from '../projects';
 
 interface Props {
   project: Project;
@@ -28,8 +28,8 @@ const images = d.blocks.flatMap((block) =>
 const responsiveImages = await Promise.all(
   images.map(({ image }) => getResponsiveImage(image)),
 );
-// The first image is the project's cover.
-const cover = responsiveImages[0]?.share;
+const cover = projectCover(d.thumbnail, images);
+const responsiveCover = cover ? await getResponsiveImage(cover.image) : undefined;
 const description = projectDescription(d);
 const site = new URL('/', Astro.site);
 ---
@@ -40,7 +40,7 @@ const site = new URL('/', Astro.site);
     en: `${d.title_en} | ${credentialedName}`,
   }}
   {description}
-  image={cover}
+  image={responsiveCover?.share}
   type="article"
   graph={[
     creativeWork({
@@ -50,6 +50,7 @@ const site = new URL('/', Astro.site);
       description: description.cs,
       images,
       responsiveImages,
+      responsiveCover,
     }),
   ]}
 >
@@ -80,7 +81,7 @@ const site = new URL('/', Astro.site);
       </div>
     </header>
 
-    <ProjectBlocks projectId={project.id} blocks={d.blocks} {responsiveImages} />
+    <ProjectBlocks projectId={project.id} blocks={d.blocks} {responsiveImages} coverPath={cover?.image} />
     {images.length > 0 && <Gallery {images} {responsiveImages} client:load />}
   </article>
 </Base>

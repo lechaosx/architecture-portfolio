@@ -1,0 +1,13 @@
+---
+import ProjectPage from '../../../src/components/ProjectPage.astro';
+import { thumbnailProjects } from '../thumbnail-projects';
+
+export function getStaticPaths() {
+  return thumbnailProjects.filter(({ data }) => data.blocks.length > 0).map((project) => ({
+    params: { fixture: project.id.replace('e2e-thumbnail-', '') }, props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+---
+<ProjectPage {project} />

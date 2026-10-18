@@ -4,17 +4,23 @@ import { latestFirst } from './period';
 
 export type Project = Pick<CollectionEntry<'projects'>, 'id' | 'data'>;
 
-/** A project in the grid, with its cover: its first image in page order. */
 export type CardProject = Project & { cover: GalleryImage };
+
+export function projectCover(
+  thumbnail: string | undefined,
+  images: GalleryImage[],
+): GalleryImage | undefined {
+  const selected = thumbnail?.trim();
+  return selected
+    ? images.find(({ image }) => image === selected) ?? { image: selected }
+    : images[0];
+}
 
 /** Latest period first, then by English title, so both languages list projects alike. */
 export const newestFirst = (a: Project, b: Project) =>
   latestFirst(a.data, b.data) || a.data.title_en.localeCompare(b.data.title_en);
 
-/**
- * Newest first, split into the project grid's cards, the projects with a cover,
- * and the index of those without.
- */
+/** Cards need content blocks because projects without blocks have no page. */
 export function workProjects(projects: Project[]): {
   grid: CardProject[];
   listed: Project[];
@@ -22,7 +28,12 @@ export function workProjects(projects: Project[]): {
   const grid: CardProject[] = [];
   const listed: Project[] = [];
   for (const project of [...projects].sort(newestFirst)) {
-    const cover = project.data.blocks.find((block) => block.type !== 'text')?.images[0];
+    const images = project.data.blocks.flatMap((block) =>
+      block.type === 'text' ? [] : block.images,
+    );
+    const cover = project.data.blocks.length > 0
+      ? projectCover(project.data.thumbnail, images)
+      : undefined;
     if (cover) grid.push({ ...project, cover });
     else listed.push(project);
   }

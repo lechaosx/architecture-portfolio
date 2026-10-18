@@ -20,9 +20,10 @@ interface Props {
   projectId: string;
   blocks: ProjectBlock[];
   responsiveImages: (ResponsiveImage | undefined)[];
+  coverPath?: string;
 }
 
-const { projectId, blocks, responsiveImages } = Astro.props;
+const { projectId, blocks, responsiveImages, coverPath } = Astro.props;
 let pageImageIndex = 0;
 const displayBlocks = blocks.map((block, blockIndex) =>
   block.type === 'text'
@@ -44,7 +45,7 @@ const displayBlocks = blocks.map((block, blockIndex) =>
             loading: index === 0 ? 'eager' : 'lazy',
             decoding: index === 0 ? 'auto' : 'async',
             // Only an image at the top of the page morphs from the work card.
-            morph: blockIndex === 0 && index === 0,
+            morph: blockIndex === 0 && index === 0 && (coverPath === undefined || coverPath === item.image),
           } as const;
         }),
       },

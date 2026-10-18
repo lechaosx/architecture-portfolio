@@ -19,6 +19,8 @@ const { projects, heading } = Astro.props;
 const cards = await Promise.all(
   projects.map(async (project) => {
     const responsive = await getResponsiveImage(project.cover.image);
+    const firstBlock = project.data.blocks[0];
+    const morph = firstBlock?.type !== 'text' && firstBlock?.images[0]?.image === project.cover.image;
     // Mirrors the grid's breakpoints, columns and gaps below; change them together.
     const sizes = coverSizes(
       responsive ? responsive.source.width / responsive.source.height : 1,
@@ -31,7 +33,7 @@ const cards = await Promise.all(
       ],
       1.03,
     );
-    return { ...project, responsive, sizes };
+    return { ...project, responsive, sizes, morph };
   }),
 );
 ---
@@ -40,11 +42,11 @@ const cards = await Promise.all(
   class="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-20 lg:grid-cols-3 lg:gap-x-32"
 >
   {
-    cards.map(({ id, data, cover, responsive, sizes }) => (
+    cards.map(({ id, data, cover, responsive, sizes, morph }) => (
       <a href={`/projects/${id}/`} class="group relative block hover:z-10">
         <div
-          class="project-cover aspect-square overflow-hidden bg-neutral-100"
-          style={`view-transition-name: cover-${id}`}
+          class:list={['aspect-square overflow-hidden bg-neutral-100', { 'project-cover': morph }]}
+          style={morph ? `view-transition-name: cover-${id}` : undefined}
         >
           <img
             src={displayImageUrl(responsive, cover.image)}

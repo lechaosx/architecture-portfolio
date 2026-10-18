@@ -159,6 +159,36 @@ describe('creativeWork', () => {
     });
   });
 
+  test('puts an explicitly selected image first, keeps its caption and omits duplicate cover occurrences', () => {
+    const { image } = creativeWork({
+      site, url: 'https://example.cz/project/',
+      project: { ...project, thumbnail: '/uploads/selected.png' },
+      images: [
+        { image: '/uploads/first.png', title_cs: 'První' },
+        { image: '/uploads/selected.png', title_cs: 'Pohled', description_cs: 'Popis' },
+        { image: '/uploads/selected.png', title_cs: 'Podruhé' },
+        { image: '/uploads/untitled.png' },
+      ],
+      responsiveImages: [drawing('first'), drawing('selected'), drawing('selected'), drawing('untitled')],
+      responsiveCover: drawing('selected'),
+    });
+    expect(image).toEqual([
+      { '@type': 'ImageObject', contentUrl: 'https://example.cz/_responsive/selected/2560.webp', name: 'Pohled', caption: 'Popis' },
+      { '@type': 'ImageObject', contentUrl: 'https://example.cz/_responsive/first/2560.webp', name: 'První' },
+    ]);
+  });
+
+  test('includes an untitled standalone thumbnail even on a text-only page', () => {
+    const { image } = creativeWork({
+      site, url: 'https://example.cz/project/',
+      project: { ...project, thumbnail: '/uploads/standalone.png' },
+      images: [], responsiveImages: [], responsiveCover: drawing('standalone'),
+    });
+    expect(image).toEqual([
+      { '@type': 'ImageObject', contentUrl: 'https://example.cz/_responsive/standalone/2560.webp' },
+    ]);
+  });
+
   test('lists a titled cover once', () => {
     const { image } = creativeWork({
       site,

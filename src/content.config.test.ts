@@ -137,6 +137,18 @@ test('every period date in Pages CMS takes the dates the build takes, or nothing
 });
 
 describe('project content schema', () => {
+  test.each([undefined, '', '  ', '/uploads/selected.jpg'])('accepts an optional language-neutral thumbnail: %s', (thumbnail) => {
+    expect(projectSchema.safeParse({ ...project, thumbnail })).toMatchObject({
+      success: true, data: { thumbnail },
+    });
+  });
+
+  test('the CMS exposes an optional thumbnail image picker', () => {
+    expect(projectEditorFields.find((field) => field.name === 'thumbnail')).toMatchObject({
+      type: 'image', required: false,
+    });
+  });
+
   test.each([
     ['no content blocks', undefined],
     ['only an empty CMS block row', [{}]],

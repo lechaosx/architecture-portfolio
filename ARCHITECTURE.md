@@ -205,8 +205,10 @@ keep browser momentum and snapping; the strip recenters when it settles.
 
 `ProjectBlocks.astro` renders the blocks on the server; each image button
 carries its page index so the single island treats every occurrence as its own
-slide. The first image of the page is the project's cover: the work card shows
-it, it is the only image that loads eagerly, and it is the page's share image.
+slide. The first page image loads eagerly regardless of the selected cover.
+The shared cover selection in `src/projects.ts` uses the optional `thumbnail`
+or the first page image, retaining a matching page image's caption metadata for
+cards, share previews and structured data — [Implicit].
 
 ### Pages are components the e2e fixtures render — [Implicit]
 
@@ -245,7 +247,9 @@ like the landing page's link to all work, needs no layout of its own.
 `@view-transition { navigation: auto; }`, with no client router. The name
 `cover-<id>` sits on the wrapper holding the first image (for a multi-image set,
 its first slide), so it does not compete with the inner image's hover scale. It
-is set only when the first block is an image block. An inline `pagereveal` script tags
+is set on both card and page only when the selected cover matches that image
+and the first block is an image block. Other covers remain in the page crossfade.
+An inline `pagereveal` script tags
 each navigation by whether it arrives at a project page and carries the card's
 hover scale across, so a card morphs from any page that shows one, Work or the
 landing page. One snapshot is drawn, because blending two crops doubles the

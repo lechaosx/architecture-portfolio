@@ -28,6 +28,7 @@ content:
     fields:
       - { name: title_cs, label: Název (česky), type: string, required: true }
       - { name: title_en, label: Název (anglicky), type: string, required: true }
+      - { name: thumbnail, label: Náhled projektu, type: image, required: false, description: 'Obrázek pro karty projektu a náhledy sdílených odkazů. Když pole necháte prázdné, automaticky se použije první obrázek v obsahu stránky. Výběr nemění obsah ani pořadí obrázků na stránce.' }
       - name: from
         label: Moje zapojení od
         type: string

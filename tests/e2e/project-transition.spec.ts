@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import type { ImageManifest } from '../../src/images';
 
 /** Waits for the transitions under way on `locator`, such as its hover's, to end. */
 function transitionsEnd(locator: Locator) {
@@ -56,11 +57,13 @@ async function navigateWithTransition(
  * A project card on the work page, the address of its project and the view
  * transition name its cover shares with that page's.
  */
-async function projectCard(page: Page, nth = 0) {
-  const card = page.locator('main .grid > a').nth(nth);
+async function projectCard(page: Page, nth = 0, morph = false) {
+  const cards = page.locator(morph ? 'main .grid > a:has(.project-cover)' : 'main .grid > a');
+  test.skip(morph && (await cards.count()) <= nth, 'The published projects have no matching cover for this morph');
+  const card = cards.nth(nth);
   const path = new URL((await card.getAttribute('href'))!, page.url()).pathname;
   const cover = await card
-    .locator('.project-cover')
+    .locator('div').first()
     .evaluate((element) => getComputedStyle(element).viewTransitionName);
   return { card, url: new RegExp(`${path}$`), cover };
 }
@@ -93,7 +96,7 @@ test('cover hover does not change the shared transition box', async ({ page }) =
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/work/');
   const { card: project } = await projectCard(page);
-  const transitionCover = project.locator('.project-cover');
+  const transitionCover = project.locator('div').first();
   const image = project.locator('img');
   const before = await transitionCover.boundingBox();
   const imageBefore = (await image.boundingBox())!;
@@ -209,14 +212,20 @@ test('the first image of a page loads and decodes eagerly and the others lazily'
   }
 });
 
-test('the work card shows the first image of its project', async ({ page }) => {
+test('the work card shows the cover shared by its project', async ({ page }) => {
   await page.goto('/work/');
   const { card } = await projectCard(page);
   const cardSrc = await card.locator('img').getAttribute('src');
   await card.click();
-  await expect(
-    page.locator('article [data-lightbox-index="0"] img'),
-  ).toHaveAttribute('src', cardSrc!);
+  const { images } = await (await page.request.get('/_responsive/manifest.json')).json() as ImageManifest;
+  const cover = images[cardSrc!] ?? Object.values(images).find(({ source }) => source.url === cardSrc);
+  const shared = cover?.share;
+  if (shared) {
+    const preview = await page.locator('meta[property="og:image"]').getAttribute('content');
+    expect(new URL(preview!).pathname).toBe(shared.url);
+  } else {
+    await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
+  }
 });
 
 // The work page's cards return through the project page's back link, the
@@ -239,7 +248,7 @@ for (const { path, home, back } of [
     );
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto(path);
-    const { card: project, url, cover } = await projectCard(page);
+    const { card: project, url, cover } = await projectCard(page, 0, true);
     await page.addInitScript((cover) => {
       addEventListener('pagereveal', (event) => {
         const transition = (event as PageRevealEvent).viewTransition;
@@ -311,8 +320,9 @@ test('a keyboard-opened project starts from its own card, not the hovered one', 
     (await page.locator('main .grid > a').count()) < 2,
     'It needs a second project to hover',
   );
-  const opened = await projectCard(page);
-  const { card: hovered } = await projectCard(page, 1);
+  const opened = await projectCard(page, 0, true);
+  const openedHref = await opened.card.getAttribute('href');
+  const hovered = page.locator(`main .grid > a:not([href="${openedHref}"])`).first();
   await page.addInitScript((cover) => {
     addEventListener('pagereveal', (event) => {
       const transition = (event as PageRevealEvent).viewTransition;

@@ -3,6 +3,7 @@ import type { GalleryImage } from './components/gallery';
 import { ui } from './i18n';
 import { largeImageUrl, type ResponsiveImage } from './images';
 import { formatPeriod } from './period';
+import { projectCover } from './projects';
 
 // schema.org JSON-LD for the page's inline script. Text is the Czech source as
 // plain strings, the value type Google documents for these properties.
@@ -98,17 +99,29 @@ export function creativeWork({
   description,
   images,
   responsiveImages,
+  responsiveCover,
 }: {
   site: URL;
   url: string;
   project: Pick<
     Data<'projects'>,
-    'title_cs' | 'location_cs' | 'realization' | 'role_cs' | 'collaborators' | 'award_cs'
+    'title_cs' | 'location_cs' | 'realization' | 'role_cs' | 'collaborators' | 'award_cs' | 'thumbnail'
   >;
   description?: string;
   images: GalleryImage[];
   responsiveImages: (ResponsiveImage | undefined)[];
+  responsiveCover?: ResponsiveImage;
 }) {
+  const cover = projectCover(project.thumbnail, images);
+  const coverIndex = images.findIndex((item) => item.image === cover?.image);
+  const represented = [
+    ...(cover ? [{ item: cover, responsive: responsiveCover ?? responsiveImages[coverIndex] }] : []),
+    ...images.flatMap((item, index) =>
+      item.image !== cover?.image && (text(item.title_cs) || text(item.description_cs))
+        ? [{ item, responsive: responsiveImages[index] }]
+        : [],
+    ),
+  ];
   const location = text(project.location_cs);
   const architect = { '@id': personId(site) };
   const roleName = text(project.role_cs);
@@ -127,23 +140,15 @@ export function creativeWork({
     contributor: [roleName ? { '@type': 'Role', roleName, contributor: architect } : architect, ...contributors],
     award: text(project.award_cs),
     creativeWorkStatus: project.realization && ui.cs[project.realization],
-    // The cover, the first image, even untitled; then the described ones.
-    image: images.flatMap((item, index) => {
+    image: represented.map(({ item, responsive }) => {
       const name = text(item.title_cs);
       const caption = text(item.description_cs);
-      return index === 0 || name || caption
-        ? [
-            compact({
-              '@type': 'ImageObject',
-              contentUrl: absolute(
-                largeImageUrl(responsiveImages[index], item.image),
-                site,
-              ),
-              name,
-              caption,
-            }),
-          ]
-        : [];
+      return compact({
+        '@type': 'ImageObject',
+        contentUrl: absolute(largeImageUrl(responsive, item.image), site),
+        name,
+        caption,
+      });
     }),
   });
 }

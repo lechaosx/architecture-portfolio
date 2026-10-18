@@ -24,7 +24,9 @@ images, the About page, the contacts in the footer and the site
 settings are in `src/content/singletons/`, and images in `public/uploads/`.
 Each project brief introduces the project and her involvement. Optional personal
 roles summarize her responsibilities; collaborators credit other people. Project
-classifications and realization describe the whole project. See [MAINTAINERS.md](MAINTAINERS.md)
+classifications and realization describe the whole project. An optional project
+thumbnail selects its card and share image; an empty field uses the first page
+image. See [MAINTAINERS.md](MAINTAINERS.md)
 for the editing fields.
 
 The owner edits all of it through [Pages CMS](https://pagescms.org): the repo is

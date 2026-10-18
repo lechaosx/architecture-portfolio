@@ -2,6 +2,7 @@
 // Pages the browser tests run against, so they do not depend on the shipped
 // content; astro.config.e2e.mjs adds them at /e2e/. Their images are
 // tests/e2e/images, served by images/[file].ts.
+import { thumbnailProjects } from '../thumbnail-projects';
 import type { CollectionEntry } from 'astro:content';
 import Base from '../../../src/layouts/Base.astro';
 import AboutPage from '../../../src/components/AboutPage.astro';
@@ -258,6 +259,8 @@ export function getStaticPaths() {
   });
 
   return [
+    { params: { fixture: 'thumbnail-work' }, props: { projects: thumbnailProjects } },
+    { params: { fixture: 'thumbnail-landing' }, props: { ...landing([]), projects: thumbnailProjects } },
     { params: { fixture: 'landing' }, props: landing([images[0], '/e2e/images/wide.png', '/e2e/images/cover.png']) },
     { params: { fixture: 'landing-single' }, props: landing(images.slice(0, 1)) },
     { params: { fixture: 'landing-bare' }, props: landing([]) },
