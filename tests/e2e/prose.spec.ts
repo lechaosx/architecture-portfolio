@@ -67,22 +67,14 @@ test('plain-text paragraphs count as one block without losing their paragraph bo
   }
 });
 
-test('switching between one- and two-column translations keeps the language button anchored', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 700 });
-  await page.goto('/e2e/brief-length/');
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    document.documentElement.style.overflowAnchor = 'none';
-    document.body.style.paddingBottom = '600px';
-  });
-  const button = page.locator('[data-lang-toggle]');
+test('keyboard and pointer language links open the equivalent page across different column layouts', async ({ page }) => {
+  await page.goto('/en/e2e/brief-length/');
   for (const keyboard of [false, true]) {
-    await button.evaluate((element) => scrollTo(0, scrollY + element.getBoundingClientRect().y - 350));
-    await button.focus();
-    const before = (await button.boundingBox())!.y;
+    const link = page.locator('footer [data-lang-toggle]');
+    await link.focus();
     if (keyboard) await page.keyboard.press('Enter');
-    else await button.click();
-    await expect(page.locator('html')).toHaveAttribute('lang', keyboard ? 'en' : 'cs');
-    await expect.poll(async () => Math.abs((await button.boundingBox())!.y - before)).toBeLessThanOrEqual(1);
+    else await link.click();
+    await expect(page).toHaveURL(`/${keyboard ? 'en' : 'cs'}/e2e/brief-length/`);
+    await expect(page.locator('article h1')).toBeVisible();
   }
 });

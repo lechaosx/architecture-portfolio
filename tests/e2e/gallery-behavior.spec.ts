@@ -790,7 +790,7 @@ test('the description is on the back of the drawing', async ({ page }) => {
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('changing image always shows the drawing; the language switch keeps the side', async ({
+test('changing image shows the drawing; a translated page reopens the same image', async ({
   page,
 }) => {
   await gotoProject(page);
@@ -798,14 +798,14 @@ test('changing image always shows the drawing; the language switch keeps the sid
   await waitForLightbox(page);
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('button', { name: 'Show description' }).click();
-  await dialog.getByRole('button', { name: 'Switch to Czech' }).click();
+  await dialog.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
-  await expect(
-    dialog.getByRole('region', { name: 'Dlaždicová varianta 3' }),
-  ).toBeVisible();
+  await expect(page).toHaveURL(/\/cs\/e2e\/project\/#image-3$/);
   await expect(
     dialog.getByRole('button', { name: 'Zobrazit popis' }),
-  ).toHaveAttribute('aria-pressed', 'true');
+  ).toHaveAttribute('aria-pressed', 'false');
+  await dialog.getByRole('button', { name: 'Zobrazit popis' }).click();
+  await expect(dialog.getByRole('region', { name: 'Dlaždicová varianta 3' })).toBeVisible();
 
   await dialog.getByRole('button', { name: 'Další obrázek' }).click();
   await expect(page).toHaveURL(/#image-4$/);
@@ -829,7 +829,8 @@ test('the back never ends a Czech line on a one-letter word, and keeps English s
     return back.locator('p').textContent();
   };
   expect(await description('Tiled variant 3')).not.toContain('\u00A0');
-  await dialog.getByRole('button', { name: 'Switch to Czech' }).click();
+  await dialog.getByRole('link', { name: 'Switch to Czech' }).click();
+  await dialog.getByRole('button', { name: 'Zobrazit popis' }).click();
   expect(await description('Dlaždicová varianta 3')).toContain('řeky a\u00A0kudy');
 });
 

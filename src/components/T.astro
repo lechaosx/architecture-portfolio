@@ -1,12 +1,13 @@
 ---
+import { pageLanguage } from '../locale';
 import { ui, type UiKey } from '../i18n';
 import { bindOneLetterWords } from '../one-letter-words';
 import type { HTMLTag } from 'astro/types';
 
-// Renders both language variants inline; global.css hides whichever the active
-// language (html[data-lang]) is not. Pass a dictionary `k` for baked-in labels,
-// or explicit `cs`/`en` for CMS content.
+const lang = pageLanguage(Astro.url.pathname);
+
 interface Props {
+  bilingual?: boolean;
   k?: UiKey;
   cs?: string;
   en?: string;
@@ -14,14 +15,10 @@ interface Props {
   class?: string;
 }
 
-const { k, cs, en, as = 'span', class: cls } = Astro.props;
+const { bilingual = false, k, cs, en, as = 'span', class: cls } = Astro.props;
 const csText = bindOneLetterWords(k ? ui.cs[k] : (cs ?? ''));
 const enText = k ? ui.en[k] : (en ?? '');
 const Tag = as;
 ---
 
-<Tag lang="cs" class={cls} set:text={csText} /><Tag
-  lang="en"
-  class={cls}
-  set:text={enText}
-/>
+{(bilingual ? ['cs', 'en'] as const : [lang]).map((language) => <Tag lang={language} class={cls} set:text={language === 'cs' ? csText : enText} />)}

@@ -15,9 +15,9 @@ test.describe(() => {
   test('project images are described by their Czech titles as served, untitled ones by nothing', async ({
     page,
   }) => {
-    await page.goto('/e2e/titled-sets/');
+    await page.goto('/cs/e2e/titled-sets/');
     expect(await alts(page)).toEqual(['Půdorys', 'Řez', '']);
-    await page.goto('/e2e/project/');
+    await page.goto('/cs/e2e/project/');
     expect((await alts(page)).slice(0, 3)).toEqual([
       '',
       'Dlaždicová varianta 2',
@@ -32,7 +32,7 @@ test.describe(() => {
   test('image descriptions follow the language switch', async ({ page }) => {
     await page.goto('/e2e/titled-sets/');
     expect(await alts(page)).toEqual(['Půdorys', 'Řez', '']);
-    await page.getByRole('button', { name: 'Přepnout do angličtiny' }).click();
+    await page.getByRole('link', { name: 'Přepnout do angličtiny' }).click();
     expect(await alts(page)).toEqual(['Plan', 'Section', '']);
   });
 });
@@ -46,7 +46,7 @@ test.describe(() => {
     await page.locator('[data-lightbox-index="1"]').click();
     const lightbox = page.getByRole('dialog');
     await expect(lightbox.getByRole('img', { name: 'Tiled variant 2' })).toBeVisible();
-    await lightbox.getByRole('button', { name: 'Switch to Czech' }).click();
+    await lightbox.getByRole('link', { name: 'Switch to Czech' }).click();
     await expect(lightbox.getByRole('img', { name: 'Dlaždicová varianta 2' })).toBeVisible();
   });
 });

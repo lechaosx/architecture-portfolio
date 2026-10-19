@@ -2,6 +2,10 @@
   import { untrack } from 'svelte';
   import { prefersReducedMotion } from 'svelte/motion';
   import { ui, type Lang } from '../i18n';
+  import { localizedPath } from '../locale';
+  import { onMount } from 'svelte';
+  let pagePath = $state('/');
+  onMount(() => { pagePath = location.pathname + location.search; });
 
   // The lightbox's corner controls: the set strip and close button along the
   // top, the edge arrows, the description toggle, and the language switch and
@@ -173,18 +177,17 @@
   </button>
 {/if}
 <div class="absolute right-(--lightbox-gap) bottom-(--lightbox-gap) flex gap-2">
-  <button type="button" data-lang-toggle class="lightbox-control">
+  <a href={`${localizedPath(pagePath, lang === 'cs' ? 'en' : 'cs')}#image-${currentIndex + 1}`} data-lang-toggle class="lightbox-control">
     <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
       <span class="language-option-cs absolute inset-0" aria-hidden="true"
-        >CZ</span
+        >CS</span
       >
       <span class="language-option-en absolute inset-0" aria-hidden="true"
         >EN</span
       >
     </span>
-    <span lang="cs" class="sr-only">{ui.cs.switchLanguage}</span>
-    <span lang="en" class="sr-only">{ui.en.switchLanguage}</span>
-  </button>
+    <span class="sr-only">{ui[lang].switchLanguage}</span>
+  </a>
   <a
     href={originalSrc}
     target="_blank"

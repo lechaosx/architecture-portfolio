@@ -1,4 +1,5 @@
 ---
+import { pageLanguage, localizedPath } from '../locale';
 import T from './T.astro';
 import { formatPeriod } from '../period';
 import type { CardProject } from '../projects';
@@ -9,6 +10,8 @@ import {
   THUMBNAIL_WIDTHS,
 } from '../images';
 import { getResponsiveImage } from '../server-images';
+
+const lang = pageLanguage(Astro.url.pathname);
 
 interface Props {
   projects: CardProject[];
@@ -43,7 +46,7 @@ const cards = await Promise.all(
 >
   {
     cards.map(({ id, data, cover, responsive, sizes, morph }) => (
-      <a href={`/projects/${id}/`} class="group relative block hover:z-10">
+      <a href={localizedPath(`/projects/${id}/`, lang)} class="group relative block hover:z-10">
         <div
           class:list={['aspect-square overflow-hidden bg-neutral-100', { 'project-cover': morph }]}
           style={morph ? `view-transition-name: cover-${id}` : undefined}

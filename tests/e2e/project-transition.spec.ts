@@ -236,7 +236,7 @@ for (const { path, home, back } of [
     home: /\/work\/?$/,
     back: (page: Page) => page.getByRole('link', { name: 'Back to work' }),
   },
-  { path: '/', home: /:\d+\/$/, back: (page: Page) => page.locator('header nav > a') },
+  { path: '/', home: /\/en\/$/, back: (page: Page) => page.locator('header nav > a') },
 ]) {
   test(`project covers morph one uncropped snapshot in both directions from ${path}`, async ({
     browserName,

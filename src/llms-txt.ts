@@ -1,4 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
+import { localizedPath } from './locale';
 import { ui, type UiKey } from './i18n';
 import { formatPeriod, type Period } from './period';
 import { projectBadges, projectFacts } from './project-facts';
@@ -71,7 +72,7 @@ function project(site: URL, { id, data }: Project) {
       .filter(Boolean)
       .join(' · '),
     ...(data.blocks.length > 0
-      ? [new URL(`/projects/${id}/`, site).href]
+      ? ['cs', 'en'].map((lang) => new URL(`/${lang}/projects/${id}/`, site).href)
       : []),
     ...list(projectBadges(data).length ? [`${label('projectInformation')}: ${projectBadges(data).map(label).join(' · ')}`] : []),
     ...list(
@@ -164,16 +165,18 @@ export function llmsTxt({
     ...line(both(description.cs, description.en).map((text) => `> ${text}`).join('\n>\n')),
     pair(ui.cs.llmsLanguages, ui.en.llmsLanguages),
     ...section(label('llmsPages'), list([
-      `${textLink(label('about'), new URL('/about/', site))}: ${label('llmsAbout')}`,
-      `${textLink(label('work'), new URL('/work/', site))}: ${label('llmsWork')}`,
+      ...(['cs', 'en'] as const).flatMap((lang) => [
+        `${textLink(`${ui[lang].about} (${lang})`, new URL(localizedPath('/about/', lang), site))}: ${ui[lang].llmsAbout}`,
+        `${textLink(`${ui[lang].work} (${lang})`, new URL(localizedPath('/work/', lang), site))}: ${ui[lang].llmsWork}`,
+      ]),
     ])),
     ...section(label('work'), list(
       projects.filter(({ data }) => !data.draft && data.blocks.length > 0)
         .sort(newestFirst)
-        .map(({ id, data }) => `${textLink(pair(data.title_cs, data.title_en), new URL(`/projects/${id}/`, site))}: ${[
-          pair(data.location_cs, data.location_en).replace(/\s+/g, ' '),
-          `${label('involvement')}: ${period(data)}`,
-        ].filter(Boolean).join(' · ')}`),
+        .flatMap(({ id, data }) => (['cs', 'en'] as const).map((lang) => `${textLink(`${data[`title_${lang}`]} (${lang})`, new URL(localizedPath(`/projects/${id}/`, lang), site))}: ${[
+          data[`location_${lang}`]?.replace(/\s+/g, ' '),
+          `${ui[lang].involvement}: ${formatPeriod(data)?.[lang]}`,
+        ].filter(Boolean).join(' · ')}`)),
     )),
     ...section(label('llmsResources'), list([
       `${textLink(label('llmsFull'), new URL('/llms-full.txt', site))}: ${label('llmsFullDescription')}`,

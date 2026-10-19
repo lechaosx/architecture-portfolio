@@ -1,10 +1,11 @@
 ---
+import { pageLanguage } from '../locale';
 import { Marked, marked } from 'marked';
 import { bindOneLetterWords } from '../one-letter-words';
 import { canSplitProse } from '../prose';
 
-// CMS frontmatter holds both Markdown strings; global.css hides the inactive
-// language after `marked` renders them.
+const lang = pageLanguage(Astro.url.pathname);
+
 interface Props {
   cs: string;
   en: string;
@@ -33,7 +34,7 @@ const visibleText = (html: string) => html
 ---
 
 {
-  languages.map(({ lang, html }) => (
+  languages.filter((entry) => entry.lang === lang).map(({ lang, html }) => (
     <div
       {lang}
       class:list={[

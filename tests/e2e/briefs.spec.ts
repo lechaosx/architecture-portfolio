@@ -59,7 +59,7 @@ test('a card shows its period, an ongoing one running until now in the visitor�
   await page.goto('/e2e/work/');
   const card = page.locator('main .grid > a').first();
   await expect(card.getByText('2025–present')).toBeVisible();
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(card.getByText('2025–dosud')).toBeVisible();
 });
 
@@ -123,7 +123,7 @@ test('an author line break in a brief ends its line short', async ({ page }) => 
 test('a row whose project has a page links to it, and a bare row does neither', async ({ page }) => {
   await page.goto('/e2e/work/');
   await expect(rows(page).nth(0).getByRole('link')).toHaveCount(0);
-  await expect(rows(page).nth(1).getByRole('link')).toHaveAttribute('href', '/projects/e2e-text-only/');
+  await expect(rows(page).nth(1).getByRole('link')).toHaveAttribute('href', '/en/projects/e2e-text-only/');
   await expect(rows(page).nth(1).getByText('A text project.')).toHaveCount(0);
 
   const bare = rows(page).nth(2);
@@ -253,7 +253,10 @@ test('expanded contribution shares the title column as one readable column', asy
   const row = page.locator('main > div > ul > li').first();
   await row.locator('summary').click();
   for (const language of ['en', 'cs']) {
-    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    if (language === 'cs') {
+      await page.getByRole('link', { name: 'Switch to Czech' }).click();
+      await row.locator('summary').click();
+    }
     for (const width of [1440, 1280, 800, 390, 320]) {
       await page.setViewportSize({ width, height: 1000 });
       const title = await row.locator('h2:visible').boundingBox();

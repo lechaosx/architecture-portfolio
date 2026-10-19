@@ -1,4 +1,5 @@
 ---
+import { pageLanguage, localizedPath } from '../locale';
 import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ApproachIcon from './ApproachIcon.astro';
@@ -12,6 +13,8 @@ import { getResponsiveImage } from '../server-images';
 import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
 import { formatPeriod } from '../period';
 import { profilePage } from '../structured-data';
+
+const lang = pageLanguage(Astro.url.pathname);
 
 interface Props {
   about: CollectionEntry<'about'>['data'];
@@ -36,7 +39,7 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
     en: `${ui.en.about} | ${credentialedName}`,
   }}
   image={responsivePortrait?.share}
-  graph={[profilePage({ site: origin, url: new URL(Astro.url.pathname, origin).href })]}
+  graph={[profilePage({ site: origin, url: new URL(localizedPath(Astro.url.pathname, lang), origin).href })]}
 >
   <div class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
     <T as="h1" k="about" class="sr-only" />

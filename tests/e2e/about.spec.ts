@@ -19,7 +19,7 @@ test('the bio opens About without repeating the wordmark as a visible title', as
   const header = (await page.locator('body > header').boundingBox())!;
   const bio = (await page.locator('main .prose:visible').boundingBox())!;
   expect(bio.y - header.y - header.height).toBeCloseTo(64, 0);
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.locator('main h1:visible')).toHaveText('O mně');
 });
 
@@ -60,7 +60,7 @@ test('Approach comes before the facts, whose rows keep their order', async ({ pa
     [/^2024–present\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],
     visibleText,
   );
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(section(page, 'Praxe').getByRole('listitem').first()).toHaveText(/^2024–dosud\s*Architektka/, visibleText);
 });
 
@@ -94,7 +94,7 @@ test('a fact description keeps the author’s paragraphs in both languages', asy
     'Permit drawings.',
   ], visibleText);
 
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(row('Architektka').getByRole('paragraph').filter({ visible: true })).toHaveText([
     'Architektka, Ateliér A, Brno',
     'Tým bydlení',
@@ -124,7 +124,7 @@ test('services are a plain list in the visitor’s language', async ({ page }) =
     ['Family houses', 'Renovations', 'Interiors'],
     visibleText,
   );
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(section(page, 'Služby').getByRole('listitem')).toHaveText(
     ['Rodinné domy', 'Rekonstrukce', 'Interiéry'],
     visibleText,

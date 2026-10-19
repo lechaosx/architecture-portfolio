@@ -28,11 +28,11 @@ npm run images       # regenerate responsive images (dev and build run it)
   on port 4322, so it runs beside `dev` and `preview`. To run Playwright
   directly, run `npm run pretest:e2e` first.
 - Lightbox and carousel tests use test-only pages in `tests/e2e/pages/`, served
-  under `/e2e/`, with images in `tests/e2e/images/`. The work page's index and
+  under `/e2e/`, `/cs/e2e/` and `/en/e2e/`, with images in `tests/e2e/images/`. The work page's index and
   the brief, credits and text-only project pages are tested through fixture
   projects, the landing and About pages through fixture data; other landing,
   About, work and footer tests use the real content.
-- Thumbnail fixtures also render at `/projects/e2e-thumbnail-…/` so their cards
+- Thumbnail fixtures also render at `/projects/e2e-thumbnail-…/` and both language-prefixed equivalents so their cards
   navigate through the production project-page component.
 - `/e2e/project/` is frozen: tests address its images by position (`#image-N`).
   For a new case, add a fixture entry in `tests/e2e/pages/[fixture].astro`
@@ -47,6 +47,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/i18n.ts` | baked-in UI labels |
+| `src/locale.ts`, `src/pages/[lang]/` | language selection, translated page paths and static locale routes |
 | `src/one-letter-words.ts` | Czech one-letter words kept off line ends, applied where text renders |
 | `src/period.ts` | project and About periods: the date format, checks, display and project order |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
@@ -74,6 +75,8 @@ help texts and option labels in `.pages.yml` are Czech, a pair's labels ending
 and nested descriptions, or leave both empty when optional. Whitespace is empty.
 The build reports incomplete pairs at their field paths and prevents deployment;
 Pages CMS can save them, so check the deployment result after editing.
+
+**Add a page.** Provide the neutral route and both static language variants through `src/pages/[lang]/`; use `localizedPath(path, lang)` for page links and keep assets rooted at `/uploads/…`. Check its canonical, alternate language links and sitemap entries.
 
 **Add UI text.** Add a key with both languages to `src/i18n.ts` and render it
 with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` or

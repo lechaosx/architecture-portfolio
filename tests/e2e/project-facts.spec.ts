@@ -37,7 +37,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
     'Ing. Iva Tichá',
   ]);
 
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   expect(await labels(page)).toEqual([
     'Místo',
     'Období zapojení',
@@ -85,7 +85,7 @@ for (const path of ['/e2e/project-role/', '/e2e/work-role-only/']) {
         JSON.parse(element.textContent!)['@graph'].find((node: Record<string, unknown>) => node['@type'] === 'CreativeWork'),
       );
       expect(work.contributor[0]).toEqual({
-        '@type': 'Role', roleName: 'Návrh interiéru, dokumentace',
+        '@type': 'Role', roleName: 'Interior design, documentation',
         contributor: { '@id': new URL('/#person', work.url).href },
       });
       expect(work).not.toHaveProperty('creator');
@@ -94,7 +94,10 @@ for (const path of ['/e2e/project-role/', '/e2e/work-role-only/']) {
       ['en', 'My role', 'Interior design, documentation', 'Jan Novák\nStructural design'],
       ['cs', 'Moje role', 'Návrh interiéru, dokumentace', 'Jan Novák\nStatika'],
     ] as const) {
-      if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      if (language === 'cs') {
+        await page.getByRole('link', { name: 'Switch to Czech' }).click();
+        if (path.includes('work-')) await page.locator('details > summary').first().click();
+      }
       await expect(sheet(page).getByText(label, { exact: true })).toBeVisible();
       await expect(sheet(page).getByText(role, { exact: true })).toBeVisible();
       if (index) {
@@ -120,7 +123,11 @@ for (const path of ['/e2e/credits/', '/e2e/work-credits/']) {
       ['en', 'Collaborators', 'Design author · Coordination'],
       ['cs', 'Spolupráce', 'Autor návrhu · koordinace'],
     ] as const) {
-      if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      if (language === 'cs') {
+        await page.getByRole('link', { name: 'Switch to Czech' }).click();
+        if (path.includes('work-')) await page.locator('details > summary').first().click();
+      }
+      await page.evaluate(() => document.fonts.ready);
       const list = sheet(page).locator(':scope > div').filter({ has: page.getByText(label, { exact: true }) }).getByRole('list');
       await expect(list.getByRole('listitem')).toHaveCount(5);
       const person = list.getByRole('listitem').filter({ has: page.getByText('Jan Novák', { exact: true }) });
@@ -153,7 +160,10 @@ test('an optional project website appears on the project page and expands a link
       await expect(page.locator('details')).toHaveAttribute('open', '');
     }
     for (const [language, label] of [['en', 'Project website'], ['cs', 'Odkaz na projekt']] as const) {
-      if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      if (language === 'cs') {
+        await page.getByRole('link', { name: 'Switch to Czech' }).click();
+        if (path.includes('work-')) await page.locator('details > summary').first().click();
+      }
       await expect(sheet(page).getByText(label, { exact: true })).toBeVisible();
       const link = sheet(page).getByRole('link', { name: hostname, exact: true });
       await expect(link).toBeVisible();
@@ -173,7 +183,7 @@ test('the brief precedes full-width facts below the title at every screen size',
   await page.goto('/e2e/credits/');
   await page.evaluate(() => document.fonts.ready);
   for (const language of ['en', 'cs']) {
-    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    if (language === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
     for (const width of [1280, 800, 700, 390]) {
       await page.setViewportSize({ width, height: 900 });
       const [title, briefBox, sheetBox, header] = await Promise.all([
@@ -230,7 +240,7 @@ for (const path of ['/e2e/credits-no-brief/', '/e2e/credits-blank-brief/']) {
     await page.goto(path);
     await expect(brief(page)).toHaveCount(0);
     for (const language of ['en', 'cs']) {
-      if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      if (language === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
       for (const [width, groups] of [[1280, 2], [980, 1], [834, 1], [390, 1]] as const) {
         await page.setViewportSize({ width, height: 900 });
         const rows = await sheet(page).locator(':scope > div').filter({ visible: true }).evaluateAll((rows) =>
@@ -283,14 +293,14 @@ test('values line up at the same place on every project, in either language', as
     bare - (await page.locator('article h1:visible').boundingBox())!.x,
     0,
   );
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   expect(await valueLeft()).toBeCloseTo(credited, 0);
 });
 
 test('wide fact labels fit on one line in either language', async ({ page }) => {
   await page.goto('/e2e/credits/');
   for (const language of ['en', 'cs']) {
-    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    if (language === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
     await page.evaluate(() => document.fonts.ready);
     for (const width of [1280, 800]) {
       await page.setViewportSize({ width, height: 900 });
@@ -332,7 +342,8 @@ test('an opened index row shows the brief, then the sheet without the place and 
   expect(sheetBox!.y).toBeGreaterThan(briefBox!.y + briefBox!.height);
   expect(sheetBox!.x).toBeCloseTo(briefBox!.x, 0);
 
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
+  await row.locator('summary').click();
   expect(await labels(opened)).toEqual(['Zásah', 'Zaměření', 'Ateliér', 'Spolupráce', 'Ocenění']);
   await expect(row.getByText('První řádek').filter({ visible: true })).toBeVisible();
   await expect(row.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
@@ -355,7 +366,7 @@ test('project context and progress are quiet bilingual badges below the title', 
     ['en', ['Academic project', 'Competition entry', 'Design in progress', 'Construction planned']],
     ['cs', ['Školní projekt', 'Soutěžní návrh', 'Probíhá projektování', 'Plánovaná realizace']],
   ] as const) {
-    if (language === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    if (language === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
     await expect(brief(page)).toBeVisible();
     await expect(header.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
     const badgeList = header.locator('h1:visible').locator('..').locator(':scope > ul');

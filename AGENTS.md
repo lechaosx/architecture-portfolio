@@ -50,8 +50,8 @@ Only then reconcile them.
   and `.pages.yml` (Pages CMS editing UI). Change both together. See
   ARCHITECTURE.md → "Two sources of truth for content shape".
 - **Root-only hosting on a custom domain.** The site is mounted at the root, so
-  internal links/assets are plain root-absolute paths (`/work/`, `/uploads/…`) —
-  there is no `base` and no link helper. The domain lives in `public/CNAME`
+  assets use root-absolute paths (`/uploads/…`) and page links use language
+  prefixes (`/cs/work/`, `/en/work/`) through `src/locale.ts`; there is no `base`. The domain lives in `public/CNAME`
   and `site` in `astro.config.mjs`, the origin of every absolute URL the build
   writes. Don't add a `base`/subpath deployment without routing every
   link/asset through a base-aware helper. See ARCHITECTURE.md → "Hosting:
@@ -67,7 +67,7 @@ Only then reconcile them.
 - **All user-facing text is bilingual (cs + en).** Translatable fields come in
   `_cs`/`_en` pairs (add both, in both schema places); baked-in UI labels live in
   `src/i18n.ts`. Render bilingual text through `T.astro`, `Prose.astro` or
-  `Paragraphs.astro` so the language switch keeps working — never emit a bare
+  `Paragraphs.astro` to select the route language — never emit a bare
   user-facing string. See ARCHITECTURE.md → "Internationalization".
 
 ## Verifying a change

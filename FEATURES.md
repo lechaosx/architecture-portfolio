@@ -323,23 +323,15 @@ prevent deployment; the CMS explains the rule beside optional translated fields.
 
 ### Auto-detected, with a manual switch in the footer — [Explicit]
 
-For visitors, the language comes from a saved choice, else the browser, else
-English. The footer button shows the language it switches _to_, switches without
-a reload and saves the choice. It sits in the footer, not the nav, because with
-auto-detection it is a fallback, and in the nav it confused the architect.
+The original unprefixed URLs select a saved choice, then the first supported browser language, then English, and go directly to content without a selection screen. The footer link shows the language it switches _to_ and saves an explicit choice; language selection stays in the footer rather than the navigation.
 
-### Language switching keeps the button in place — [Explicit]
+### A stable URL for each language — [Explicit]
 
-Switching languages preserves the activated button’s position in the viewport
-as translated content changes height, so the visitor can switch back without
-chasing the control.
+Czech pages use `/cs/…` and English pages `/en/…`; an explicit language URL always wins over browser or saved preferences. The footer opens the same page in the other language, navigation stays in the selected language, and the viewer's language link retains the selected image.
 
-### Czech in the page as served — [Explicit]
+### Language-specific HTML and previews — [Explicit]
 
-The raw HTML is Czech (language, tab title, description, image alt text and
-sharing tags), so crawlers that read it, link previews and no-JS visitors get
-Czech, the source language the architect writes in. Crawlers that run scripts
-are detected like visitors.
+Content, page titles, descriptions, alt text and sharing metadata are served in the language named by the URL, including without JavaScript. Unprefixed pages show English content without JavaScript, with the footer language link still available.
 
 ---
 
@@ -478,7 +470,7 @@ closes to the project page before Back leaves it.
 
 Focus moves in on open, cycles inside, and returns to the thumbnail on close
 without moving the page. Clicking the backdrop does not close it; ×, Escape and
-Back do. Labels follow the site language and a live status announces the
+Back do. Labels follow the page language and a live status announces the
 position.
 
 ### Inspection: zoom, pan, swipe — [Explicit]
@@ -566,8 +558,7 @@ the size the lightbox opens it at.
 ### Bilingual index and full export for AI assistants — [Explicit]
 
 `/llms.txt` is a compact bilingual index of About, Work and published project
-pages, discovered through a link in each page's head; it explains that Czech
-and English share the same URLs. `/llms-full.txt` gathers her bio, education,
+pages in both canonical languages, discovered through a link in each page's head; each link identifies Czech or English. `/llms-full.txt` gathers her bio, education,
 experience, services, contact details and every published project's facts,
 texts and linked image captions, including projects without a separate page;
 long passages identify Czech (`cs`) and English (`en`) explicitly.

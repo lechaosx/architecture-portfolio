@@ -32,7 +32,7 @@ test('under the images one line says what she is, where and what she offers, and
   const services = page.getByText('Family houses · Renovations · Interiors', { exact: true });
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architect · Brno');
   await expect(services).toBeVisible();
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architektka · Brno');
   await expect(page.getByText('Rodinné domy · Rekonstrukce · Interiéry', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'O mně →' }).click();
@@ -46,7 +46,7 @@ test('without services the line is the profession and the place filled in each l
   await page.goto('/e2e/landing-bare/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architect');
   await expect(page.getByText(/Family houses/)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architektka · Brno');
 });
 

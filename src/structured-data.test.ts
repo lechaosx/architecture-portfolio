@@ -49,7 +49,7 @@ describe('person', () => {
       name: 'Jana Nováková',
       honorificPrefix: 'Ing. arch.',
       jobTitle: 'Architektka',
-      url: 'https://example.cz/',
+      url: 'https://example.cz/cs/',
       email: 'jana@example.cz',
       telephone: '+420 777 000 000',
       image: 'https://example.cz/_responsive/hash/1280.webp',
@@ -297,7 +297,7 @@ describe('jsonLd', () => {
 
 
 test('personal involvement does not establish project authorship or creation date', () => {
-  const project = { title_cs: 'Projekt', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', collaborators: [{ name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' }] };
+  const project = { title_cs: 'Projekt', title_en: 'Project', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', collaborators: [{ name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' }] };
   const node = creativeWork({ site, url: 'https://example.cz/project/',
     project,
     images: [], responsiveImages: [] });
@@ -310,7 +310,7 @@ test('personal involvement does not establish project authorship or creation dat
 test('credits the architect implicitly and trims supplied collaborator names and roles', () => {
   const node = creativeWork({
     site, url: 'https://example.cz/project/',
-    project: { title_cs: 'Projekt', collaborators: [
+    project: { title_cs: 'Projekt', title_en: 'Project', collaborators: [
       { name: '  Jan Novák  ', role_cs: '  dokumentace  ', role_en: 'Documentation' },
       { name: 'Petr' },
     ] },
@@ -322,4 +322,19 @@ test('credits the architect implicitly and trims supplied collaborator names and
     { '@type': 'Role', roleName: 'dokumentace', contributor: { '@type': 'Person', name: 'Jan Novák' } },
     { '@type': 'Person', name: 'Petr' },
   ]);
+});
+
+test('English person facts use English service names, award text and ongoing periods', () => {
+  const node = person({
+    site, owner, contact, lang: 'en',
+    about: {
+      services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
+      awards: [{ place_cs: 'Soutěž', place_en: 'Competition', title_cs: 'Finále', title_en: 'Final', from: '9/2025' }],
+    },
+  });
+  expect(node).toMatchObject({
+    '@id': 'https://example.cz/#person', jobTitle: 'Architect', url: 'https://example.cz/en/',
+    makesOffer: [{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Family houses' } }],
+    award: ['Competition, Final (9/2025–present)'],
+  });
 });

@@ -18,6 +18,12 @@ export default mergeConfig(config, {
             pattern: '/e2e/[fixture]',
             entrypoint: './tests/e2e/pages/[fixture].astro',
           });
+          for (const pattern of ['/cs/e2e/[fixture]', '/en/e2e/[fixture]']) {
+            injectRoute({ pattern, entrypoint: './tests/e2e/pages/[fixture].astro' });
+          }
+          for (const pattern of ['/cs/projects/e2e-thumbnail-[fixture]', '/en/projects/e2e-thumbnail-[fixture]']) {
+            injectRoute({ pattern, entrypoint: './tests/e2e/pages/thumbnail-project.astro' });
+          }
           injectRoute({
             pattern: '/e2e/images/[file]',
             entrypoint: './tests/e2e/pages/images/[file].ts',

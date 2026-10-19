@@ -19,7 +19,7 @@ backend, which is also what keeps the site fast and cheap.
 ### Hosting: custom domain at the root — [Explicit]
 
 One mount point, the root of the domain in `public/CNAME`. So there is no `base`
-and no link helper: internal links and assets are plain root-absolute paths.
+and assets use root-absolute paths; page links include their language prefix through `src/locale.ts`.
 `site` in `astro.config.mjs` is the origin of every absolute URL the build
 writes. The `*.github.io/<repo>/` URL does not serve on its own, but GitHub
 redirects it to the domain.
@@ -431,9 +431,7 @@ onto white, because LinkedIn is reported to drop WebP previews.
 ### JSON-LD from pure functions — [Implicit]
 
 Pure functions in `src/structured-data.ts` turn content into schema.org nodes,
-which `Base` inlines as one `@graph` per page. Text is plain Czech, because
-Google documents only plain-text values for these properties, not
-language-tagged ones. Awards are plain text named "award, placement (period)".
+which `Base` inlines as one `@graph` per page. Text follows the page language as plain strings; the architect keeps one shared Person identity across languages. Awards are plain text named "award, placement (period)".
 
 ### Structured data preserves supplied meaning — [Implicit]
 
@@ -463,36 +461,29 @@ canonical origin and project order as the pages, and `Base.astro` advertises
 
 ## Internationalization
 
-### Both languages in one page; CSS picks — [Explicit] (shape [Implicit])
+### Symmetric static language routes — [Explicit]
 
-No `/cs` or `/en` routes: that keeps root-only hosting and lets a static host
-default to the browser's language with no server. Every page renders both;
-`html[data-lang]` hides the other. Switching is instant and search engines see
-both. `<html>` ships `data-lang="cs"` with the Czech title, description and
-Open Graph tags, so crawlers that read the raw HTML, link previews and no-JS
-visitors get the source language; the inline script then picks the visitor's.
+Czech pages live under `/cs/` and English pages under `/en/`; each renders its own content, metadata and image alt text at build time, including without JavaScript. `src/locale.ts` supplies shared path and preference rules; thin route files reuse the same page components.
 
-### Language picked by an inline script — [Implicit]
+### Neutral routes detect language without a selection screen — [Explicit]
 
-An `is:inline` head script sets `data-lang` and the tab title before first
-paint; a module script in `Base.astro` wires the toggle and syncs `<title>`, the
-meta description and image alt text. On a toggle it synchronously notifies the
-footer to recompute its layout, then compensates scroll by the button’s
-change in position, preserving the activated control through translation
-reflow — [Implicit].
+Original unprefixed pages retain English content as a useful no-JavaScript fallback, canonicalize to the English equivalent, and use a head script to replace the URL with the saved language, first supported browser language or English fallback. Query strings and anchors survive, and explicit language routes always take precedence over preferences.
 
-### Bilingual alt text: one attribute, swapped — [Implicit]
+### Language switches are ordinary page links — [Explicit]
 
-An image cannot be doubled per language like text, so a project image ships its
-Czech title as `alt`, with both titles in `data-cs`/`data-en`, and the language
-script sets `alt` from them. The lightbox sets it from its own language state.
+The footer and viewer link to the equivalent translated route and remember an explicit choice; navigation stays within the URL's language. Viewer links carry the selected image anchor, so the translated page reopens that image; ordinary browser navigation supplies Back and open-in-new-tab behavior.
+
+### A bilingual shell for the static 404 — [Implicit]
+
+GitHub Pages serves one error document for every unknown URL, so only this shell includes both translations and chooses from the actual URL before saved or browser preferences. It keeps the requested URL and 404 status; its language link changes the prefix of that unknown URL, and its home link points to the selected language's landing page.
+
+### Canonical languages and alternates — [Explicit]
+
+Each localized page has a self-canonical address, reciprocal `cs` and `en` alternates, and an `x-default` pointing to its neutral equivalent. The sitemap includes only canonical language routes; the 404 and neutral duplicates stay out, while AI exports link directly to both canonical languages.
 
 ### Strings: `i18n.ts`, `T.astro`, `Prose.astro`, `Paragraphs.astro` — [Implicit]
 
-UI labels are a `{ cs, en }` dictionary in `src/i18n.ts`. `T.astro`,
-`Prose.astro` and `Paragraphs.astro` emit one element per language with a
-`lang` attribute: `T` a string, `Prose` Markdown, `Paragraphs` plain text split
-into one `<p>` per paragraph (Approach texts and fact descriptions).
+UI labels are a `{ cs, en }` dictionary in `src/i18n.ts`. Translation components select the route language and emit a matching `lang` attribute: `T` a string, `Prose` Markdown, `Paragraphs` plain text split into one `<p>` per paragraph (Approach texts and fact descriptions).
 
 ### Paired `_cs`/`_en` fields — [Implicit]
 

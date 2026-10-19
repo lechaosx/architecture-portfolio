@@ -39,7 +39,7 @@ function indexLinks(text: string) {
   return links;
 }
 
-test('llms.txt is a bilingual link index with a summary and shared-language URL guidance', () => {
+test('llms.txt is a bilingual link index with a summary and language-specific canonical URL guidance', () => {
   const output = llms.llmsTxt({
     ...input,
     description: { cs: 'Portfolio architektky.', en: 'An architect’s portfolio.' },
@@ -52,13 +52,14 @@ test('llms.txt is a bilingual link index with a summary and shared-language URL 
   expect(tokens[2]).toMatchObject({ type: 'paragraph' });
   expect(tokens[2].raw).toContain('cs');
   expect(tokens[2].raw).toContain('en');
-  expect(tokens[2].raw).toContain('stejné');
-  expect(tokens[2].raw).toContain('same');
+  expect(tokens[2].raw).toContain('/cs/');
+  expect(tokens[2].raw).toContain('/en/');
   expect(indexLinks(output).map((link) => link.href)).toEqual([
-    'https://example.cz/about/', 'https://example.cz/work/', 'https://example.cz/llms-full.txt',
+    'https://example.cz/cs/about/', 'https://example.cz/cs/work/',
+    'https://example.cz/en/about/', 'https://example.cz/en/work/', 'https://example.cz/llms-full.txt',
   ]);
-  expect(output).toContain('O mně / About');
-  expect(output).toContain('Práce / Work');
+  expect(output).toContain('O mně (cs)');
+  expect(output).toContain('Work (en)');
   expect(output).not.toContain(about.body_cs);
 });
 
@@ -73,14 +74,16 @@ test('the index links only published project pages, newest first, with short fac
     ],
   });
   expect(indexLinks(output).map((link) => link.href)).toEqual([
-    'https://example.cz/about/', 'https://example.cz/work/',
-    'https://example.cz/projects/new/', 'https://example.cz/projects/old/',
+    'https://example.cz/cs/about/', 'https://example.cz/cs/work/',
+    'https://example.cz/en/about/', 'https://example.cz/en/work/',
+    'https://example.cz/cs/projects/new/', 'https://example.cz/en/projects/new/',
+    'https://example.cz/cs/projects/old/', 'https://example.cz/en/projects/old/',
     'https://example.cz/llms-full.txt',
   ]);
   expect(output).toContain('2025');
-  expect(output).toContain('Brno, Česko / Brno, Czechia');
+  expect(output).toContain('Brno, Česko');
   for (const omitted of ['Bez stránky', 'Koncept', 'Dlouhá anotace', 'Lorem ipsum', 'Long body']) expect(output).not.toContain(omitted);
-  expect(output.length).toBeLessThan(2000);
+  expect(output.length).toBeLessThan(2500);
 });
 
 test('Markdown links preserve literal CMS titles and encoded paths', () => {
@@ -90,9 +93,9 @@ test('Markdown links preserve literal CMS titles and encoded paths', () => {
     projects: [{ id: 'dům (A)', data: { ...project, title_cs: title, title_en: title, blocks: [{ type: 'text', body_cs: 'Text.', body_en: 'Text.' }] } }],
   });
   const link = indexLinks(output).find((entry) => entry.href.includes('/projects/'))!;
-  expect(link.href).toBe('https://example.cz/projects/d%C5%AFm%20(A)/');
+  expect(link.href).toBe('https://example.cz/cs/projects/d%C5%AFm%20(A)/');
   expect(link.tokens.every((token) => token.type === 'text' || token.type === 'escape')).toBe(true);
-  expect(link.tokens.map((token) => token.type === 'escape' ? token.raw.slice(1) : token.raw).join('')).toBe(title);
+  expect(link.tokens.map((token) => token.type === 'escape' ? token.raw.slice(1) : token.raw).join('')).toBe(`${title} (cs)`);
 });
 
 test.each([
@@ -109,7 +112,7 @@ test.each([
   });
   const link = indexLinks(output).find((entry) => entry.href.includes('/projects/'))!;
   expect(link.tokens.every((token) => token.type === 'text' || token.type === 'escape')).toBe(true);
-  expect(parseInline(link.raw)).toContain(`>${rendered}</a>`);
+  expect(parseInline(link.raw)).toContain(`>${rendered} (cs)</a>`);
 });
 
 test('multiline location notes keep the index link list intact', () => {
@@ -122,7 +125,8 @@ test('multiline location notes keep the index link list intact', () => {
     } }],
   });
   indexLinks(output);
-  expect(output).toContain(': Praha ## Vložená sekce / Prague ## Inserted section ·');
+  expect(output).toContain(': Praha ## Vložená sekce ·')
+  expect(output).toContain(': Prague ## Inserted section ·');
 });
 
 test('the full export retains facts, full URLs, personal roles, credits and language-labelled prose', () => {
@@ -184,7 +188,8 @@ test('the full export includes projects without pages, excludes drafts and leave
     ],
   });
   expect(output.indexOf('### Nový / New')).toBeLessThan(output.indexOf('### Starý / Old'));
-  expect(output).toContain('https://example.cz/projects/new/');
+  expect(output).toContain('https://example.cz/cs/projects/new/')
+  expect(output).toContain('https://example.cz/en/projects/new/');
   expect(output).not.toContain('/projects/old/');
   expect(output).not.toContain('Koncept');
   for (const heading of ['Praxe', 'Služby', 'Vzdělání', 'Ocenění']) expect(output).not.toContain(`## ${heading}`);

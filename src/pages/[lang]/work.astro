@@ -1,0 +1,9 @@
+---
+export const getStaticPaths = () => ['cs', 'en'].map((lang) => ({ params: { lang } }));
+import { getCollection } from 'astro:content';
+import WorkPage from '../../components/WorkPage.astro';
+
+const projects = await getCollection('projects', ({ data }) => !data.draft);
+---
+
+<WorkPage {projects} />

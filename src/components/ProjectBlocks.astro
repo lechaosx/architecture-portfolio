@@ -1,4 +1,5 @@
 ---
+import { pageLanguage } from '../locale';
 import type { CollectionEntry } from 'astro:content';
 import Carousel from './Carousel.astro';
 import Prose from './Prose.astro';
@@ -13,6 +14,8 @@ import {
   THUMBNAIL_WIDTHS,
 } from '../images';
 import type { ResponsiveImage } from '../images';
+
+const lang = pageLanguage(Astro.url.pathname);
 
 type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
 
@@ -36,8 +39,6 @@ const displayBlocks = blocks.map((block, blockIndex) =>
             item,
             index,
             responsive: responsiveImages[index],
-            // The alt text: Czech as served, then set from data-cs/data-en
-            // by the language script in Base.astro.
             title: {
               cs: imageText(item, 'title', 'cs'),
               en: imageText(item, 'title', 'en'),
@@ -104,9 +105,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
                       ],
                       1.05,
                     )}
-                    alt={title.cs ?? ''}
-                    data-cs={title.cs}
-                    data-en={title.en}
+                    alt={title[lang] ?? ''}
                     {loading}
                     {decoding}
                     style="--thumbnail-hover-scale: 1.05"
@@ -142,9 +141,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
               sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
               width={responsive?.source.width}
               height={responsive?.source.height}
-              alt={title.cs ?? ''}
-              data-cs={title.cs}
-              data-en={title.en}
+              alt={title[lang] ?? ''}
               {loading}
               {decoding}
               style="--thumbnail-hover-scale: 1.02"
@@ -174,9 +171,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
                 sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
                 width={responsive?.source.width}
                 height={responsive?.source.height}
-                alt={title.cs ?? ''}
-                data-cs={title.cs}
-                data-en={title.en}
+                alt={title[lang] ?? ''}
                 {loading}
                 {decoding}
                 class="size-full object-contain"

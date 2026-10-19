@@ -1,4 +1,5 @@
 ---
+import { pageLanguage, localizedPath } from '../locale';
 import Base from '../layouts/Base.astro';
 import Gallery from './Gallery.svelte';
 import ProjectBlocks from './ProjectBlocks.astro';
@@ -12,6 +13,8 @@ import { projectDescription } from '../project-description';
 import { creativeWork } from '../structured-data';
 import { projectBadges, projectFacts } from '../project-facts';
 import { projectCover, type Project } from '../projects';
+
+const lang = pageLanguage(Astro.url.pathname);
 
 interface Props {
   project: Project;
@@ -45,9 +48,10 @@ const site = new URL('/', Astro.site);
   graph={[
     creativeWork({
       site,
-      url: new URL(Astro.url.pathname, site).href,
+      url: new URL(localizedPath(Astro.url.pathname, lang), site).href,
       project: d,
-      description: description.cs,
+      description: description[lang],
+      lang,
       images,
       responsiveImages,
       responsiveCover,
@@ -55,7 +59,7 @@ const site = new URL('/', Astro.site);
   ]}
 >
   <article class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
-    <a href="/work/" class="text-sm text-neutral-500 hover:text-neutral-900">
+    <a href={localizedPath('/work/', lang)} class="text-sm text-neutral-500 hover:text-neutral-900">
       <T k="backToWork" />
     </a>
 

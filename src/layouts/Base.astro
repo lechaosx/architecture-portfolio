@@ -1,4 +1,5 @@
 ---
+import { pageLanguage, routeLanguage, localizedPath, neutralPath, preferredLanguage } from '../locale';
 import '@fontsource-variable/roboto/index.css';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
@@ -27,43 +28,50 @@ const description = {
   cs: Astro.props.description?.cs ?? site.description_cs,
   en: Astro.props.description?.en ?? site.description_en,
 };
+const lang = pageLanguage(Astro.url.pathname);
 const origin = new URL('/', Astro.site);
-const url = noindex ? undefined : new URL(Astro.url.pathname, origin).href;
+const path = neutralPath(Astro.url.pathname);
+const redirect = !noindex && !routeLanguage(Astro.url.pathname);
+const url = noindex ? undefined : new URL(localizedPath(path, lang), origin).href;
 const imageUrl = image && new URL(image.url, origin).href;
 const portrait = about.portrait
   ? await getResponsiveImage(about.portrait)
   : undefined;
 const structuredData = jsonLd([
-  person({ site: origin, owner: site, about, contact, portrait: portrait?.share.url }),
+  person({ site: origin, owner: site, about, contact, portrait: portrait?.share.url, lang }),
   ...graph,
 ]);
 ---
 
 <!doctype html>
-<html lang="cs" data-lang="cs" data-theme="light">
+<html lang={lang} data-lang={lang} data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="describedby" href="/llms.txt" type="text/plain" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <title>{title.cs}</title>
+    <title>{title[lang]}</title>
     <meta name="page-title" data-cs={title.cs} data-en={title.en} />
     <meta
       name="description"
-      content={description.cs}
+      content={description[lang]}
       data-cs={description.cs}
       data-en={description.en}
     />
     {url && <link rel="canonical" href={url} />}
+    {!noindex && ['cs', 'en'].map((language) => (
+      <link rel="alternate" hreflang={language} href={new URL(localizedPath(path, language as 'cs' | 'en'), origin).href} />
+    ))}
+    {!noindex && <link rel="alternate" hreflang="x-default" href={new URL(path, origin).href} />}
     {noindex && <meta name="robots" content="noindex" />}
-    <meta property="og:title" content={title.cs} />
-    <meta property="og:description" content={description.cs} />
+    <meta property="og:title" content={title[lang]} />
+    <meta property="og:description" content={description[lang]} />
     <meta property="og:type" content={type} />
     {url && <meta property="og:url" content={url} />}
     <meta property="og:site_name" content={credentialedName} />
-    <meta property="og:locale" content="cs_CZ" />
-    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale" content={lang === 'cs' ? 'cs_CZ' : 'en_US'} />
+    <meta property="og:locale:alternate" content={lang === 'cs' ? 'en_US' : 'cs_CZ'} />
     {
       image && (
         <>
@@ -81,28 +89,27 @@ const structuredData = jsonLd([
     />
     <script type="application/ld+json" set:html={structuredData} />
 
-    <!-- Pick the language and its tab title before first paint (saved >
-         browser > en) so the correct-language content shows without a flash.
-         It reads the page-title meta, so that must come first. -->
-    <script is:inline>
-      {
-        let saved = null;
-        try {
-          saved = localStorage.getItem('lang');
-        } catch {}
-        const nav = (navigator.language || '').toLowerCase();
-        let lang = saved || (nav.startsWith('cs') ? 'cs' : 'en');
-        if (lang !== 'cs' && lang !== 'en') lang = 'en';
-        document.documentElement.dataset.lang = lang;
-        document.documentElement.lang = lang;
-        const title = /** @type {HTMLMetaElement | null} */ (
-          document.querySelector('meta[name="page-title"]')
-        );
-        if (title) {
-          document.title = title.dataset[lang] || title.dataset.cs || document.title;
-        }
-      }
-    </script>
+    {redirect && <script is:inline set:html={`
+      const preferredLanguage = ${preferredLanguage.toString()};
+      let saved = null;
+      try { saved = localStorage.getItem('lang'); } catch {}
+      const language = preferredLanguage(saved, navigator.languages?.length ? navigator.languages : [navigator.language]);
+      location.replace('/' + language + location.pathname + location.search + location.hash);
+    `} />}
+
+    {noindex && <script is:inline set:html={`
+      const preferredLanguage = ${preferredLanguage.toString()};
+      const routeLanguage = ${routeLanguage.toString()};
+      let saved = null;
+      try { saved = localStorage.getItem('lang'); } catch {}
+      const language = routeLanguage(location.pathname) || preferredLanguage(saved, navigator.languages?.length ? navigator.languages : [navigator.language]);
+      document.documentElement.lang = language;
+      document.documentElement.dataset.lang = language;
+      const title = document.querySelector('meta[name="page-title"]');
+      if (title) document.title = title.dataset[language];
+      const description = document.querySelector('meta[name="description"]');
+      if (description) description.content = description.dataset[language];
+    `} />}
 
     <!-- Pick the saved theme or current system preference before first paint. -->
     <script is:inline>
@@ -150,7 +157,7 @@ const structuredData = jsonLd([
           } catch {}
           const transition = /** @type {PageRevealEvent} */ (event).viewTransition;
           if (!transition) return;
-          const opening = location.pathname.startsWith('/projects/');
+          const opening = /^\/(?:cs\/|en\/)?projects\//.test(location.pathname);
           transition.types.add(opening ? 'project-open' : 'project-close');
           if (opening && scale) {
             const root = document.documentElement;
@@ -164,11 +171,11 @@ const structuredData = jsonLd([
     </script>
   </head>
   <body class="min-h-screen bg-white font-sans text-black antialiased">
-    <Nav />
+    <Nav bilingual={noindex} />
     <main>
       <slot />
     </main>
-    <Footer />
+    <Footer bilingual={noindex} />
 
     <script>
       // Reveal elements as they enter the viewport, using the real scrollbar.
@@ -190,26 +197,22 @@ const structuredData = jsonLd([
           .forEach((element) => observer.observe(element));
       }
 
-      function applyLang() {
-        const lang = document.documentElement.dataset.lang || 'cs';
-        const title = document.querySelector<HTMLMetaElement>(
-          'meta[name="page-title"]',
-        );
-        if (title) {
-          document.title =
-            title.dataset[lang] || title.dataset.cs || document.title;
+      import { localizedPath, pageLanguage } from '../locale';
+
+      function languageLinks() {
+        const lang = document.documentElement.dataset.lang === 'cs' ? 'cs' : 'en';
+        const other = lang === 'cs' ? 'en' : 'cs';
+        for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-localized-path]')) {
+          link.href = localizedPath(link.dataset.localizedPath!, lang);
         }
-        const description = document.querySelector<HTMLMetaElement>(
-          'meta[name="description"]',
-        );
-        const content = description?.dataset[lang];
-        if (description && content) description.content = content;
-        for (const image of document.querySelectorAll<HTMLImageElement>(
-          'img[data-cs], img[data-en]',
-        )) {
-          image.alt = image.dataset[lang] ?? '';
+        for (const link of document.querySelectorAll<HTMLAnchorElement>('footer a[data-lang-toggle]')) {
+          link.href = localizedPath(location.pathname + location.search + location.hash, other);
+          link.hreflang = other;
         }
       }
+      languageLinks();
+      addEventListener('hashchange', languageLinks);
+      addEventListener('pageshow', languageLinks);
 
       const themeQuery = matchMedia('(prefers-color-scheme: dark)');
       themeQuery.addEventListener('change', () => {
@@ -229,19 +232,9 @@ const structuredData = jsonLd([
         const root = document.documentElement;
         const languageButton = event.target.closest('[data-lang-toggle]');
         if (languageButton) {
-          const buttonTop = languageButton.getBoundingClientRect().top;
-          const lang = root.dataset.lang === 'cs' ? 'en' : 'cs';
-          try {
-            localStorage.setItem('lang', lang);
-          } catch {}
-          root.dataset.lang = lang;
-          root.lang = lang;
-          applyLang();
-          document.dispatchEvent(new Event('site:languagechange'));
-          window.scrollBy({
-            top: languageButton.getBoundingClientRect().top - buttonTop,
-            behavior: 'instant',
-          });
+          const link = languageButton as HTMLAnchorElement;
+          const lang = pageLanguage(new URL(link.href).pathname);
+          try { localStorage.setItem('lang', lang); } catch {}
         } else if (event.target.closest('[data-theme-toggle]')) {
           const theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
           try {
@@ -252,7 +245,7 @@ const structuredData = jsonLd([
       });
 
       initReveal();
-      applyLang();
+
     </script>
   </body>
 </html>

@@ -1,6 +1,9 @@
 ---
+import { pageLanguage } from '../locale';
 import { bindOneLetterWords } from '../one-letter-words';
 import { canSplitProse } from '../prose';
+
+const lang = pageLanguage(Astro.url.pathname);
 
 interface Props {
   cs?: string;
@@ -12,7 +15,7 @@ const { cs, en, class: cls } = Astro.props;
 ---
 
 {
-  [{ lang: 'cs', text: cs }, { lang: 'en', text: en }].map(({ lang, text }) =>
+  [{ lang: 'cs', text: cs }, { lang: 'en', text: en }].filter((entry) => entry.lang === lang).map(({ lang, text }) =>
     text?.trim() && (
       <p
         {lang}

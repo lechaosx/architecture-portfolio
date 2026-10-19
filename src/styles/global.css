@@ -165,10 +165,7 @@ html {
   --page-text: var(--color-black);
 }
 
-/* Dual language: both variants render into the page; hide the one that is not
-   the active language (set on <html data-lang> by the script in Base.astro).
-   <html> ships with data-lang="cs", so with no JS the page shows Czech, the
-   source language, rather than both languages at once. */
+/* The static 404 shares one document across unknown URLs and selects its translation. */
 html[data-lang="cs"] [lang="en"] {
   display: none !important;
 }
@@ -179,6 +176,7 @@ html[data-lang="en"] [lang="cs"] {
 /* Language toggle: show the language it switches TO. */
 .language-option-cs,
 .language-option-en {
+  text-align: center;
   transition: opacity var(--duration-fast) ease;
 }
 .language-option-en {

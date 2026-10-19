@@ -1,9 +1,14 @@
 ---
+import { pageLanguage, localizedPath } from '../locale';
 import { contact, site } from '../singletons';
 import { onlyIn } from '../i18n';
 import ContactIcon from './ContactIcon.astro';
 import T from './T.astro';
 
+const lang = pageLanguage(Astro.url.pathname);
+
+interface Props { bilingual?: boolean; }
+const { bilingual = false } = Astro.props;
 const year = new Date().getFullYear();
 const { email, phone, hours_cs, hours_en } = contact;
 const item = 'flex w-max items-center gap-2 whitespace-nowrap';
@@ -29,8 +34,8 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
       {(hours_cs || hours_en) && (
         <li class={item} lang={onlyIn(hours_cs, hours_en)}>
           <ContactIcon icon="hours" class={icon} />
-          <T k="callHours" class="sr-only" />
-          <T cs={hours_cs} en={hours_en} />
+          <T {bilingual} k="callHours" class="sr-only" />
+          <T {bilingual} cs={hours_cs} en={hours_en} />
         </li>
       )}
     </ul>
@@ -72,20 +77,21 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
             </svg>
           </span>
-          <T k="switchTheme" class="sr-only" />
+          <T {bilingual} k="switchTheme" class="sr-only" />
         </button>
 
-        <button
-          type="button"
+        <a
+          href={localizedPath(bilingual ? '/' : Astro.url.pathname, lang === 'cs' ? 'en' : 'cs')}
+          hreflang={lang === 'cs' ? 'en' : 'cs'}
           data-lang-toggle
           class="flex size-10 cursor-pointer items-center justify-center border border-transparent hover:border-black"
         >
           <span class="relative block h-4 w-6 text-xs leading-4 tracking-wider">
-            <span class="language-option-cs absolute inset-0" aria-hidden="true">CZ</span>
+            <span class="language-option-cs absolute inset-0" aria-hidden="true">CS</span>
             <span class="language-option-en absolute inset-0" aria-hidden="true">EN</span>
           </span>
-          <T k="switchLanguage" class="sr-only" />
-        </button>
+          <T {bilingual} k="switchLanguage" class="sr-only" />
+        </a>
       </div>
     </div>
   </div>
@@ -141,6 +147,5 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
   }
   const observer = new ResizeObserver(fitFooter);
   for (const element of [row, copyright, switches, ...items]) observer.observe(element);
-  document.addEventListener('site:languagechange', fitFooter);
   fitFooter();
 </script>

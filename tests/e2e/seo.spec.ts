@@ -43,7 +43,7 @@ test.describe(() => {
   test.use({ javaScriptEnabled: false });
 
   test('a project page is described by its brief, in Czech as served', async ({ page }) => {
-    await page.goto('/e2e/brief/');
+    await page.goto('/cs/e2e/brief/');
     await expect(meta(page, 'name="description"')).toHaveAttribute(
       'content',
       'Anotace stránky. Druhý řádek.',
@@ -55,7 +55,7 @@ test.describe(() => {
   });
 
   test('a project page shares its cover as an absolute JPEG', async ({ page }) => {
-    await page.goto('/e2e/project/');
+    await page.goto('/cs/e2e/project/');
     const image = await meta(page, 'property="og:image"').getAttribute('content');
     expect(image).toMatch(new RegExp(`^${origin}/.+\\.jpg$`));
     await expect(meta(page, 'property="og:image:type"')).toHaveAttribute('content', 'image/jpeg');
@@ -80,10 +80,10 @@ test.describe(() => {
 
   test('every page names its canonical address and the site', async ({ page }) => {
     for (const [path, type] of [
-      ['/', 'website'],
-      ['/work/', 'website'],
-      ['/about/', 'website'],
-      ['/e2e/brief/', 'article'],
+      ['/cs/', 'website'],
+      ['/cs/work/', 'website'],
+      ['/cs/about/', 'website'],
+      ['/cs/e2e/brief/', 'article'],
     ]) {
       await page.goto(path);
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${origin}${path}`);
@@ -98,7 +98,7 @@ test.describe(() => {
   });
 
   test('a non-ASCII page address is percent-encoded as in the sitemap', async ({ page, request }) => {
-    const path = encodeURI('/e2e/náměstí/');
+    const path = encodeURI('/cs/e2e/náměstí/');
     await page.goto(path);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${origin}${path}`);
     await expect(meta(page, 'property="og:url"')).toHaveAttribute('content', `${origin}${path}`);
@@ -106,13 +106,13 @@ test.describe(() => {
   });
 
   test('every page describes the architect as structured data', async ({ page }) => {
-    for (const path of ['/', '/work/', '/about/', '/e2e/project/']) {
+    for (const path of ['/cs/', '/cs/work/', '/cs/about/', '/cs/e2e/project/']) {
       await page.goto(path);
       const architect = node(await graph(page), 'Person');
       expect(architect).toMatchObject({
         '@id': `${origin}/#person`,
         name: site.name,
-        url: `${origin}/`,
+        url: `${origin}/cs/`,
       });
       expect(architect).not.toHaveProperty('knowsLanguage');
       expect(architect).not.toHaveProperty('hasCredential');
@@ -121,13 +121,13 @@ test.describe(() => {
   });
 
   test('the landing page is the website', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/cs/');
     expect(node(await graph(page), 'WebSite')).toMatchObject({ name: owner, url: `${origin}/` });
   });
 
   test('the landing page shares its first raster hero image', async ({ page }) => {
     // tests/e2e/pages/[fixture].astro: an SVG, then two rasters.
-    await page.goto('/e2e/landing/');
+    await page.goto('/cs/e2e/landing/');
     const { images } = await manifest(page);
     await expect(meta(page, 'property="og:image"')).toHaveAttribute(
       'content',
@@ -138,19 +138,19 @@ test.describe(() => {
   test('the landing page without a raster hero image shares the newest cover', async ({
     page,
   }) => {
-    await page.goto('/e2e/landing-single/');
+    await page.goto('/cs/e2e/landing-single/');
     await expectSharesFirstCard(page);
   });
 
   test('the work page shares its first cover', async ({ page }) => {
-    await page.goto('/work/');
+    await page.goto('/cs/work/');
     await expectSharesFirstCard(page);
   });
 
   test('the about page is the architect’s profile', async ({ page }) => {
-    await page.goto('/about/');
+    await page.goto('/cs/about/');
     expect(node(await graph(page), 'ProfilePage')).toMatchObject({
-      url: `${origin}/about/`,
+      url: `${origin}/cs/about/`,
       mainEntity: { '@id': `${origin}/#person` },
     });
   });
@@ -161,7 +161,7 @@ test.describe(() => {
   });
 
   test('project metadata preserves collaborator roles without inferring ownership', async ({ page }) => {
-    await page.goto('/e2e/credits/');
+    await page.goto('/cs/e2e/credits/');
     const work = node(await graph(page), 'CreativeWork')!;
     expect(work).not.toHaveProperty('creator');
     expect(work.contributor).toEqual([
@@ -173,7 +173,7 @@ test.describe(() => {
       { '@type': 'Person', name: 'Ing. Iva Tichá' },
     ]);
 
-    await page.goto('/projects/křížovice/');
+    await page.goto('/cs/projects/křížovice/');
     const actual = node(await graph(page), 'CreativeWork')!;
     expect(actual).not.toHaveProperty('creator');
     expect(actual.contributor).toEqual([
@@ -185,12 +185,12 @@ test.describe(() => {
   test('a project page is a creative work by the architect, with its described images', async ({
     page,
   }) => {
-    await page.goto('/e2e/project/');
+    await page.goto('/cs/e2e/project/');
     const work = node(await graph(page), 'CreativeWork')!;
     expect(work).toMatchObject({
       name: 'Testovací projekt',
       contentLocation: { '@type': 'Place', name: 'Nikde' },
-      url: `${origin}/e2e/project/`,
+      url: `${origin}/cs/e2e/project/`,
     });
     expect(work).not.toHaveProperty('dateCreated');
     expect(work).not.toHaveProperty('creator');
@@ -214,10 +214,10 @@ test.describe(() => {
 
 test('the sitemap lists the pages but not the not-found page', async ({ request }) => {
   const sitemap = await (await request.get('/sitemap-0.xml')).text();
-  for (const path of ['/', '/work/', '/about/']) {
+  for (const path of ['/cs/', '/cs/work/', '/cs/about/', '/en/', '/en/work/', '/en/about/']) {
     expect(sitemap).toContain(`<loc>${origin}${path}</loc>`);
   }
-  for (const path of ['/404/', '/404.html']) {
+  for (const path of ['/404/', '/404.html', '/', '/about/', '/work/']) {
     expect(sitemap).not.toContain(`<loc>${origin}${path}</loc>`);
   }
 });
@@ -233,7 +233,7 @@ test('robots.txt allows crawling and names the sitemap', async ({ request }) => 
   expect((await request.get(new URL(sitemap).pathname)).ok()).toBe(true);
 });
 
-test('llms.txt indexes shared bilingual pages and llms-full.txt retains published content', async ({
+test('llms.txt indexes canonical language pages and llms-full.txt retains published content', async ({
   request,
 }) => {
   const response = await request.get('/llms.txt');
@@ -268,13 +268,16 @@ test('llms.txt indexes shared bilingual pages and llms-full.txt retains publishe
     }
   }
   const urls = links.map((link) => link.href);
-  for (const path of ['/about/', '/work/', '/llms-full.txt']) expect(urls).toContain(`${origin}${path}`);
+  for (const url of urls.filter((url) => !url.endsWith('.txt'))) {
+    expect(new URL(url).pathname).toMatch(/^\/(cs|en)\//);
+  }
+  for (const path of ['/cs/about/', '/en/about/', '/cs/work/', '/en/work/', '/llms-full.txt']) expect(urls).toContain(`${origin}${path}`);
 
   const projects = readdirSync('src/content/projects').map((file) =>
     frontmatter(`src/content/projects/${file}`),
   );
   const pageProjects = projects.filter((data) => !data.draft && data.blocks?.length);
-  expect(urls.filter((url) => new URL(url).pathname.startsWith('/projects/'))).toHaveLength(pageProjects.length);
+  expect(urls.filter((url) => new URL(url).pathname.includes('/projects/'))).toHaveLength(pageProjects.length * 2);
   for (const data of projects) {
     if (data.draft) {
       expect(text).not.toContain(data.title_cs);
@@ -285,10 +288,10 @@ test('llms.txt indexes shared bilingual pages and llms-full.txt retains publishe
     expect(full).toContain(data.title_en);
     if (data.brief_cs) expect(full).toContain(data.brief_cs.trim());
     if (data.brief_en) expect(full).toContain(data.brief_en.trim());
-    const projectLink = links.find((link) => link.href.startsWith(`${origin}/projects/`) && link.text.includes(data.title_cs));
+    const projectLink = links.find((link) => link.href.startsWith(`${origin}/cs/projects/`) && link.text.includes(data.title_cs));
     if (data.blocks?.length) {
       expect(projectLink).toBeDefined();
-      expect(projectLink!.text).toContain(data.title_en);
+      expect(links.some((link) => link.href.startsWith(`${origin}/en/projects/`) && link.text.includes(data.title_en))).toBe(true);
     } else expect(projectLink).toBeUndefined();
   }
   expect(text.length).toBeLessThan(full.length / 3);
@@ -301,4 +304,29 @@ test('llms.txt indexes shared bilingual pages and llms-full.txt retains publishe
     expect(new URL(url).origin).toBe(origin);
     expect((await request.get(new URL(url).pathname)).ok(), url).toBe(true);
   }
+});
+
+test('English structured data follows the page while the architect identity stays shared', async ({ page }) => {
+  await page.goto('/en/e2e/project-role/');
+  const nodes = await graph(page);
+  expect(node(nodes, 'Person')).toMatchObject({
+    '@id': `${origin}/#person`, jobTitle: 'Architect', url: `${origin}/en/`,
+  });
+  expect(node(nodes, 'CreativeWork')).toMatchObject({
+    name: 'Test project', inLanguage: 'en',
+    contentLocation: { name: 'Nowhere' }, url: `${origin}/en/e2e/project-role/`,
+    contributor: [
+      { '@type': 'Role', roleName: 'Interior design, documentation', contributor: { '@id': `${origin}/#person` } },
+      { '@type': 'Role', roleName: 'Structural design', contributor: { '@type': 'Person', name: 'Jan Novák' } },
+    ],
+  });
+  await page.goto('/en/e2e/project/');
+  const work = node(await graph(page), 'CreativeWork')!;
+  expect(work.image).toContainEqual({
+    '@type': 'ImageObject', contentUrl: `${origin}/e2e/images/vector.svg`,
+    name: 'Vector 17', caption: 'A short note.',
+  });
+  await page.goto('/en/about/');
+  const architect = node(await graph(page), 'Person')!;
+  expect(architect['@id']).toBe(`${origin}/#person`);
 });

@@ -1,9 +1,11 @@
 ---
+import { pageLanguage } from '../locale';
 import { bindOneLetterWords } from '../one-letter-words';
 import { canSplitProse } from '../prose';
 
-// Plain text with the author's paragraphs, one element per language like
-// T.astro. Pages CMS writes one typed line break as a single newline and two as
+const lang = pageLanguage(Astro.url.pathname);
+
+// Pages CMS writes one typed line break as a single newline and two as
 // a blank line; the architect starts a paragraph with either.
 interface Props {
   cs?: string;
@@ -19,7 +21,7 @@ const languages = [
 ---
 
 {
-  languages.map(
+  languages.filter((entry) => entry.lang === lang).map(
     ({ lang, text }) =>
       text && (
         <div {lang} class:list={['running-text', cls, { 'prose-columns': canSplitProse(text) }]}>

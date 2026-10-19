@@ -1017,7 +1017,7 @@ test('the lightbox is full screen with controls in the corners', async ({
   expect(original.x + original.width).toBeGreaterThan(viewport.width - 20);
   expect(original.y + original.height).toBeGreaterThan(viewport.height - 20);
   await expect(
-    dialog.getByRole('button', { name: 'Switch to Czech' }),
+    dialog.getByRole('link', { name: 'Switch to Czech' }),
   ).toBeVisible();
 
   const previous = await box(

@@ -1,12 +1,11 @@
 import type { CollectionEntry } from 'astro:content';
 import type { GalleryImage } from './components/gallery';
-import { ui } from './i18n';
+import { localizedPath } from './locale';
+import { ui, type Lang } from './i18n';
 import { largeImageUrl, type ResponsiveImage } from './images';
 import { formatPeriod } from './period';
 import { projectCover } from './projects';
 
-// schema.org JSON-LD for the page's inline script. Text is the Czech source as
-// plain strings, the value type Google documents for these properties.
 
 type Node = Record<string, unknown>;
 type Data<Collection extends 'site' | 'about' | 'contact' | 'projects'> =
@@ -17,10 +16,10 @@ const texts = (values: (string | undefined)[]) =>
   values.flatMap((value) => text(value) ?? []);
 type FactRow = Data<'about'>['awards'][number];
 /** The row's filled parts in the given order, then its period in brackets. */
-const factNames = (rows: FactRow[], parts: (row: FactRow) => (string | undefined)[]) =>
+const factNames = (rows: FactRow[], parts: (row: FactRow) => (string | undefined)[], lang: Lang) =>
   rows.flatMap((row) => {
     const name = texts(parts(row)).join(', ');
-    const period = formatPeriod(row)?.cs;
+    const period = formatPeriod(row)?.[lang];
     return name ? [period ? `${name} (${period})` : name] : [];
   });
 
@@ -43,30 +42,32 @@ export function person({
   about,
   contact,
   portrait,
+  lang = 'cs',
 }: {
   site: URL;
   owner: Pick<Data<'site'>, 'name' | 'credential'>;
   about: Pick<Data<'about'>, 'services' | 'awards'>;
   contact: Pick<Data<'contact'>, 'email' | 'phone'>;
   portrait?: string;
+  lang?: Lang;
 }) {
   return compact({
     '@type': 'Person',
     '@id': personId(site),
     name: owner.name,
     honorificPrefix: text(owner.credential),
-    jobTitle: ui.cs.tagline,
-    url: absolute('/', site),
+    jobTitle: ui[lang].tagline,
+    url: absolute(localizedPath('/', lang), site),
     email: contact.email,
     telephone: text(contact.phone),
     image: portrait && absolute(portrait, site),
-    makesOffer: texts(about.services.map((service) => service.name_cs)).map(
+    makesOffer: texts(about.services.map((service) => service[`name_${lang}`])).map(
       (name) => ({
         '@type': 'Offer',
         itemOffered: { '@type': 'Service', name },
       }),
     ),
-    award: factNames(about.awards, (row) => [row.place_cs, row.title_cs]),
+    award: factNames(about.awards, (row) => [row[`place_${lang}`], row[`title_${lang}`]], lang),
   });
 }
 
@@ -100,49 +101,51 @@ export function creativeWork({
   images,
   responsiveImages,
   responsiveCover,
+  lang = 'cs',
 }: {
   site: URL;
   url: string;
   project: Pick<
     Data<'projects'>,
-    'title_cs' | 'location_cs' | 'realization' | 'role_cs' | 'collaborators' | 'award_cs' | 'thumbnail'
+    'title_cs' | 'title_en' | 'location_cs' | 'location_en' | 'realization' | 'role_cs' | 'role_en' | 'collaborators' | 'award_cs' | 'award_en' | 'thumbnail'
   >;
   description?: string;
   images: GalleryImage[];
   responsiveImages: (ResponsiveImage | undefined)[];
   responsiveCover?: ResponsiveImage;
+  lang?: Lang;
 }) {
   const cover = projectCover(project.thumbnail, images);
   const coverIndex = images.findIndex((item) => item.image === cover?.image);
   const represented = [
     ...(cover ? [{ item: cover, responsive: responsiveCover ?? responsiveImages[coverIndex] }] : []),
     ...images.flatMap((item, index) =>
-      item.image !== cover?.image && (text(item.title_cs) || text(item.description_cs))
+      item.image !== cover?.image && (text(item[`title_${lang}`]) || text(item[`description_${lang}`]))
         ? [{ item, responsive: responsiveImages[index] }]
         : [],
     ),
   ];
-  const location = text(project.location_cs);
+  const location = text(project[`location_${lang}`]);
   const architect = { '@id': personId(site) };
-  const roleName = text(project.role_cs);
-  const contributors = project.collaborators.map(({ name, role_cs }) => {
+  const roleName = text(project[`role_${lang}`]);
+  const contributors = project.collaborators.map(({ name, role_cs, role_en }) => {
     const person = { '@type': 'Person', name: name.trim() };
-    const roleName = text(role_cs);
+    const roleName = text(lang === 'cs' ? role_cs : role_en);
     return roleName ? { '@type': 'Role', roleName, contributor: person } : person;
   });
   return compact({
     '@type': 'CreativeWork',
-    name: project.title_cs,
+    name: project[`title_${lang}`],
     contentLocation: location && { '@type': 'Place', name: location },
     description,
-    inLanguage: 'cs',
+    inLanguage: lang,
     url,
     contributor: [roleName ? { '@type': 'Role', roleName, contributor: architect } : architect, ...contributors],
-    award: text(project.award_cs),
-    creativeWorkStatus: project.realization && ui.cs[project.realization],
+    award: text(project[`award_${lang}`]),
+    creativeWorkStatus: project.realization && ui[lang][project.realization],
     image: represented.map(({ item, responsive }) => {
-      const name = text(item.title_cs);
-      const caption = text(item.description_cs);
+      const name = text(item[`title_${lang}`]);
+      const caption = text(item[`description_${lang}`]);
       return compact({
         '@type': 'ImageObject',
         contentUrl: absolute(largeImageUrl(responsive, item.image), site),

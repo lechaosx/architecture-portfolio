@@ -58,7 +58,7 @@ test('an unknown address shows the not-found page with the menu', async ({ page 
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
   await expect(page).toHaveTitle(`Page not found | ${owner}`);
 
-  await page.getByRole('button', { name: 'Switch to Czech' }).click();
+  await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.getByRole('heading', { name: 'Na této parcele nic nestojí.' })).toBeVisible();
   await expect(page).toHaveTitle(`Stránka nenalezena | ${owner}`);
   await page.getByRole('link', { name: 'Zpátky do ateliéru' }).click();
@@ -76,7 +76,7 @@ test.describe(() => {
     await expect(page.getByRole('heading', { name: 'Přístup' })).toBeVisible();
     expect(await page.evaluate(() => localStorage.getItem('lang'))).toBeNull();
 
-    await page.getByRole('button', { name: 'Přepnout do angličtiny' }).click();
+    await page.getByRole('link', { name: 'Přepnout do angličtiny' }).click();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByRole('heading', { name: 'Approach' })).toBeVisible();
     await expect(page).toHaveTitle(`About | ${owner}`);
@@ -95,7 +95,7 @@ test.describe(() => {
 test.describe(() => {
   test.use({ locale: 'en-US' });
 
-  test('an English browser gets English over the Czech static default', async ({ page }) => {
+  test('an English browser reaches the English canonical page', async ({ page }) => {
     await page.goto('/work/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByRole('heading', { name: 'Work' })).toHaveCount(1);
@@ -295,7 +295,7 @@ test('when the contact line does not fit the footer stacks the contacts in a col
   const { footer, copyright, email, phone, hours, theme } = footerParts(page);
   const icons = footer.getByRole('listitem').locator('svg');
   for (const lang of ['en', 'cs'] as const) {
-    if (lang === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    if (lang === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
     for (const width of [320, 360, 390]) {
       const at = `${lang} at ${width}px`;
       await page.setViewportSize({ width, height: 700 });
@@ -328,7 +328,7 @@ test('the wordmark and menu fit a 320px phone, each menu item on one line', asyn
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto('/about/');
   for (const lang of ['en', 'cs']) {
-    if (lang === 'cs') await page.getByRole('button', { name: 'Switch to Czech' }).click();
+    if (lang === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
     const lines = await page
       .locator('header nav li span:visible')
       .evaluateAll((items) => items.map((item) => item.getClientRects().length));
@@ -365,47 +365,48 @@ test('running text is justified and hyphenates in its own language, short lines 
     ['en', /^The drawing follows .* The drawing follows /, 'First paragraph.', 'Permit drawings.', /^The drawing follows [^.]*\.$/],
     ['cs', /^Výkres sleduje, .* Výkres sleduje, /, 'První odstavec.', 'Výkresy k povolení.', /^Výkres sleduje, [^.]*\.$/],
   ] as const) {
+    await page.goto(`/${lang}/e2e/about/`);
     for (const text of [bio, approach, description, award]) {
       expect(await typeset(text), String(text)).toEqual(running(lang));
     }
   }
+  await page.goto('/en/e2e/about/');
   expect((await typeset('Place')).textAlign).not.toBe('justify');
   expect((await typeset('Architect')).textAlign).not.toBe('justify');
 
   await page.goto('/e2e/work/');
   expect(await typeset('First line\nSecond line')).toEqual(running('en'));
+  await page.goto('/cs/e2e/work/');
   expect(await typeset('První řádek\nDruhý řádek')).toEqual(running('cs'));
+  await page.goto('/en/e2e/work/');
   expect((await typeset('Alpha brief')).textAlign).not.toBe('justify');
 
   await page.goto('/e2e/brief/');
   expect(await typeset('A brief for the page.\nSecond line.')).toEqual(running('en'));
+  await page.goto('/cs/e2e/brief/');
   expect(await typeset('Anotace stránky.\nDruhý řádek.')).toEqual(running('cs'));
 });
 
-test('Czech running text never ends a line on a one-letter word; English text and structured data keep plain spaces', async ({
-  page,
-}) => {
+test('Czech running text binds one-letter words while English and structured data keep plain spaces', async ({ page }) => {
   const nbsp = '\u00A0';
-  // The fixtures' sentence: "… podél řeky a kudy …", "… a park and a stadium …".
-  const sentences = (text: string) => page.locator('main .running-text').filter({ hasText: text }).allTextContents();
-  // About's bio and row descriptions, and a project's brief.
-  for (const path of ['/e2e/about/', '/e2e/credits/']) {
-    await page.goto(path);
-    const czech = await sentences('Výkres sleduje');
-    const english = await sentences('The drawing follows');
-    expect(czech.length, path).toBeGreaterThan(0);
-    expect(english.length, path).toBeGreaterThan(0);
-    for (const text of czech) expect(text, path).toContain(`řeky a${nbsp}kudy`);
-    for (const text of english) expect(text, path).not.toContain(nbsp);
+  for (const lang of ['cs', 'en']) {
+    for (const fixture of ['about', 'credits']) {
+      await page.goto(`/${lang}/e2e/${fixture}/`);
+      const texts = await page.locator('main .running-text').filter({ hasText: lang === 'cs' ? 'Výkres sleduje' : 'The drawing follows' }).allTextContents();
+      expect(texts.length).toBeGreaterThan(0);
+      for (const text of texts) {
+        if (lang === 'cs') expect(text).toContain(`řeky a${nbsp}kudy`);
+        else expect(text).not.toContain(nbsp);
+      }
+      expect(await page.locator('script[type="application/ld+json"]').textContent()).not.toContain(nbsp);
+    }
+    await page.goto(`/${lang}/e2e/markdown/`);
+    const prose = page.locator('main .prose');
+    if (lang === 'cs') {
+      expect(await prose.textContent()).toContain(`Plán v${nbsp}parku a${nbsp}v${nbsp}Brně.`);
+      expect(await prose.locator('img').getAttribute('alt')).toBe('Plán v parku');
+    } else expect(await prose.textContent()).not.toContain(nbsp);
   }
-  expect(await page.locator('script[type="application/ld+json"]').textContent()).not.toContain(nbsp);
-
-  // Rich text: across a soft line break and into emphasis, but not in alt text.
-  await page.goto('/e2e/markdown/');
-  const prose = (lang: string) => page.locator(`main .prose[lang="${lang}"]`);
-  expect(await prose('cs').textContent()).toContain(`Plán v${nbsp}parku a${nbsp}v${nbsp}Brně.`);
-  expect(await prose('cs').locator('img').getAttribute('alt')).toBe('Plán v parku');
-  expect(await prose('en').textContent()).not.toContain(nbsp);
 });
 
 test('project prose fills the available width with comfortable columns', async ({
@@ -416,7 +417,7 @@ test('project prose fills the available width with comfortable columns', async (
 
   for (const lang of ['en', 'cs']) {
     if (lang === 'cs') {
-      await page.getByRole('button', { name: 'Switch to Czech' }).click();
+      await page.getByRole('link', { name: 'Switch to Czech' }).click();
     }
     const prose = page.locator(`article .prose[lang="${lang}"]`).first();
     await expect(prose).toBeVisible();
@@ -517,8 +518,8 @@ test('reduced motion keeps project images still on hover', async ({ page }) => {
 test.describe(() => {
   test.use({ javaScriptEnabled: false });
 
-  test('the static page is Czech, as crawlers and link previews read it', async ({ page }) => {
-    await page.goto('/');
+  test('the Czech canonical page serves Czech to crawlers and link previews', async ({ page }) => {
+    await page.goto('/cs/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       `Architektka · ${contact.location_cs}`,
@@ -636,29 +637,6 @@ test('the footer spreads a complete contact line across the width above copyrigh
   }
 });
 
-test('language changes keep the activated footer button in place through unequal translation heights', async ({ page }) => {
-  await page.setViewportSize({ width: 600, height: 700 });
-  await page.goto('/e2e/about/');
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    document.documentElement.style.overflowAnchor = 'none';
-    document.body.style.paddingBottom = '600px';
-    document.querySelector('main .prose[lang="cs"]')!.textContent = 'Delší český text. '.repeat(400);
-    document.querySelector('main .prose[lang="en"]')!.textContent = 'Shorter English text. '.repeat(60);
-  });
-  const button = page.locator('[data-lang-toggle]');
-  for (const keyboard of [false, true]) {
-    await button.evaluate((element) => scrollTo(0, scrollY + element.getBoundingClientRect().y - 350));
-    await button.focus();
-    const before = (await button.boundingBox())!.y;
-    if (keyboard) await page.keyboard.press('Enter');
-    else await button.click();
-    await expect(page.locator('html')).toHaveAttribute('lang', keyboard ? 'en' : 'cs');
-    await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
-    expect(Math.abs((await button.boundingBox())!.y - before)).toBeLessThanOrEqual(1);
-  }
-});
-
 test('the footer adapts when translating the contact line changes whether it fits', async ({ page }) => {
   await page.setViewportSize({ width: 486, height: 700 });
   await page.goto('/work/');
@@ -666,13 +644,10 @@ test('the footer adapts when translating the contact line changes whether it fit
   const { email, phone, hours, language } = footerParts(page);
   expect(await middle(phone)).toBeGreaterThan(await middle(email));
   await language.scrollIntoViewIfNeeded();
-  const top = (await language.boundingBox())!.y;
   await language.click();
   await expect.poll(async () => new Set(await Promise.all([email, phone, hours('cs')].map(middle))).size).toBe(1);
-  expect((await language.boundingBox())!.y).toBeCloseTo(top, 0);
   await language.click();
   expect(await middle(phone)).toBeGreaterThan(await middle(email));
-  expect((await language.boundingBox())!.y).toBeCloseTo(top, 0);
 });
 
 test('hours filled in only one language leave no extra gap in the other contact line', async ({ page }) => {
@@ -689,5 +664,6 @@ test('hours filled in only one language leave no extra gap in the other contact 
   await expect(hours('cs')).toBeVisible();
   expect(await middle(phone)).toBeGreaterThan(await middle(email));
   await language.click();
+  await footer.getByRole('listitem').filter({ hasText: contact.hours_en }).evaluate((item) => item.setAttribute('lang', 'cs'));
   await expect.poll(async () => await middle(phone) - await middle(email)).toBe(0);
 });

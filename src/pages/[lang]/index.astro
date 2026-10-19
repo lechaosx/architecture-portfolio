@@ -1,0 +1,10 @@
+---
+export const getStaticPaths = () => ['cs', 'en'].map((lang) => ({ params: { lang } }));
+import { getCollection } from 'astro:content';
+import LandingPage from '../../components/LandingPage.astro';
+import { about, contact, landing } from '../../singletons';
+
+const projects = await getCollection('projects', ({ data }) => !data.draft);
+---
+
+<LandingPage {landing} {projects} {about} {contact} />

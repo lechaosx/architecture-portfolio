@@ -2,7 +2,9 @@
 
 The portfolio website of Ing. arch. Tereza Kalábková, live at
 [kalabkova.cz](https://kalabkova.cz). Static, bilingual (Czech and English) and
-image-forward.
+image-forward. Czech pages use `/cs/…` and English pages `/en/…`; existing
+unprefixed URLs automatically select a saved or browser language, falling back
+to English. The footer links to the equivalent translated page.
 
 Astro with one Svelte island and Tailwind, in TypeScript on Node 24, hosted on
 GitHub Pages.

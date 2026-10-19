@@ -7,7 +7,7 @@ export const ui = {
   cs: {
     about: 'O mně',
     languageName: 'Česky (cs)',
-    llmsLanguages: 'Stránky obsahují češtinu (cs) i angličtinu (en) na stejné URL; jazyk lze přepnout v zápatí.',
+    llmsLanguages: 'České stránky jsou na /cs/ a anglické na /en/; odkazy níže označují jazyk.',
     llmsPages: 'Stránky',
     llmsAbout: 'Životopis, přístup, služby, praxe, vzdělání a ocenění.',
     llmsWork: 'Všechny publikované projekty včetně projektů bez samostatné stránky.',
@@ -79,7 +79,7 @@ export const ui = {
   en: {
     about: 'About',
     languageName: 'English (en)',
-    llmsLanguages: 'Pages contain both Czech (cs) and English (en) at the same URL; switch languages in the footer.',
+    llmsLanguages: 'Czech pages use /cs/ and English pages use /en/; links below identify the language.',
     llmsPages: 'Pages',
     llmsAbout: 'Biography, approach, services, experience, education and awards.',
     llmsWork: 'All published projects, including projects without a separate page.',

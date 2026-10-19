@@ -1,14 +1,19 @@
 ---
+import { pageLanguage, localizedPath } from '../locale';
 import { site } from '../singletons';
 import type { UiKey } from '../i18n';
 import T from './T.astro';
 
+const lang = pageLanguage(Astro.url.pathname);
+
+interface Props { bilingual?: boolean; }
+const { bilingual = false } = Astro.props;
 const links: { href: string; key: UiKey }[] = [
   { href: '/work/', key: 'work' },
   { href: '/about/', key: 'about' },
 ];
 
-const isActive = (href: string) => Astro.url.pathname === href;
+const isActive = (href: string) => Astro.url.pathname === localizedPath(href, lang);
 ---
 
 <header class="sticky top-0 z-40 border-b border-rule bg-white">
@@ -16,7 +21,8 @@ const isActive = (href: string) => Astro.url.pathname === href;
     class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4"
   >
     <a
-      href="/"
+      href={localizedPath('/', lang)}
+      data-localized-path="/"
       class="flex flex-col gap-0.5 leading-none sm:flex-row sm:items-baseline sm:gap-1.5 sm:leading-normal"
     >
       <span class="text-xs font-normal tracking-widest">{site.credential}</span>
@@ -31,7 +37,8 @@ const isActive = (href: string) => Astro.url.pathname === href;
         links.map((l) => (
           <li>
             <a
-              href={l.href}
+              href={localizedPath(l.href, lang)}
+              data-localized-path={l.href}
               aria-current={isActive(l.href) ? 'page' : undefined}
               class:list={[
                 'border border-transparent px-2 py-1.5 whitespace-nowrap sm:py-0.5',
@@ -40,7 +47,7 @@ const isActive = (href: string) => Astro.url.pathname === href;
                   : 'hover:border-black',
               ]}
             >
-              <T k={l.key} />
+              <T {bilingual} k={l.key} />
             </a>
           </li>
         ))
