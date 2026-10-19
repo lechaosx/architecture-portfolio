@@ -406,6 +406,12 @@ Moving forward from the last image continues into the first; moving backward
 from the first continues into the last. Arrows, automatic advance and native
 horizontal scrolling share this circular order.
 
+### Mouse dragging in carousels — [Explicit]
+
+The landing carousel and project image sets follow mouse drags as well as touch
+swipes. Short drags snap back; a sideways drag advances through the images, and
+releasing it does not open the lightbox. Clicking a project image still opens it.
+
 ---
 
 ## Project pages and the lightbox

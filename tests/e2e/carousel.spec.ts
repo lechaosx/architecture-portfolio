@@ -129,6 +129,128 @@ test('a project image set does not auto-advance', async ({ page }) => {
   await expect.poll(() => currentSlide(page)).toBe(0);
 });
 
+for (const path of ['/e2e/landing/', '/e2e/carousel-lightbox/']) {
+  test(`mouse dragging follows the pointer and wraps at ${path}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 1400 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(path);
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    const { track, dots } = parts(page);
+    const bounds = (await track.boundingBox())!;
+    const x = bounds.x + bounds.width / 2;
+    const y = bounds.y + bounds.height / 2;
+    const start = await track.evaluate((element) => element.scrollLeft);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x - 100, y, { steps: 5 });
+    expect(await track.evaluate((element) => element.scrollLeft) - start).toBeCloseTo(100, 0);
+    await page.mouse.up();
+    await expect.poll(() => currentSlide(page)).toBe(1);
+    await expect(page.locator('[data-gallery-lightbox]')).not.toBeVisible();
+
+    await dots.first().click();
+    await expect.poll(() => track.evaluate((element) => {
+      const left = element.getBoundingClientRect().left;
+      return [...element.querySelectorAll('img')].find((image) =>
+        image.getBoundingClientRect().width && Math.abs(image.getBoundingClientRect().left - left) < 1,
+      )?.getAttribute('src');
+    })).toBe(sources[0]);
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + 100, y, { steps: 5 });
+    await page.mouse.up();
+    await expect.poll(() => currentSlide(page)).toBe((await dots.count()) - 1);
+  });
+}
+
+test('a short mouse drag snaps back and a subsequent click opens the lightbox', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/e2e/set-first/');
+  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+  const { track } = parts(page);
+  const bounds = (await track.boundingBox())!;
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + bounds.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x - 25, y, { steps: 5 });
+  await page.mouse.up();
+  expect(await currentSlide(page)).toBe(0);
+  await expect(page.locator('[data-gallery-lightbox]')).not.toBeVisible();
+  await page.mouse.click(x, y);
+  await expect(page.getByRole('dialog', { name: 'Image viewer' })).toBeVisible();
+  await expect(page).toHaveURL(/#image-1$/);
+});
+
+test('a dot takes over an unfinished mouse drag', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(fixture);
+  const { track, dots } = parts(page);
+  const bounds = (await track.boundingBox())!;
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + bounds.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x - 100, y, { steps: 5 });
+  await dots.nth(2).evaluate((dot: HTMLElement) => dot.click());
+  expect(await currentSlide(page)).toBe(2);
+  await page.mouse.move(x - 150, y);
+  await page.mouse.up();
+  expect(await currentSlide(page)).toBe(2);
+});
+
+test('releasing outside the track before dragging leaves subsequent hover still', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(fixture);
+  const { track } = parts(page);
+  const bounds = (await track.boundingBox())!;
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + 5;
+  const start = await track.evaluate((element) => element.scrollLeft);
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, bounds.y - 20);
+  await page.mouse.up();
+  await page.mouse.move(x - 100, y);
+  expect(await track.evaluate((element) => element.scrollLeft)).toBe(start);
+  expect(await currentSlide(page)).toBe(0);
+});
+
+test('native horizontal scrolling takes over a held mouse press', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(fixture);
+  const { track } = parts(page);
+  const bounds = (await track.boundingBox())!;
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + bounds.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.wheel(bounds.width, 0);
+  await expect.poll(() => currentSlide(page)).toBe(1);
+  await page.mouse.up();
+  expect(await currentSlide(page)).toBe(1);
+});
+
+test('automatic advance waits for a drag held outside the carousel', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1400 });
+  await page.clock.install();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.goto('/e2e/landing/');
+  const { track } = parts(page);
+  const bounds = (await track.boundingBox())!;
+  const x = bounds.x + bounds.width / 2;
+  const y = bounds.y + bounds.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x - 100, y, { steps: 5 });
+  await page.mouse.move(x - 100, bounds.y + bounds.height + 20);
+  const held = await track.evaluate((element) => element.scrollLeft);
+  await page.clock.fastForward(10_000);
+  await page.clock.runFor(1_000);
+  expect(await track.evaluate((element) => element.scrollLeft)).toBe(held);
+  await page.mouse.up();
+});
+
 test('arrows and dots navigate and wrap', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(fixture);

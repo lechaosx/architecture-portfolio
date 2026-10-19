@@ -20,7 +20,7 @@ const slides = await Promise.all(
 <div data-carousel data-auto-advance={autoAdvance || undefined} class="relative bg-neutral-100">
   <div
     data-carousel-track
-    class="no-scrollbar flex aspect-video snap-x snap-mandatory overflow-x-auto *:relative *:size-full *:shrink-0 *:snap-start"
+    class="no-scrollbar flex aspect-video cursor-grab snap-x snap-mandatory overflow-x-auto select-none *:relative *:size-full *:shrink-0 *:snap-start"
   >
     {slides.map((slide) => <Fragment set:html={slide} />)}
   </div>
@@ -116,6 +116,8 @@ const slides = await Promise.all(
     let pending = false;
     let animation: number | undefined;
     let lastFrame = 0;
+    let drag: { id: number; x: number; y: number; from: number; index: number } | undefined;
+    let dragged = false;
     const sync = () => {
       dots.forEach((dot, index) =>
         dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
@@ -168,6 +170,12 @@ const slides = await Promise.all(
       }
     };
     const goTo = (index: number) => {
+      if (drag) {
+        const id = drag.id;
+        drag = undefined;
+        track.style.cursor = '';
+        if (track.hasPointerCapture(id)) track.releasePointerCapture(id);
+      }
       direction = Math.sign(index - current) || direction;
       current = wrap(index);
       visitorScrolling = false;
@@ -211,16 +219,71 @@ const slides = await Promise.all(
     dots.forEach((dot, index) =>
       dot.addEventListener('click', () => goTo(index)),
     );
-    for (const event of ['pointerdown', 'keydown', 'focusin']) {
+    for (const event of ['keydown', 'focusin']) {
       track.addEventListener(event, takeOver, {
         passive: true,
       });
     }
+    track.addEventListener('pointerdown', (event) => {
+      takeOver();
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      dragged = false;
+      const nearest = frames.reduce((near, frame) =>
+        Math.abs(frame.at - position) < Math.abs(near.at - position) ? frame : near,
+      );
+      drag = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        from: track.scrollLeft,
+        index: nearest.index,
+      };
+      track.style.scrollSnapType = 'none';
+    });
+    track.addEventListener('dragstart', (event) => event.preventDefault());
+    track.addEventListener('pointermove', (event) => {
+      if (!drag || event.pointerId !== drag.id) return;
+      const offset = drag.x - event.clientX;
+      if (!dragged && Math.hypot(offset, drag.y - event.clientY) <= 10) return;
+      dragged = true;
+      track.setPointerCapture(event.pointerId);
+      track.style.cursor = 'grabbing';
+      track.scrollLeft = drag.from + offset;
+    });
+    const releaseDrag = (event: PointerEvent) => {
+      if (!drag || event.pointerId !== drag.id) return;
+      const offset = drag.x - event.clientX;
+      const step = dragged && event.type === 'pointerup'
+        && Math.abs(offset) >= 50 && Math.abs(offset) > Math.abs(drag.y - event.clientY)
+        ? Math.sign(offset) * Math.max(1, Math.round(Math.abs(offset) / track.clientWidth))
+        : 0;
+      const index = drag.index;
+      goTo(index + step);
+    };
+    // A press can leave the track before movement starts pointer capture.
+    window.addEventListener('pointerup', releaseDrag);
+    window.addEventListener('pointercancel', releaseDrag);
+    track.addEventListener('lostpointercapture', releaseDrag);
+    // A released drag must not activate the image button underneath it.
+    track.addEventListener('click', (event) => {
+      if (!dragged || event.detail === 0) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      dragged = false;
+    }, { capture: true });
     // A vertical wheel over the track scrolls the page, not the track.
     track.addEventListener(
       'wheel',
       (event) => {
-        if (event.deltaX || event.shiftKey) takeOver();
+        if (!event.deltaX && !event.shiftKey) return;
+        if (drag) {
+          const id = drag.id;
+          drag = undefined;
+          track.style.cursor = '';
+          if (track.hasPointerCapture(id)) track.releasePointerCapture(id);
+          track.style.scrollSnapType = '';
+        }
+        takeOver();
       },
       { passive: true },
     );
@@ -245,7 +308,7 @@ const slides = await Promise.all(
     );
     track.addEventListener('scrollend', () => {
       // Recentring can queue a scrollend before a new gesture starts moving.
-      if (animation !== undefined || !visitorScrolling || !visitorMoved) return;
+      if (drag || animation !== undefined || !visitorScrolling || !visitorMoved) return;
       visitorScrolling = false;
       settle();
     });

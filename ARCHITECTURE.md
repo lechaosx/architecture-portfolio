@@ -200,6 +200,8 @@ original slides and the next destination occupy it. A frame animation places
 the latest target just beyond the visible pair, so rapid changes skip unused
 images and the lightbox always receives the original thumbnail. Native gestures
 keep browser momentum and snapping; the strip recenters when it settles.
+Mouse dragging moves the same native scroll surface with pointer capture,
+then hands settling back to the carousel animation — [Implicit].
 
 ### Project blocks render in Astro — [Explicit]
 
