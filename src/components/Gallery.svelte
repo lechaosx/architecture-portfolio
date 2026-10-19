@@ -137,7 +137,6 @@
   let trigger: HTMLButtonElement | undefined;
   let thumbnailButtons: HTMLButtonElement[] = [];
   let pointer: Point | undefined;
-  let heldHover: { image: HTMLImageElement; scale: string; transition: string } | undefined;
   let nextSlideId = 0;
   const gestures = new LightboxGestures();
   const imageHistory = new LightboxHistory(untrack(() => images.length), {
@@ -243,18 +242,38 @@
       thumbnail.style.opacity = '';
     };
   });
-  // Closing follows the thumbnail's geometry as the page takes
-  // input again; losing the destination's visible area fades the card.
+  // Holding both images at one scale prevents a hover change underneath
+  // the returning card from breaking the handoff.
   let landingOn = $derived(!open && morph?.landing ? morph.thumbnail : undefined);
   $effect(() => {
     const thumbnail = landingOn;
     if (!thumbnail) return;
+    const image = thumbnail.querySelector('img');
+    const savedScale = image?.style.scale ?? '';
+    const savedTransition = image?.style.transitionProperty ?? '';
+    if (image) {
+      // Modality suppresses native :hover, even with the pointer over the thumbnail.
+      const hovered = matchMedia('(hover: hover)').matches && pointer &&
+        thumbnail.contains(document.elementFromPoint(pointer.x, pointer.y));
+      const scale = hovered ? Number(getComputedStyle(image).getPropertyValue('--thumbnail-hover-scale')) || 1 : 1;
+      image.style.transitionProperty = 'none';
+      image.style.scale = String(scale);
+    }
+    untrack(() => closeInto(thumbnail));
     const follow = () => {
-      untrack(() => closeInto(thumbnail));
+      closeInto(thumbnail);
       landingFrame = requestAnimationFrame(follow);
     };
     let landingFrame = requestAnimationFrame(follow);
-    return () => cancelAnimationFrame(landingFrame);
+    return () => {
+      cancelAnimationFrame(landingFrame);
+      if (image) {
+        image.style.transitionProperty = savedTransition;
+        // Commit the held scale with transitions enabled before releasing it to CSS.
+        getComputedStyle(image).scale;
+        image.style.scale = savedScale;
+      }
+    };
   });
   // A resize, a rotation or another image keeps the current view within its
   // new limits.
@@ -289,25 +308,17 @@
       attributeFilter: ['data-lang'],
     });
 
-    const rememberPointer = (event: PointerEvent) => {
-      pointer = event.pointerType === 'mouse' ? { x: event.clientX, y: event.clientY } : undefined;
-    };
-    const removePointerMove = on(window, 'pointermove', rememberPointer);
-    const removePointerDown = on(window, 'pointerdown', rememberPointer);
-    const removePointerOut = on(window, 'pointerout', (event) => {
-      if (!event.relatedTarget) pointer = undefined;
-    });
     imageHistory.restore();
     return () => {
-      releaseHover();
-      removePointerMove();
-      removePointerDown();
-      removePointerOut();
       imageHistory.destroy();
       for (const remove of removeTriggers) remove();
       languageObserver.disconnect();
     };
   });
+
+  function rememberPointer(event: PointerEvent) {
+    pointer = event.pointerType === 'mouse' ? { x: event.clientX, y: event.clientY } : undefined;
+  }
 
   function setView(next: View, duration = 0) {
     view = next;
@@ -431,7 +442,6 @@
       cardAt.set(from ? 0 : 1, { duration: 0 });
       cardShown.set(from ? 1 : 0, { duration: 0 });
     }
-    releaseHover();
     const duration = again || source ? undefined : 0;
     moveCard(cardShown, 1, duration);
     moveCard(shownOpen, 1, duration);
@@ -520,34 +530,10 @@
       cardShown.current === 1 &&
       !prefersReducedMotion.current
     ) {
-      holdHover(thumbnail);
       closeInto(thumbnail);
     } else {
       fadeCard();
     }
-  }
-
-  function holdHover(thumbnail: HTMLElement) {
-    releaseHover();
-    const image = thumbnail.querySelector('img');
-    if (!image) return;
-    // Modality suppresses native :hover, even with the pointer over the thumbnail.
-    const hovered = matchMedia('(hover: hover)').matches && pointer &&
-      thumbnail.contains(document.elementFromPoint(pointer.x, pointer.y));
-    const scale = hovered ? Number(getComputedStyle(image).getPropertyValue('--thumbnail-hover-scale')) || 1 : 1;
-    heldHover = { image, scale: image.style.scale, transition: image.style.transitionProperty };
-    image.style.transitionProperty = 'none';
-    image.style.scale = String(scale);
-  }
-
-  function releaseHover() {
-    if (!heldHover) return;
-    const { image, scale, transition } = heldHover;
-    image.style.transitionProperty = transition;
-    // Commit the held scale with transitions enabled before releasing it to CSS.
-    getComputedStyle(image).scale;
-    image.style.scale = scale;
-    heldHover = undefined;
   }
 
   /**
@@ -574,13 +560,11 @@
   /** The card fades where it is. */
   function fadeCard() {
     if (morph) morph = { from: frame!, at: cardAt.current };
-    releaseHover();
     stop(cardAt);
     moveCard(cardShown, 0);
   }
 
   function leave() {
-    releaseHover();
     mounted = false;
     morph = undefined;
     trigger = undefined;
@@ -938,7 +922,15 @@
   }
 </script>
 
-<svelte:window {onkeydown} onpopstate={() => imageHistory.popstate()} />
+<svelte:window
+  {onkeydown}
+  onpopstate={() => imageHistory.popstate()}
+  onpointermove={rememberPointer}
+  onpointerdown={rememberPointer}
+  onpointerout={(event) => {
+    if (!event.relatedTarget) pointer = undefined;
+  }}
+/>
 
 <!-- Always in the page, so it becomes modal in the click itself; no longer
      modal while it fades out after closing, so the page behind takes input,

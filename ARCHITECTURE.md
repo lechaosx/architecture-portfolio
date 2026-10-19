@@ -173,12 +173,13 @@ returns directly to its destination frame; retargeting a moving card starts
 from its current frame. During return, each animation frame remeasures the
 destination’s geometry so scrolling, resizing and header clipping stay aligned.
 
-### Hold thumbnail hover during return — [Explicit]
+### Hold thumbnail hover during return — [Explicit] (lifecycle ownership [Implicit])
 
-Closing hit-tests the pointer after dismissing modality and holds the destination
-image at that hover target, shared with its CSS hover rule. The returning card
-uses the held scale until landing, then releasing it lets the native CSS
-transition ease toward the latest pointer state.
+After modality drops, the return effect hit-tests the pointer and holds the
+destination at its CSS hover target. The same effect follows the thumbnail’s
+geometry and restores its styles when the return ends or is interrupted, keeping
+the temporary hover state local to that movement. On release, the native CSS
+transition eases toward the latest pointer state.
 
 ### The card and its back — [Explicit]
 
