@@ -33,6 +33,10 @@ The owner edits all of it through [Pages CMS](https://pagescms.org): the repo is
 connected at app.pagescms.org, which reads `.pages.yml` and commits straight to
 `master` as `pages-cms[bot]`, so pull before you push.
 
+For a full-width project image, add **Obrázek nebo prezentace na celou šířku**
+under **Obsah stránky** and add one image. Multiple images in the same block
+form a manual slideshow.
+
 ## Deploys
 
 Every push to `master`, from the CMS or from code, runs

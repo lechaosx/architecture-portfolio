@@ -423,6 +423,11 @@ image-set blocks, in any order and repeated freely. A one-image set is a plain
 image; more form a manual carousel, whose controls keep a high-contrast palette
 in both themes.
 
+### Single full-width images are discoverable in the CMS — [Explicit]
+
+The full-width block's CMS label names both a single image and a slideshow, and
+its help explains how the number of images determines the presentation.
+
 ### Project pages end with their content — [Explicit]
 
 The footer follows the blocks, as on every page, and a project page carries no

@@ -132,10 +132,11 @@ content:
                   - { name: description_cs, label: Popis obrázku (česky), type: text, required: false }
                   - { name: description_en, label: Popis obrázku (anglicky), type: text, required: false, description: *translations }
           - name: image_set
-            label: Sada obrázků na celou šířku
+            label: Obrázek nebo prezentace na celou šířku
             fields:
               - name: images
                 label: Obrázky
+                description: 'Jeden obrázek se zobrazí samostatně na celou šířku. Více obrázků vytvoří prezentaci, kterou návštěvník přepíná šipkami nebo tečkami.'
                 type: object
                 list: { min: 1 }
                 required: true
