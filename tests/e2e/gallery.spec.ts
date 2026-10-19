@@ -140,65 +140,139 @@ async function renderedThumbnailScale(thumbnail: Locator) {
 }
 
 for (const placement of ['visible', 'header', 'bottom'] as const) {
-  test(`rapid pointer crossings keep the ${placement} thumbnail zoom continuous during and after return`, async ({ page }) => {
+  for (const startsHovered of [true, false]) {
+    test(`return holds the ${placement} thumbnail’s initial ${startsHovered ? 'hovered' : 'rest'} zoom through pointer crossings, then settles`, async ({ page }) => {
+      await page.goto(projectPath);
+      await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+      const thumbnail = galleryImage(page, 10);
+      await thumbnail.scrollIntoViewIfNeeded();
+      if (placement !== 'visible') {
+        await thumbnail.evaluate((button, placement) => {
+          const bounds = button.getBoundingClientRect();
+          const header = document.querySelector('body > header')!.getBoundingClientRect();
+          const top = placement === 'header' ? header.bottom - bounds.height / 2
+            : innerHeight - bounds.height / 2;
+          scrollBy(0, bounds.top - top);
+        }, placement);
+      }
+      const bounds = (await thumbnail.boundingBox())!;
+      const header = (await page.locator('body > header').boundingBox())!;
+      const y = (Math.max(bounds.y, header.y + header.height) + Math.min(bounds.y + bounds.height, page.viewportSize()!.height)) / 2;
+      const inside = bounds.x + 2;
+      const outside = bounds.x - 2;
+      await page.mouse.move(inside, y);
+      await thumbnail.locator('img').evaluate((image) =>
+        Promise.all(image.getAnimations().map((animation) => animation.finished)),
+      );
+      const hovered = await renderedThumbnailScale(thumbnail);
+      expect(hovered).toBeGreaterThan(1);
+      await page.mouse.click(inside, y);
+      await expect.poll(() => backdrop(page)).toBeCloseTo(0.91, 3);
+      await expect(page.locator('.lightbox-crop > div')).toHaveCSS('transform', 'none');
+      if (!startsHovered) await page.mouse.move(outside, y);
+
+      const sampling = thumbnail.evaluate(async (button) => {
+        const image = button.querySelector('img')!;
+        const samples: { time: number; scale: number; drawing?: number; width: number; closing: boolean }[] = [];
+        const start = performance.now();
+        await new Promise<void>((resolve) => {
+          const sample = (time: number) => {
+            const drawing = document.querySelector('.lightbox-slide-current .lightbox-front > img');
+            samples.push({
+              time,
+              scale: image.getBoundingClientRect().width / button.clientWidth,
+              drawing: drawing?.getBoundingClientRect().width,
+              width: image.getBoundingClientRect().width,
+              closing: !document.querySelector('dialog[open]'),
+            });
+            if (time - start < 1100) requestAnimationFrame(sample);
+            else resolve();
+          };
+          requestAnimationFrame(sample);
+        });
+        return samples;
+      });
+      if (startsHovered) await page.keyboard.press('Escape');
+      else await page.getByRole('button', { name: 'Close', exact: true }).click();
+      await page.waitForTimeout(70);
+      for (let crossing = 0; crossing < 6; crossing += 1) {
+        await page.mouse.move(crossing % 2 ? inside : outside, y);
+        await page.waitForTimeout(30);
+      }
+      await page.mouse.move(startsHovered ? outside : inside, y);
+      const samples = await sampling;
+      const returning = samples.filter(({ closing, drawing }) => closing && drawing);
+      expect(returning.length).toBeGreaterThan(5);
+      for (const { scale } of returning) expect(scale).toBeCloseTo(startsHovered ? hovered : 1, 3);
+      const handoff = samples.findIndex((sample, at) => at > 0 && !sample.drawing && samples[at - 1].drawing);
+      expect(handoff).toBeGreaterThan(0);
+      expect(Math.abs(samples[handoff - 1].drawing! - samples[handoff].width)).toBeLessThan(2);
+      const settling = samples.slice(handoff);
+      expect(settling.some(({ scale }) => scale > 1.005 && scale < hovered - 0.005)).toBe(true);
+      const steps = settling.slice(1).map((sample, at) => ({
+        change: Math.abs(sample.scale - settling[at].scale),
+        elapsed: sample.time - settling[at].time,
+      }));
+      expect(Math.max(...steps.map(({ change, elapsed }) => change / elapsed))).toBeLessThan(0.0008);
+      expect(samples.at(-1)!.scale).toBeCloseTo(startsHovered ? 1 : hovered, 3);
+    });
+  }
+}
+
+test.describe('a touchscreen without CSS hover', () => {
+  test.use({ hasTouch: true });
+
+  test('a mouse pointer over the destination keeps the return at rest zoom', async ({ page }) => {
+    await gotoProject(page);
+    expect(await page.evaluate(() => matchMedia('(hover: hover)').matches)).toBe(false);
+    const thumbnail = galleryImage(page, 10);
+    await thumbnail.scrollIntoViewIfNeeded();
+    await thumbnail.click();
+    await waitForLightbox(page);
+    await holdTime(page);
+    await page.keyboard.press('Escape');
+    expect(await renderedThumbnailScale(thumbnail)).toBeCloseTo(1, 3);
+    await page.clock.runFor(390);
+    expect(await renderedThumbnailScale(thumbnail)).toBeCloseTo(1, 3);
+    await page.clock.runFor(200);
+    expect(await renderedThumbnailScale(thumbnail)).toBeCloseTo(1, 3);
+  });
+});
+
+for (const interruption of ['reopen', 'scroll out'] as const) {
+  test(`${interruption} during return releases the held zoom and preserves normal hover easing`, async ({ page }) => {
     await page.goto(projectPath);
     await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
     const thumbnail = galleryImage(page, 10);
     await thumbnail.scrollIntoViewIfNeeded();
-    if (placement !== 'visible') {
-      await thumbnail.evaluate((button, placement) => {
-        const bounds = button.getBoundingClientRect();
-        const header = document.querySelector('body > header')!.getBoundingClientRect();
-        const top = placement === 'header' ? header.bottom - bounds.height / 2
-          : innerHeight - bounds.height / 2;
-        scrollBy(0, bounds.top - top);
-      }, placement);
-    }
-    const bounds = (await thumbnail.boundingBox())!;
-    const header = (await page.locator('body > header').boundingBox())!;
-    const y = (Math.max(bounds.y, header.y + header.height) + Math.min(bounds.y + bounds.height, page.viewportSize()!.height)) / 2;
-    const inside = bounds.x + 2;
-    const outside = bounds.x - 2;
-    await page.mouse.click(inside, y);
+    await thumbnail.hover();
+    await thumbnail.locator('img').evaluate((image) =>
+      Promise.all(image.getAnimations().map((animation) => animation.finished)),
+    );
+    const hovered = await renderedThumbnailScale(thumbnail);
+    await thumbnail.click();
     await expect.poll(() => backdrop(page)).toBeCloseTo(0.91, 3);
-    await expect(page.locator('.lightbox-crop > div')).toHaveCSS('transform', 'none');
-
-    const sampling = thumbnail.evaluate(async (button) => {
-      const image = button.querySelector('img')!;
-      const samples: { time: number; scale: number; drawing?: number; width: number }[] = [];
-      const start = performance.now();
-      await new Promise<void>((resolve) => {
-        const sample = (time: number) => {
-          const drawing = document.querySelector('.lightbox-slide-current .lightbox-front > img');
-          samples.push({
-            time,
-            scale: image.getBoundingClientRect().width / button.clientWidth,
-            drawing: drawing?.getBoundingClientRect().width,
-            width: image.getBoundingClientRect().width,
-          });
-          if (time - start < 1000) requestAnimationFrame(sample);
-          else resolve();
-        };
-        requestAnimationFrame(sample);
-      });
-      return samples;
-    });
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(120);
-    for (let crossing = 0; crossing < 18; crossing += 1) {
-      await page.mouse.move(crossing % 2 ? inside : outside, y);
-      await page.waitForTimeout(40);
+    await page.waitForTimeout(100);
+    await page.mouse.move(0, 0);
+    if (interruption === 'reopen') {
+      await page.keyboard.press('Enter');
+      await expect.poll(() => backdrop(page)).toBeCloseTo(0.91, 3);
+      await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(1, 3);
+      await page.getByRole('button', { name: 'Close', exact: true }).click();
+    } else {
+      await thumbnail.evaluate((button) => scrollBy(0, button.getBoundingClientRect().bottom + 100));
     }
-    const samples = await sampling;
-    const steps = samples.slice(1).map((sample, at) => ({
-      change: Math.abs(sample.scale - samples[at].scale),
-      elapsed: sample.time - samples[at].time,
-    }));
-    expect(Math.max(...steps.map(({ change, elapsed }) => change / elapsed))).toBeLessThan(0.0008);
-    expect(Math.max(...samples.map(({ scale }) => scale)) - Math.min(...samples.map(({ scale }) => scale))).toBeGreaterThan(0.005);
-    const handoff = samples.findIndex((sample, at) => at > 0 && !sample.drawing && samples[at - 1].drawing);
-    expect(handoff).toBeGreaterThan(0);
-    expect(Math.abs(samples[handoff - 1].drawing! - samples[handoff].width)).toBeLessThan(2);
+    await expect(page.locator('.lightbox-slide-current')).toHaveCount(0);
+    await thumbnail.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(1, 3);
+    await thumbnail.hover();
+    await page.waitForTimeout(50);
+    const easing = await renderedThumbnailScale(thumbnail);
+    expect(easing).toBeGreaterThan(1);
+    expect(easing).toBeLessThan(hovered);
+    await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(hovered, 3);
   });
 }
 
@@ -255,39 +329,30 @@ test('closing after navigating moves directly from the full image to its own thu
   }
 });
 
-for (const pointer of ['stationary', 'enters', 'leaves'] as const) {
-  test(`closing with a pointer that ${pointer === 'stationary' ? 'stays stationary' : pointer} lands at the thumbnail’s hover zoom`, async ({ page }) => {
+for (const position of [1, 10]) {
+  test(`closing image ${position} with a stationary pointer lands at the thumbnail’s hover zoom`, async ({ page }) => {
     await gotoProject(page);
-    const thumbnail = galleryImage(page, 10);
+    const thumbnail = galleryImage(page, position);
     await thumbnail.scrollIntoViewIfNeeded();
     await thumbnail.hover();
-    const hoverSettles = () => thumbnail.locator('img').evaluate((image) =>
+    await thumbnail.locator('img').evaluate((image) =>
       Promise.all(image.getAnimations().map((animation) => animation.finished)),
     );
-    await hoverSettles();
     const hovered = await renderedThumbnailScale(thumbnail);
     expect(hovered).toBeGreaterThan(1);
     await thumbnail.click();
     await waitForLightbox(page);
-    if (pointer === 'enters') await page.mouse.move(0, 0);
     await holdTime(page);
     await page.keyboard.press('Escape');
-    if (pointer !== 'stationary') {
-      await page.clock.runFor(150);
-      const before = await visibleCard(page);
-      if (pointer === 'enters') await thumbnail.hover();
-      else await page.mouse.move(0, 0);
-      expect((await visibleCard(page)).drawingWidth).toBeCloseTo(before.drawingWidth, 1);
-    }
-    await hoverSettles();
-    await page.clock.runFor(pointer === 'stationary' ? 390 : 240);
+    await page.clock.runFor(390);
     const landing = await visibleCard(page);
     await page.clock.runFor(100);
     await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
     const returned = (await thumbnail.locator('img').boundingBox())!;
-    expect(await renderedThumbnailScale(thumbnail)).toBeCloseTo(pointer === 'leaves' ? 1 : hovered, 3);
+    expect(await renderedThumbnailScale(thumbnail)).toBeCloseTo(hovered, 3);
     expect(Math.abs(landing.drawingWidth - returned.width)).toBeLessThan(1);
   });
+
 }
 
 test('the card opens from its thumbnail, cropped as it is and at its hover scale, and closes back to it', async ({

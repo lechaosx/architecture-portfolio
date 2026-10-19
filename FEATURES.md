@@ -462,10 +462,10 @@ zoomed or turned; reduced-motion preferences suppress the movement.
 
 The thumbnail fades back into the background as the image opens, and fades
 under the returning image on close. After navigating, the full image moves
-directly to its own thumbnail; it lands at that thumbnail’s hover zoom even
-when the pointer stays still or moves during the return. Crossing the image’s
-edge repeatedly keeps its hover zoom smooth, including when it is partly off
-screen or behind the header.
+directly to its own thumbnail. Closing captures the hover zoom from the pointer’s
+position and holds it for both images until landing; pointer changes during the
+return ease into their latest hover state afterward, including when the thumbnail
+is partly off screen or behind the header — [Explicit].
 
 ### Addressable images — [Explicit]
 

@@ -109,7 +109,8 @@ const morphName = `view-transition-name: cover-${projectId}`;
                     data-en={title.en}
                     {loading}
                     {decoding}
-                    class="size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105"
+                    style="--thumbnail-hover-scale: 1.05"
+                    class="size-full object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[var(--thumbnail-hover-scale)]"
                   />
                 </button>
               );
@@ -146,7 +147,8 @@ const morphName = `view-transition-name: cover-${projectId}`;
               data-en={title.en}
               {loading}
               {decoding}
-              class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-102"
+              style="--thumbnail-hover-scale: 1.02"
+              class="w-full motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-[var(--thumbnail-hover-scale)]"
             />
           </button>
         );

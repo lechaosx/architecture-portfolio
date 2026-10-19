@@ -171,9 +171,14 @@ Thumbnail opacity follows the card’s displayed opening progress in both
 directions, so reversing the movement preserves its visibility. A settled card
 returns directly to its destination frame; retargeting a moving card starts
 from its current frame. During return, each animation frame remeasures the
-destination’s geometry and displayed hover scale, so the card follows native
-hover transitions through pointer changes and meets the thumbnail where it is
-currently drawn.
+destination’s geometry so scrolling, resizing and header clipping stay aligned.
+
+### Hold thumbnail hover during return — [Explicit]
+
+Closing hit-tests the pointer after dismissing modality and holds the destination
+image at that hover target, shared with its CSS hover rule. The returning card
+uses the held scale until landing, then releasing it lets the native CSS
+transition ease toward the latest pointer state.
 
 ### The card and its back — [Explicit]
 
