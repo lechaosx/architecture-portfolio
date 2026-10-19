@@ -458,6 +458,13 @@ A crop at the header’s edge opens with the image and closes again on return.
 Closing fades when the destination has no visible area or the image is
 zoomed or turned; reduced-motion preferences suppress the movement.
 
+### Thumbnail handoff stays continuous — [Explicit] (fade [Implicit])
+
+The thumbnail fades back into the background as the image opens, and fades
+under the returning image on close. After navigating, the full image moves
+directly to its own thumbnail; it lands at that thumbnail’s hover zoom even
+when the pointer stays still or moves during the return.
+
 ### Addressable images — [Explicit]
 
 Each open image has a shareable `#image-N` address, by position, so reordering a

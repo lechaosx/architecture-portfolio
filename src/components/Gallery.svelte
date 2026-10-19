@@ -231,28 +231,34 @@
   $effect(() => {
     if (open && live?.ready && cardAt.target !== 1) untrack(() => moveCard(cardAt, 1));
   });
-  // The thumbnail is the card while the card travels from or to it; it stays
-  // focusable, as closing gives it focus at once.
+  // The thumbnail fades under the departing/returning card; tying its alpha
+  // to the displayed position also keeps reversals continuous.
   $effect(() => {
     const thumbnail = morph?.thumbnail;
     if (!thumbnail || cardAt.current === cardAt.target) return;
-    thumbnail.style.opacity = '0';
+    thumbnail.style.opacity = String(cardAt.current);
     return () => {
       thumbnail.style.opacity = '';
     };
   });
-  // Closing into a thumbnail, the card lands where the thumbnail is as the
-  // page scrolls or resizes, or fades where it is once the thumbnail is out
-  // of view.
+  // Closing follows the thumbnail's geometry and hover as the page takes
+  // input again; losing the destination's visible area fades the card.
   let landingOn = $derived(!open && morph?.landing ? morph.thumbnail : undefined);
   $effect(() => {
     const thumbnail = landingOn;
     if (!thumbnail) return;
     const follow = () => untrack(() => closeInto(thumbnail));
+    // Native :hover updates on the next frame after modality/pointer changes.
+    let hoverFrame = requestAnimationFrame(follow);
     const stops = ['scroll', 'resize'].map((type) =>
       on(window, type, follow, { passive: true }),
     );
+    stops.push(on(window, 'pointermove', () => {
+      cancelAnimationFrame(hoverFrame);
+      hoverFrame = requestAnimationFrame(follow);
+    }, { passive: true }));
     return () => {
+      cancelAnimationFrame(hoverFrame);
       for (const stop of stops) stop();
     };
   });
@@ -449,9 +455,21 @@
    * A thumbnail's frame and its image's hover scale, for the card to move
    * from or to, preserving the crop where the sticky header hides it.
    */
-  function thumbnailFrame(thumbnail: HTMLElement): Frame | undefined {
+  function thumbnailFrame(thumbnail: HTMLElement, settleHover = false): Frame | undefined {
     const { x, y, width, height } = thumbnail.getBoundingClientRect();
     const image = thumbnail.querySelector('img');
+    // Closing the modal can restart hover with a stationary pointer. Land on
+    // its final scale rather than sampling the start of the CSS transition.
+    if (settleHover && image) {
+      for (const animation of image.getAnimations()) {
+        if (
+          animation instanceof CSSTransition &&
+          ['scale', 'transform'].includes(animation.transitionProperty)
+        ) {
+          animation.finish();
+        }
+      }
+    }
     const header = document.querySelector('body > header')?.getBoundingClientRect();
     const underHeader =
       header &&
@@ -519,15 +537,18 @@
    * from is the one it is in now, so the move goes on without a jump.
    */
   function closeInto(thumbnail: HTMLElement) {
-    const landing = thumbnailFrame(thumbnail);
+    const landing = thumbnailFrame(thumbnail, true);
     if (!landing) {
       fadeCard();
       return;
     }
     const moving = morph?.landing && morph.thumbnail === thumbnail;
-    morph = moving
-      ? { ...morph!, landing }
-      : { from: frame ?? landing, at: cardAt.current, landing, thumbnail };
+    morph = {
+      from: cardAt.current === 1 ? landing : frame ?? landing,
+      at: cardAt.current,
+      landing,
+      thumbnail,
+    };
     if (!moving) moveCard(cardAt, 0);
   }
 

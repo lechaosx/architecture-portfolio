@@ -340,7 +340,9 @@ test('the lightbox closes into the visible carousel image', async ({ page }) => 
   await page.getByRole('button', { name: 'Close' }).click();
   await expect(page.locator('[data-gallery-lightbox]')).not.toHaveAttribute('open', '');
   await page.clock.runFor(100);
-  await expect(thumbnail).toHaveCSS('opacity', '0');
+  const returning = await thumbnail.evaluate((button) => Number(getComputedStyle(button).opacity));
+  expect(returning).toBeGreaterThan(0);
+  expect(returning).toBeLessThan(1);
   await page.clock.runFor(1000);
   await expect(thumbnail).toHaveCSS('opacity', '1');
 });
@@ -640,7 +642,9 @@ test('a skipped-to image remains the real lightbox thumbnail', async ({ page }) 
   await page.clock.runFor(1000);
   await page.getByRole('button', { name: 'Close' }).click();
   await page.clock.runFor(100);
-  await expect(thumbnail).toHaveCSS('opacity', '0');
+  const returning = await thumbnail.evaluate((button) => Number(getComputedStyle(button).opacity));
+  expect(returning).toBeGreaterThan(0);
+  expect(returning).toBeLessThan(1);
   await page.clock.runFor(1000);
   await expect(thumbnail).toHaveCSS('opacity', '1');
 });

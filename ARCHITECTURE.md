@@ -165,6 +165,15 @@ hidden image is revealed continuously while the backdrop dims the header; the
 same geometry follows closing and reversals. The input stage stays uncropped so
 gestures work across the screen throughout the transition.
 
+### Lightbox thumbnail handoff — [Implicit]
+
+Thumbnail opacity follows the card’s displayed opening progress in both
+directions, so reversing the movement preserves its visibility. A settled card
+returns directly to its destination frame; retargeting a moving card starts
+from its current frame. Closing remeasures the destination after native hover
+updates and on pointer movement, finishing its hover transition so the card
+lands at the scale the thumbnail will keep.
+
 ### The card and its back — [Explicit]
 
 A comparison set's images are layers of one `LightboxCard`, and every change

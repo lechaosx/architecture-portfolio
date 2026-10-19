@@ -139,6 +139,94 @@ async function renderedThumbnailScale(thumbnail: Locator) {
   });
 }
 
+test('the source thumbnail returns gradually behind the opening and stays visible through navigation', async ({ page }) => {
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await holdTime(page);
+  await thumbnail.click();
+  await page.waitForFunction(() => document.querySelector<HTMLImageElement>(
+    '.lightbox-slide-current .lightbox-front > img',
+  )?.complete);
+  const opacities = [];
+  for (let frame = 0; frame < 4; frame += 1) {
+    await page.clock.runFor(80);
+    opacities.push(await thumbnail.evaluate((button) => Number(getComputedStyle(button).opacity)));
+  }
+  expect(opacities.every((opacity) => opacity > 0 && opacity < 1)).toBe(true);
+  expect(opacities).toEqual([...opacities].sort((a, b) => a - b));
+  await page.clock.runFor(600);
+  await expect(thumbnail).toHaveCSS('opacity', '1');
+  await page.keyboard.press('ArrowLeft');
+  await page.clock.runFor(600);
+  await expect(thumbnail).toHaveCSS('opacity', '1');
+  await page.keyboard.press('Escape');
+  await page.clock.runFor(80);
+  await expect(thumbnail).toHaveCSS('opacity', '1');
+  await page.clock.runFor(600);
+  await expect(thumbnail).toHaveCSS('opacity', '1');
+});
+
+test('closing after navigating moves directly from the full image to its own thumbnail', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1400 });
+  await gotoProject(page);
+  const thumbnail = galleryImage(page, 10);
+  await thumbnail.scrollIntoViewIfNeeded();
+  await galleryImage(page, 6).click();
+  await waitForLightbox(page);
+  for (let image = 6; image < 10; image += 1) await page.keyboard.press('ArrowRight');
+  await waitForLightbox(page);
+  await holdTime(page);
+  const drawing = page.locator('.lightbox-slide-current .lightbox-front > img');
+  const start = (await drawing.boundingBox())!;
+  const target = (await thumbnail.boundingBox())!;
+  const origin = { x: start.x + start.width / 2, y: start.y + start.height / 2 };
+  const delta = { x: target.x + target.width / 2 - origin.x, y: target.y + target.height / 2 - origin.y };
+  await page.keyboard.press('Escape');
+  for (let frame = 0; frame < 4; frame += 1) {
+    await page.clock.runFor(80);
+    const box = (await drawing.boundingBox())!;
+    const offset = { x: box.x + box.width / 2 - origin.x, y: box.y + box.height / 2 - origin.y };
+    const distance = Math.abs(offset.x * delta.y - offset.y * delta.x) / Math.hypot(delta.x, delta.y);
+    expect(distance, `distance from the direct path at frame ${frame}`).toBeLessThan(1);
+  }
+});
+
+for (const pointer of ['stationary', 'enters', 'leaves'] as const) {
+  test(`closing with a pointer that ${pointer === 'stationary' ? 'stays stationary' : pointer} lands at the thumbnail’s hover zoom`, async ({ page }) => {
+    await gotoProject(page);
+    const thumbnail = galleryImage(page, 10);
+    await thumbnail.scrollIntoViewIfNeeded();
+    await thumbnail.hover();
+    const hoverSettles = () => thumbnail.locator('img').evaluate((image) =>
+      Promise.all(image.getAnimations().map((animation) => animation.finished)),
+    );
+    await hoverSettles();
+    const hovered = await renderedThumbnailScale(thumbnail);
+    expect(hovered).toBeGreaterThan(1);
+    await thumbnail.click();
+    await waitForLightbox(page);
+    if (pointer === 'enters') await page.mouse.move(0, 0);
+    await holdTime(page);
+    await page.keyboard.press('Escape');
+    if (pointer !== 'stationary') {
+      await page.clock.runFor(150);
+      const before = await visibleCard(page);
+      if (pointer === 'enters') await thumbnail.hover();
+      else await page.mouse.move(0, 0);
+      expect((await visibleCard(page)).drawingWidth).toBeCloseTo(before.drawingWidth, 1);
+    }
+    await hoverSettles();
+    await page.clock.runFor(pointer === 'stationary' ? 390 : 240);
+    const landing = await visibleCard(page);
+    await page.clock.runFor(100);
+    await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
+    const returned = (await thumbnail.locator('img').boundingBox())!;
+    expect(await renderedThumbnailScale(thumbnail)).toBeCloseTo(pointer === 'leaves' ? 1 : hovered, 3);
+    expect(Math.abs(landing.drawingWidth - returned.width)).toBeLessThan(1);
+  });
+}
+
 test('the card opens from its thumbnail, cropped as it is and at its hover scale, and closes back to it', async ({
   page,
 }) => {
@@ -193,8 +281,7 @@ test('the card opens from its thumbnail, cropped as it is and at its hover scale
     shown = await visibleCard(page);
     expect(shown.x).toBeCloseTo(frame.x, -1);
     expect(shown.width).toBeCloseTo(frame.width, -1);
-    // The thumbnail is the card until it lands.
-    expect(await thumbnail.evaluate((button) => getComputedStyle(button).opacity)).toBe('0');
+    expect(await thumbnail.evaluate((button) => Number(getComputedStyle(button).opacity))).toBeLessThan(0.01);
     await page.clock.resume();
     await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
     await expect(thumbnail).toHaveCSS('opacity', '1');
@@ -1155,7 +1242,9 @@ test('a drawing that arrives late moves from its thumbnail once it has', async (
   await page.clock.runFor(32);
   const leaving = await visibleCard(page);
   expect(leaving.width).toBeLessThan(frame.width * 1.5);
-  await expect(thumbnail).toHaveCSS('opacity', '0');
+  const revealing = await thumbnail.evaluate((button) => Number(getComputedStyle(button).opacity));
+  expect(revealing).toBeGreaterThan(0);
+  expect(revealing).toBeLessThan(1);
   await page.clock.runFor(600);
   const rest = (await page.locator('.lightbox-slide-current .lightbox-front > img').boundingBox())!;
   expect((await visibleCard(page)).width).toBeCloseTo(rest.width, 0);
@@ -1235,7 +1324,7 @@ test('opened again on another image while it closes, the card waits for that dra
   await page.clock.resume();
 });
 
-test('opened again while it closes, the thumbnail stays hidden while the card travels from it', async ({
+test('thumbnail visibility stays continuous when closing and reopening reverse the card', async ({
   page,
 }) => {
   await gotoProject(page);
@@ -1244,13 +1333,22 @@ test('opened again while it closes, the thumbnail stays hidden while the card tr
   await thumbnail.click();
   await waitForLightbox(page);
   await holdTime(page);
+  const opacity = () => thumbnail.evaluate((button) => Number(getComputedStyle(button).opacity));
+  const opened = await opacity();
   await page.keyboard.press('Escape');
+  expect(await opacity()).toBeCloseTo(opened, 5);
   await page.clock.runFor(150);
-  await expect(thumbnail).toHaveCSS('opacity', '0');
+  const closing = await opacity();
+  expect(closing).toBeGreaterThan(0);
+  expect(closing).toBeLessThan(opened);
   await page.keyboard.press('Enter');
+  expect(await opacity()).toBeCloseTo(closing, 5);
+  let previous = closing;
   for (let frame = 0; frame < 4; frame += 1) {
     await page.clock.runFor(16);
-    await expect(thumbnail).toHaveCSS('opacity', '0');
+    const now = await opacity();
+    expect(now).toBeGreaterThanOrEqual(previous);
+    previous = now;
   }
   await page.clock.resume();
   await waitForLightbox(page);
