@@ -12,16 +12,16 @@ interface Props {
 }
 
 const { cs, en, class: cls } = Astro.props;
+const texts = { cs: cs ? bindOneLetterWords(cs) : '', en: en ?? '' };
+const text = texts[lang];
 ---
 
-{
-  [{ lang: 'cs', text: cs }, { lang: 'en', text: en }].filter((entry) => entry.lang === lang).map(({ lang, text }) =>
-    text?.trim() && (
-      <p
-        {lang}
-        class:list={['running-text whitespace-pre-line', cls, { 'prose-columns': canSplitProse(text) }]}
-        set:text={lang === 'cs' ? bindOneLetterWords(text) : text}
-      />
-    ),
-  )
-}
+<p
+  {lang}
+  hidden={!text.trim()}
+  data-translation-optional
+  data-translation-cs={texts.cs} data-translation-en={texts.en}
+  data-columns-cs={canSplitProse(texts.cs)} data-columns-en={canSplitProse(texts.en)}
+  class:list={['running-text whitespace-pre-line', cls, { 'prose-columns': canSplitProse(text) }]}
+  set:text={text}
+/>

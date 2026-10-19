@@ -21,4 +21,4 @@ const enText = k ? ui.en[k] : (en ?? '');
 const Tag = as;
 ---
 
-{(bilingual ? ['cs', 'en'] as const : [lang]).map((language) => <Tag lang={language} class={cls} set:text={language === 'cs' ? csText : enText} />)}
+{(bilingual ? ['cs', 'en'] as const : [lang]).map((language) => <Tag lang={language} class={cls} data-translation-cs={bilingual ? undefined : csText} data-translation-en={bilingual ? undefined : enText} set:text={language === 'cs' ? csText : enText} />)}

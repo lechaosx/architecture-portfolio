@@ -329,6 +329,10 @@ The original unprefixed URLs select a saved choice, then the first supported bro
 
 Czech pages use `/cs/…` and English pages `/en/…`; an explicit language URL always wins over browser or saved preferences. The footer opens the same page in the other language, navigation stays in the selected language, and the viewer's language link retains the selected image.
 
+### Language changes without a page jump — [Explicit]
+
+With JavaScript, the language link updates the current page without reloading, keeping footer position and keyboard focus. In the viewer it retains the same drawing, zoom, pan and description side; Back closes the viewer in the selected language, and Forward reopens its selected image. The links also support ordinary navigation and opening the translation in another tab.
+
 ### Language-specific HTML and previews — [Explicit]
 
 Content, page titles, descriptions, alt text and sharing metadata are served in the language named by the URL, including without JavaScript. Unprefixed pages show English content without JavaScript, with the footer language link still available.

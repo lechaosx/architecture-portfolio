@@ -469,13 +469,17 @@ Czech pages live under `/cs/` and English pages under `/en/`; each renders its o
 
 Original unprefixed pages retain English content as a useful no-JavaScript fallback, canonicalize to the English equivalent, and use a head script to replace the URL with the saved language, first supported browser language or English fallback. Query strings and anchors survive, and explicit language routes always take precedence over preferences.
 
-### Language switches are ordinary page links — [Explicit]
+### Language links update the mounted page — [Explicit]
 
-The footer and viewer link to the equivalent translated route and remember an explicit choice; navigation stays within the URL's language. Viewer links carry the selected image anchor, so the translated page reopens that image; ordinary browser navigation supplies Back and open-in-new-tab behavior.
+The footer and viewer retain ordinary translated page links, enhanced for unmodified primary activation to update text, metadata and the URL in place. The footer stays at the same viewport height and keeps focus; the mounted viewer retains its selected image, view and card side. A viewer switch replaces its current history entry, and Back or Close keeps the chosen language on the underlying page.
+
+### Inert translations keep switching synchronous — [Implicit]
+
+Localized HTML carries alternate text and structured data in escaped attributes, rendered only when selected. This adds text payload in exchange for immediate switching without a network request or client router; project images, carousels and the gallery stay mounted. Rich text replaces its own contents, including any embedded Markdown images.
 
 ### A bilingual shell for the static 404 — [Implicit]
 
-GitHub Pages serves one error document for every unknown URL, so only this shell includes both translations and chooses from the actual URL before saved or browser preferences. It keeps the requested URL and 404 status; its language link changes the prefix of that unknown URL, and its home link points to the selected language's landing page.
+GitHub Pages serves one error document for every unknown URL, so only this shell renders both translations and chooses from the actual URL before saved or browser preferences. It keeps the requested URL and 404 status; its language link changes the prefix of that unknown URL, and its home link points to the selected language's landing page.
 
 ### Canonical languages and alternates — [Explicit]
 

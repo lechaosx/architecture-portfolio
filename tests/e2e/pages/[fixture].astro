@@ -265,6 +265,7 @@ export function getStaticPaths() {
     { params: { fixture: 'landing-single' }, props: landing(images.slice(0, 1)) },
     { params: { fixture: 'landing-bare' }, props: landing([]) },
     { params: { fixture: 'about' }, props: { about } },
+    { params: { fixture: 'language-height' }, props: { about: { ...about, body_en: Array(20).fill(text(4).en).join('\n\n'), body_cs: text(2).cs } } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
     { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, body_cs: words(150).cs, body_en: words(150).en } } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },

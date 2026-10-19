@@ -48,6 +48,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/i18n.ts` | baked-in UI labels |
 | `src/locale.ts`, `src/pages/[lang]/` | language selection, translated page paths and static locale routes |
+| `src/language-switch.ts` | in-place language changes, metadata, links and browser history |
 | `src/one-letter-words.ts` | Czech one-letter words kept off line ends, applied where text renders |
 | `src/period.ts` | project and About periods: the date format, checks, display and project order |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
@@ -76,7 +77,7 @@ and nested descriptions, or leave both empty when optional. Whitespace is empty.
 The build reports incomplete pairs at their field paths and prevents deployment;
 Pages CMS can save them, so check the deployment result after editing.
 
-**Add a page.** Provide the neutral route and both static language variants through `src/pages/[lang]/`; use `localizedPath(path, lang)` for page links and keep assets rooted at `/uploads/…`. Check its canonical, alternate language links and sitemap entries.
+**Add a page.** Provide the neutral route and both static language variants through `src/pages/[lang]/`; use `localizedPath(path, lang)` for page links and keep assets rooted at `/uploads/…`. Check its canonical, alternate language links and sitemap entries. Pass language-dependent structured data to `Base` as paired `cs`/`en` graphs so in-place switching updates it too.
 
 **Add UI text.** Add a key with both languages to `src/i18n.ts` and render it
 with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` or

@@ -35,6 +35,16 @@ const cover = projectCover(d.thumbnail, images);
 const responsiveCover = cover ? await getResponsiveImage(cover.image) : undefined;
 const description = projectDescription(d);
 const site = new URL('/', Astro.site);
+const graph = (language: 'cs' | 'en') => [creativeWork({
+  site,
+  url: new URL(localizedPath(Astro.url.pathname, language), site).href,
+  project: d,
+  description: description[language],
+  lang: language,
+  images,
+  responsiveImages,
+  responsiveCover,
+})];
 ---
 
 <Base
@@ -45,18 +55,7 @@ const site = new URL('/', Astro.site);
   {description}
   image={responsiveCover?.share}
   type="article"
-  graph={[
-    creativeWork({
-      site,
-      url: new URL(localizedPath(Astro.url.pathname, lang), site).href,
-      project: d,
-      description: description[lang],
-      lang,
-      images,
-      responsiveImages,
-      responsiveCover,
-    }),
-  ]}
+  graph={{ cs: graph('cs'), en: graph('en') }}
 >
   <article class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
     <a href={localizedPath('/work/', lang)} class="text-sm text-neutral-500 hover:text-neutral-900">

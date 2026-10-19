@@ -664,6 +664,6 @@ test('hours filled in only one language leave no extra gap in the other contact 
   await expect(hours('cs')).toBeVisible();
   expect(await middle(phone)).toBeGreaterThan(await middle(email));
   await language.click();
-  await footer.getByRole('listitem').filter({ hasText: contact.hours_en }).evaluate((item) => item.setAttribute('lang', 'cs'));
+  await expect(hours('en')).toBeHidden();
   await expect.poll(async () => await middle(phone) - await middle(email)).toBe(0);
 });

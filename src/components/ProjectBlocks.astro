@@ -106,6 +106,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
                       1.05,
                     )}
                     alt={title[lang] ?? ''}
+                    data-alt-cs={title.cs ?? ''} data-alt-en={title.en ?? ''}
                     {loading}
                     {decoding}
                     style="--thumbnail-hover-scale: 1.05"
@@ -142,6 +143,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
               width={responsive?.source.width}
               height={responsive?.source.height}
               alt={title[lang] ?? ''}
+              data-alt-cs={title.cs ?? ''} data-alt-en={title.en ?? ''}
               {loading}
               {decoding}
               style="--thumbnail-hover-scale: 1.02"
@@ -172,6 +174,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
                 width={responsive?.source.width}
                 height={responsive?.source.height}
                 alt={title[lang] ?? ''}
+                data-alt-cs={title.cs ?? ''} data-alt-en={title.en ?? ''}
                 {loading}
                 {decoding}
                 class="size-full object-contain"

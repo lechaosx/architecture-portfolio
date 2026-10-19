@@ -255,7 +255,7 @@ test('expanded contribution shares the title column as one readable column', asy
   for (const language of ['en', 'cs']) {
     if (language === 'cs') {
       await page.getByRole('link', { name: 'Switch to Czech' }).click();
-      await row.locator('summary').click();
+      await expect(row.locator('details')).toHaveAttribute('open', '');
     }
     for (const width of [1440, 1280, 800, 390, 320]) {
       await page.setViewportSize({ width, height: 1000 });

@@ -790,7 +790,7 @@ test('the description is on the back of the drawing', async ({ page }) => {
   await expect(flip).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('changing image shows the drawing; a translated page reopens the same image', async ({
+test('changing language keeps the description up; changing image shows the drawing', async ({
   page,
 }) => {
   await gotoProject(page);
@@ -803,8 +803,7 @@ test('changing image shows the drawing; a translated page reopens the same image
   await expect(page).toHaveURL(/\/cs\/e2e\/project\/#image-3$/);
   await expect(
     dialog.getByRole('button', { name: 'Zobrazit popis' }),
-  ).toHaveAttribute('aria-pressed', 'false');
-  await dialog.getByRole('button', { name: 'Zobrazit popis' }).click();
+  ).toHaveAttribute('aria-pressed', 'true');
   await expect(dialog.getByRole('region', { name: 'Dlaždicová varianta 3' })).toBeVisible();
 
   await dialog.getByRole('button', { name: 'Další obrázek' }).click();
@@ -830,7 +829,6 @@ test('the back never ends a Czech line on a one-letter word, and keeps English s
   };
   expect(await description('Tiled variant 3')).not.toContain('\u00A0');
   await dialog.getByRole('link', { name: 'Switch to Czech' }).click();
-  await dialog.getByRole('button', { name: 'Zobrazit popis' }).click();
   expect(await description('Dlaždicová varianta 3')).toContain('řeky a\u00A0kudy');
 });
 

@@ -48,6 +48,7 @@ export class LightboxHistory {
   #leaving = false;
   /** An image opened meanwhile, whose entry is pushed once it has. */
   #reopening: number | undefined;
+  #languagePath: string | undefined;
 
   constructor(imageCount: number, handlers: LightboxHistoryHandlers) {
     this.#imageCount = imageCount;
@@ -58,6 +59,7 @@ export class LightboxHistory {
   restore() {
     const index = galleryImageIndex(location.hash, this.#imageCount);
     if (index === undefined) return;
+    this.#languagePath = location.pathname;
     this.#suspendScrollRestoration();
     const initialState = history.state;
     history.replaceState(
@@ -70,6 +72,7 @@ export class LightboxHistory {
   }
 
   open(index: number) {
+    this.#languagePath = location.pathname;
     this.#pending = undefined;
     this.#suspendScrollRestoration();
     if (this.#leaving) this.#reopening = index;
@@ -83,6 +86,11 @@ export class LightboxHistory {
     }
     this.#pending = index;
     if (this.#interval === undefined) this.#write();
+  }
+
+  /** The viewer and its closed history entry keep the language selected while it is open. */
+  rebase(pathname: string) {
+    if (this.#handlers.isOpen()) this.#languagePath = pathname;
   }
 
   /** Closes at once; the browser goes back over the lightbox's entry after. */
@@ -107,6 +115,10 @@ export class LightboxHistory {
 
   popstate() {
     this.#pending = undefined;
+    const index = galleryImageIndex(location.hash, this.#imageCount);
+    if (this.#languagePath && (this.#leaving || this.#handlers.isOpen() || index !== undefined)) {
+      history.replaceState(history.state, '', `${this.#languagePath}${location.search}${location.hash}`);
+    }
     if (this.#leaving) {
       this.#leaving = false;
       const index = this.#reopening;
@@ -115,7 +127,6 @@ export class LightboxHistory {
       else history.pushState(marked(history.state), '', galleryImageHash(index));
       return;
     }
-    const index = galleryImageIndex(location.hash, this.#imageCount);
     if (!this.#handlers.isOpen() && index === undefined) return;
     this.#suspendScrollRestoration();
     if (index === undefined) {

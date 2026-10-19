@@ -37,6 +37,11 @@ const visibleText = (html: string) => html
   languages.filter((entry) => entry.lang === lang).map(({ lang, html }) => (
     <div
       {lang}
+      data-translation-html
+      data-translation-cs={languages[0].html}
+      data-translation-en={languages[1].html}
+      data-columns-cs={canSplitProse(visibleText(languages[0].html))}
+      data-columns-en={canSplitProse(visibleText(languages[1].html))}
       class:list={[
         'running-text prose prose-neutral max-w-none dark:prose-invert',
         { 'prose-columns': canSplitProse(visibleText(html)) },

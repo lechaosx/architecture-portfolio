@@ -14,21 +14,18 @@ interface Props {
 }
 
 const { cs, en, class: cls } = Astro.props;
-const languages = [
-  { lang: 'cs', text: cs && bindOneLetterWords(cs.trim()) },
-  { lang: 'en', text: en?.trim() },
-];
+const texts = { cs: cs ? bindOneLetterWords(cs.trim()) : '', en: en?.trim() ?? '' };
+const text = texts[lang];
 ---
 
-{
-  languages.filter((entry) => entry.lang === lang).map(
-    ({ lang, text }) =>
-      text && (
-        <div {lang} class:list={['running-text', cls, { 'prose-columns': canSplitProse(text) }]}>
-          {text.split(/\s*\n\s*/).map((paragraph) => (
-            <p>{paragraph}</p>
-          ))}
-        </div>
-      ),
-  )
-}
+<div
+  {lang}
+  hidden={!text}
+  data-translation-paragraphs
+  data-translation-optional
+  data-translation-cs={texts.cs} data-translation-en={texts.en}
+  data-columns-cs={canSplitProse(texts.cs)} data-columns-en={canSplitProse(texts.en)}
+  class:list={['running-text', cls, { 'prose-columns': canSplitProse(text) }]}
+>
+  {text && text.split(/\s*\n\s*/).map((paragraph) => <p>{paragraph}</p>)}
+</div>

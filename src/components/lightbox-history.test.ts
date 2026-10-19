@@ -130,6 +130,38 @@ describe('image hashes', () => {
 });
 
 describe('the lightbox history', () => {
+  test('a later opening follows the page language after the footer changes it', () => {
+    load('/en/projects/a/');
+    openImage(2);
+    browser.replaceState(browser.state, '', '/cs/projects/a/#image-3');
+    history.rebase('/cs/projects/a/');
+    history.close();
+    browser.pushState(browser.state, '', '/en/projects/a/');
+    openImage(3);
+    history.close();
+    expect(browser.url).toBe('/en/projects/a/');
+  });
+
+  test('a language chosen in the viewer persists when Back closes it and Forward reopens it', () => {
+    load('/en/projects/a/?view=plan');
+    browser.replaceState({ applicationValue: 42 }, '', browser.url);
+    openImage(2);
+    browser.replaceState(browser.state, '', '/cs/projects/a/?view=plan#image-3');
+    history.rebase('/cs/projects/a/');
+    browser.back();
+    expect(browser.url).toBe('/cs/projects/a/?view=plan');
+    expect(open).toBe(false);
+    expect(browser.state).toEqual({ applicationValue: 42 });
+    browser.go(1);
+    expect(browser.url).toBe('/cs/projects/a/?view=plan#image-3');
+    expect(shown).toEqual([2]);
+    history.change(4);
+    written();
+    expect(browser.url).toBe('/cs/projects/a/?view=plan#image-5');
+    history.close();
+    expect(browser.url).toBe('/cs/projects/a/?view=plan');
+  });
+
   test('opening adds one entry, changing image replaces it, and Back closes', () => {
     openImage(2);
     expect(browser.entries.map((entry) => entry.url)).toEqual([

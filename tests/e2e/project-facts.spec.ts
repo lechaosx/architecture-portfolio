@@ -96,7 +96,7 @@ for (const path of ['/e2e/project-role/', '/e2e/work-role-only/']) {
     ] as const) {
       if (language === 'cs') {
         await page.getByRole('link', { name: 'Switch to Czech' }).click();
-        if (path.includes('work-')) await page.locator('details > summary').first().click();
+        if (index) await expect(page.locator('details')).toHaveAttribute('open', '');
       }
       await expect(sheet(page).getByText(label, { exact: true })).toBeVisible();
       await expect(sheet(page).getByText(role, { exact: true })).toBeVisible();
@@ -125,7 +125,7 @@ for (const path of ['/e2e/credits/', '/e2e/work-credits/']) {
     ] as const) {
       if (language === 'cs') {
         await page.getByRole('link', { name: 'Switch to Czech' }).click();
-        if (path.includes('work-')) await page.locator('details > summary').first().click();
+        if (path.includes('work-')) await expect(page.locator('details').first()).toHaveAttribute('open', '');
       }
       await page.evaluate(() => document.fonts.ready);
       const list = sheet(page).locator(':scope > div').filter({ has: page.getByText(label, { exact: true }) }).getByRole('list');
@@ -162,7 +162,7 @@ test('an optional project website appears on the project page and expands a link
     for (const [language, label] of [['en', 'Project website'], ['cs', 'Odkaz na projekt']] as const) {
       if (language === 'cs') {
         await page.getByRole('link', { name: 'Switch to Czech' }).click();
-        if (path.includes('work-')) await page.locator('details > summary').first().click();
+        if (path.includes('work-')) await expect(page.locator('details').first()).toHaveAttribute('open', '');
       }
       await expect(sheet(page).getByText(label, { exact: true })).toBeVisible();
       const link = sheet(page).getByRole('link', { name: hostname, exact: true });
@@ -343,7 +343,7 @@ test('an opened index row shows the brief, then the sheet without the place and 
   expect(sheetBox!.x).toBeCloseTo(briefBox!.x, 0);
 
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
-  await row.locator('summary').click();
+  await expect(row.locator('details')).toHaveAttribute('open', '');
   expect(await labels(opened)).toEqual(['Zásah', 'Zaměření', 'Ateliér', 'Spolupráce', 'Ocenění']);
   await expect(row.getByText('První řádek').filter({ visible: true })).toBeVisible();
   await expect(row.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);

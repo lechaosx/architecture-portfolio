@@ -302,6 +302,10 @@
       lang = document.documentElement.dataset.lang === 'cs' ? 'cs' : 'en';
     };
     syncLang();
+    const removeLanguage = on(document, 'site:language', () => {
+      syncLang();
+      imageHistory.rebase(location.pathname);
+    });
     const languageObserver = new MutationObserver(syncLang);
     languageObserver.observe(document.documentElement, {
       attributes: true,
@@ -313,6 +317,7 @@
       imageHistory.destroy();
       for (const remove of removeTriggers) remove();
       languageObserver.disconnect();
+      removeLanguage();
     };
   });
 

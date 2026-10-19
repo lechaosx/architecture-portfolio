@@ -146,6 +146,7 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
     row.dataset.footerLayout = fullWidth <= available ? 'full' : contactWidth <= available ? 'contacts' : 'stack';
   }
   const observer = new ResizeObserver(fitFooter);
+  document.addEventListener('site:language', fitFooter);
   for (const element of [row, copyright, switches, ...items]) observer.observe(element);
   fitFooter();
 </script>
