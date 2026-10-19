@@ -157,6 +157,14 @@ fits at 100%, and what pan and the zoom floor respect); CSS reads its sizes as
 custom properties. The controls sit outside the stage, so no gesture or turn
 moves or disables them.
 
+### Lightbox header crop — [Implicit]
+
+The thumbnail morph keeps its full frame even when partly obscured. A separate
+screen-space crop opens from the sticky header’s lower edge, so the
+hidden image is revealed continuously while the backdrop dims the header; the
+same geometry follows closing and reversals. The input stage stays uncropped so
+gestures work across the screen throughout the transition.
+
 ### The card and its back — [Explicit]
 
 A comparison set's images are layers of one `LightboxCard`, and every change

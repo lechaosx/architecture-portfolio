@@ -68,6 +68,8 @@
   /** A thumbnail's frame on screen, and the hover scale of its image. */
   interface Frame extends Rect {
     hover: number;
+    /** Screen-space crop where the sticky header obscures the thumbnail. */
+    clipTop: number;
   }
 
   /** One image in the strip, `position` stage widths along it. */
@@ -383,8 +385,8 @@
 
   /**
    * Makes image `i` the open lightbox's current image, as it is at rest, and
-   * brings the lightbox in: from `source` the card moves from it, where it
-   * can, and otherwise fades in; opened from history it shows at once.
+   * brings the lightbox in: from `source` the card moves from its visible
+   * frame; opened from history it shows at once.
    * Opened again while it closes, it goes on from where it is: on the same
    * image it keeps its strip, and on another it changes to it.
    */
@@ -445,8 +447,7 @@
 
   /**
    * A thumbnail's frame and its image's hover scale, for the card to move
-   * from or to: only while the thumbnail is fully in view and clear of the
-   * sticky header, as the card would otherwise pass over or under the header.
+   * from or to, preserving the crop where the sticky header hides it.
    */
   function thumbnailFrame(thumbnail: HTMLElement): Frame | undefined {
     const { x, y, width, height } = thumbnail.getBoundingClientRect();
@@ -458,28 +459,28 @@
       x + width > header.left &&
       y < header.bottom &&
       y + height > header.top;
-    // Within a pixel, as a thumbnail scrolled flush with an edge may lie a
-    // fraction past it.
+    const clipTop = underHeader ? Math.max(0, header.bottom) : 0;
     const inView =
       width > 0 &&
       height > 0 &&
-      x > -1 &&
-      y > -1 &&
-      x + width < innerWidth.current! + 1 &&
-      y + height < innerHeight.current! + 1;
-    if (!inView || underHeader) return undefined;
+      x < innerWidth.current! &&
+      y < innerHeight.current! &&
+      x + width > 0 &&
+      y + height > clipTop;
+    if (!inView) return undefined;
     return {
       x,
       y,
       width,
       height,
       hover: image ? image.getBoundingClientRect().width / thumbnail.clientWidth : 1,
+      clipTop,
     };
   }
 
   function betweenFrames(from: Frame, to: Frame, share: number): Frame {
     const at = (key: keyof Frame) => from[key] + (to[key] - from[key]) * share;
-    return { x: at('x'), y: at('y'), width: at('width'), height: at('height'), hover: at('hover') };
+    return { x: at('x'), y: at('y'), width: at('width'), height: at('height'), hover: at('hover'), clipTop: at('clipTop') };
   }
 
   function requestClose() {
@@ -941,75 +942,81 @@
       {ontouchend}
       ontouchcancel={(e) => apply(gestures.touchCancel(), e)}
     >
-      <!-- Opening, the card moves from its thumbnail's frame, cropped to it,
-           or, where it cannot, fades in. -->
+      <!-- Clip only the drawing: the full stage must keep receiving input. -->
       <div
-        class="absolute inset-0"
-        style:transform={opened &&
-          `translate(${opened.x}px, ${opened.y}px) scale(${opened.scale})`}
-        style:clip-path={opened &&
-          `inset(${opened.clip.top}px ${opened.clip.right}px ${opened.clip.bottom}px ${opened.clip.left}px)`}
-        style:opacity={cardShown.current < 1 ? cardShown.current : undefined}
+        class="lightbox-crop absolute inset-0"
+        style:clip-path={frame && cardAt.current < 1 && frame.clipTop > 0
+          ? `inset(${frame.clipTop * (1 - cardAt.current)}px 0 0)`
+          : undefined}
       >
-        <!-- One translation moves every slide, so they stay edge to edge. -->
         <div
-          class="lightbox-strip absolute inset-0"
-          style:transform={`translate3d(${-strip.current * 100}%, 0, 0)`}
+          class="absolute inset-0"
+          style:transform={opened &&
+            `translate(${opened.x}px, ${opened.y}px) scale(${opened.scale})`}
+          style:clip-path={opened &&
+            `inset(${opened.clip.top}px ${opened.clip.right}px ${opened.clip.bottom}px ${opened.clip.left}px)`}
+          style:opacity={cardShown.current < 1 ? cardShown.current : undefined}
         >
-          {#each slides as slide (slide.id)}
-            {@const isCurrent = slide.position === at}
-            <div
-              class={[
-                'lightbox-slide absolute inset-0 overflow-hidden',
-                {
-                  'lightbox-slide-current': isCurrent,
-                  'lightbox-slide-previous': !isCurrent && slide.position === at - 1,
-                  'lightbox-slide-next': !isCurrent && slide.position === at + 1,
-                },
-              ]}
-              style:transform={`translate3d(${slide.position * 100}%, 0, 0)`}
-              inert={!isCurrent}
-            >
-              {#if isCurrent || slide.left}
-                {@const left = isCurrent ? undefined : slide.left}
-                <LightboxCard
-                  image={slide.image}
-                  describe={cardImage}
-                  source={drawingUrl}
-                  towards={left?.towards ?? towards}
-                  textUp={left ? left.textUp : flipped}
-                  variants={isCurrent ? variants : noVariants}
-                  drag={isCurrent ? cardDrag : undefined}
-                  view={left?.view ?? view}
-                  viewDuration={isCurrent ? viewDuration : 0}
-                  moving={carried}
-                  restArea={areas.rest}
-                  {columnLimit}
-                  {lang}
-                  {tiledCanvas}
-                  bind:drawing={slide.drawing}
-                  bind:turn={slide.turn}
-                  bind:ready={slide.ready}
-                  onload={isCurrent ? onImageLoad : undefined}
-                />
-              {:else}
-                {@const size = restImageSize(slide.image)}
-                <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <img
-                    src={previewUrl(slide.image)}
-                    width={responsiveImages[slide.image]?.source.width}
-                    height={responsiveImages[slide.image]?.source.height}
-                    alt={imageText(images[slide.image], 'title', lang) ?? ''}
-                    draggable="false"
-                    decoding="async"
-                    style:width={size ? `${size.width}px` : undefined}
-                    style:height={size ? `${size.height}px` : undefined}
-                    class="size-auto max-h-full max-w-full object-contain select-none"
+          <!-- One translation moves every slide, so they stay edge to edge. -->
+          <div
+            class="lightbox-strip absolute inset-0"
+            style:transform={`translate3d(${-strip.current * 100}%, 0, 0)`}
+          >
+            {#each slides as slide (slide.id)}
+              {@const isCurrent = slide.position === at}
+              <div
+                class={[
+                  'lightbox-slide absolute inset-0 overflow-hidden',
+                  {
+                    'lightbox-slide-current': isCurrent,
+                    'lightbox-slide-previous': !isCurrent && slide.position === at - 1,
+                    'lightbox-slide-next': !isCurrent && slide.position === at + 1,
+                  },
+                ]}
+                style:transform={`translate3d(${slide.position * 100}%, 0, 0)`}
+                inert={!isCurrent}
+              >
+                {#if isCurrent || slide.left}
+                  {@const left = isCurrent ? undefined : slide.left}
+                  <LightboxCard
+                    image={slide.image}
+                    describe={cardImage}
+                    source={drawingUrl}
+                    towards={left?.towards ?? towards}
+                    textUp={left ? left.textUp : flipped}
+                    variants={isCurrent ? variants : noVariants}
+                    drag={isCurrent ? cardDrag : undefined}
+                    view={left?.view ?? view}
+                    viewDuration={isCurrent ? viewDuration : 0}
+                    moving={carried}
+                    restArea={areas.rest}
+                    {columnLimit}
+                    {lang}
+                    {tiledCanvas}
+                    bind:drawing={slide.drawing}
+                    bind:turn={slide.turn}
+                    bind:ready={slide.ready}
+                    onload={isCurrent ? onImageLoad : undefined}
                   />
-                </div>
-              {/if}
-            </div>
-          {/each}
+                {:else}
+                  {@const size = restImageSize(slide.image)}
+                  <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <img
+                      src={previewUrl(slide.image)}
+                      width={responsiveImages[slide.image]?.source.width}
+                      height={responsiveImages[slide.image]?.source.height}
+                      alt={imageText(images[slide.image], 'title', lang) ?? ''}
+                      draggable="false"
+                      decoding="async"
+                      style:width={size ? `${size.width}px` : undefined}
+                      style:height={size ? `${size.height}px` : undefined}
+                      class="size-auto max-h-full max-w-full object-contain select-none"
+                    />
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
         </div>
       </div>
     </div>

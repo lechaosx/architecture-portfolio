@@ -108,7 +108,7 @@ function visibleCard(page: Page) {
     const drawing = document
       .querySelector('.lightbox-slide-current .lightbox-front > img')!
       .getBoundingClientRect();
-    const opening = document.querySelector<HTMLElement>('.lightbox-stage > div')!;
+    const opening = document.querySelector<HTMLElement>('.lightbox-crop > div')!;
     const box = opening.getBoundingClientRect();
     const scale = box.width / opening.offsetWidth;
     const inset = /inset\(([^)]*)\)/
@@ -116,13 +116,16 @@ function visibleCard(page: Page) {
       .split(' ')
       .map((value) => parseFloat(value) * scale) ?? [0, 0, 0, 0];
     const [top, right, bottom, left] = [inset[0], inset[1] ?? inset[0], inset[2] ?? inset[0], inset[3] ?? inset[1] ?? inset[0]];
-    const x = Math.max(drawing.x, box.x + left);
-    const y = Math.max(drawing.y, box.y + top);
+    const stageTop = parseFloat(/inset\(([^)]*)\)/.exec(
+      getComputedStyle(document.querySelector('.lightbox-crop')!).clipPath,
+    )?.[1] ?? '0');
+    const x = Math.max(0, drawing.x, box.x + left);
+    const y = Math.max(stageTop, drawing.y, box.y + top);
     return {
       x,
       y,
-      width: Math.min(drawing.right, box.right - right) - x,
-      height: Math.min(drawing.bottom, box.bottom - bottom) - y,
+      width: Math.min(innerWidth, drawing.right, box.right - right) - x,
+      height: Math.min(innerHeight, drawing.bottom, box.bottom - bottom) - y,
       drawingWidth: drawing.width,
       opacity: Number(getComputedStyle(opening).opacity),
     };
@@ -566,50 +569,94 @@ test('header remains in place beneath the lightbox, and the cover keeps its page
   expect(await coverName()).toBe('cover-e2e-project');
 });
 
-test('an obscured thumbnail opens and closes the lightbox with a fade, the card at rest', async ({
-  page,
-}) => {
+for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+  test.describe(`partly visible thumbnails at ${viewport.width}px`, () => {
+    test.use({ viewport });
+
+    for (const edge of ['header', 'top', 'bottom'] as const) {
+      test(`a thumbnail crossing the ${edge} opens and closes with movement`, async ({ page }) => {
+        await gotoProject(page);
+        const thumbnail = galleryImage(page, edge === 'bottom' ? 10 : 1);
+        await thumbnail.scrollIntoViewIfNeeded();
+        await thumbnail.evaluate((button, edge) => {
+          const bounds = button.getBoundingClientRect();
+          const header = document.querySelector('body > header')!.getBoundingClientRect();
+          const top = edge === 'header' ? header.bottom - bounds.height + 6
+            : edge === 'top' ? -20 : innerHeight - bounds.height + 20;
+          scrollBy(0, bounds.top - top);
+        }, edge);
+        const target = (await thumbnail.boundingBox())!;
+        const header = (await page.locator('body > header').boundingBox())!;
+        const visibleTop = Math.max(target.y, header.y + header.height);
+        const visibleBottom = Math.min(viewport.height, target.y + target.height);
+        expect(visibleBottom).toBeGreaterThan(visibleTop);
+        if (edge === 'bottom') expect(target.y + target.height).toBeGreaterThan(viewport.height);
+        else expect(target.y).toBeLessThan(edge === 'top' ? 0 : header.y + header.height);
+
+        await holdTime(page);
+        await page.mouse.click(target.x + target.width / 2, (visibleTop + visibleBottom) / 2);
+        await page.waitForFunction(() =>
+          document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
+            ?.complete,
+        );
+        const start = await visibleCard(page);
+        expect(start.x).toBeCloseTo(target.x, 0);
+        expect(start.y).toBeCloseTo(visibleTop, 0);
+        expect(start.width).toBeCloseTo(target.width, 0);
+        expect(start.height).toBeCloseTo(visibleBottom - visibleTop, 0);
+        expect(start.opacity).toBe(1);
+        const drawing = (await page.locator('.lightbox-slide-current .lightbox-front > img').boundingBox())!;
+        expect(drawing.y + drawing.height / 2).toBeCloseTo(target.y + target.height / 2, 0);
+
+        await page.clock.runFor(100);
+        const opening = await visibleCard(page);
+        await page.clock.runFor(500);
+        const rest = await visibleCard(page);
+        expect(Math.abs(opening.width - start.width) + Math.abs(opening.y - start.y)).toBeGreaterThan(1);
+        expect(Math.abs(opening.width - rest.width) + Math.abs(opening.y - rest.y)).toBeGreaterThan(1);
+        expect(opening.opacity).toBe(1);
+        await page.clock.resume();
+        await waitForLightbox(page);
+
+        await holdTime(page);
+        await page.keyboard.press('Escape');
+        await page.clock.runFor(100);
+        const closing = await visibleCard(page);
+        expect(Math.abs(closing.width - rest.width) + Math.abs(closing.y - rest.y)).toBeGreaterThan(1);
+        expect(closing.opacity).toBe(1);
+        await page.clock.runFor(290);
+        const landing = await visibleCard(page);
+        expect(Math.abs(landing.y - visibleTop)).toBeLessThan(3);
+        expect(Math.abs(landing.height - start.height)).toBeLessThan(3);
+        await page.clock.resume();
+        await expect(thumbnail).toHaveCSS('opacity', '1');
+      });
+    }
+  });
+}
+
+test('the header crop leaves wheel input available while opening', async ({ page }) => {
   await gotoProject(page);
   const thumbnail = galleryImage(page, 1);
   await thumbnail.scrollIntoViewIfNeeded();
   await thumbnail.evaluate((button) => {
-    const header = document.querySelector('body > header')!;
-    const buttonBounds = button.getBoundingClientRect();
-    const headerBounds = header.getBoundingClientRect();
-    scrollBy(0, buttonBounds.top - headerBounds.bottom + 20);
+    const bounds = button.getBoundingClientRect();
+    const header = document.querySelector('body > header')!.getBoundingClientRect();
+    scrollBy(0, bounds.top - header.bottom + 20);
   });
   const target = (await thumbnail.boundingBox())!;
   const header = (await page.locator('body > header').boundingBox())!;
-  expect(target.y).toBeLessThan(header.y + header.height);
-  expect(target.y + target.height).toBeGreaterThan(header.y + header.height);
-
   await holdTime(page);
-  await page.mouse.click(
-    target.x + target.width / 2,
-    Math.max(header.y + header.height + 10, target.y + target.height / 2),
-  );
+  await page.mouse.click(target.x + target.width / 2, header.y + header.height + 10);
   await page.waitForFunction(() =>
     document.querySelector<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')
       ?.complete,
   );
-  await page.clock.runFor(100);
-  const opening = await visibleCard(page);
+  const before = await imageZoom(page);
+  await page.mouse.move(page.viewportSize()!.width / 2, 1);
+  await page.mouse.wheel(0, -1200);
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(before * 1.2);
   await page.clock.resume();
-  await waitForLightbox(page);
-  const rest = await visibleCard(page);
-
-  await holdTime(page);
-  await page.getByRole('button', { name: 'Close' }).click();
-  await page.clock.runFor(100);
-  const closing = await visibleCard(page);
-  await page.clock.resume();
-
-  for (const shown of [opening, closing]) {
-    expect(shown.x).toBeCloseTo(rest.x, 0);
-    expect(shown.width).toBeCloseTo(rest.width, 0);
-    expect(shown.opacity).toBeGreaterThan(0);
-    expect(shown.opacity).toBeLessThan(1);
-  }
 });
 
 test('dark theme keeps the lightbox surface black and controls white', async ({

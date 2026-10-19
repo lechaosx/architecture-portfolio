@@ -452,9 +452,11 @@ zoomed, any part can be panned clear of the controls.
 
 ### Opening morphs from the thumbnail — [Explicit]
 
-The clicked image grows into the lightbox and returns on close, unless the
-thumbnail is not fully in view or under the header, or the image is zoomed or
-turned, in which case it fades.
+The clicked image grows from its visible thumbnail into the lightbox, including
+when it is partly outside the screen or behind the header, and returns on close.
+A crop at the header’s edge opens with the image and closes again on return.
+Closing fades when the destination has no visible area or the image is
+zoomed or turned; reduced-motion preferences suppress the movement.
 
 ### Addressable images — [Explicit]
 
