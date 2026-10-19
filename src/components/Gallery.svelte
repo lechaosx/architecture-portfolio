@@ -247,20 +247,14 @@
   $effect(() => {
     const thumbnail = landingOn;
     if (!thumbnail) return;
-    const follow = () => untrack(() => closeInto(thumbnail));
-    // Native :hover updates on the next frame after modality/pointer changes.
-    let hoverFrame = requestAnimationFrame(follow);
-    const stops = ['scroll', 'resize'].map((type) =>
-      on(window, type, follow, { passive: true }),
-    );
-    stops.push(on(window, 'pointermove', () => {
-      cancelAnimationFrame(hoverFrame);
+    // CSS hover keeps moving between input events, including after modality
+    // changes under a stationary pointer.
+    const follow = () => {
+      untrack(() => closeInto(thumbnail));
       hoverFrame = requestAnimationFrame(follow);
-    }, { passive: true }));
-    return () => {
-      cancelAnimationFrame(hoverFrame);
-      for (const stop of stops) stop();
     };
+    let hoverFrame = requestAnimationFrame(follow);
+    return () => cancelAnimationFrame(hoverFrame);
   });
   // A resize, a rotation or another image keeps the current view within its
   // new limits.
@@ -455,21 +449,9 @@
    * A thumbnail's frame and its image's hover scale, for the card to move
    * from or to, preserving the crop where the sticky header hides it.
    */
-  function thumbnailFrame(thumbnail: HTMLElement, settleHover = false): Frame | undefined {
+  function thumbnailFrame(thumbnail: HTMLElement): Frame | undefined {
     const { x, y, width, height } = thumbnail.getBoundingClientRect();
     const image = thumbnail.querySelector('img');
-    // Closing the modal can restart hover with a stationary pointer. Land on
-    // its final scale rather than sampling the start of the CSS transition.
-    if (settleHover && image) {
-      for (const animation of image.getAnimations()) {
-        if (
-          animation instanceof CSSTransition &&
-          ['scale', 'transform'].includes(animation.transitionProperty)
-        ) {
-          animation.finish();
-        }
-      }
-    }
     const header = document.querySelector('body > header')?.getBoundingClientRect();
     const underHeader =
       header &&
@@ -537,7 +519,7 @@
    * from is the one it is in now, so the move goes on without a jump.
    */
   function closeInto(thumbnail: HTMLElement) {
-    const landing = thumbnailFrame(thumbnail, true);
+    const landing = thumbnailFrame(thumbnail);
     if (!landing) {
       fadeCard();
       return;

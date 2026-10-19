@@ -170,9 +170,10 @@ gestures work across the screen throughout the transition.
 Thumbnail opacity follows the card’s displayed opening progress in both
 directions, so reversing the movement preserves its visibility. A settled card
 returns directly to its destination frame; retargeting a moving card starts
-from its current frame. Closing remeasures the destination after native hover
-updates and on pointer movement, finishing its hover transition so the card
-lands at the scale the thumbnail will keep.
+from its current frame. During return, each animation frame remeasures the
+destination’s geometry and displayed hover scale, so the card follows native
+hover transitions through pointer changes and meets the thumbnail where it is
+currently drawn.
 
 ### The card and its back — [Explicit]
 

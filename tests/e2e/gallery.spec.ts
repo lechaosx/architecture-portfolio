@@ -139,6 +139,69 @@ async function renderedThumbnailScale(thumbnail: Locator) {
   });
 }
 
+for (const placement of ['visible', 'header', 'bottom'] as const) {
+  test(`rapid pointer crossings keep the ${placement} thumbnail zoom continuous during and after return`, async ({ page }) => {
+    await page.goto(projectPath);
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    const thumbnail = galleryImage(page, 10);
+    await thumbnail.scrollIntoViewIfNeeded();
+    if (placement !== 'visible') {
+      await thumbnail.evaluate((button, placement) => {
+        const bounds = button.getBoundingClientRect();
+        const header = document.querySelector('body > header')!.getBoundingClientRect();
+        const top = placement === 'header' ? header.bottom - bounds.height / 2
+          : innerHeight - bounds.height / 2;
+        scrollBy(0, bounds.top - top);
+      }, placement);
+    }
+    const bounds = (await thumbnail.boundingBox())!;
+    const header = (await page.locator('body > header').boundingBox())!;
+    const y = (Math.max(bounds.y, header.y + header.height) + Math.min(bounds.y + bounds.height, page.viewportSize()!.height)) / 2;
+    const inside = bounds.x + 2;
+    const outside = bounds.x - 2;
+    await page.mouse.click(inside, y);
+    await expect.poll(() => backdrop(page)).toBeCloseTo(0.91, 3);
+    await expect(page.locator('.lightbox-crop > div')).toHaveCSS('transform', 'none');
+
+    const sampling = thumbnail.evaluate(async (button) => {
+      const image = button.querySelector('img')!;
+      const samples: { time: number; scale: number; drawing?: number; width: number }[] = [];
+      const start = performance.now();
+      await new Promise<void>((resolve) => {
+        const sample = (time: number) => {
+          const drawing = document.querySelector('.lightbox-slide-current .lightbox-front > img');
+          samples.push({
+            time,
+            scale: image.getBoundingClientRect().width / button.clientWidth,
+            drawing: drawing?.getBoundingClientRect().width,
+            width: image.getBoundingClientRect().width,
+          });
+          if (time - start < 1000) requestAnimationFrame(sample);
+          else resolve();
+        };
+        requestAnimationFrame(sample);
+      });
+      return samples;
+    });
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(120);
+    for (let crossing = 0; crossing < 18; crossing += 1) {
+      await page.mouse.move(crossing % 2 ? inside : outside, y);
+      await page.waitForTimeout(40);
+    }
+    const samples = await sampling;
+    const steps = samples.slice(1).map((sample, at) => ({
+      change: Math.abs(sample.scale - samples[at].scale),
+      elapsed: sample.time - samples[at].time,
+    }));
+    expect(Math.max(...steps.map(({ change, elapsed }) => change / elapsed))).toBeLessThan(0.0008);
+    expect(Math.max(...samples.map(({ scale }) => scale)) - Math.min(...samples.map(({ scale }) => scale))).toBeGreaterThan(0.005);
+    const handoff = samples.findIndex((sample, at) => at > 0 && !sample.drawing && samples[at - 1].drawing);
+    expect(handoff).toBeGreaterThan(0);
+    expect(Math.abs(samples[handoff - 1].drawing! - samples[handoff].width)).toBeLessThan(2);
+  });
+}
+
 test('the source thumbnail returns gradually behind the opening and stays visible through navigation', async ({ page }) => {
   await gotoProject(page);
   const thumbnail = galleryImage(page, 10);
