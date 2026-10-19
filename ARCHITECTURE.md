@@ -63,8 +63,8 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
   SVG and two rasters, over fixture projects; services and the place are
   filled only where there are images — [Implicit].
 - Metadata, structured-data and alt-text tests use fixture project pages; the
-  `llms.txt` test checks it against the shipped projects and follows its links
-  — [Implicit].
+  AI export tests check both text endpoints against the shipped projects and
+  follow their links — [Explicit].
 - The work page's index and the brief, credits and text-only project pages
   are tested through fixture projects; other landing, About, work-page, footer
   and transition tests use the shipped content — [Implicit].
@@ -243,12 +243,12 @@ page from the data passed in, so the e2e fixtures can render them with their
 own. Their routes in `src/pages/` only load the content and pass it on.
 `src/projects.ts` holds the one project order and splits the projects into
 cards with a cover and the index, so the share image that falls back to the
-newest cover always matches the first card, and `llms.txt` lists projects in
+newest cover always matches the first card, and both AI exports list projects in
 the same order.
 
 ### One project metadata model — [Implicit]
 
-`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms.txt`. Optional top-level `role_cs` / `role_en` describe the architect’s responsibilities, while each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets and collaborators in a semantic people list with secondary roles.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms-full.txt`. Optional top-level `role_cs` / `role_en` describe the architect’s responsibilities, while each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets and collaborators in a semantic people list with secondary roles.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 
@@ -330,7 +330,7 @@ element or its wrapper carries `lang` so the browser picks the right dictionary
 
 `T.astro`, `Prose.astro`, `Paragraphs.astro`, `PlainProse.astro` and the lightbox back put a no-break
 space after Czech one-letter words (`src/one-letter-words.ts`), so the content
-files, metadata, alt text, JSON-LD and `/llms.txt` keep the text as written.
+files, metadata, alt text, JSON-LD and both AI exports keep the text as written.
 `Prose.astro` binds the text `marked` renders as HTML, never its markup, link
 targets or image alt text.
 
@@ -441,12 +441,23 @@ Project sites use `contentLocation`; `contributor` links the architect’s Perso
 Studies, a generic contact area and website languages do not establish awarded credentials, a workplace or personal language proficiency.
 Personal involvement dates do not establish a project creation date, and free-text roles and studio credits do not establish a creator relationship.
 
-### `llms.txt` and `robots.txt` as static endpoints — [Implicit]
+### AI exports and `robots.txt` as static endpoints — [Implicit]
 
-`src/pages/llms.txt.ts` renders at build time through the pure
-`src/llms-txt.ts`, from the same content as the pages, so it cannot drift from
-them and needs no server. `src/pages/robots.txt.ts` builds the sitemap's URL
-from `site`, so the domain is written only in `site` and `public/CNAME`.
+`src/pages/llms.txt.ts` and `src/pages/llms-full.txt.ts` render at build time
+through the pure `src/llms-txt.ts`, from the same content as the pages, so
+content edits update both exports without a server. `src/pages/robots.txt.ts`
+builds the sitemap's URL from `site`, so the domain is written only in `site`
+and `public/CNAME`.
+
+### Bilingual AI index and complete export — [Explicit]
+
+`/llms.txt` follows the [llms.txt proposal](https://llmstxt.org/): a name,
+summary, language guidance and H2 sections containing only annotated Markdown
+links, with short project notes drawn from location and involvement period.
+`/llms-full.txt` retains the full content with language-labelled prose and
+absolute links for titled or described images; both exports use the same
+canonical origin and project order as the pages, and `Base.astro` advertises
+`/llms.txt` through `rel="describedby"`.
 
 ---
 

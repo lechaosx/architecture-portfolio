@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { parse } from 'yaml';
+import { Lexer, type Tokens } from 'marked';
 import type { ImageManifest } from '../../src/images';
 
 const frontmatter = (path: string) => parse(readFileSync(path, 'utf8').split('---')[1]);
@@ -86,6 +87,8 @@ test.describe(() => {
     ]) {
       await page.goto(path);
       await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `${origin}${path}`);
+      await expect(page.locator('link[rel="describedby"]')).toHaveAttribute('href', '/llms.txt');
+      await expect(page.locator('link[rel="describedby"]')).toHaveAttribute('type', 'text/plain');
       await expect(meta(page, 'property="og:url"')).toHaveAttribute('content', `${origin}${path}`);
       await expect(meta(page, 'property="og:type"')).toHaveAttribute('content', type);
       await expect(meta(page, 'property="og:site_name"')).toHaveAttribute('content', owner);
@@ -230,26 +233,72 @@ test('robots.txt allows crawling and names the sitemap', async ({ request }) => 
   expect((await request.get(new URL(sitemap).pathname)).ok()).toBe(true);
 });
 
-test('llms.txt presents the architect and her published projects, linking pages that exist', async ({
+test('llms.txt indexes shared bilingual pages and llms-full.txt retains published content', async ({
   request,
 }) => {
   const response = await request.get('/llms.txt');
+  const fullResponse = await request.get('/llms-full.txt');
   expect(response.ok()).toBe(true);
+  expect(fullResponse.ok()).toBe(true);
+  expect(response.headers()['content-type']).toContain('text/plain');
+  expect(fullResponse.headers()['content-type']).toContain('text/plain');
   const text = await response.text();
+  const full = await fullResponse.text();
   expect(text.startsWith(`# ${owner}\n`)).toBe(true);
+  expect(full.startsWith(`# ${owner}\n`)).toBe(true);
+  for (const description of [site.description_cs, site.description_en]) expect(text).toContain(description);
+  expect(text).toContain('cs');
+  expect(text).toContain('en');
+  expect(full).toContain('**Česky (cs):**');
+  expect(full).toContain('**English (en):**');
+
+  const tokens = Lexer.lex(text).filter((token) => token.type !== 'space');
+  const firstSection = tokens.findIndex((token) => token.type === 'heading' && token.depth === 2);
+  const links: Tokens.Link[] = [];
+  for (const [position, token] of tokens.slice(firstSection).entries()) {
+    if (position % 2 === 0) expect(token).toMatchObject({ type: 'heading', depth: 2 });
+    else {
+      expect(token.type).toBe('list');
+      for (const item of (token as Tokens.List).items) {
+        const inline = Lexer.lexInline(item.text);
+        expect(inline[0].type).toBe('link');
+        expect(inline[1].raw).toMatch(/^: \S/);
+        links.push(inline[0] as Tokens.Link);
+      }
+    }
+  }
+  const urls = links.map((link) => link.href);
+  for (const path of ['/about/', '/work/', '/llms-full.txt']) expect(urls).toContain(`${origin}${path}`);
 
   const projects = readdirSync('src/content/projects').map((file) =>
     frontmatter(`src/content/projects/${file}`),
   );
-  for (const project of projects) {
-    if (project.draft) expect(text).not.toContain(project.title_cs);
-    else expect(text).toContain(project.title_cs);
-    if (!project.draft && project.brief_cs) expect(text).toContain(project.brief_cs.trim());
+  const pageProjects = projects.filter((data) => !data.draft && data.blocks?.length);
+  expect(urls.filter((url) => new URL(url).pathname.startsWith('/projects/'))).toHaveLength(pageProjects.length);
+  for (const data of projects) {
+    if (data.draft) {
+      expect(text).not.toContain(data.title_cs);
+      expect(full).not.toContain(data.title_cs);
+      continue;
+    }
+    expect(full).toContain(data.title_cs);
+    expect(full).toContain(data.title_en);
+    if (data.brief_cs) expect(full).toContain(data.brief_cs.trim());
+    if (data.brief_en) expect(full).toContain(data.brief_en.trim());
+    const projectLink = links.find((link) => link.href.startsWith(`${origin}/projects/`) && link.text.includes(data.title_cs));
+    if (data.blocks?.length) {
+      expect(projectLink).toBeDefined();
+      expect(projectLink!.text).toContain(data.title_en);
+    } else expect(projectLink).toBeUndefined();
   }
+  expect(text.length).toBeLessThan(full.length / 3);
 
-  const links = text.match(new RegExp(`${origin}/\\S*`, 'g')) ?? [];
-  expect(links.length).toBeGreaterThan(0);
-  for (const link of links) {
-    expect((await request.get(new URL(link).pathname)).ok(), link).toBe(true);
+  const fullLinks = Lexer.lex(full)
+    .filter((token): token is Tokens.Heading => token.type === 'heading')
+    .flatMap((heading) => heading.tokens.filter((token): token is Tokens.Link => token.type === 'link'));
+  expect(fullLinks.length).toBeGreaterThan(0);
+  for (const url of new Set([...urls, ...fullLinks.map((link) => link.href)])) {
+    expect(new URL(url).origin).toBe(origin);
+    expect((await request.get(new URL(url).pathname)).ok(), url).toBe(true);
   }
 });

@@ -53,8 +53,8 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro` | the pages, also rendered by the e2e fixtures |
 | `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |
-| `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD and `/llms.txt`, built from content |
-| `src/pages/llms.txt.ts`, `src/pages/robots.txt.ts` | the `/llms.txt` and `/robots.txt` endpoints |
+| `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD, bilingual `/llms.txt` index and `/llms-full.txt` export, built from content |
+| `src/pages/llms.txt.ts`, `src/pages/llms-full.txt.ts`, `src/pages/robots.txt.ts` | static text endpoints |
 | `src/components/Gallery.svelte`, `Lightbox*.svelte`, `lightbox-*.ts`, `gallery.ts` | the project lightbox |
 | `src/components/ProjectBlocks.astro` | project blocks |
 | `src/project-facts.ts`, `src/components/ProjectFacts.astro` | project badges and facts: involvement, classification, credits and award |
@@ -91,6 +91,12 @@ a project still needs content blocks to have a page and a card.
 **Link to a project's external page.** Set optional `project_url` to its complete
 HTTP or HTTPS address, shared by both languages, or leave it empty. Invalid web
 addresses fail content validation during the build.
+
+**Check AI exports.** After `npm run build`, inspect `dist/llms.txt` for the
+page index and `dist/llms-full.txt` for the complete published project facts,
+texts and linked image captions. Their section and language labels live in
+`src/i18n.ts`; `tests/e2e/seo.spec.ts` checks the shipped content and follows
+index and caption links.
 
 **Change the domain.** Edit `public/CNAME` and `site` in `astro.config.mjs`,
 then the domain under GitHub **Settings → Pages** and its DNS.

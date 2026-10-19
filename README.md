@@ -29,6 +29,9 @@ thumbnail selects its card and share image; an empty field uses the first page
 image. See [MAINTAINERS.md](MAINTAINERS.md)
 for the editing fields.
 
+The same content generates `/llms.txt`, a bilingual index of pages, and
+`/llms-full.txt`, the full text and facts with passages labelled by language.
+
 The owner edits all of it through [Pages CMS](https://pagescms.org): the repo is
 connected at app.pagescms.org, which reads `.pages.yml` and commits straight to
 `master` as `pages-cms[bot]`, so pull before you push.

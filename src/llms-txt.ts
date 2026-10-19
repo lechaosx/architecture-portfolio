@@ -4,9 +4,6 @@ import { formatPeriod, type Period } from './period';
 import { projectBadges, projectFacts } from './project-facts';
 import { newestFirst, type Project } from './projects';
 
-// /llms.txt (https://llmstxt.org): the site's facts as one Markdown file,
-// each in Czech and then English.
-
 type Data<Collection extends 'about' | 'contact' | 'projects'> =
   CollectionEntry<Collection>['data'];
 
@@ -16,6 +13,16 @@ const both = (cs?: string, en?: string) => [
 ];
 const pair = (cs?: string, en?: string) => both(cs, en).join(' / ');
 const label = (key: UiKey) => pair(ui.cs[key], ui.en[key]);
+const textLink = (title: string, url: URL) =>
+  `[${title.replace(/\s+/g, ' ').trim().replace(/[\\`*_[\]<>~&]/g, '\\$&')}](<${url.href}>)`;
+
+function passages(cs?: string, en?: string) {
+  return [
+    cs?.trim() ? `**${ui.cs.languageName}:**\n\n${cs.trim()}` : '',
+    en?.trim() ? `**${ui.en.languageName}:**\n\n${en.trim()}` : '',
+  ].filter(Boolean);
+}
+
 const period = (value: Period) => {
   const text = formatPeriod(value);
   return pair(text?.cs, text?.en);
@@ -39,7 +46,7 @@ function factRow(row: FactRow) {
   ]
     .filter(Boolean)
     .join(' · ');
-  const details = both(row.description_cs, row.description_en)
+  const details = passages(row.description_cs, row.description_en)
     .flatMap((text) => text.split('\n'))
     .map((detail) => detail.trim())
     .filter(Boolean);
@@ -75,24 +82,24 @@ function project(site: URL, { id, data }: Project) {
             .join('; ')}`,
       ),
     ),
-    ...both(data.brief_cs, data.brief_en),
+    ...passages(data.brief_cs, data.brief_en),
     ...data.blocks.flatMap((block) =>
-      block.type === 'text' ? both(block.body_cs, block.body_en) : [],
+      block.type === 'text' ? passages(block.body_cs, block.body_en) : [],
     ),
     ...images.flatMap((image, index) => {
       const title = pair(image.title_cs, image.title_en);
-      const description = both(image.description_cs, image.description_en);
+      const description = passages(image.description_cs, image.description_en);
       if (!title && description.length === 0) return [];
       const position = index + 1;
       return [
-        `#### ${title || pair(`${ui.cs.image} ${position}`, `${ui.en.image} ${position}`)}`,
+        `#### ${textLink(title || pair(`${ui.cs.image} ${position}`, `${ui.en.image} ${position}`), new URL(image.image, site))}`,
         ...description,
       ];
     }),
   ];
 }
 
-export function llmsTxt({
+export function llmsFullTxt({
   site,
   name,
   description,
@@ -115,7 +122,7 @@ export function llmsTxt({
   const blocks = [
     `# ${name}`,
     ...line(both(description.cs, description.en).map((text) => `> ${text}`).join('\n>\n')),
-    ...section(label('about'), both(about.body_cs, about.body_en)),
+    ...section(label('about'), passages(about.body_cs, about.body_en)),
     ...section(label('experience'), list(about.experience.map(factRow))),
     ...section(
       label('services'),
@@ -135,8 +142,42 @@ export function llmsTxt({
     ),
     ...section(
       label('work'),
-      [...projects].sort(newestFirst).flatMap((entry) => project(site, entry)),
+      projects.filter(({ data }) => !data.draft).sort(newestFirst).flatMap((entry) => project(site, entry)),
     ),
+  ];
+  return `${blocks.join('\n\n')}\n`;
+}
+
+export function llmsTxt({
+  site,
+  name,
+  description,
+  projects,
+}: {
+  site: URL;
+  name: string;
+  description: { cs?: string; en?: string };
+  projects: Project[];
+}) {
+  const blocks = [
+    `# ${name}`,
+    ...line(both(description.cs, description.en).map((text) => `> ${text}`).join('\n>\n')),
+    pair(ui.cs.llmsLanguages, ui.en.llmsLanguages),
+    ...section(label('llmsPages'), list([
+      `${textLink(label('about'), new URL('/about/', site))}: ${label('llmsAbout')}`,
+      `${textLink(label('work'), new URL('/work/', site))}: ${label('llmsWork')}`,
+    ])),
+    ...section(label('work'), list(
+      projects.filter(({ data }) => !data.draft && data.blocks.length > 0)
+        .sort(newestFirst)
+        .map(({ id, data }) => `${textLink(pair(data.title_cs, data.title_en), new URL(`/projects/${id}/`, site))}: ${[
+          pair(data.location_cs, data.location_en).replace(/\s+/g, ' '),
+          `${label('involvement')}: ${period(data)}`,
+        ].filter(Boolean).join(' · ')}`),
+    )),
+    ...section(label('llmsResources'), list([
+      `${textLink(label('llmsFull'), new URL('/llms-full.txt', site))}: ${label('llmsFullDescription')}`,
+    ])),
   ];
   return `${blocks.join('\n\n')}\n`;
 }

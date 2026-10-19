@@ -508,8 +508,8 @@ strip stays one row and scrolls sideways — [Implicit].
 Optional bilingual title and description per image, shown only in the lightbox.
 On the page, the title is also the image's alt text in the current language,
 and an untitled image has none — [Explicit]. Both are machine-readable in the
-structured data and `llms.txt` — [Implicit]. The title shows in the top-left
-set strip: a titled image outside a set gets a strip of one, an image with
+structured data — [Implicit] — and `llms-full.txt` with links to the images —
+[Explicit]. The title shows in the top-left set strip: a titled image outside a set gets a strip of one, an image with
 neither title nor set gets none. A description lives on the card's back, reached
 with the bottom-left toggle, which turns the card over in 3D:
 
@@ -561,9 +561,16 @@ So that an assistant asked which architect to hire can quote her, every page
 carries structured data (schema.org) about the architect: name, credential,
 contact, services and awards; a project page adds its project location, credits,
 award and status, its cover and its titled or described images, each linked at
-the size the lightbox opens it at. `/llms.txt` gathers these facts, her education, work
-experience, her bio and every published project's fact sheet, texts and image
-captions in one Markdown file, Czech then English.
+the size the lightbox opens it at.
+
+### Bilingual index and full export for AI assistants — [Explicit]
+
+`/llms.txt` is a compact bilingual index of About, Work and published project
+pages, discovered through a link in each page's head; it explains that Czech
+and English share the same URLs. `/llms-full.txt` gathers her bio, education,
+experience, services, contact details and every published project's facts,
+texts and linked image captions, including projects without a separate page;
+long passages identify Czech (`cs`) and English (`en`) explicitly.
 
 ### The landing page's tab title says what she is — [Explicit]
 
