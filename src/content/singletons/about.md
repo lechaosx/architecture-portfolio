@@ -3,27 +3,21 @@ portrait: /uploads/placeholder-portrait.svg
 approaches:
   - label_cs: Místo
     label_en: Place
-    text_cs: >-
-      Kde není člověk, není místo. Kde není místo, chybí i člověk. 
-
-      Věřím – zvláště v dnešní době plné informačního šumu, že lidé se potřebují
-      znovu potkávat. Kde jinde – než v kvalitních místech a prostorech. 
-    text_en: >-
-      Where there are no people, there is no place. And where there is no place,
-      people are missing too.
-
-
-      I believe that, especially today, in a world full of information noise,
-      people need to meet again. And where else, if not in well-designed places
-      and spaces.
+    text_cs: "Kde není člověk, není místo. Kde není místo, chybí i člověk. Věřím, že
+      zvláště v dnešní době plné informačního šumu, se lidé potřebují znovu
+      potkávat. Kde jinde než v kvalitních místech a prostorech. "
+    text_en: Where there are no people, there is no place. And where there is no
+      place, people are missing too. I believe that, especially today, in a
+      world full of information noise, people need to meet again. And where
+      else, if not in well-designed places and spaces.
     icon: place
   - label_cs: Měřítko
     label_en: Scale
     text_cs: "Základním měřítkem je pro mne především výsledná spokojenost s
       návrhem. Když nová intervence přiláká do místa či prostoru život. "
     text_en: For me, the most important measure of a successful design is the final
-      sense of satisfaction it brings — when a new intervention draws life into
-      a place or space.
+      sense of satisfaction it brings. When a new intervention draws life into a
+      place or space.
     icon: scale
   - label_cs: Materiál
     label_en: Material
@@ -83,8 +77,8 @@ experience:
     place_en: Fránek Architects s.r.o.
     department_cs: Architektura, projekce a inženýring
     department_en: Architecture, Design Documentation & Permitting
-    from: '2022'
-    to: '2026'
+    from: "2022"
+    to: "2026"
     title_cs: Architektka
     title_en: Architect
 education:
@@ -92,16 +86,16 @@ education:
     place_en: Brno University of Technology
     department_cs: Fakulta stavební, Ústav architektury
     department_en: Faculty of Civil Engineering, Institute of Architecture
-    from: '2024'
-    to: '2026'
+    from: "2024"
+    to: "2026"
     title_cs: Architektura a rozvoj sídel
     title_en: Architecture and Urban Development
   - place_cs: VUT v Brně
     place_en: Brno University of Technology
     department_cs: Fakulta stavební, Ústav architektury
     department_en: Faculty of Civil Engineering, Institute of Architecture
-    from: '2020'
-    to: '2024'
+    from: "2020"
+    to: "2024"
     title_cs: Architektura pozemních staveb
     title_en: Building Architecture
 ---
