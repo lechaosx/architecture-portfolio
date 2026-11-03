@@ -10,6 +10,13 @@ brief_cs: Zpracování architektonické studie rekonstrukce hasičské zbrojnice
   obci Doubravník.
 brief_en: Development of the architectural study for the renovation of the fire
   station in Doubravník.
+context:
+  - commissioned
+intervention:
+  - renovation
+scope:
+  - public_space
+  - architecture
 design_in_progress: false
 realization: construction
 collaborators:
