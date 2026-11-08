@@ -7,4 +7,8 @@ images:
   - /uploads/09 AXO 5-1.webp
   - /uploads/Image25_000-1.webp
   - /uploads/Image3-1.webp
+  - /uploads/11 Axo 1-3.webp
+  - /uploads/12 Axo 2-2.webp
+  - /uploads/09 AXONOMETRIE-3.webp
+  - /uploads/10 AXONOMETRIE-2.webp
 ---
