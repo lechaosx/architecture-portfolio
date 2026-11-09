@@ -16,11 +16,25 @@ test('the bio opens About without repeating the wordmark as a visible title', as
   await page.goto('/e2e/about/');
   await expect(page.locator('main h1:visible')).toHaveText('About');
   await expect(page.locator('main h1:visible')).toHaveClass(/sr-only/);
-  const header = (await page.locator('body > header').boundingBox())!;
-  const bio = (await page.locator('main .prose:visible').boundingBox())!;
-  expect(bio.y - header.y - header.height).toBeCloseTo(64, 0);
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.locator('main h1:visible')).toHaveText('O mně');
+});
+
+test('a portrait opens About as close under the header as the landing hero; without one the bio opens it as the identity line does without images', async ({
+  page,
+}) => {
+  const gap = async (path: string, opener: string) => {
+    await page.goto(path);
+    const header = (await page.locator('body > header').boundingBox())!;
+    return (await page.locator(opener).first().boundingBox())!.y - header.y - header.height;
+  };
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const hero = await gap('/e2e/landing/', 'main [data-carousel]');
+    const heading = await gap('/e2e/landing-bare/', 'main h1:visible');
+    expect(await gap('/e2e/about/', 'main img'), `${width}px`).toBeCloseTo(hero, 0);
+    expect(await gap('/e2e/about-bare/', 'main .prose:visible'), `${width}px`).toBeCloseTo(heading, 0);
+  }
 });
 
 test('the bio sits beside the portrait on wide screens, below it on phones', async ({

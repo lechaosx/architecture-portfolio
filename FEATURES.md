@@ -200,9 +200,11 @@ page, so there is no separate Contact page — [Explicit].
 
 The small-caps heading over a black rule marks a section inside a page and
 never titles one. The landing page opens with her images, Work with its covers
-and About with her bio; the menu, which shows the current page inverted, says
-where the visitor is. Work and About titles are there only for screen readers
-and search.
+and About with her bio and portrait; the menu, which shows the current page
+inverted, says where the visitor is. Work and About titles are there only for
+screen readers and search. A page opening with imagery sits closer under the
+header than a text page such as a project page or the 404, and without its
+imagery opens like a text page.
 
 ### Landing page — [Explicit]
 

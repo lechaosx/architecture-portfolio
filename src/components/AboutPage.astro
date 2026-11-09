@@ -43,7 +43,14 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
     en: [profilePage({ site: origin, url: new URL(localizedPath(Astro.url.pathname, 'en'), origin).href })],
   }}
 >
-  <div class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
+  {/* A portrait opens the page like the landing hero: first when stacked,
+      top-aligned with the bio beside it. */}
+  <div
+    class:list={[
+      'mx-auto max-w-6xl px-6 pb-16 sm:pb-24',
+      about.portrait ? 'pt-8' : 'pt-12 sm:pt-16',
+    ]}
+  >
     <T as="h1" k="about" class="sr-only" />
     <div class="flex flex-wrap-reverse items-end gap-12">
       <div class="reveal min-w-0 flex-[1_1_35ch]">
