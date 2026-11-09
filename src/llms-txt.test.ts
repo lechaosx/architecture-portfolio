@@ -14,7 +14,8 @@ const project = {
   draft: false, context: [], intervention: [], scope: [],
   design_in_progress: false, collaborators: [], blocks: [],
 };
-const input = { site, name, about, contact, description: {}, projects: [] };
+const description = { cs: 'Portfolio architektky.', en: 'An architect’s portfolio.' };
+const input = { site, name, about, contact, description, projects: [] };
 
 function indexLinks(text: string) {
   const tokens = Lexer.lex(text);
@@ -39,10 +40,7 @@ function indexLinks(text: string) {
 }
 
 test('llms.txt is a bilingual link index with a summary and language-specific canonical URL guidance', () => {
-  const output = llms.llmsTxt({
-    ...input,
-    description: { cs: 'Portfolio architektky.', en: 'An architect’s portfolio.' },
-  });
+  const output = llms.llmsTxt(input);
   const tokens = Lexer.lex(output).filter((token) => token.type !== 'space');
   expect(tokens[0]).toMatchObject({ type: 'heading', depth: 1, text: name });
   expect(tokens[1]).toMatchObject({ type: 'blockquote' });

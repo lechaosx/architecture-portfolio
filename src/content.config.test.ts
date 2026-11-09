@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
-import { parse } from 'yaml';
+import { parse, stringify } from 'yaml';
+import { parseFrontmatter } from 'astro/markdown';
 import { z } from 'astro/zod';
 import { collections, projectId, TEXT } from './content.config';
 import { DATE } from './period';
@@ -39,11 +40,7 @@ function staticSchema(name: keyof typeof collections) {
   return schema;
 }
 
-function frontmatter(path: string): Record<string, unknown> {
-  const match = /^---\n([\s\S]*?)\n---/.exec(readFileSync(path, 'utf8'));
-  if (!match) throw new TypeError(`Expected frontmatter in ${path}`);
-  return parse(match[1]);
-}
+const frontmatter = (path: string) => parseFrontmatter(readFileSync(path, 'utf8')).frontmatter;
 
 /** A field, whether it may be left out, and the fields of its rows or blocks. */
 interface FieldShape {
@@ -421,6 +418,24 @@ test('a project file name gives its URL, and one with nothing to slug still gets
   expect(bangs).not.toBe(emoji);
 });
 
+/** Content as Pages CMS writes it (YAML 1.2) and Astro reads it back (js-yaml). */
+const savedByCms = (content: Record<string, unknown>) =>
+  parseFrontmatter(`---\n${stringify(content)}---\n`).frontmatter;
+
+const dateLike = '2024-05-01';
+
+test.each([
+  ['projects', project, {
+    studio: dateLike,
+    collaborators: [{ name: dateLike }],
+    blocks: [{ type: 'gallery', images: [{ image: '/uploads/plan.jpg', comparison_set: dateLike }] }],
+  }],
+  ['site', { description: { cs: 'Portfolio', en: 'Portfolio' } }, { name: dateLike, credential: dateLike }],
+  ['contact', {}, { email: dateLike, phone: dateLike }],
+] as const)('%s reads a date-like text the CMS leaves unquoted as typed', (name, content, fields) => {
+  expect(staticSchema(name).safeParse(savedByCms({ ...content, ...fields }))).toMatchObject({ success: true, data: fields });
+});
+
 const aboutContent = { body: { cs: 'O mně', en: 'About me' } };
 const fact = { place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Stáž', en: 'Internship' } };
 
@@ -502,6 +517,12 @@ describe.each(bilingualCases)('$name translations', (entry) => {
   test('accepts both languages without changing their text', () => {
     const input = withPair(entry, { cs: ' Český text ', en: ' English text ' });
     expect(staticSchema(entry.collection).safeParse(input)).toMatchObject({ success: true, data: input });
+  });
+
+  test('reads a date or number the CMS leaves unquoted as text', () => {
+    expect(staticSchema(entry.collection).safeParse(savedByCms(withPair(entry, { cs: dateLike, en: '0b101' })))).toMatchObject({
+      success: true, data: withPair(entry, { cs: dateLike, en: expect.any(String) }),
+    });
   });
 
   test.each(['cs', 'en'])('rejects the pair without text in %s', (language) => {

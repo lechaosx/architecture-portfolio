@@ -46,7 +46,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images and projects), `about.md`, `contact.md` (the footer's contacts and the landing page's location) |
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
-| `src/singletons.ts`, `src/published-projects.ts` | content as pages read it: no drafts, no images whose file is missing, period warnings, the landing page's projects as cards |
+| `src/singletons.ts`, `src/published-projects.ts` | content as pages read it: no drafts, no images whose file is missing, warnings for those images and periods, the landing page's projects as cards |
 | `src/i18n.ts` | baked-in UI labels |
 | `src/locale.ts`, `src/pages/[lang]/` | language selection, translated page paths and static locale routes |
 | `src/language-switch.ts` | in-place language changes, metadata, links and browser history |
@@ -128,3 +128,11 @@ is the only hydrated component, and the rest is small vanilla scripts.
   accept TypeScript 7.
 - **`@types/node` stays on Node's major** (24), to describe the runtime the
   scripts use.
+- **Very large uploads are untested for memory** in the build.
+- **Where a CMS save builds but shows something wrong.** Titles or file names
+  that slug to the same id shadow each other (Astro's duplicate-id warning
+  only); a rich-text image whose upload was deleted renders broken; an upload
+  named like `plan.png.webp` gets a spurious warning; text YAML reads as a
+  number or timestamp shows converted, e.g. `0b101` as `5`.
+- **Build warnings appear only in the GitHub Actions log**, where the architect
+  does not see them.

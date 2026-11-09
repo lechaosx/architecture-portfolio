@@ -17,6 +17,22 @@ const withoutEmptyCmsRows = (value: unknown) =>
       )
     : value;
 
+/**
+ * Frontmatter with its text as the architect typed it. Pages CMS writes YAML 1.2, which leaves
+ * text such as `2024-05-01` or `0b101` unquoted; Astro reads frontmatter with js-yaml, which makes
+ * those a Date and a number. No field holds a date or a number, so each becomes text again: a
+ * real date as typed, a time as an ISO timestamp, a number in decimal.
+ */
+const withTextAsTyped = (value: unknown): unknown => {
+  if (value instanceof Date) return value.toISOString().replace(/T00:00:00\.000Z$/, '');
+  if (typeof value === 'number') return String(value);
+  if (Array.isArray(value)) return value.map(withTextAsTyped);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, field]) => [key, withTextAsTyped(field)]));
+  }
+  return value;
+};
+
 const date = z.string().regex(DATE, 'Expected a year or month/year, e.g. 2023 or 3/2023');
 const period = { from: date.optional(), to: date.optional() };
 
@@ -51,7 +67,7 @@ export const projectId = ({ entry }: { entry: string }) =>
 
 const projects = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/projects', generateId: projectId }),
-  schema: z.object({
+  schema: z.preprocess(withTextAsTyped, z.object({
     title: bilingual,
     thumbnail: z.string().optional(),
     from: date,
@@ -100,7 +116,7 @@ const projects = defineCollection({
         )
         .default([]),
     ),
-  }),
+  })),
 });
 
 // Each singleton is one Markdown file, read as the one entry of its own
@@ -109,20 +125,20 @@ const singletons = './src/content/singletons';
 
 const site = defineCollection({
   loader: glob({ pattern: 'site.md', base: singletons }),
-  schema: z.object({
+  schema: z.preprocess(withTextAsTyped, z.object({
     name: z.string(),
     credential: z.string().optional(),
     description: bilingual,
-  }),
+  })),
 });
 
 const landing = defineCollection({
   loader: glob({ pattern: 'landing.md', base: singletons }),
-  schema: z.object({
+  schema: z.preprocess(withTextAsTyped, z.object({
     images: z.array(z.string()).default([]),
     // Project file paths from the repository root, as Pages CMS references store them.
     projects: z.array(z.string()).default([]),
-  }),
+  })),
 });
 
 const factRow = z.object({
@@ -136,7 +152,7 @@ const facts = z.preprocess(withoutEmptyCmsRows, z.array(factRow).default([]));
 
 const about = defineCollection({
   loader: glob({ pattern: 'about.md', base: singletons }),
-  schema: z.object({
+  schema: z.preprocess(withTextAsTyped, z.object({
     portrait: z.string().optional(),
     approaches: z.preprocess(
       withoutEmptyCmsRows,
@@ -158,17 +174,17 @@ const about = defineCollection({
     ),
     education: facts,
     awards: facts,
-  }),
+  })),
 });
 
 const contact = defineCollection({
   loader: glob({ pattern: 'contact.md', base: singletons }),
-  schema: z.object({
+  schema: z.preprocess(withTextAsTyped, z.object({
     email: z.string(),
     phone: z.string().optional(),
     location: bilingual.optional(),
     hours: bilingual.optional(),
-  }),
+  })),
 });
 
 export const collections = { projects, site, landing, about, contact };

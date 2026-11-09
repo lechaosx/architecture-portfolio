@@ -108,7 +108,7 @@ content:
             - { name: planned, label: Plánovaná realizace }
             - { name: construction, label: Ve výstavbě }
             - { name: built, label: Realizováno }
-      - { name: project_url, label: Odkaz na projekt, type: string, required: false, pattern: { regex: '^https?://(?:[\w-]+\.)*[A-Za-z][\w-]*(?:[/?#]\S*)?$|^$', message: 'Zadejte úplnou adresu začínající http:// nebo https://, např. https://www.example.cz/projekt.' }, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
+      - { name: project_url, label: Odkaz na projekt, type: string, required: false, pattern: { regex: '^https?://(?:[\w-]+\.)*[A-Za-z][\w-]*(?:[/?#]\S*)?$|^$', message: 'Zadejte úplnou adresu začínající http:// nebo https://, s doménou bez diakritiky a bez čísla portu (např. :8080), např. https://www.example.cz/projekt.' }, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
       - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména ostatních lidí patří do spolupráce.' }
       - name: role
         label: Moje role

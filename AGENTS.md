@@ -76,8 +76,8 @@ Only then reconcile them.
   later deploy unnoticed. The CMS refuses what it can express (`required`,
   `pattern`, required subfields of an optional object); the build tolerates
   what it can't, and the loading modules (`src/singletons.ts`,
-  `src/published-projects.ts`) log a warning. See ARCHITECTURE.md → "A CMS save
-  never stops the deploy".
+  `src/published-projects.ts`) and the image script log a warning. See
+  ARCHITECTURE.md → "A CMS save never stops the deploy".
 
 ## Verifying a change
 

@@ -123,7 +123,7 @@ Only filled facts appear, with location and **Období zapojení / Involvement pe
 
 ### Optional project website — [Explicit]
 
-An optional external project link appears in the fact sheet on the project page and in an expanded index entry, including entries with no other details. Its hostname identifies the destination; the same address serves both languages and is preserved in machine-readable output. The CMS refuses anything but a complete http or https address with a plain hostname: no IP address, port or non-ASCII hostname — [Implicit].
+An optional external project link appears in the fact sheet on the project page and in an expanded index entry, including entries with no other details. Its hostname identifies the destination; the same address serves both languages and is preserved in machine-readable output. The CMS refuses anything but a complete http or https address — [Explicit]. That address needs a plain hostname: no IP address, port or non-ASCII hostname — [Implicit].
 
 ### Project fact rows form two groups when they fit — [Explicit]
 
@@ -143,13 +143,12 @@ may be outside the page's blocks and does not change their order or the lightbox
 The project page keeps the blocks in the architect's order and loads its first
 page image eagerly — [Implicit].
 
-### A missing image is left out — [Implicit]
+### A missing image is left out — [Explicit] (details [Implicit])
 
 An image whose file is gone from the media library while content still refers
-to it is left out wherever it would appear: a block it empties goes too, and a
-missing thumbnail counts as unset. For a missing image the site makes resized
-copies of, the build logs a warning naming the file and the content referring
-to it; other missing images are only left out.
+to it is left out wherever it would appear, with a build warning naming the
+file and the content referring to it — [Explicit]. A block it empties goes too,
+and a missing thumbnail counts as unset — [Implicit].
 
 ### Project URL is the editable filename — [Explicit]
 

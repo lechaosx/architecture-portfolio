@@ -8,20 +8,20 @@ import { newestFirst, type Project } from './projects';
 type Data<Collection extends 'about' | 'contact' | 'projects'> =
   CollectionEntry<Collection>['data'];
 
-type Texts = Partial<Record<Lang, string>>;
+type Texts = Record<Lang, string> | undefined;
 
 /** The languages' versions of a text, each once. */
-const both = (texts: Texts = {}) => [
-  ...new Set([texts.cs, texts.en].flatMap((text) => text?.trim() || [])),
+const both = (texts: Texts) => [
+  ...new Set([texts?.cs, texts?.en].flatMap((text) => text?.trim() || [])),
 ];
-const pair = (texts?: Texts) => both(texts).join(' / ');
+const pair = (texts: Texts) => both(texts).join(' / ');
 const label = (key: UiKey) => pair({ cs: ui.cs[key], en: ui.en[key] });
 const textLink = (title: string, url: URL) =>
   `[${title.replace(/\s+/g, ' ').trim().replace(/[\\`*_[\]<>~&]/g, '\\$&')}](<${url.href}>)`;
 
-function passages(texts: Texts = {}) {
+function passages(texts: Texts) {
   return (['cs', 'en'] as const).flatMap((lang) => {
-    const text = texts[lang]?.trim();
+    const text = texts?.[lang].trim();
     return text ? [`**${ui[lang].languageName}:**\n\n${text}`] : [];
   });
 }
@@ -107,7 +107,7 @@ export function llmsFullTxt({
   site: URL;
   /** The credentialed name. */
   name: string;
-  description: { cs?: string; en?: string };
+  description: Record<Lang, string>;
   about: Pick<Data<'about'>, 'body' | 'experience' | 'services' | 'education' | 'awards'>;
   contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location'>;
   /** The published projects. */
@@ -150,7 +150,7 @@ export function llmsTxt({
 }: {
   site: URL;
   name: string;
-  description: { cs?: string; en?: string };
+  description: Record<Lang, string>;
   projects: Project[];
 }) {
   const blocks = [

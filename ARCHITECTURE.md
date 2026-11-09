@@ -380,18 +380,19 @@ writes them. Before `dev` and `build`, `scripts/generate-responsive-images.ts`
 writes WebP derivatives and a manifest to the ignored `public/_responsive`,
 never enlarging or touching the original. It skips an image it cannot read,
 with a warning naming it and the content referring to it, so a CMS media
-deletion cannot stop the deploy — [Implicit].
+deletion cannot stop the deploy.
 
 ### Pages read content through two loading modules — [Implicit]
 
 `src/singletons.ts` and `src/published-projects.ts` load the content once per
 build for every page: they drop drafts and images whose file is missing from
-`public/`, and log period warnings. `src/singletons.ts` turns the landing
-page's chosen projects into published projects' cards, logging a warning for
-each choice it skips. These checks live here, not in the schema, because a
-schema can only fail an entry, not warn, and the content layer skips
-revalidating an entry until its file changes. An image the script could not
-read but whose file exists renders from the original, as SVGs do.
+`public/`, and log warnings for those images and for periods.
+`src/singletons.ts` turns the landing page's chosen projects into published
+projects' cards, logging a warning for each choice it skips. These checks live
+here, not in the schema, because a schema can only fail an entry, not warn, and
+the content layer skips revalidating an entry until its file changes. An image
+the script could not read but whose file exists renders from the original, as
+SVGs do.
 
 ### Deep-zoom pyramids for large drawings — [Explicit]
 
@@ -505,15 +506,15 @@ UI labels are per-language dictionaries in `src/i18n.ts`, rendered with `<T k="�
 
 Every translatable field is one object with `cs` and `en` keys, in the content,
 the schema and the CMS, so one convention covers every field and the CMS can
-refuse a half-filled pair [Explicit]. Both subfields are required and Pages CMS
-validates an optional object only once either is filled, so it saves both
-languages or neither; each subfield's `pattern` refuses whitespace alone, as the
-schema's `bilingual` shape does [Implicit]. One file and one CMS form per entry;
+refuse a half-filled pair: both subfields are required and Pages CMS validates
+an optional object only once either is filled, so it saves both languages or
+neither [Explicit]. Each subfield's `pattern` refuses whitespace alone, as the
+schema's `bilingual` shape does [Explicit]. One file and one CMS form per entry;
 language-neutral fields (images, period dates, email, phone, a project's studio
 and collaborators’ names) stay single [Implicit]. Project classification stores
-stable values, labelled in `src/i18n.ts` under the same keys. The project route
-is the filename-derived content ID, so the filename is the only source of the
-slug.
+stable values, labelled in `src/i18n.ts` under the same keys [Implicit]. The
+project route is the filename-derived content ID, so the filename is the only
+source of the slug [Explicit].
 
 ---
 
@@ -537,7 +538,14 @@ committed content file is valid.
 Pages CMS commits straight to `master` and every push deploys, so the build
 accepts everything the CMS can save. A rule the CMS can express, it enforces
 itself (`required`, `pattern`, the bilingual objects); a rule it cannot, the
-loading modules tolerate and log as a warning.
+build tolerates, and the loading modules and the image script log a warning.
+
+### Frontmatter text reads as typed — [Implicit]
+
+Pages CMS writes YAML 1.2, which leaves text such as `2024-05-01` or `0b101`
+unquoted, and Astro reads frontmatter with js-yaml, which makes those a Date and
+a number. No field holds either, so each collection's schema first turns them
+back into text: a date as typed, a number in decimal.
 
 ### A period is two date strings — [Explicit] (module [Implicit])
 
@@ -557,12 +565,12 @@ the same ids, so existing URLs stay: `github-slugger` per path segment (the CMS
 allows folders), `/index` dropped. A segment with nothing to slug, such as
 `!!!`, becomes a hash of it.
 
-### A project URL is a plain http(s) address — [Implicit]
+### A project URL is a plain http(s) address — [Explicit] (rules [Implicit])
 
 The schema and the CMS's `pattern` share `PROJECT_URL`, and
 `src/content.config.test.ts` checks one against the other, so the CMS refuses
-what the build would. It takes only addresses `new URL` parses, because the
-fact sheet shows the hostname.
+what the build would [Explicit]. It takes only addresses `new URL` parses, with
+a plain hostname, because the fact sheet shows the hostname [Implicit].
 
 ### Chosen projects are references by file path — [Implicit]
 
