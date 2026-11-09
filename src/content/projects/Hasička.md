@@ -23,7 +23,6 @@ collaborators:
   - name: Ing. Jiří Železný
     role_cs: hlavní projektant stavby
     role_en: Lead Project Designer
-award_cs: na40
 draft: false
 blocks:
   - type: gallery
