@@ -251,7 +251,7 @@ first card, and both AI exports list projects in the same order.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 
-Context, intervention and scope are optional controlled lists; current design activity is a separate boolean, and realization is one optional enum. Pages CMS uses multi-selects for the lists and a single select for realization, matching content validation. The brief, personal role and credits describe involvement independently of classification.
+Context, intervention and scope are optional controlled lists; current design activity is a separate boolean, and realization is one optional enum. Pages CMS uses multi-selects for the lists and a single select for realization, matching content validation; content stores stable values, labelled in `src/i18n.ts` under the same keys. The brief, personal role and credits describe involvement independently of classification.
 
 ### Footer layout follows its content — [Implicit]
 
@@ -379,19 +379,8 @@ Content refers to uploads by root-absolute path (`/uploads/…`), as the CMS
 writes them. Before `dev` and `build`, `scripts/generate-responsive-images.ts`
 writes WebP derivatives and a manifest to the ignored `public/_responsive`,
 never enlarging or touching the original. It skips an image it cannot read,
-with a warning naming it, so a CMS media deletion cannot stop the deploy.
-
-### Pages read content through two loading modules — [Implicit]
-
-`src/singletons.ts` and `src/published-projects.ts` load the content once per
-build for every page: they drop drafts and images whose file is missing from
-`public/`, and log warnings for those images and for periods.
-`src/singletons.ts` turns the landing page's chosen projects into published
-projects' cards, logging a warning for each choice it skips. These checks live
-here, not in the schema, because a schema can only fail an entry, not warn, and
-the content layer skips revalidating an entry until its file changes. An image
-the script could not read but whose file exists renders from the original, as
-SVGs do.
+with a warning naming it; if the file exists, pages show the original, as they
+do SVGs.
 
 ### Deep-zoom pyramids for large drawings — [Explicit]
 
@@ -501,19 +490,18 @@ Each localized page has a self-canonical address, reciprocal `cs` and `en` alter
 
 UI labels are per-language dictionaries in `src/i18n.ts`, rendered with `<T k="…" />`. Translation components take `cs` and `en` props, so content, periods and computed text all spread in as `{ cs, en }` objects, e.g. `<T {...project.title} />`; they select the route language and emit a matching `lang` attribute: `T` a string, `Prose` Markdown, `Paragraphs` plain text split into one `<p>` per paragraph (Approach texts and fact descriptions).
 
-### Translations are `{ cs, en }` objects — [Explicit] / [Implicit]
+### Translations are `{ cs, en }` objects — [Explicit]
 
-Every translatable field is one object with `cs` and `en` keys, in the content,
+Every translatable field is one object with `cs` and `en` keys in the content,
 the schema and the CMS, so one convention covers every field and the CMS can
-refuse a half-filled pair: both subfields are required and Pages CMS validates
-an optional object only once either is filled, so it saves both languages or
-neither [Explicit]. Each subfield's `pattern` refuses whitespace alone, as the
-schema's `bilingual` shape does [Explicit]. One file and one CMS form per entry;
-language-neutral fields (images, period dates, email, phone, a project's studio
-and collaborators’ names) stay single [Implicit]. Project classification stores
-stable values, labelled in `src/i18n.ts` under the same keys [Implicit]. The
-project route is the filename-derived content ID, so the filename is the only
-source of the slug [Explicit].
+refuse a half-filled pair: both subfields are required, and Pages CMS validates
+an optional object only once either is filled. Each subfield's `pattern`
+refuses whitespace alone, as the schema's `bilingual` does.
+
+### One entry holds both languages — [Implicit]
+
+One file and one CMS form per entry; language-neutral fields (images, period
+dates, email, phone, a project's studio and collaborators’ names) stay single.
 
 ---
 
@@ -532,12 +520,17 @@ The shape is declared in `src/content.config.ts` (build) and `.pages.yml`
 same fields, required in the same places, at every level, and that each
 committed content file is valid.
 
-### A CMS save never stops the deploy — [Explicit]
+### A CMS save never stops the deploy — [Explicit] (loading modules [Implicit])
 
 Pages CMS commits straight to `master` and every push deploys, so the build
-accepts everything the CMS can save. A rule the CMS can express, it enforces
-itself (`required`, `pattern`, the bilingual objects); a rule it cannot, the
-build tolerates, and the loading modules and the image script log a warning.
+accepts everything the CMS can save: the CMS refuses what it can express
+(`required`, `pattern`, the bilingual objects) and the build tolerates the rest.
+Pages read content through `src/published-projects.ts` and `src/singletons.ts`,
+which leave out what a CMS save broke (a missing image, a skipped landing
+choice) and warn about it and about wrong periods; the image script warns about
+an upload it cannot read. These checks live in the loading modules, not the
+schema, because a schema can only fail an entry, and the content layer skips
+revalidating an entry until its file changes.
 
 ### Frontmatter text reads as typed — [Implicit]
 
@@ -552,17 +545,17 @@ Pages CMS has no conditional fields or cross-field validation, so each end of a
 period is one string, "2023" or "3/2023", whose `pattern` lets the CMS refuse a
 malformed date. That pattern also takes the empty string, the value of an
 empty optional field in its form, and `src/content.config.test.ts` checks it
-against `DATE`. `src/period.ts` holds the rest: the cross-field checks (the
-loading modules log them as warnings so a CMS save cannot stop the deploy
-[Explicit]), the display and the project order.
+against `DATE`. `src/period.ts` holds the rest: the cross-field checks (logged
+as warnings [Explicit]), the display and the project order.
 
-### A project id never comes out empty — [Implicit]
+### A project id never comes out empty — [Implicit] (filename as slug [Explicit])
 
-Pages CMS saves any file name she types, and Astro rejects an empty id, so
-`projectId` in `src/content.config.ts` replaces the glob loader's default with
-the same ids, so existing URLs stay: `github-slugger` per path segment (the CMS
-allows folders), `/index` dropped. A segment with nothing to slug, such as
-`!!!`, becomes a hash of it.
+The project route is the filename-derived content id, so the filename is the
+only source of the slug [Explicit]. Pages CMS saves any file name she types, and
+Astro rejects an empty id, so `projectId` in `src/content.config.ts` replaces
+the glob loader's default with the same ids, so existing URLs stay:
+`github-slugger` per path segment (the CMS allows folders), `/index` dropped. A
+segment with nothing to slug, such as `!!!`, becomes a hash of it.
 
 ### A project URL is a plain http(s) address — [Explicit] (rules [Implicit])
 
@@ -580,7 +573,7 @@ A list rather than one multi-select lets her drag choices into order. The
 picker shows and searches the collection's primary field, the English title,
 because file names need not match it.
 
-### Empty block rows are dropped — [Explicit]
+### Empty CMS rows are dropped from every list — [Explicit] (beyond blocks [Implicit])
 
 Pages CMS can write a blank row as `{}`; the schema removes completely empty
-rows before validating.
+rows from every list before validating.

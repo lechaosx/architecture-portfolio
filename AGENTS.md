@@ -73,11 +73,9 @@ Only then reconcile them.
   "Internationalization".
 - **The build accepts everything the CMS can save.** Pages CMS commits straight
   to `master` and every push deploys, so a save the build rejects blocks every
-  later deploy unnoticed. The CMS refuses what it can express (`required`,
-  `pattern`, required subfields of an optional object); the build tolerates
-  what it can't, and the loading modules (`src/singletons.ts`,
-  `src/published-projects.ts`) and the image script log a warning. See
-  ARCHITECTURE.md → "A CMS save never stops the deploy".
+  later deploy unnoticed. The CMS refuses what it can express; the build
+  tolerates the rest, warning about what it leaves out. See ARCHITECTURE.md →
+  "A CMS save never stops the deploy".
 
 ## Verifying a change
 
