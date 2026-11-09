@@ -52,7 +52,7 @@ test('a thumbnail makes a text-only page a card but leaves a project with no blo
   expect(listed.map(({ id }) => id)).toEqual(['empty']);
 });
 
-test('images whose file is missing are left out and reported, with any image block they empty', () => {
+test('images whose file is missing are left out, each looked up by its field, with any image block they empty', () => {
   const missing = { image: '/uploads/deleted.jpg' };
   const text = { type: 'text' as const, body: { cs: 'Text', en: 'Text' } };
   const data = { ...project('missing', 2026).data, thumbnail: missing.image, blocks: [
@@ -60,16 +60,17 @@ test('images whose file is missing are left out and reported, with any image blo
     text,
     { type: 'gallery' as const, images: [first, missing, selected] },
   ] };
-  expect(withoutMissingImages(data, (path) => path !== missing.image)).toEqual({
-    data: {
-      ...data,
-      thumbnail: undefined,
-      blocks: [text, { type: 'gallery', images: [first, selected] }],
-    },
-    issues: ['thumbnail', 'blocks[0].images[0].image', 'blocks[2].images[1].image'].map((field) => ({
-      field, message: '/uploads/deleted.jpg no longer exists',
-    })),
+  const reported: string[] = [];
+  const found = (path: string, field: string) => {
+    if (path === missing.image) reported.push(field);
+    return path !== missing.image;
+  };
+  expect(withoutMissingImages(data, found)).toEqual({
+    ...data,
+    thumbnail: undefined,
+    blocks: [text, { type: 'gallery', images: [first, selected] }],
   });
+  expect(reported).toEqual(['thumbnail', 'blocks[0].images[0].image', 'blocks[2].images[1].image']);
 });
 
 test('the chosen projects become cards in the chosen order, leaving out and reporting any without a card', () => {

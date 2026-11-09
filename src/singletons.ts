@@ -2,7 +2,7 @@ import { getEntry } from 'astro:content';
 import { periodIssues } from './period';
 import { chosenCards } from './projects';
 import { projects } from './published-projects';
-import { fileExists } from './server-images';
+import { fileFound } from './server-images';
 
 function data<T>(entry: { data: T } | undefined, name: string) {
   if (!entry) throw new Error(`Missing src/content/singletons/${name}.md`);
@@ -27,20 +27,14 @@ for (const { index, message } of chosen.issues) {
   console.warn(`src/content/singletons/landing.md: projects[${index}]: ${message}`);
 }
 
-// Images whose file is missing are left out, as if never added, and reported.
-function found(path: string, location: string) {
-  const there = fileExists(path);
-  if (!there) console.warn(`${location}: ${path} no longer exists`);
-  return there;
-}
-
 export const site = data(await getEntry('site', 'site'), 'site');
+// Images whose file is missing are left out, as if never added, and reported.
 export const landing = {
-  images: landingData.images.filter((image, index) => found(image, `src/content/singletons/landing.md: images[${index}]`)),
+  images: landingData.images.filter((image, index) => fileFound(image, `src/content/singletons/landing.md: images[${index}]`)),
   projects: chosen.cards,
 };
 export const about = {
   ...aboutData,
-  portrait: aboutData.portrait && found(aboutData.portrait, 'src/content/singletons/about.md: portrait') ? aboutData.portrait : undefined,
+  portrait: aboutData.portrait && fileFound(aboutData.portrait, 'src/content/singletons/about.md: portrait') ? aboutData.portrait : undefined,
 };
 export const contact = data(await getEntry('contact', 'contact'), 'contact');

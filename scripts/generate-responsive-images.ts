@@ -84,12 +84,9 @@ const deepZoomRecipe = {
   vips: sharp.versions.vips,
 };
 
-/**
- * The raster images to process, by the path pages refer to them by: their
- * files and the content files that refer to them.
- */
+/** The raster images to process, by the path pages refer to them by, and their files. */
 async function referencedImages() {
-  const images = new Map<string, { file: string; referencedBy: Set<string> }>();
+  const images = new Map<string, string>();
 
   for (const contentDirectory of sources.content ?? []) {
     const entries = await readdir(contentDirectory, {
@@ -104,10 +101,7 @@ async function referencedImages() {
         const sourcePath = resolve(sourceDirectory, match[1]);
         if (!sourcePath.startsWith(`${sourceDirectory}${sep}`)) continue;
         const relativePath = relative(sourceDirectory, sourcePath);
-        const path = `/uploads/${relativePath.split(sep).join('/')}`;
-        const image = images.get(path) ?? { file: sourcePath, referencedBy: new Set() };
-        image.referencedBy.add(contentPath);
-        images.set(path, image);
+        images.set(`/uploads/${relativePath.split(sep).join('/')}`, sourcePath);
       }
     }
   }
@@ -117,7 +111,7 @@ async function referencedImages() {
     if (!directory || !path) throw new Error(`--images expects <directory>=<url path>, got ${argument}`);
     for (const file of await readdir(directory)) {
       if (!rasterFile.test(file)) continue;
-      images.set(`${path}/${file}`, { file: resolve(directory, file), referencedBy: new Set() });
+      images.set(`${path}/${file}`, resolve(directory, file));
     }
   }
 
@@ -384,14 +378,13 @@ async function responsiveImage(path: string, sourcePath: string): Promise<Respon
   };
 }
 
-for (const [path, { file, referencedBy }] of await referencedImages()) {
+for (const [path, file] of await referencedImages()) {
   try {
     manifest.images[path] = await responsiveImage(path, file);
   } catch (error) {
     // A missing or unreadable upload must not stop the deploy; pages leave out
     // an image whose file is missing and show any other without derivatives.
-    const references = referencedBy.size > 0 ? `, referenced by ${[...referencedBy].join(', ')}` : '';
-    console.warn(`Skipped ${path}${references}: ${(error as Error).message}`);
+    console.warn(`Skipped ${path}: ${(error as Error).message}`);
   }
 }
 

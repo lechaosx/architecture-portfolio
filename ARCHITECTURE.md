@@ -379,8 +379,7 @@ Content refers to uploads by root-absolute path (`/uploads/…`), as the CMS
 writes them. Before `dev` and `build`, `scripts/generate-responsive-images.ts`
 writes WebP derivatives and a manifest to the ignored `public/_responsive`,
 never enlarging or touching the original. It skips an image it cannot read,
-with a warning naming it and the content referring to it, so a CMS media
-deletion cannot stop the deploy.
+with a warning naming it, so a CMS media deletion cannot stop the deploy.
 
 ### Pages read content through two loading modules — [Implicit]
 

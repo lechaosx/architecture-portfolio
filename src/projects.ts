@@ -19,20 +19,14 @@ export function projectCover(
 /**
  * The project as if images whose file is missing had never been added: an
  * image block they leave empty goes too, and a missing thumbnail counts as unset.
- * Each image left out is reported by its field.
+ * `found` says whether the file at an image's path exists, given that path and the image's field.
  */
 export function withoutMissingImages(
   data: Project['data'],
-  exists: (path: string) => boolean,
-) {
-  const issues: { field: string; message: string }[] = [];
-  const found = (path: string, field: string) => {
-    const there = exists(path);
-    if (!there) issues.push({ field, message: `${path} no longer exists` });
-    return there;
-  };
+  found: (path: string, field: string) => boolean,
+): Project['data'] {
   const thumbnail = data.thumbnail?.trim();
-  const projectData: Project['data'] = {
+  return {
     ...data,
     thumbnail: thumbnail && found(thumbnail, 'thumbnail') ? data.thumbnail : undefined,
     blocks: data.blocks.flatMap((block, blockIndex): Project['data']['blocks'] => {
@@ -41,7 +35,6 @@ export function withoutMissingImages(
       return images.length > 0 ? [{ ...block, images }] : [];
     }),
   };
-  return { data: projectData, issues };
 }
 
 /** Latest period first, then by English title, so both languages list projects alike. */

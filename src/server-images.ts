@@ -25,6 +25,12 @@ export async function getResponsiveImage(src: string) {
   return (await imageManifest()).images[src];
 }
 
-/** Whether public/ holds the file a content path names, e.g. `/uploads/plan.png`. */
-export const fileExists = (path: string) =>
-  statSync(join('public', path), { throwIfNoEntry: false })?.isFile() ?? false;
+/**
+ * Whether public/ holds the file a content path names, e.g. `/uploads/plan.png`.
+ * A missing one is reported at its location, e.g. `src/content/singletons/about.md: portrait`.
+ */
+export function fileFound(path: string, location: string) {
+  const found = statSync(join('public', path), { throwIfNoEntry: false })?.isFile() ?? false;
+  if (!found) console.warn(`${location}: ${path} no longer exists`);
+  return found;
+}

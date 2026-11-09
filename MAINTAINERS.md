@@ -131,7 +131,8 @@ is the only hydrated component, and the rest is small vanilla scripts.
 - **Very large uploads are untested for memory** in the build.
 - **Where a CMS save builds but shows something wrong.** Titles or file names
   that slug to the same id shadow each other (Astro's duplicate-id warning
-  only); a rich-text image whose upload was deleted renders broken; an upload
+  only); a rich-text image whose upload was deleted renders broken, and the
+  script's warning names only the upload, not the content file; an upload
   named like `plan.png.webp` gets a spurious warning; text YAML reads as a
   number or timestamp shows converted, e.g. `0b101` as `5`.
 - **Build warnings appear only in the GitHub Actions log**, where the architect

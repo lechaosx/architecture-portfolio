@@ -120,45 +120,26 @@ const webAddresses = ['https://example.org/projects/library?view=plan#drawings',
 // The last three look like web addresses, but `new URL`, which reads the hostname for the fact sheet, throws on them.
 const nonWebAddresses = ['not a URL', '/projects/library/', 'example.org/library', 'https:example.org', 'https:/example.org', 'javascript:alert(1)', 'data:text/html,hello', 'mailto:architect@example.org', 'ftp://example.org/library', ' https://example.org', 'https://example.123', 'https://example.org:99999', 'https://[::1'];
 
-test('the project URL in Pages CMS takes the addresses the build takes, or nothing', () => {
-  const pattern = new RegExp(projectEditorFields.find((field) => field.name === 'project_url')!.pattern!.regex);
-  expect(pattern.test('')).toBe(true);
-  for (const text of [...webAddresses, ...nonWebAddresses]) {
-    expect(pattern.test(text), text).toBe(PROJECT_URL.test(text));
-  }
-});
+const allFields = (fields: CmsField[]): CmsField[] =>
+  fields.flatMap((field) => [
+    field,
+    ...allFields(field.fields ?? []),
+    ...(field.blocks ?? []).flatMap((block) => allFields(block.fields ?? [])),
+  ]);
+const cmsFields = pagesConfig.content.flatMap((entry) => allFields(entry.fields ?? []));
 
-test('every translation in Pages CMS takes the text the build takes, or nothing', () => {
-  const translations = (fields: CmsField[]): CmsField[] =>
-    fields.flatMap((field) => [
-      ...(field.fields?.map(({ name }) => name).sort().join() === 'cs,en' ? field.fields : []),
-      ...translations(field.fields ?? []),
-      ...(field.blocks ?? []).flatMap((block) => translations(block.fields ?? [])),
-    ]);
-  const fields = pagesConfig.content.flatMap((entry) => translations(entry.fields ?? []));
+test.each([
+  ['project URL', ['project_url'], PROJECT_URL, [...webAddresses, ...nonWebAddresses]],
+  ['translation', ['cs', 'en'], TEXT, ['Brno', ' Brno ', '\nBrno', ' ', ' \n\t ', '\u00a0', '&nbsp;']],
+  ['period date', ['from', 'to'], DATE, ['2023', '3/2023', '03/2023', '12/2023', '0/2023', '13/2023', '3/', '2023/3', '23', ' 2023']],
+])('every %s in Pages CMS takes the text the build takes, or nothing', (_, names, regex, samples) => {
+  const fields = cmsFields.filter(({ name }) => names.includes(name));
   expect(fields.length).toBeGreaterThan(0);
   for (const field of fields) {
     const pattern = new RegExp(field.pattern!.regex);
     expect(pattern.test(''), `${field.name} left empty`).toBe(true);
-    for (const text of ['Brno', ' Brno ', '\nBrno', ' ', ' \n\t ', '\u00a0', '&nbsp;']) {
-      expect(pattern.test(text), `${field.name}: ${JSON.stringify(text)}`).toBe(TEXT.test(text));
-    }
-  }
-});
-
-test('every period date in Pages CMS takes the dates the build takes, or nothing', () => {
-  const dates = (fields: CmsField[]): CmsField[] =>
-    fields.flatMap((field) => [
-      ...(['from', 'to'].includes(field.name) ? [field] : []),
-      ...dates(field.fields ?? []),
-    ]);
-  const fields = pagesConfig.content.flatMap((entry) => dates(entry.fields ?? []));
-  expect(fields.length).toBeGreaterThan(0);
-  for (const field of fields) {
-    const pattern = new RegExp(field.pattern!.regex);
-    expect(pattern.test(''), `${field.name} left empty`).toBe(true);
-    for (const text of ['2023', '3/2023', '03/2023', '12/2023', '0/2023', '13/2023', '3/', '2023/3', '23', ' 2023']) {
-      expect(pattern.test(text), `${field.name}: ${text}`).toBe(DATE.test(text));
+    for (const text of samples) {
+      expect(pattern.test(text), `${field.name}: ${JSON.stringify(text)}`).toBe(regex.test(text));
     }
   }
 });
