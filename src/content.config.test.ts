@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro/zod';
-import { collections } from './content.config';
+import { collections, TEXT } from './content.config';
 import { DATE } from './period';
 import { PROJECT_URL } from './project-facts';
 
@@ -106,8 +106,7 @@ const imageSet = {
 };
 
 const project = {
-  title_cs: 'Projekt',
-  title_en: 'Project',
+  title: { cs: 'Projekt', en: 'Project' },
   from: '2026',
   to: '2026',
   blocks: [imageSet],
@@ -129,6 +128,24 @@ test('the project URL in Pages CMS takes the addresses the build takes, or nothi
   expect(pattern.test('')).toBe(true);
   for (const text of [...webAddresses, ...nonWebAddresses]) {
     expect(pattern.test(text), text).toBe(PROJECT_URL.test(text));
+  }
+});
+
+test('every translation in Pages CMS takes the text the build takes, or nothing', () => {
+  const translations = (fields: CmsField[]): CmsField[] =>
+    fields.flatMap((field) => [
+      ...(field.fields?.map(({ name }) => name).sort().join() === 'cs,en' ? field.fields : []),
+      ...translations(field.fields ?? []),
+      ...(field.blocks ?? []).flatMap((block) => translations(block.fields ?? [])),
+    ]);
+  const fields = pagesConfig.content.flatMap((entry) => translations(entry.fields ?? []));
+  expect(fields.length).toBeGreaterThan(0);
+  for (const field of fields) {
+    const pattern = new RegExp(field.pattern!.regex);
+    expect(pattern.test(''), `${field.name} left empty`).toBe(true);
+    for (const text of ['Brno', ' Brno ', '\nBrno', ' ', ' \n\t ', '\u00a0', '&nbsp;']) {
+      expect(pattern.test(text), `${field.name}: ${JSON.stringify(text)}`).toBe(TEXT.test(text));
+    }
   }
 });
 
@@ -165,15 +182,14 @@ describe('project content schema', () => {
   test.each([
     ['no content blocks', undefined],
     ['only an empty CMS block row', [{}]],
-    ['only text', [{ type: 'text', body_cs: 'Popis', body_en: 'Description' }]],
+    ['only text', [{ type: 'text', body: { cs: 'Popis', en: 'Description' } }]],
   ])('accepts a project with %s', (_, blocks) => {
     expect(projectSchema.safeParse({ ...project, blocks }).success).toBe(true);
   });
 
   test('accepts a brief in both languages', () => {
-    expect(
-      projectSchema.safeParse({ ...project, brief_cs: 'Stručně', brief_en: 'Briefly' }),
-    ).toMatchObject({ success: true, data: { brief_cs: 'Stručně', brief_en: 'Briefly' } });
+    const brief = { cs: 'Stručně', en: 'Briefly' };
+    expect(projectSchema.safeParse({ ...project, brief })).toMatchObject({ success: true, data: { brief } });
   });
 
   test('reads credits, award and status, dropping empty CMS rows', () => {
@@ -181,13 +197,12 @@ describe('project content schema', () => {
       context: ['competition'],
       studio: 'Ateliér A',
       collaborators: [
-        { name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' },
-        { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
-        { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
+        { name: 'Jan Novák', role: { cs: 'Autor návrhu', en: 'Design author' } },
+        { name: 'Eva Dvořáková', role: { cs: 'Autor návrhu', en: 'Design author' } },
+        { name: 'Ing. Petr Malý', role: { cs: 'vizualizace', en: 'Visualizations' } },
         { name: 'Ing. Iva Tichá' },
       ],
-      award_cs: 'Odměna',
-      award_en: 'Special mention',
+      award: { cs: 'Odměna', en: 'Special mention' },
     };
     expect(
       projectSchema.safeParse({ ...project, ...credits, collaborators: [{}, ...credits.collaborators] }),
@@ -219,7 +234,7 @@ describe('project content schema', () => {
     ['an intervention outside the list', { intervention: ['study'] }],
     ['a scope outside the list', { scope: ['housing'] }],
     ['non-boolean design activity', { design_in_progress: 'yes' }],
-    ['a collaborator without a name', { collaborators: [{ role_cs: 'statika', role_en: 'Structures' }] }],
+    ['a collaborator without a name', { collaborators: [{ role: { cs: 'statika', en: 'Structures' } }] }],
     ['a non-record collaborator', { collaborators: ['Jana'] }],
   ])('rejects %s', (_, fields) => {
     expect(projectSchema.safeParse({ ...project, ...fields }).success).toBe(false);
@@ -236,7 +251,7 @@ describe('project content schema', () => {
 
   test('accepts independently ordered text, gallery, and image-set blocks', () => {
     const blocks = [
-      { type: 'text', body_cs: 'Popis', body_en: 'Description' },
+      { type: 'text', body: { cs: 'Popis', en: 'Description' } },
       {
         type: 'gallery',
         images: [{ image: '/uploads/thumbnail.jpg' }],
@@ -301,10 +316,11 @@ describe('project content schema', () => {
 });
 
 test('site settings need the description in both languages, the landing page intro', () => {
-  const settings = { name: 'Jana', description_cs: 'Portfolio', description_en: 'Portfolio' };
+  const settings = { name: 'Jana', description: { cs: 'Portfolio', en: 'Portfolio' } };
   expect(staticSchema('site').safeParse(settings).success).toBe(true);
-  for (const field of ['description_cs', 'description_en']) {
-    expect(staticSchema('site').safeParse({ ...settings, [field]: undefined }).success, field).toBe(false);
+  for (const language of ['cs', 'en']) {
+    const description = { ...settings.description, [language]: undefined };
+    expect(staticSchema('site').safeParse({ ...settings, description }).success, language).toBe(false);
   }
 });
 
@@ -317,26 +333,22 @@ test('the landing page may have no images and no chosen projects', () => {
 
 describe('about content schema', () => {
   const aboutSchema = staticSchema('about');
-  const about = { body_cs: 'O mně', body_en: 'About me' };
+  const about = { body: { cs: 'O mně', en: 'About me' } };
 
   const row = {
-    place_cs: 'Fakulta stavební VUT v Brně',
-    place_en: 'Faculty of Civil Engineering, Brno University of Technology',
-    department_cs: 'Ústav architektury',
-    department_en: 'Institute of Architecture',
+    place: { cs: 'Fakulta stavební VUT v Brně', en: 'Faculty of Civil Engineering, Brno University of Technology' },
+    department: { cs: 'Ústav architektury', en: 'Institute of Architecture' },
     from: '9/2024',
     to: '2026',
-    title_cs: 'Architektura a rozvoj sídel',
-    title_en: 'Architecture and Urban Development',
-    description_cs: 'Diplomová práce.',
-    description_en: 'Diploma thesis.',
+    title: { cs: 'Architektura a rozvoj sídel', en: 'Architecture and Urban Development' },
+    description: { cs: 'Diplomová práce.', en: 'Diploma thesis.' },
   };
-  const bare = { place_cs: 'Ateliér', place_en: 'Studio', title_cs: 'Stáž', title_en: 'Internship' };
+  const bare = { place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Stáž', en: 'Internship' } };
 
   test('reads fact rows and services, dropping empty CMS rows', () => {
     const facts = {
       experience: [bare],
-      services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
+      services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
       education: [row],
       awards: [{ ...bare, from: '2025', to: '2025' }],
     };
@@ -359,10 +371,10 @@ describe('about content schema', () => {
   });
 
   test.each(['experience', 'education', 'awards'])(
-    'rejects a %s row without its place or title in both languages',
+    'rejects a %s row without its place or title',
     (field) => {
-      for (const missing of ['place_cs', 'place_en', 'title_cs', 'title_en']) {
-        const { [missing as keyof typeof bare]: _, ...partial } = bare;
+      for (const missing of ['place', 'title'] as const) {
+        const { [missing]: _, ...partial } = bare;
         expect(aboutSchema.safeParse({ ...about, [field]: [partial] }).success, missing).toBe(false);
       }
     },
@@ -375,16 +387,14 @@ describe('about content schema', () => {
   });
 
   test('rejects a service in only one language', () => {
-    expect(aboutSchema.safeParse({ ...about, services: [{ name_cs: 'Interiéry' }] }).success).toBe(false);
+    expect(aboutSchema.safeParse({ ...about, services: [{ name: { cs: 'Interiéry' } }] }).success).toBe(false);
   });
 });
 
 test('contact reads where she is and when she is reachable, one line per language', () => {
   const lines = {
-    location_cs: 'Brno',
-    location_en: 'Brno',
-    hours_cs: 'Po–Pá 10–15',
-    hours_en: 'Mon–Fri 10–15',
+    location: { cs: 'Brno', en: 'Brno' },
+    hours: { cs: 'Po–Pá 10–15', en: 'Mon–Fri 10–15' },
   };
   expect(
     staticSchema('contact').safeParse({ email: 'jana@example.cz', ...lines }),
@@ -403,8 +413,8 @@ test.each(readdirSync('src/content/projects').filter((file) => file.endsWith('.m
   },
 );
 
-const aboutContent = { body_cs: 'O mně', body_en: 'About me' };
-const fact = { place_cs: 'Ateliér', place_en: 'Studio', title_cs: 'Stáž', title_en: 'Internship' };
+const aboutContent = { body: { cs: 'O mně', en: 'About me' } };
+const fact = { place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Stáž', en: 'Internship' } };
 
 interface BilingualCase {
   name: string;
@@ -413,6 +423,8 @@ interface BilingualCase {
   path: Array<string | number>;
   pair: string;
   optional: boolean;
+  /** The pair is all its row holds, so leaving it out leaves an empty CMS row. */
+  wholeRow?: boolean;
 }
 
 const bilingualCases: BilingualCase[] = [
@@ -427,7 +439,7 @@ const bilingualCases: BilingualCase[] = [
   },
   {
     name: 'project text', collection: 'projects',
-    content: { ...project, blocks: [imageSet, { type: 'text', body_cs: 'Popis', body_en: 'Description' }] },
+    content: { ...project, blocks: [imageSet, { type: 'text', body: { cs: 'Popis', en: 'Description' } }] },
     path: ['blocks', 1], pair: 'body', optional: false,
   },
   ...['gallery', 'image_set'].flatMap((type) => ['title', 'description'].map((pair) => ({
@@ -437,7 +449,7 @@ const bilingualCases: BilingualCase[] = [
   }))),
   {
     name: 'site description', collection: 'site',
-    content: { name: 'Jana', description_cs: 'Portfolio', description_en: 'Portfolio' },
+    content: { name: 'Jana', description: { cs: 'Portfolio', en: 'Portfolio' } },
     path: [], pair: 'description', optional: false,
   },
   {
@@ -446,18 +458,18 @@ const bilingualCases: BilingualCase[] = [
   },
   ...['label', 'text'].map((pair) => ({
     name: `Approach ${pair}`, collection: 'about' as const,
-    content: { ...aboutContent, approaches: [{ label_cs: 'Místo', label_en: 'Place', text_cs: 'Kontext', text_en: 'Context', icon: 'place' }] },
+    content: { ...aboutContent, approaches: [{ label: { cs: 'Místo', en: 'Place' }, text: { cs: 'Kontext', en: 'Context' }, icon: 'place' }] },
     path: ['approaches', 0], pair, optional: false,
   })),
   {
     name: 'service name', collection: 'about',
-    content: { ...aboutContent, services: [{ name_cs: 'Interiéry', name_en: 'Interiors' }] },
-    path: ['services', 0], pair: 'name', optional: false,
+    content: { ...aboutContent, services: [{ name: { cs: 'Interiéry', en: 'Interiors' } }] },
+    path: ['services', 0], pair: 'name', optional: false, wholeRow: true,
   },
   ...['experience', 'education', 'awards'].flatMap((field) =>
     ['place', 'title', 'department', 'description'].map((pair) => ({
       name: `${field} ${pair}`, collection: 'about' as const,
-      content: { ...aboutContent, [field]: [fact, fact] },
+      content: { ...aboutContent, [field]: [{ ...fact }, { ...fact }] },
       path: [field, 1], pair, optional: pair === 'department' || pair === 'description',
     })),
   ),
@@ -467,44 +479,40 @@ const bilingualCases: BilingualCase[] = [
   })),
 ];
 
-function withPair({ content, path, pair }: BilingualCase, cs: unknown, en: unknown) {
+function withPair({ content, path, pair }: BilingualCase, value: unknown) {
   const input = structuredClone(content);
   let row: Record<string | number, unknown> = input;
   for (const key of path) row = row[key] as Record<string | number, unknown>;
-  for (const [language, value] of [['cs', cs], ['en', en]]) {
-    if (value === undefined) delete row[`${pair}_${language}`];
-    else row[`${pair}_${language}`] = value;
-  }
+  if (value === undefined) delete row[pair];
+  else row[pair] = value;
   return input;
 }
 
 describe.each(bilingualCases)('$name translations', (entry) => {
-  test.each(['cs', 'en'])('a filled %s value requires a meaningful counterpart', (language) => {
-    for (const missing of [undefined, '', ' \n\t ']) {
-      const result = staticSchema(entry.collection).safeParse(withPair(
-        entry,
-        language === 'cs' ? 'Český text' : missing,
-        language === 'en' ? 'English text' : missing,
-      ));
-      expect(result.success, `${language}, counterpart ${JSON.stringify(missing)}`).toBe(false);
+  const parse = (value: unknown) => staticSchema(entry.collection).safeParse(withPair(entry, value));
+
+  test('accepts both languages without changing their text', () => {
+    const input = withPair(entry, { cs: ' Český text ', en: ' English text ' });
+    expect(staticSchema(entry.collection).safeParse(input)).toMatchObject({ success: true, data: input });
+  });
+
+  test.each(['cs', 'en'])('rejects the pair without text in %s', (language) => {
+    for (const text of [undefined, '', ' \n\t ']) {
+      const result = parse({ cs: 'Český text', en: 'English text', [language]: text });
+      expect(result.success, JSON.stringify(text)).toBe(false);
       if (!result.success) {
-        expect(result.error.issues).toEqual(expect.arrayContaining([
-          expect.objectContaining({ path: [...entry.path, `${entry.pair}_${language === 'cs' ? 'en' : 'cs'}`] }),
-        ]));
+        expect(result.error.issues).toEqual([expect.objectContaining({ path: [...entry.path, entry.pair, language] })]);
       }
     }
   });
 
-  test('accepts both translations without changing their text', () => {
-    const input = withPair(entry, ' Český text ', ' English text ');
-    expect(staticSchema(entry.collection).safeParse(input)).toMatchObject({ success: true, data: input });
-  });
-
-  if (entry.optional) {
-    test('allows an optional pair to be absent or empty in both languages', () => {
-      for (const [cs, en] of [[undefined, undefined], ['', ''], [' \n\t', ' '], [undefined, ''], ['', undefined]]) {
-        expect(staticSchema(entry.collection).safeParse(withPair(entry, cs, en)).success).toBe(true);
-      }
+  if (entry.wholeRow) {
+    test('left out, leaves an empty row, which is dropped', () => {
+      expect(parse(undefined)).toMatchObject({ success: true, data: { [entry.path[0]]: [] } });
+    });
+  } else {
+    test(entry.optional ? 'may be left out' : 'may not be left out', () => {
+      expect(parse(undefined).success).toBe(entry.optional);
     });
   }
 });

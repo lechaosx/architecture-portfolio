@@ -1,13 +1,16 @@
 ---
-title_cs: RD Doubravník
-title_en: Family house Doubravník
+title:
+  cs: RD Doubravník
+  en: Family house Doubravník
 thumbnail: /uploads/11 Axo 1-1.webp
 from: "2023"
 to: "2023"
-location_cs: Doubravník
-location_en: Doubravník
-brief_cs: Zpracování architektonické studie rodinného domu v Doubravníku.
-brief_en: Development of the architectural study for a family house in Doubravník.
+location:
+  cs: Doubravník
+  en: Doubravník
+brief:
+  cs: Zpracování architektonické studie rodinného domu v Doubravníku.
+  en: Development of the architectural study for a family house in Doubravník.
 intervention:
   - new_build
 scope:
@@ -16,43 +19,55 @@ design_in_progress: false
 realization: construction
 collaborators:
   - name: Ing. Jiří Železný
-    role_cs: hlavní projektant stavby
-    role_en: Lead Project Designer
+    role:
+      cs: hlavní projektant stavby
+      en: Lead Project Designer
 draft: false
 blocks:
   - type: gallery
     images:
       - image: /uploads/03 Půdorys 1.NP.webp
-        title_cs: Půdorys 1.NP
-        title_en: Floor plan 1st floor
+        title:
+          cs: Půdorys 1.NP
+          en: Floor plan 1st floor
       - image: /uploads/02 Půdorys 1.PP.webp
-        title_cs: Půdorys 1.PP
-        title_en: Basement Floor Plan
+        title:
+          cs: Půdorys 1.PP
+          en: Basement Floor Plan
       - image: /uploads/08 Řezy AA.webp
-        title_cs: Řez AA'
-        title_en: Section AA'
+        title:
+          cs: Řez AA'
+          en: Section AA'
       - image: /uploads/09 Řezy BB.webp
-        title_cs: Řez BB'
-        title_en: Section BB'
+        title:
+          cs: Řez BB'
+          en: Section BB'
       - image: /uploads/10 Řezy CC.webp
-        title_cs: Řez CC'
-        title_en: Section CC'
+        title:
+          cs: Řez CC'
+          en: Section CC'
       - image: /uploads/04 Pohled jižní.webp
-        title_cs: "Pohled jižní "
-        title_en: Southern view
+        title:
+          cs: "Pohled jižní "
+          en: Southern view
       - image: /uploads/05 Pohled severní.webp
-        title_cs: Pohled severní
-        title_en: North view
+        title:
+          cs: Pohled severní
+          en: North view
       - image: /uploads/06 Pohled východní.webp
-        title_cs: Pohled východní
-        title_en: Eastern View
+        title:
+          cs: Pohled východní
+          en: Eastern View
       - image: /uploads/07 Pohled západní.webp
-        title_cs: Pohled západní
-        title_en: Western view
+        title:
+          cs: Pohled západní
+          en: Western view
       - image: /uploads/11 Axo 1.webp
-        title_cs: Axonometrie
-        title_en: Axonometry
+        title:
+          cs: Axonometrie
+          en: Axonometry
       - image: /uploads/12 Axo 2-3.webp
-        title_cs: Axonometrie
-        title_en: Axonometry
+        title:
+          cs: Axonometrie
+          en: Axonometry
 ---

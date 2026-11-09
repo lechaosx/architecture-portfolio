@@ -36,21 +36,18 @@ test('under the images one line says what she is, where and what she offers, and
   await expect(page).toHaveURL(/\/about\/$/);
 });
 
-test('without services the line is the profession and the place filled in each language', async ({
-  page,
-}) => {
-  // The bare fixture's place is filled in Czech only.
+test('without services or a place the line is the profession', async ({ page }) => {
   await page.goto('/e2e/landing-bare/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architect');
   await expect(page.getByText(/Family houses/)).toHaveCount(0);
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architektka · Brno');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architektka');
 });
 
 test('the site description is not shown, only used as the page description', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', site.description_en);
-  await expect(page.locator('main')).not.toContainText(site.description_en);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', site.description.en);
+  await expect(page.locator('main')).not.toContainText(site.description.en);
 });
 
 test('the landing page ends with the selected work', async ({ page }) => {

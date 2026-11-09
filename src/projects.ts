@@ -38,7 +38,7 @@ export function withoutMissingImages(
 
 /** Latest period first, then by English title, so both languages list projects alike. */
 export const newestFirst = (a: Project, b: Project) =>
-  latestFirst(a.data, b.data) || a.data.title_en.localeCompare(b.data.title_en);
+  latestFirst(a.data, b.data) || a.data.title.en.localeCompare(b.data.title.en);
 
 /** A card needs a cover and content blocks, because a project without blocks has no page. */
 export function projectCard(project: Project): CardProject | undefined {

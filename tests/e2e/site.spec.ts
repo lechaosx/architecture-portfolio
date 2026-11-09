@@ -102,7 +102,7 @@ test.describe(() => {
     await expect(page).toHaveTitle(`Work | ${owner}`);
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
-      site.description_en,
+      site.description.en,
     );
   });
 
@@ -247,7 +247,7 @@ const footerParts = (page: Page) => {
     copyright: footer.getByText(`© ${new Date().getFullYear()} ${site.name}`),
     email: footer.getByRole('link', { name: contact.email }),
     phone: footer.getByRole('link', { name: contact.phone }),
-    hours: (lang: 'en' | 'cs') => footer.getByText(contact[`hours_${lang}`], { exact: true }),
+    hours: (lang: 'en' | 'cs') => footer.getByText(contact.hours[lang], { exact: true }),
     theme: footer.locator('[data-theme-toggle]'),
     language: footer.locator('[data-lang-toggle]'),
   };
@@ -281,11 +281,11 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
 test('screen readers hear the footer hours as call hours, in the visitor’s language', async ({ page }) => {
   await page.goto('/work/');
   const { footer, language } = footerParts(page);
-  const item = (lang: 'en' | 'cs') => footer.getByRole('listitem').filter({ hasText: contact[`hours_${lang}`] });
+  const item = (lang: 'en' | 'cs') => footer.getByRole('listitem').filter({ hasText: contact.hours[lang] });
 
-  expect(await item('en').ariaSnapshot()).toContain(`Phone call hours: ${contact.hours_en}`);
+  expect(await item('en').ariaSnapshot()).toContain(`Phone call hours: ${contact.hours.en}`);
   await language.click();
-  expect(await item('cs').ariaSnapshot()).toContain(`Čas pro telefonické hovory: ${contact.hours_cs}`);
+  expect(await item('cs').ariaSnapshot()).toContain(`Čas pro telefonické hovory: ${contact.hours.cs}`);
 });
 
 test('when the contact line does not fit the footer stacks the contacts in a column, then © and the switches in one row', async ({
@@ -522,15 +522,15 @@ test.describe(() => {
     await page.goto('/cs/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      `Architektka · ${contact.location_cs}`,
+      `Architektka · ${contact.location.cs}`,
     );
     await expect(page).toHaveTitle(`${owner} | Architektka`);
     const meta = (selector: string) => page.locator(`meta[${selector}]`);
-    await expect(meta('name="description"')).toHaveAttribute('content', site.description_cs);
+    await expect(meta('name="description"')).toHaveAttribute('content', site.description.cs);
     await expect(meta('property="og:title"')).toHaveAttribute('content', `${owner} | Architektka`);
     await expect(meta('property="og:description"')).toHaveAttribute(
       'content',
-      site.description_cs,
+      site.description.cs,
     );
   });
 
@@ -648,22 +648,4 @@ test('the footer adapts when translating the contact line changes whether it fit
   await expect.poll(async () => new Set(await Promise.all([email, phone, hours('cs')].map(middle))).size).toBe(1);
   await language.click();
   expect(await middle(phone)).toBeGreaterThan(await middle(email));
-});
-
-test('hours filled in only one language leave no extra gap in the other contact line', async ({ page }) => {
-  await page.goto('/work/');
-  await page.evaluate(() => document.fonts.ready);
-  const { footer, email, phone, hours, language } = footerParts(page);
-  await footer.getByRole('listitem').filter({ hasText: contact.hours_en }).evaluate((item) => {
-    item.setAttribute('lang', 'cs');
-  });
-  await page.setViewportSize({ width: 350, height: 700 });
-  await expect(hours('en')).toBeHidden();
-  await expect.poll(async () => await middle(phone) - await middle(email)).toBe(0);
-  await language.click();
-  await expect(hours('cs')).toBeVisible();
-  expect(await middle(phone)).toBeGreaterThan(await middle(email));
-  await language.click();
-  await expect(hours('en')).toBeHidden();
-  await expect.poll(async () => await middle(phone) - await middle(email)).toBe(0);
 });

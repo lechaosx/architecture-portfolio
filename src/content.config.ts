@@ -18,37 +18,19 @@ const withoutEmptyCmsRows = (value: unknown) =>
 const date = z.string().regex(DATE, 'Expected a year or month/year, e.g. 2023 or 3/2023');
 const period = { from: date.optional(), to: date.optional() };
 
-const bilingualPairs = (value: unknown, context: z.RefinementCtx, path: Array<string | number> = []) => {
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => bilingualPairs(item, context, [...path, index]));
-  } else if (value !== null && typeof value === 'object') {
-    const fields = value as Record<string, unknown>;
-    for (const [key, text] of Object.entries(fields)) {
-      const language = /_(cs|en)$/.exec(key)?.[1];
-      if (language && typeof text === 'string' && text.trim()) {
-        const counterpart = `${key.slice(0, -3)}_${language === 'cs' ? 'en' : 'cs'}`;
-        const translation = fields[counterpart];
-        if (typeof translation !== 'string' || !translation.trim()) {
-          context.addIssue({
-            code: 'custom',
-            path: [...path, counterpart],
-            message: `Fill ${counterpart} when ${key} is filled, or leave both empty.`,
-          });
-        }
-      }
-      if (text !== null && typeof text === 'object') bilingualPairs(text, context, [...path, key]);
-    }
-  }
-};
+/** Text with something to read. The CMS's `pattern` in .pages.yml mirrors it. */
+export const TEXT = /\S/;
+
+const text = z.string().regex(TEXT, 'Expected text, not only whitespace');
+// A translatable field: both languages, or neither where optional, as Pages CMS saves it.
+const bilingual = z.object({ cs: text, en: text });
 
 const projectImage = z.object({
   // Image paths live under /public (served from root), so plain strings.
   image: z.string(),
   comparison_set: z.string().optional(),
-  title_cs: z.string().optional(),
-  title_en: z.string().optional(),
-  description_cs: z.string().optional(),
-  description_en: z.string().optional(),
+  title: bilingual.optional(),
+  description: bilingual.optional(),
 });
 
 const projectImages = z.preprocess(
@@ -59,38 +41,32 @@ const projectImages = z.preprocess(
 const projects = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/projects' }),
   schema: z.object({
-    title_cs: z.string(),
-    title_en: z.string(),
+    title: bilingual,
     thumbnail: z.string().optional(),
     from: date,
     to: date.optional(),
-    location_cs: z.string().optional(),
-    location_en: z.string().optional(),
+    location: bilingual.optional(),
     project_url: z.union([z.string().regex(PROJECT_URL, 'Expected an http or https address, e.g. https://example.org'), z.literal('')]).optional(),
-    brief_cs: z.string().optional(),
-    brief_en: z.string().optional(),
+    brief: bilingual.optional(),
     context: z.array(z.enum(['academic', 'competition', 'commissioned', 'self_initiated'])).default([]),
     intervention: z.array(z.enum(['new_build', 'renovation', 'extension', 'adaptive_reuse'])).default([]),
     scope: z.array(z.enum(['architecture', 'interior', 'landscape', 'public_space', 'urban_design'])).default([]),
     design_in_progress: z.boolean().default(false),
     realization: z.enum(['planned', 'construction', 'built']).optional(),
     studio: z.string().optional(),
-    role_cs: z.string().optional(),
-    role_en: z.string().optional(),
+    role: bilingual.optional(),
     collaborators: z.preprocess(
       withoutEmptyCmsRows,
       z
         .array(
           z.object({
             name: z.string(),
-            role_cs: z.string().optional(),
-            role_en: z.string().optional(),
+            role: bilingual.optional(),
           }),
         )
         .default([]),
     ),
-    award_cs: z.string().optional(),
-    award_en: z.string().optional(),
+    award: bilingual.optional(),
     draft: z.boolean().default(false),
     blocks: z.preprocess(
       withoutEmptyCmsRows,
@@ -99,8 +75,7 @@ const projects = defineCollection({
           z.discriminatedUnion('type', [
             z.object({
               type: z.literal('text'),
-              body_cs: z.string(),
-              body_en: z.string(),
+              body: bilingual,
             }),
             z.object({
               type: z.literal('gallery'),
@@ -114,7 +89,7 @@ const projects = defineCollection({
         )
         .default([]),
     ),
-  }).superRefine(bilingualPairs),
+  }),
 });
 
 // Each singleton is one Markdown file, read as the one entry of its own
@@ -126,9 +101,8 @@ const site = defineCollection({
   schema: z.object({
     name: z.string(),
     credential: z.string().optional(),
-    description_cs: z.string(),
-    description_en: z.string(),
-  }).superRefine(bilingualPairs),
+    description: bilingual,
+  }),
 });
 
 const landing = defineCollection({
@@ -137,19 +111,15 @@ const landing = defineCollection({
     images: z.array(z.string()).default([]),
     // Project file paths from the repository root, as Pages CMS references store them.
     projects: z.array(z.string()).default([]),
-  }).superRefine(bilingualPairs),
+  }),
 });
 
 const factRow = z.object({
-  place_cs: z.string(),
-  place_en: z.string(),
-  department_cs: z.string().optional(),
-  department_en: z.string().optional(),
+  place: bilingual,
+  department: bilingual.optional(),
   ...period,
-  title_cs: z.string(),
-  title_en: z.string(),
-  description_cs: z.string().optional(),
-  description_en: z.string().optional(),
+  title: bilingual,
+  description: bilingual.optional(),
 });
 const facts = z.preprocess(withoutEmptyCmsRows, z.array(factRow).default([]));
 
@@ -162,25 +132,22 @@ const about = defineCollection({
       z
         .array(
           z.object({
-            label_cs: z.string(),
-            label_en: z.string(),
-            text_cs: z.string(),
-            text_en: z.string(),
+            label: bilingual,
+            text: bilingual,
             icon: z.enum(['place', 'scale', 'material', 'thinking']),
           }),
         )
         .default([]),
     ),
-    body_cs: z.string(),
-    body_en: z.string(),
+    body: bilingual,
     experience: facts,
     services: z.preprocess(
       withoutEmptyCmsRows,
-      z.array(z.object({ name_cs: z.string(), name_en: z.string() })).default([]),
+      z.array(z.object({ name: bilingual })).default([]),
     ),
     education: facts,
     awards: facts,
-  }).superRefine(bilingualPairs),
+  }),
 });
 
 const contact = defineCollection({
@@ -188,11 +155,9 @@ const contact = defineCollection({
   schema: z.object({
     email: z.string(),
     phone: z.string().optional(),
-    location_cs: z.string().optional(),
-    location_en: z.string().optional(),
-    hours_cs: z.string().optional(),
-    hours_en: z.string().optional(),
-  }).superRefine(bilingualPairs),
+    location: bilingual.optional(),
+    hours: bilingual.optional(),
+  }),
 });
 
 export const collections = { projects, site, landing, about, contact };

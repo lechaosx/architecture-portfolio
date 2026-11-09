@@ -247,7 +247,7 @@ first card, and both AI exports list projects in the same order.
 
 ### One project metadata model — [Implicit]
 
-`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms-full.txt`. Optional top-level `role_cs` / `role_en` describe the architect’s responsibilities, while each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets and collaborators in a semantic people list with secondary roles.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms-full.txt`. Optional top-level `role` describes the architect’s responsibilities, while each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets and collaborators in a semantic people list with secondary roles.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 
@@ -368,10 +368,10 @@ for no-JS.
 ### Content collections; singletons as one-entry collections — [Implicit] / [Explicit]
 
 `src/content.config.ts` validates projects and the site, landing, about and
-contact singletons [Explicit] with Zod, so a CMS edit the pages cannot render fails the
-build. A field is required only when a page needs it; optional lists default to
-empty — [Implicit]. Markdown file bodies are unused: bilingual text lives in
-`_cs`/`_en` frontmatter.
+contact singletons [Explicit] with Zod, accepting everything Pages CMS can save
+(see "A CMS save never stops the deploy"). A field is required only when a page
+needs it; optional lists default to empty — [Implicit]. Markdown file bodies are
+unused: bilingual text lives in frontmatter `{ cs, en }` objects.
 
 ### Images: uploads plus responsive derivatives — [Explicit]
 
@@ -499,15 +499,21 @@ Each localized page has a self-canonical address, reciprocal `cs` and `en` alter
 
 ### Strings: `i18n.ts`, `T.astro`, `Prose.astro`, `Paragraphs.astro` — [Implicit]
 
-UI labels are a `{ cs, en }` dictionary in `src/i18n.ts`. Translation components select the route language and emit a matching `lang` attribute: `T` a string, `Prose` Markdown, `Paragraphs` plain text split into one `<p>` per paragraph (Approach texts and fact descriptions).
+UI labels are per-language dictionaries in `src/i18n.ts`, rendered with `<T k="…" />`. Translation components take `cs` and `en` props, so content, periods and computed text all spread in as `{ cs, en }` objects, e.g. `<T {...project.title} />`; they select the route language and emit a matching `lang` attribute: `T` a string, `Prose` Markdown, `Paragraphs` plain text split into one `<p>` per paragraph (Approach texts and fact descriptions).
 
-### Paired `_cs`/`_en` fields — [Implicit]
+### Translations are `{ cs, en }` objects — [Explicit] / [Implicit]
 
-One file and one CMS form per entry; language-neutral fields (images, period
-dates, email, phone, a project's studio and collaborators’ names) stay
-single. Project classification stores stable values, labelled in `src/i18n.ts`
-under the same keys. The project route is the filename-derived content
-ID, so the filename is the only source of the slug.
+Every translatable field is one object with `cs` and `en` keys, in the content,
+the schema and the CMS, so one convention covers every field and the CMS can
+refuse a half-filled pair [Explicit]. Both subfields are required and Pages CMS
+validates an optional object only once either is filled, so it saves both
+languages or neither; each subfield's `pattern` refuses whitespace alone, as the
+schema's `bilingual` shape does [Implicit]. One file and one CMS form per entry;
+language-neutral fields (images, period dates, email, phone, a project's studio
+and collaborators’ names) stay single [Implicit]. Project classification stores
+stable values, labelled in `src/i18n.ts` under the same keys. The project route
+is the filename-derived content ID, so the filename is the only source of the
+slug.
 
 ---
 
@@ -526,12 +532,12 @@ The shape is declared in `src/content.config.ts` (build) and `.pages.yml`
 same fields, required in the same places, at every level, and that each
 committed content file is valid.
 
-### Conditional bilingual validation — [Explicit]
+### A CMS save never stops the deploy — [Explicit]
 
-A shared collection refinement checks `_cs`/`_en` string pairs throughout
-nested content and reports the missing counterpart's field path. Pages CMS
-cannot validate dependencies between the flat fields, so its help explains the
-rule and the build enforces it before deployment; optional pairs can both be empty.
+Pages CMS commits straight to `master` and every push deploys, so the build
+accepts everything the CMS can save. A rule the CMS can express, it enforces
+itself (`required`, `pattern`, the bilingual objects); a rule it cannot, the
+loading modules tolerate and log as a warning.
 
 ### A period is two date strings — [Explicit] (module [Implicit])
 

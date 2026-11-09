@@ -1,5 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
-import { onlyIn, type Lang, type UiKey } from './i18n';
+import type { Lang, UiKey } from './i18n';
 import { formatPeriod } from './period';
 
 type Data = CollectionEntry<'projects'>['data'];
@@ -16,21 +16,17 @@ export interface FactLine extends Record<Lang, string> {
   names: string[];
 }
 
-/**
- * A row of a project's fact sheet: its label and its lines. A row filled in
- * one language names it in `lang`, so it shows only in that language.
- */
+/** A row of a project's fact sheet: its label and its lines. */
 export interface Fact {
   label: UiKey;
-  lang?: Lang;
   lines: FactLine[];
   badges?: UiKey[];
   href?: string;
 }
 
-const text = (cs = '', en = cs) => ({ names: [], cs, en });
-const pair = (label: UiKey, cs?: string, en?: string): Fact[] =>
-  cs || en ? [{ label, lang: onlyIn(cs, en), lines: [text(cs, en ?? '')] }] : [];
+const text = (value: string) => ({ names: [], cs: value, en: value });
+const pair = (label: UiKey, value?: Record<Lang, string>): Fact[] =>
+  value ? [{ label, lines: [{ names: [], cs: value.cs, en: value.en }] }] : [];
 
 /** The rows of a project's fact sheet that are filled, led by its place and period where asked. */
 export function projectFacts(
@@ -38,17 +34,14 @@ export function projectFacts(
     Data,
     | 'from'
     | 'to'
-    | 'location_cs'
-    | 'location_en'
+    | 'location'
     | 'project_url'
     | 'intervention'
     | 'scope'
     | 'studio'
-    | 'role_cs'
-    | 'role_en'
+    | 'role'
     | 'collaborators'
-    | 'award_cs'
-    | 'award_en'
+    | 'award'
   >,
   { placeAndPeriod = false } = {},
 ): Fact[] {
@@ -57,24 +50,24 @@ export function projectFacts(
   return [
     ...(placeAndPeriod
       ? [
-          ...pair('location', project.location_cs, project.location_en),
-          ...pair('involvement', period?.cs, period?.en),
+          ...pair('location', project.location),
+          ...pair('involvement', period),
         ]
       : []),
     ...(['intervention', 'scope'] as const).flatMap((label) =>
       project[label]?.length ? [{ label, lines: [], badges: project[label] }] : [],
     ),
     ...(studio ? [{ label: 'studio' as const, lines: [text(studio)] }] : []),
-    ...pair('myRole', project.role_cs?.trim(), project.role_en?.trim()),
+    ...pair('myRole', project.role),
     ...(collaborators.length ? [{
       label: 'collaborators' as const,
-      lines: collaborators.map(({ name, role_cs, role_en }) => ({
+      lines: collaborators.map(({ name, role }) => ({
         names: [name],
-        cs: role_cs ?? '',
-        en: role_en ?? '',
+        cs: role?.cs ?? '',
+        en: role?.en ?? '',
       })),
     }] : []),
-    ...pair('award', project.award_cs, project.award_en),
+    ...pair('award', project.award),
     ...(project.project_url ? [{
       label: 'projectWebsite' as const,
       href: project.project_url,

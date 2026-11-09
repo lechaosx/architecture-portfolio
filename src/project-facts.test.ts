@@ -4,8 +4,7 @@ import { projectBadges, projectFacts } from './project-facts';
 const project = {
   from: '2024',
   to: '2024',
-  location_cs: 'Brno',
-  location_en: 'Brno',
+  location: { cs: 'Brno', en: 'Brno' },
   collaborators: [],
   context: [],
   intervention: [],
@@ -19,14 +18,13 @@ test('lists the filled credits, award and status in sheet order, names kept as i
       ...project,
       studio: 'Ateliér A | Ing. arch. Jan Novák',
       collaborators: [
-        { name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' },
-        { name: 'Eva Dvořáková', role_cs: 'Autor návrhu · koordinace', role_en: 'Design author · Coordination' },
-        { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
-        { name: 'Ing. Pavel Velký', role_cs: 'statika' },
+        { name: 'Jan Novák', role: { cs: 'Autor návrhu', en: 'Design author' } },
+        { name: 'Eva Dvořáková', role: { cs: 'Autor návrhu · koordinace', en: 'Design author · Coordination' } },
+        { name: 'Ing. Petr Malý', role: { cs: 'vizualizace', en: 'Visualizations' } },
+        { name: 'Ing. Pavel Velký', role: { cs: 'statika', en: 'Structural design' } },
         { name: 'Ing. Iva Tichá' },
       ],
-      award_cs: 'Odměna',
-      award_en: 'Special mention',
+      award: { cs: 'Odměna', en: 'Special mention' },
     }),
   ).toEqual([
     {
@@ -39,7 +37,7 @@ test('lists the filled credits, award and status in sheet order, names kept as i
         { names: ['Jan Novák'], cs: 'Autor návrhu', en: 'Design author' },
         { names: ['Eva Dvořáková'], cs: 'Autor návrhu · koordinace', en: 'Design author · Coordination' },
         { names: ['Ing. Petr Malý'], cs: 'vizualizace', en: 'Visualizations' },
-        { names: ['Ing. Pavel Velký'], cs: 'statika', en: '' },
+        { names: ['Ing. Pavel Velký'], cs: 'statika', en: 'Structural design' },
         { names: ['Ing. Iva Tichá'], cs: '', en: '' },
       ],
     },
@@ -48,15 +46,9 @@ test('lists the filled credits, award and status in sheet order, names kept as i
 });
 
 test('leads with the place and period where asked', () => {
-  expect(projectFacts({ ...project, location_en: undefined, to: undefined }, { placeAndPeriod: true })).toEqual([
-    { label: 'location', lang: 'cs', lines: [{ names: [], cs: 'Brno', en: '' }] },
+  expect(projectFacts({ ...project, to: undefined }, { placeAndPeriod: true })).toEqual([
+    { label: 'location', lines: [{ names: [], cs: 'Brno', en: 'Brno' }] },
     { label: 'involvement', lines: [{ names: [], cs: '2024–dosud', en: '2024–present' }] },
-  ]);
-});
-
-test('a text filled in one language shows only in that language', () => {
-  expect(projectFacts({ ...project, award_en: 'Special mention' })).toEqual([
-    { label: 'award', lang: 'en', lines: [{ names: [], cs: '', en: 'Special mention' }] },
   ]);
 });
 
@@ -68,19 +60,13 @@ test('keeps my role separate from the studio and other contributors’ roles', (
   expect(projectFacts({
     ...project,
     studio: 'Ateliér A',
-    role_cs: 'Návrh, dokumentace', role_en: 'Design, documentation',
-    collaborators: [{ name: 'Jan Novák', role_cs: 'Statika', role_en: 'Structural design' }],
+    role: { cs: 'Návrh, dokumentace', en: 'Design, documentation' },
+    collaborators: [{ name: 'Jan Novák', role: { cs: 'Statika', en: 'Structural design' } }],
   })).toEqual([
     { label: 'studio', lines: [{ names: [], cs: 'Ateliér A', en: 'Ateliér A' }] },
     { label: 'myRole', lines: [{ names: [], cs: 'Návrh, dokumentace', en: 'Design, documentation' }] },
     { label: 'collaborators', lines: [{ names: ['Jan Novák'], cs: 'Statika', en: 'Structural design' }] },
   ]);
-});
-
-test('an empty or whitespace-only personal role adds no fact row', () => {
-  for (const role of [undefined, '', ' \n\t ']) {
-    expect(projectFacts({ ...project, role_cs: role, role_en: role })).toEqual([]);
-  }
 });
 
 test('a project website keeps the complete target and displays its hostname', () => {

@@ -78,7 +78,7 @@ export function imageText(
   field: 'title' | 'description',
   lang: Lang,
 ) {
-  return image?.[`${field}_${lang}`]?.trim() || undefined;
+  return image?.[field]?.[lang].trim();
 }
 
 export function comparisonSetIndexes(

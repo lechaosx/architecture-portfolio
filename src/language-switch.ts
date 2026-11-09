@@ -32,7 +32,6 @@ export function initLanguageSwitch() {
             return p;
           }));
         } else element.textContent = text;
-        if (element.hasAttribute('data-translation-optional')) element.hidden = !text.trim();
         if (element.hasAttribute('data-columns-cs')) {
           element.classList.toggle('prose-columns', element.getAttribute(`data-columns-${lang}`) === 'true');
         }

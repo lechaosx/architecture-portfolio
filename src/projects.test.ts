@@ -3,7 +3,7 @@ import { chosenCards, projectCover, withoutMissingImages, workProjects, type Pro
 
 const project = (id: string, year: number): Project => ({
   id,
-  data: { title_cs: id, title_en: id, from: String(year), to: String(year), draft: false, context: [], intervention: [], scope: [], design_in_progress: false, collaborators: [], blocks: [] },
+  data: { title: { cs: id, en: id }, from: String(year), to: String(year), draft: false, context: [], intervention: [], scope: [], design_in_progress: false, collaborators: [], blocks: [] },
 });
 
 test('projects list ongoing first, then latest first, then by English title', () => {
@@ -17,7 +17,7 @@ test('projects list ongoing first, then latest first, then by English title', ()
 });
 
 const first = { image: '/uploads/first.jpg' };
-const selected = { image: '/uploads/selected.jpg', title_cs: 'Pohled', title_en: 'View', description_cs: 'Popis', description_en: 'Description' };
+const selected = { image: '/uploads/selected.jpg', title: { cs: 'Pohled', en: 'View' }, description: { cs: 'Popis', en: 'Description' } };
 
 test('an explicit thumbnail keeps the matching page image metadata', () => {
   expect(projectCover(selected.image, [first, selected])).toBe(selected);
@@ -44,7 +44,7 @@ test('cards use the selected thumbnail without changing page image order', () =>
 test('a thumbnail makes a text-only page a card but leaves a project with no blocks in the index', () => {
   const empty = { ...project('empty', 2026), data: { ...project('empty', 2026).data, thumbnail: '/uploads/standalone.jpg' } };
   const text = { ...project('text', 2026), data: { ...project('text', 2026).data, thumbnail: '/uploads/standalone.jpg', blocks: [
-    { type: 'text' as const, body_cs: 'Text', body_en: 'Text' },
+    { type: 'text' as const, body: { cs: 'Text', en: 'Text' } },
   ] } };
   const { grid, listed } = workProjects([empty, text]);
   expect(grid.map(({ id }) => id)).toEqual(['text']);
@@ -54,7 +54,7 @@ test('a thumbnail makes a text-only page a card but leaves a project with no blo
 
 test('images whose file is missing are left out, with any image block they empty', () => {
   const missing = { image: '/uploads/deleted.jpg' };
-  const text = { type: 'text' as const, body_cs: 'Text', body_en: 'Text' };
+  const text = { type: 'text' as const, body: { cs: 'Text', en: 'Text' } };
   const data = { ...project('missing', 2026).data, thumbnail: missing.image, blocks: [
     { type: 'image_set' as const, images: [missing] },
     text,
@@ -76,7 +76,7 @@ test('the chosen projects become cards in the chosen order, leaving out and repo
   const textOnly = {
     ...project('text', 2026),
     filePath: 'src/content/projects/text.md',
-    data: { ...project('text', 2026).data, blocks: [{ type: 'text' as const, body_cs: 'Text', body_en: 'Text' }] },
+    data: { ...project('text', 2026).data, blocks: [{ type: 'text' as const, body: { cs: 'Text', en: 'Text' } }] },
   };
   const { cards, issues } = chosenCards(
     [

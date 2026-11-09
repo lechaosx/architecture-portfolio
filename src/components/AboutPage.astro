@@ -47,7 +47,7 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
     <T as="h1" k="about" class="sr-only" />
     <div class="flex flex-wrap-reverse items-end gap-12">
       <div class="reveal min-w-0 flex-[1_1_35ch]">
-        <Prose cs={about.body_cs} en={about.body_en} />
+        <Prose {...about.body} />
       </div>
       {
         about.portrait && (
@@ -74,9 +74,9 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
               <li class="reveal">
                 <div class="flex items-center gap-3">
                   <ApproachIcon icon={item.icon} class="size-5 shrink-0 text-black" />
-                  <T as="h3" cs={item.label_cs} en={item.label_en} class="text-sm tracking-widest uppercase" />
+                  <T as="h3" {...item.label} class="text-sm tracking-widest uppercase" />
                 </div>
-                <Paragraphs cs={item.text_cs} en={item.text_en} class="mt-3 space-y-4 text-neutral-700" />
+                <Paragraphs {...item.text} class="mt-3 space-y-4 text-neutral-700" />
               </li>
             ))}
           </ul>
@@ -93,7 +93,7 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
               <ul class="space-y-1">
                 {about.services.map((service) => (
                   <li>
-                    <T cs={service.name_cs} en={service.name_en} />
+                    <T {...service.name} />
                   </li>
                 ))}
               </ul>
@@ -110,21 +110,21 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
                         <T {...formatPeriod(row)} class="text-sm text-neutral-500 tabular-nums" />
                         <div>
                           <p class="text-balance">
-                            <T cs={row.title_cs} en={row.title_en} class="font-medium" />,{' '}
-                            <T cs={row.place_cs} en={row.place_en} />
+                            <T {...row.title} class="font-medium" />,{' '}
+                            <T {...row.place} />
                           </p>
                           <T
                             as="p"
-                            cs={row.department_cs}
-                            en={row.department_en}
+                            {...row.department}
                             class="text-sm text-balance text-neutral-500 empty:hidden"
                           />
                         </div>
-                        <Paragraphs
-                          cs={row.description_cs}
-                          en={row.description_en}
-                          class="col-span-full mt-2 space-y-3 text-sm text-neutral-700 sm:col-start-2"
-                        />
+                        {row.description && (
+                          <Paragraphs
+                            {...row.description}
+                            class="col-span-full mt-2 space-y-3 text-sm text-neutral-700 sm:col-start-2"
+                          />
+                        )}
                       </li>
                     ))}
                   </ul>

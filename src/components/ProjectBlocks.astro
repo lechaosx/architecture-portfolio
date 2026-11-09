@@ -59,10 +59,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
     displayBlocks.map((block) => {
       if (block.type === 'text') {
         return (
-          <Prose
-            cs={block.body_cs}
-            en={block.body_en}
-          />
+          <Prose {...block.body} />
         );
       }
 

@@ -22,7 +22,6 @@ interface Props {
 
 const { project } = Astro.props;
 const d = project.data;
-const hasBrief = Boolean(d.brief_cs?.trim() || d.brief_en?.trim());
 const facts = projectFacts(d, { placeAndPeriod: true });
 
 const images = d.blocks.flatMap((block) =>
@@ -49,8 +48,8 @@ const graph = (language: 'cs' | 'en') => [creativeWork({
 
 <Base
   title={{
-    cs: `${d.title_cs} | ${credentialedName}`,
-    en: `${d.title_en} | ${credentialedName}`,
+    cs: `${d.title.cs} | ${credentialedName}`,
+    en: `${d.title.en} | ${credentialedName}`,
   }}
   {description}
   image={responsiveCover?.share}
@@ -65,16 +64,14 @@ const graph = (language: 'cs' | 'en') => [creativeWork({
     <header class="mt-6 mb-8">
       <T
         as="h1"
-        cs={d.title_cs}
-        en={d.title_en}
+        {...d.title}
         class="text-3xl font-medium sm:text-4xl"
       />
       <ProjectBadges badges={projectBadges(d)} class="mt-4" />
-      {hasBrief && (
+      {d.brief && (
         <div class="mt-8">
           <PlainProse
-            cs={d.brief_cs}
-            en={d.brief_en}
+            {...d.brief}
             class="leading-7 text-neutral-700"
           />
         </div>

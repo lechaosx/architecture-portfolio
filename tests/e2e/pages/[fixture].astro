@@ -32,34 +32,28 @@ export function getStaticPaths() {
     cs: text(100).cs.split(/\s+/).slice(0, count).join(' '),
     en: text(100).en.split(/\s+/).slice(0, count).join(' '),
   });
-  const described = (sentences: number) => ({
-    description_en: text(sentences).en,
-    description_cs: text(sentences).cs,
-  });
+  const described = (sentences: number) => ({ description: text(sentences) });
   const short = {
-    description_en: 'A short note.',
-    description_cs: 'Krátká poznámka.',
+    description: { cs: 'Krátká poznámka.', en: 'A short note.' },
   };
   const tiled = { comparison_set: 'tiled' };
   const untiled = { comparison_set: 'untiled' };
   const item = (file: string, title?: [en: string, cs: string], more = {}) => ({
     image: `/e2e/images/${file}`,
-    ...(title && { title_en: title[0], title_cs: title[1] }),
+    ...(title && { title: { cs: title[1], en: title[0] } }),
     ...more,
   });
   // Each title ends in its image's lightbox position.
   const project: CollectionEntry<'projects'>['data'] = {
-    title_en: 'Test project',
-    title_cs: 'Testovací projekt',
+    title: { cs: 'Testovací projekt', en: 'Test project' },
     from: '3/2025',
     to: '6/2026',
-    location_en: 'Nowhere',
-    location_cs: 'Nikde',
+    location: { cs: 'Nikde', en: 'Nowhere' },
     draft: false,
     context: [], intervention: [], scope: [], design_in_progress: false, collaborators: [],
     blocks: [
       { type: 'image_set', images: [item('cover.png')] },
-      { type: 'text', body_en: text(6).en, body_cs: text(6).cs },
+      { type: 'text', body: { cs: text(6).cs, en: text(6).en } },
       {
         type: 'gallery',
         images: [
@@ -109,37 +103,34 @@ export function getStaticPaths() {
     data: { ...project, ...data },
   });
   const gridProject = listed('grid', {
-    title_en: 'Grid project',
+    title: { ...project.title, en: 'Grid project' },
     from: '2025',
     to: undefined,
     blocks: [{ type: 'image_set', images: [item('wide.png')] }],
   });
   const alphaProject = listed('alpha', {
-    title_en: 'Alpha brief',
+    title: { ...project.title, en: 'Alpha brief' },
     from: '2025',
     to: '2025',
     blocks: [],
-    location_en: 'Prague',
-    brief_en: 'First line\nSecond line',
-    brief_cs: 'První řádek\nDruhý řádek',
+    location: { cs: 'Nikde', en: 'Prague' },
+    brief: { cs: 'První řádek\nDruhý řádek', en: 'First line\nSecond line' },
   });
   // Out of order, so the list's sort shows. Old brief has a period as wide as any.
   const briefProjects = [
-    listed('old', { title_en: 'Old brief', from: '12/2019', to: '12/2020', blocks: [] }),
+    listed('old', { title: { ...project.title, en: 'Old brief' }, from: '12/2019', to: '12/2020', blocks: [] }),
     listed('text-only', {
-      title_en: 'Beta text',
+      title: { ...project.title, en: 'Beta text' },
       from: '2025',
       to: '2025',
-      blocks: [{ type: 'text', body_en: text(1).en, body_cs: text(1).cs }],
-      brief_en: 'A text project.',
-      brief_cs: 'Textový projekt.',
+      blocks: [{ type: 'text', body: { cs: text(1).cs, en: text(1).en } }],
+      brief: { cs: 'Textový projekt.', en: 'A text project.' },
     }),
     gridProject,
     alphaProject,
   ];
 
-  // Every credit, a role in Czech only, one without a role, and an award in
-  // Czech only.
+  // Every credit, one collaborator without a role, and an award.
   const credits: Partial<typeof project> = {
     context: ['academic', 'competition'],
     design_in_progress: true,
@@ -148,19 +139,19 @@ export function getStaticPaths() {
     scope: ['architecture', 'interior'],
     studio: 'Studio North | Ing. arch. Jana Nováková',
     collaborators: [
-      { name: 'Jan Novák', role_cs: 'Autor návrhu · koordinace', role_en: 'Design author · Coordination' },
-      { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
-      { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
-      { name: 'Ing. Pavel Velký', role_cs: 'statika' },
+      { name: 'Jan Novák', role: { cs: 'Autor návrhu · koordinace', en: 'Design author · Coordination' } },
+      { name: 'Eva Dvořáková', role: { cs: 'Autor návrhu', en: 'Design author' } },
+      { name: 'Ing. Petr Malý', role: { cs: 'vizualizace', en: 'Visualizations' } },
+      { name: 'Ing. Pavel Velký', role: { cs: 'statika', en: 'Structural design' } },
       { name: 'Ing. Iva Tichá' },
     ],
-    award_cs: 'Odměna za dílčí podnět',
+    award: { cs: 'Odměna za dílčí podnět', en: 'Special mention' },
   };
-  const badgeProject = listed('badges-only', { title_en: 'Badges only', title_cs: 'Pouze štítky', from: '2023', to: '2023', blocks: [], context: ['self_initiated', 'commissioned'] });
+  const badgeProject = listed('badges-only', { title: { cs: 'Pouze štítky', en: 'Badges only' }, from: '2023', to: '2023', blocks: [], context: ['self_initiated', 'commissioned'] });
   const creditProjects = [
     { ...alphaProject, data: { ...alphaProject.data, ...credits } },
     listed('credits-only', {
-      title_en: 'Credits only',
+      title: { ...project.title, en: 'Credits only' },
       from: '2024',
       to: '2024',
       blocks: [],
@@ -170,81 +161,63 @@ export function getStaticPaths() {
 
   creditProjects.push(badgeProject);
 
-  const service = (en: string, cs: string) => ({ name_en: en, name_cs: cs });
+  const service = (en: string, cs: string) => ({ name: { cs, en } });
   // Pages CMS writes one typed line break as a single newline, two as a blank line.
   const approach = {
-    label_en: 'Place',
-    label_cs: 'Místo',
-    text_en: 'First paragraph.\n\nSecond paragraph.',
-    text_cs: 'První odstavec.\nDruhý odstavec.',
+    label: { cs: 'Místo', en: 'Place' },
+    text: { cs: 'První odstavec.\nDruhý odstavec.', en: 'First paragraph.\n\nSecond paragraph.' },
   };
   const about: CollectionEntry<'about'>['data'] = {
     portrait: '/e2e/images/square-1.png',
-    body_en: text(2).en,
-    body_cs: text(2).cs,
+    body: { cs: text(2).cs, en: text(2).en },
     approaches: (['place', 'scale', 'material', 'thinking'] as const).map((icon) => ({ ...approach, icon })),
     experience: [
       {
-        place_en: 'Studio A, Brno',
-        place_cs: 'Ateliér A, Brno',
-        department_en: 'Housing team',
-        department_cs: 'Tým bydlení',
+        place: { cs: 'Ateliér A, Brno', en: 'Studio A, Brno' },
+        department: { cs: 'Tým bydlení', en: 'Housing team' },
         from: '2024',
-        title_en: 'Architect',
-        title_cs: 'Architektka',
-        description_en: `${text(2).en}\n\nPermit drawings.`,
-        description_cs: `${text(2).cs}\nVýkresy k povolení.`,
+        title: { cs: 'Architektka', en: 'Architect' },
+        description: { cs: `${text(2).cs}\nVýkresy k povolení.`, en: `${text(2).en}\n\nPermit drawings.` },
       },
       {
-        place_en: 'Studio B, Prague',
-        place_cs: 'Ateliér B, Praha',
+        place: { cs: 'Ateliér B, Praha', en: 'Studio B, Prague' },
         from: '2022',
         to: '2024',
-        title_en: 'Intern',
-        title_cs: 'Stážistka',
+        title: { cs: 'Stážistka', en: 'Intern' },
       },
     ],
     services: [service('Family houses', 'Rodinné domy'), service('Renovations', 'Rekonstrukce'), service('Interiors', 'Interiéry')],
     education: [
       {
-        place_en: 'Faculty of Civil Engineering, Brno University of Technology',
-        place_cs: 'Fakulta stavební VUT v Brně',
-        department_en: 'Institute of Architecture',
-        department_cs: 'Ústav architektury',
+        place: { cs: 'Fakulta stavební VUT v Brně', en: 'Faculty of Civil Engineering, Brno University of Technology' },
+        department: { cs: 'Ústav architektury', en: 'Institute of Architecture' },
         from: '12/2024',
         to: '12/2026',
-        title_en: 'Architecture and Urban Development',
-        title_cs: 'Architektura a rozvoj sídel',
+        title: { cs: 'Architektura a rozvoj sídel', en: 'Architecture and Urban Development' },
       },
     ],
     awards: [
       {
-        place_en: 'Young architect',
-        place_cs: 'Mladý architekt',
-        title_en: '2nd place',
-        title_cs: '2. místo',
-        description_en: sentence.en,
-        description_cs: sentence.cs,
+        place: { cs: 'Mladý architekt', en: 'Young architect' },
+        title: { cs: '2. místo', en: '2nd place' },
+        description: { cs: sentence.cs, en: sentence.en },
       },
     ],
   };
   const contact = {
     email: 'jana@example.cz',
     phone: '+420 777 000 000',
-    location_en: 'Brno',
-    location_cs: 'Brno',
-    hours_en: 'Mon–Fri 9–17',
-    hours_cs: 'Po–Pá 9–17',
+    location: { cs: 'Brno', en: 'Brno' },
+    hours: { cs: 'Po–Pá 9–17', en: 'Mon–Fri 9–17' },
   };
-  // Nothing optional filled, but the location in Czech only.
+  // Nothing optional filled.
   const bareAbout = { ...about, portrait: undefined, approaches: [], experience: [], services: [], education: [], awards: [] };
-  const bareContact = { email: contact.email, location_cs: 'Brno' };
+  const bareContact = { email: contact.email };
 
   const cards = (projects: Project[]) => projects.flatMap((project) => projectCard(project) ?? []);
   const [project2025, project2024, project2023] = [2025, 2024, 2023].map((year) =>
     listed(String(year), {
-      title_en: `Project ${year}`,
-      title_cs: `Projekt ${year}`,
+      title: { cs: `Projekt ${year}`, en: `Project ${year}` },
       from: String(year),
       to: String(year),
       blocks: [{ type: 'image_set', images: [item('square-1.png')] }],
@@ -265,55 +238,50 @@ export function getStaticPaths() {
     { params: { fixture: 'landing-bare' }, props: landing([]) },
     { params: { fixture: 'landing-no-work' }, props: landing([], []) },
     { params: { fixture: 'about' }, props: { about } },
-    { params: { fixture: 'language-height' }, props: { about: { ...about, body_en: Array(20).fill(text(4).en).join('\n\n'), body_cs: text(2).cs } } },
+    { params: { fixture: 'language-height' }, props: { about: { ...about, body: { cs: text(2).cs, en: Array(20).fill(text(4).en).join('\n\n') } } } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
-    { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, body_cs: words(150).cs, body_en: words(150).en } } },
+    { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, body: { cs: words(150).cs, en: words(150).en } } } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
-    { params: { fixture: 'work-readable' }, props: { projects: [{ ...alphaProject, data: { ...alphaProject.data, brief_en: text(12).en, brief_cs: text(12).cs } }] } },
+    { params: { fixture: 'work-readable' }, props: { projects: [{ ...alphaProject, data: { ...alphaProject.data, brief: { cs: text(12).cs, en: text(12).en } } }] } },
     { params: { fixture: 'work-credits' }, props: { projects: creditProjects } },
-    { params: { fixture: 'work-project-link' }, props: { projects: [listed('link-only', { title_cs: 'Externí projekt', title_en: 'External project', blocks: [], project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' })] } },
+    { params: { fixture: 'work-project-link' }, props: { projects: [listed('link-only', { title: { cs: 'Externí projekt', en: 'External project' }, blocks: [], project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' })] } },
     { params: { fixture: 'work-role-only' }, props: { projects: [listed('role-only', {
-      title_cs: 'Pouze moje role', title_en: 'My role only', blocks: [],
-      role_cs: 'Návrh interiéru, dokumentace', role_en: 'Interior design, documentation',
+      title: { cs: 'Pouze moje role', en: 'My role only' }, blocks: [],
+      role: { cs: 'Návrh interiéru, dokumentace', en: 'Interior design, documentation' },
     })] } },
     projectWith('project-role', project.blocks.slice(0, 1), {
-      brief_cs: 'Knihovna s veřejnou zahradou. Navrhla jsem její interiér.',
-      brief_en: 'A library with a public garden. I designed its interior.',
-      role_cs: 'Návrh interiéru, dokumentace', role_en: 'Interior design, documentation',
+      brief: { cs: 'Knihovna s veřejnou zahradou. Navrhla jsem její interiér.', en: 'A library with a public garden. I designed its interior.' },
+      role: { cs: 'Návrh interiéru, dokumentace', en: 'Interior design, documentation' },
       studio: 'Studio North',
-      collaborators: [{ name: 'Jan Novák', role_cs: 'Statika', role_en: 'Structural design' }],
+      collaborators: [{ name: 'Jan Novák', role: { cs: 'Statika', en: 'Structural design' } }],
     }),
     projectWith('project-link', project.blocks.slice(0, 1), { project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' }),
     { params: { fixture: 'paragraphs-length' }, props: { paragraphs: { cs: `${words(75).cs}\n${words(74).cs}`, en: `${words(75).en}\n${words(75).en}` } } },
-    projectWith('brief-length', project.blocks.slice(0, 1), { brief_cs: words(149).cs, brief_en: words(150).en }),
-    projectWith('prose-long', [{ type: 'image_set', images: [item('wide.png')] }, { type: 'text', body_cs: words(150).cs, body_en: words(150).en }]),
+    projectWith('brief-length', project.blocks.slice(0, 1), { brief: { cs: words(149).cs, en: words(150).en } }),
+    projectWith('prose-long', [{ type: 'image_set', images: [item('wide.png')] }, { type: 'text', body: { cs: words(150).cs, en: words(150).en } }]),
     projectWith('prose-length', [
-      { type: 'text', body_cs: words(149).cs, body_en: words(149).en },
-      { type: 'text', body_cs: words(150).cs, body_en: words(150).en },
-      { type: 'text', body_cs: `${words(149).cs} ![${words(150).cs}](/e2e/images/placeholder-1.svg)`, body_en: `${words(149).en} ![${words(150).en}](/e2e/images/placeholder-1.svg)` },
+      { type: 'text', body: { cs: words(149).cs, en: words(149).en } },
+      { type: 'text', body: { cs: words(150).cs, en: words(150).en } },
+      { type: 'text', body: { cs: `${words(149).cs} ![${words(150).cs}](/e2e/images/placeholder-1.svg)`, en: `${words(149).en} ![${words(150).en}](/e2e/images/placeholder-1.svg)` } },
     ]),
     projectWith('brief', project.blocks.slice(0, 1), {
-      brief_en: 'A brief for the page.\nSecond line.',
-      brief_cs: 'Anotace stránky.\nDruhý řádek.',
+      brief: { cs: 'Anotace stránky.\nDruhý řádek.', en: 'A brief for the page.\nSecond line.' },
     }),
     projectWith('credits', project.blocks.slice(0, 1), {
-      brief_en: text(2).en,
-      brief_cs: text(2).cs,
+      brief: { cs: text(2).cs, en: text(2).en },
       ...credits,
     }),
     projectWith('credits-no-brief', project.blocks.slice(0, 1), credits),
-    projectWith('credits-blank-brief', project.blocks.slice(0, 1), { ...credits, brief_cs: ' \n ', brief_en: ' ' }),
-    projectWith('text-only', [{ type: 'text', body_en: text(2).en, body_cs: text(2).cs }]),
+    projectWith('text-only', [{ type: 'text', body: { cs: text(2).cs, en: text(2).en } }]),
     projectWith('vector-only', [{ type: 'gallery', images: [item('vector.svg')] }]),
-    projectWith('náměstí', [{ type: 'text', body_en: text(1).en, body_cs: text(1).cs }]),
+    projectWith('náměstí', [{ type: 'text', body: { cs: text(1).cs, en: text(1).en } }]),
     // A soft line break, emphasis and an image in the rich text.
     projectWith('markdown', [
       {
         type: 'text',
-        body_en: 'A plan in a park\nand a **view**.\n\n![A plan](/e2e/images/placeholder-1.svg)',
-        body_cs: 'Plán v\nparku a **v Brně**.\n\n![Plán v parku](/e2e/images/placeholder-1.svg)',
+        body: { cs: 'Plán v\nparku a **v Brně**.\n\n![Plán v parku](/e2e/images/placeholder-1.svg)', en: 'A plan in a park\nand a **view**.\n\n![A plan](/e2e/images/placeholder-1.svg)' },
       },
     ]),
     projectWith('titled-sets', [
@@ -325,7 +293,7 @@ export function getStaticPaths() {
     ]),
     // A text block first, so the page's first image is not at its top.
     projectWith('text-first', [
-      { type: 'text', body_en: text(2).en, body_cs: text(2).cs },
+      { type: 'text', body: { cs: text(2).cs, en: text(2).en } },
       { type: 'image_set', images: [item('wide.png')] },
     ]),
     projectWith('set-first', [

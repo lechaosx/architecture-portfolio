@@ -5,7 +5,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 // Fixtures in tests/e2e/pages/[fixture].astro: /e2e/credits/ fills every
-// credit, with a role and the award in Czech only, and a brief; /e2e/project/
+// credit, one collaborator without a role, and a brief; /e2e/project/
 // fills none and has no brief; /e2e/work-credits/ lists Alpha brief with the
 // same credits and Credits only, with a studio and nothing else.
 const sheet = (scope: Page | Locator) => scope.locator('dl');
@@ -21,7 +21,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   page,
 }) => {
   await page.goto('/e2e/credits/');
-  expect(await labels(page)).toEqual(['Location', 'Involvement period', 'Intervention', 'Scope', 'Studio', 'Collaborators']);
+  expect(await labels(page)).toEqual(['Location', 'Involvement period', 'Intervention', 'Scope', 'Studio', 'Collaborators', 'Award']);
   expect(await values(page)).toEqual([
     'Nowhere',
     '3/2025–6/2026',
@@ -33,8 +33,9 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
     'Jan Novák\nDesign author · Coordination',
     'Eva Dvořáková\nDesign author',
     'Ing. Petr Malý\nVisualizations',
-    'Ing. Pavel Velký',
+    'Ing. Pavel Velký\nStructural design',
     'Ing. Iva Tichá',
+    'Special mention',
   ]);
 
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
@@ -235,32 +236,30 @@ test('without a brief the sheet fills the width under the title', async ({ page 
   expect(sheetBox!.width).toBeCloseTo(header!.width, 0);
 });
 
-for (const path of ['/e2e/credits-no-brief/', '/e2e/credits-blank-brief/']) {
-  test(`an absent or blank brief leaves full-width facts on ${path}`, async ({ page }) => {
-    await page.goto(path);
-    await expect(brief(page)).toHaveCount(0);
-    for (const language of ['en', 'cs']) {
-      if (language === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
-      for (const [width, groups] of [[1280, 2], [980, 1], [834, 1], [390, 1]] as const) {
-        await page.setViewportSize({ width, height: 900 });
-        const rows = await sheet(page).locator(':scope > div').filter({ visible: true }).evaluateAll((rows) =>
-          rows.map((row) => ({
-            left: Math.round(row.getBoundingClientRect().left),
-            fragments: row.getClientRects().length,
-          })),
-        );
-        const [sheetBox, header] = await Promise.all([sheet(page).boundingBox(), page.locator('article header').boundingBox()]);
-        expect(sheetBox!.x, `${language}, ${width}px`).toBeCloseTo(header!.x, 0);
-        expect(sheetBox!.width, `${language}, ${width}px`).toBeCloseTo(header!.width, 0);
-        expect(new Set(rows.map(({ left }) => left)).size, `${language}, ${width}px`).toBe(groups);
-        expect(rows.every(({ fragments }) => fragments === 1), `${language}, ${width}px`).toBe(true);
-        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
-          message: `${language}, ${width}px`,
-        }).toBe(width);
-      }
+test('an absent brief leaves full-width facts', async ({ page }) => {
+  await page.goto('/e2e/credits-no-brief/');
+  await expect(brief(page)).toHaveCount(0);
+  for (const language of ['en', 'cs']) {
+    if (language === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
+    for (const [width, groups] of [[1280, 2], [980, 1], [834, 1], [390, 1]] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      const rows = await sheet(page).locator(':scope > div').filter({ visible: true }).evaluateAll((rows) =>
+        rows.map((row) => ({
+          left: Math.round(row.getBoundingClientRect().left),
+          fragments: row.getClientRects().length,
+        })),
+      );
+      const [sheetBox, header] = await Promise.all([sheet(page).boundingBox(), page.locator('article header').boundingBox()]);
+      expect(sheetBox!.x, `${language}, ${width}px`).toBeCloseTo(header!.x, 0);
+      expect(sheetBox!.width, `${language}, ${width}px`).toBeCloseTo(header!.width, 0);
+      expect(new Set(rows.map(({ left }) => left)).size, `${language}, ${width}px`).toBe(groups);
+      expect(rows.every(({ fragments }) => fragments === 1), `${language}, ${width}px`).toBe(true);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), {
+        message: `${language}, ${width}px`,
+      }).toBe(width);
     }
-  });
-}
+  }
+});
 
 test('labels sit beside their values where the sheet has room, above them on phones', async ({ page }) => {
   await page.goto('/e2e/credits/');
@@ -333,7 +332,7 @@ test('an opened index row shows the brief, then the sheet without the place and 
   const row = page.locator('main > div > ul > li').nth(0);
   await row.getByText('Alpha brief').click();
   const opened = row.locator('details > div');
-  expect(await labels(opened)).toEqual(['Intervention', 'Scope', 'Studio', 'Collaborators']);
+  expect(await labels(opened)).toEqual(['Intervention', 'Scope', 'Studio', 'Collaborators', 'Award']);
 
   await expect(row.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
   const briefText = row.getByText('First line').filter({ visible: true });

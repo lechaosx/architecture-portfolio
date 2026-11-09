@@ -85,9 +85,10 @@ code: page structure, navigation and section labels. CMS entries:
 ### The CMS speaks Czech — [Explicit]
 
 Every entry, field, help text and option the repo configures in Pages CMS is in
-Czech, the architect's language. A field kept in both languages names its
-language as "Název (česky)" / "Název (anglicky)" — [Implicit]. Pages CMS's own
-buttons and menus stay in English.
+Czech, the architect's language. A field kept in both languages groups a
+"Česky" and an "Anglicky" field; a project's title and place, which the project
+list shows as columns, name the field too: "Název (česky)" / "Název (anglicky)"
+— [Implicit]. Pages CMS's own buttons and menus stay in English.
 
 ### Required fields are what a page cannot do without — [Implicit]
 
@@ -95,8 +96,8 @@ The name, both site descriptions (the search description), the contact email,
 both About texts, every field of an Approach item, both names of a service and
 both places and titles of an experience, education or award row are
 required; everything else may be empty, including a row's period — [Explicit] —
-and the hours and location — [Implicit]. An edit that would leave a page
-unrenderable fails the build and does not deploy.
+and the hours and location — [Implicit]. The CMS refuses to save an entry
+without them.
 
 ### Projects: title and start; everything else optional — [Explicit]
 
@@ -335,8 +336,8 @@ assistive technology because the adjacent title already names them.
 
 An optional text can be omitted in both languages; filling either language
 requires the other, including nested image captions, credits and About facts.
-Whitespace alone counts as empty. Missing translations fail the build and
-prevent deployment; the CMS explains the rule beside optional translated fields.
+The CMS refuses to save a translation filled in one language or with whitespace
+alone, so no edit stops the deploy — [Explicit].
 
 ### Auto-detected, with a manual switch in the footer — [Explicit]
 

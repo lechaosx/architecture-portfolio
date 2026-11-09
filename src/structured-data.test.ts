@@ -11,28 +11,25 @@ import type { ResponsiveImage } from './images';
 const site = new URL('https://example.cz/');
 const owner = { name: 'Jana Nováková', credential: 'Ing. arch.' };
 const emptyAbout = { services: [], awards: [] };
-const contact = { email: 'jana@example.cz', location_cs: 'Brno' };
+const contact = { email: 'jana@example.cz' };
 
 describe('person', () => {
   test('describes the architect from the content, in Czech', () => {
     const about = {
-      services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
+      services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
       education: [
         {
-          place_cs: 'Fakulta stavební VUT v Brně',
-          place_en: 'Faculty of Civil Engineering, BUT',
-          department_cs: 'Ústav architektury',
-          department_en: 'Institute of Architecture',
+          place: { cs: 'Fakulta stavební VUT v Brně', en: 'Faculty of Civil Engineering, BUT' },
+          department: { cs: 'Ústav architektury', en: 'Institute of Architecture' },
           from: '2024',
           to: '2026',
-          title_cs: 'Architektura a rozvoj sídel',
-          title_en: 'Architecture and Urban Development',
+          title: { cs: 'Architektura a rozvoj sídel', en: 'Architecture and Urban Development' },
         },
-        { place_cs: 'SPŠ stavební', place_en: 'Building school', title_cs: 'Maturita', title_en: 'School-leaving exam' },
+        { place: { cs: 'SPŠ stavební', en: 'Building school' }, title: { cs: 'Maturita', en: 'School-leaving exam' } },
       ],
       awards: [
-        { place_cs: 'Cena Bohuslava Fuchse', place_en: 'Bohuslav Fuchs Award', from: '2025', to: '2025', title_cs: '2. místo', title_en: '2nd place' },
-        { place_cs: 'Soutěž', place_en: 'Competition', from: '9/2025', title_cs: 'Finále', title_en: 'Final' },
+        { place: { cs: 'Cena Bohuslava Fuchse', en: 'Bohuslav Fuchs Award' }, from: '2025', to: '2025', title: { cs: '2. místo', en: '2nd place' } },
+        { place: { cs: 'Soutěž', en: 'Competition' }, from: '9/2025', title: { cs: 'Finále', en: 'Final' } },
       ],
     };
     expect(
@@ -64,10 +61,7 @@ describe('person', () => {
     const node = person({
       site,
       owner: { name: owner.name },
-      about: {
-        ...emptyAbout,
-        awards: [{ place_cs: ' ', place_en: 'Competition', title_cs: '', title_en: 'Award' }],
-      },
+      about: emptyAbout,
       contact,
     });
     expect(Object.keys(node)).toEqual(['@type', '@id', 'name', 'jobTitle', 'url', 'email']);
@@ -94,12 +88,10 @@ test('the about page is the architect’s profile', () => {
 
 describe('creativeWork', () => {
   const project = {
-    title_cs: 'Galerie',
-    title_en: 'Gallery',
+    title: { cs: 'Galerie', en: 'Gallery' },
     from: '2023',
     to: '6/2024',
-    location_cs: 'Brno',
-    location_en: 'Brno',
+    location: { cs: 'Brno', en: 'Brno' },
     collaborators: [],
   };
 
@@ -126,9 +118,9 @@ describe('creativeWork', () => {
         description: 'Anotace.',
         images: [
           { image: '/uploads/cover.png' },
-          { image: '/uploads/Půdorys 1.svg', title_cs: 'Půdorys', title_en: 'Plan' },
+          { image: '/uploads/Půdorys 1.svg', title: { cs: 'Půdorys', en: 'Plan' } },
           { image: '/uploads/untitled.png' },
-          { image: '/uploads/rez.png', title_en: 'Section', description_cs: 'Popis řezu.' },
+          { image: '/uploads/rez.png', description: { cs: 'Popis řezu.', en: 'A section.' } },
         ],
         responsiveImages: [drawing('cover'), undefined, drawing('untitled'), drawing('rez')],
       }),
@@ -164,9 +156,9 @@ describe('creativeWork', () => {
       site, url: 'https://example.cz/project/',
       project: { ...project, thumbnail: '/uploads/selected.png' },
       images: [
-        { image: '/uploads/first.png', title_cs: 'První' },
-        { image: '/uploads/selected.png', title_cs: 'Pohled', description_cs: 'Popis' },
-        { image: '/uploads/selected.png', title_cs: 'Podruhé' },
+        { image: '/uploads/first.png', title: { cs: 'První', en: 'First' } },
+        { image: '/uploads/selected.png', title: { cs: 'Pohled', en: 'View' }, description: { cs: 'Popis', en: 'Description' } },
+        { image: '/uploads/selected.png', title: { cs: 'Podruhé', en: 'Again' } },
         { image: '/uploads/untitled.png' },
       ],
       responsiveImages: [drawing('first'), drawing('selected'), drawing('selected'), drawing('untitled')],
@@ -194,7 +186,7 @@ describe('creativeWork', () => {
       site,
       url: 'https://example.cz/projects/galerie/',
       project,
-      images: [{ image: '/uploads/cover.png', title_cs: 'Pohled' }],
+      images: [{ image: '/uploads/cover.png', title: { cs: 'Pohled', en: 'View' } }],
       responsiveImages: [drawing('cover')],
     });
     expect(image).toEqual([
@@ -212,7 +204,7 @@ describe('creativeWork', () => {
         creativeWork({
           site,
           url: 'https://example.cz/projects/galerie/',
-          project: { ...project, location_cs: undefined },
+          project: { ...project, location: undefined },
           images: [],
           responsiveImages: [],
         }),
@@ -229,12 +221,12 @@ describe('creativeWork', () => {
           ...project,
           realization: 'construction',
           collaborators: [
-            { name: 'Jan Novák', role_cs: 'Autor návrhu · koordinace', role_en: 'Design author · Coordination' },
-            { name: 'Eva Dvořáková', role_cs: 'Autor návrhu', role_en: 'Design author' },
-            { name: 'Ing. Petr Malý', role_cs: 'vizualizace', role_en: 'Visualizations' },
-            { name: 'Ing. Iva Tichá', role_en: 'Statics' },
+            { name: 'Jan Novák', role: { cs: 'Autor návrhu · koordinace', en: 'Design author · Coordination' } },
+            { name: 'Eva Dvořáková', role: { cs: 'Autor návrhu', en: 'Design author' } },
+            { name: 'Ing. Petr Malý', role: { cs: 'vizualizace', en: 'Visualizations' } },
+            { name: 'Ing. Iva Tichá' },
           ],
-          award_cs: 'Odměna',
+          award: { cs: 'Odměna', en: 'Special mention' },
         },
         images: [],
         responsiveImages: [],
@@ -259,7 +251,7 @@ describe('creativeWork', () => {
   test('attaches a supplied personal role to the implicit architect without inferring authorship', () => {
     const node = creativeWork({
       site, url: 'https://example.cz/project/',
-      project: { ...project, role_cs: '  Návrh, dokumentace  ' },
+      project: { ...project, role: { cs: '  Návrh, dokumentace  ', en: 'Design, documentation' } },
       images: [], responsiveImages: [],
     });
     expect(node.contributor).toEqual([{
@@ -267,15 +259,6 @@ describe('creativeWork', () => {
       contributor: { '@id': 'https://example.cz/#person' },
     }]);
     expect(node).not.toHaveProperty('creator');
-  });
-
-  test('a blank personal role preserves the implicit architect credit', () => {
-    const node = creativeWork({
-      site, url: 'https://example.cz/project/',
-      project: { ...project, role_cs: ' \n ' },
-      images: [], responsiveImages: [],
-    });
-    expect(node.contributor).toEqual([{ '@id': 'https://example.cz/#person' }]);
   });
 });
 
@@ -297,7 +280,7 @@ describe('jsonLd', () => {
 
 
 test('personal involvement does not establish project authorship or creation date', () => {
-  const project = { title_cs: 'Projekt', title_en: 'Project', from: '2024', to: '2025', brief_cs: 'Dokumentace pro povolení.', studio: 'Ateliér A', collaborators: [{ name: 'Jan Novák', role_cs: 'Autor návrhu', role_en: 'Design author' }] };
+  const project = { title: { cs: 'Projekt', en: 'Project' }, from: '2024', to: '2025', brief: { cs: 'Dokumentace pro povolení.', en: 'Permit documentation.' }, studio: 'Ateliér A', collaborators: [{ name: 'Jan Novák', role: { cs: 'Autor návrhu', en: 'Design author' } }] };
   const node = creativeWork({ site, url: 'https://example.cz/project/',
     project,
     images: [], responsiveImages: [] });
@@ -310,8 +293,8 @@ test('personal involvement does not establish project authorship or creation dat
 test('credits the architect implicitly and trims supplied collaborator names and roles', () => {
   const node = creativeWork({
     site, url: 'https://example.cz/project/',
-    project: { title_cs: 'Projekt', title_en: 'Project', collaborators: [
-      { name: '  Jan Novák  ', role_cs: '  dokumentace  ', role_en: 'Documentation' },
+    project: { title: { cs: 'Projekt', en: 'Project' }, collaborators: [
+      { name: '  Jan Novák  ', role: { cs: '  dokumentace  ', en: 'Documentation' } },
       { name: 'Petr' },
     ] },
     images: [], responsiveImages: [],
@@ -328,8 +311,8 @@ test('English person facts use English service names, award text and ongoing per
   const node = person({
     site, owner, contact, lang: 'en',
     about: {
-      services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
-      awards: [{ place_cs: 'Soutěž', place_en: 'Competition', title_cs: 'Finále', title_en: 'Final', from: '9/2025' }],
+      services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
+      awards: [{ place: { cs: 'Soutěž', en: 'Competition' }, title: { cs: 'Finále', en: 'Final' }, from: '9/2025' }],
     },
   });
   expect(node).toMatchObject({

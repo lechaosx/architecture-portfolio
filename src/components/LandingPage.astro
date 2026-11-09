@@ -27,12 +27,10 @@ interface Props {
 }
 
 const { landing, about, contact } = Astro.props;
-// Each language's line is built whole, so a place filled in one language
-// leaves no stray separator in the other.
 const identity = (lang: 'cs' | 'en') =>
-  [ui[lang].tagline, contact[`location_${lang}`]?.trim()].filter(Boolean).join(' · ');
+  [ui[lang].tagline, contact.location?.[lang].trim()].filter(Boolean).join(' · ');
 const services = (lang: 'cs' | 'en') =>
-  about.services.map((service) => service[`name_${lang}`]).join(' · ');
+  about.services.map((service) => service.name[lang]).join(' · ');
 const heroImages = await Promise.all(
   landing.images.map(async (src) => ({ src, responsive: await getResponsiveImage(src) })),
 );

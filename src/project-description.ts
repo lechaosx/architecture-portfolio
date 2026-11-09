@@ -1,5 +1,6 @@
 import type { CollectionEntry } from 'astro:content';
 import { marked } from 'marked';
+import type { Lang } from './i18n';
 
 type Data = CollectionEntry<'projects'>['data'];
 
@@ -35,14 +36,9 @@ function excerpt(markdown: string) {
  * A project's description in each language: its brief, else the start of its
  * first text block.
  */
-export function projectDescription(
-  project: Pick<Data, 'brief_cs' | 'brief_en' | 'blocks'>,
-) {
+export function projectDescription(project: Pick<Data, 'brief' | 'blocks'>) {
   const text = project.blocks.find((block) => block.type === 'text');
-  const describe = (brief?: string, body?: string) =>
-    brief?.trim() ? oneLine(brief) : body ? excerpt(body) : undefined;
-  return {
-    cs: describe(project.brief_cs, text?.body_cs),
-    en: describe(project.brief_en, text?.body_en),
-  };
+  const describe = (lang: Lang) =>
+    project.brief ? oneLine(project.brief[lang]) : text && excerpt(text.body[lang]);
+  return { cs: describe('cs'), en: describe('en') };
 }

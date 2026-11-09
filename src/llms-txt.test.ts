@@ -5,13 +5,12 @@ import * as llms from './llms-txt';
 const site = new URL('https://example.cz/');
 const name = 'Ing. arch. Jana Nováková';
 const about = {
-  body_cs: 'Jsem **architektka**.',
-  body_en: 'I am an **architect**.',
+  body: { cs: 'Jsem **architektka**.', en: 'I am an **architect**.' },
   experience: [], services: [], education: [], awards: [],
 };
 const contact = { email: 'jana@example.cz' };
 const project = {
-  title_cs: 'Galerie', title_en: 'Gallery', from: '2024', to: '2024',
+  title: { cs: 'Galerie', en: 'Gallery' }, from: '2024', to: '2024',
   draft: false, context: [], intervention: [], scope: [],
   design_in_progress: false, collaborators: [], blocks: [],
 };
@@ -60,17 +59,17 @@ test('llms.txt is a bilingual link index with a summary and language-specific ca
   ]);
   expect(output).toContain('O mně (cs)');
   expect(output).toContain('Work (en)');
-  expect(output).not.toContain(about.body_cs);
+  expect(output).not.toContain(about.body.cs);
 });
 
 test('the index links only published project pages, newest first, with short factual notes', () => {
   const output = llms.llmsTxt({
     ...input,
     projects: [
-      { id: 'old', data: { ...project, from: '2020', to: '2020', blocks: [{ type: 'text', body_cs: 'Starý text.', body_en: 'Old text.' }] } },
-      { id: 'no-page', data: { ...project, title_cs: 'Bez stránky', title_en: 'No page' } },
-      { id: 'draft', data: { ...project, draft: true, title_cs: 'Koncept', title_en: 'Draft', blocks: [{ type: 'text', body_cs: 'Koncept.', body_en: 'Draft.' }] } },
-      { id: 'new', data: { ...project, from: '2025', to: '2025', location_cs: 'Brno, Česko', location_en: 'Brno, Czechia', brief_cs: 'Dlouhá anotace. '.repeat(100), brief_en: 'Long brief. '.repeat(100), blocks: [{ type: 'text', body_cs: 'Lorem ipsum.', body_en: 'Long body.' }] } },
+      { id: 'old', data: { ...project, from: '2020', to: '2020', blocks: [{ type: 'text', body: { cs: 'Starý text.', en: 'Old text.' } }] } },
+      { id: 'no-page', data: { ...project, title: { cs: 'Bez stránky', en: 'No page' } } },
+      { id: 'draft', data: { ...project, draft: true, title: { cs: 'Koncept', en: 'Draft' }, blocks: [{ type: 'text', body: { cs: 'Koncept.', en: 'Draft.' } }] } },
+      { id: 'new', data: { ...project, from: '2025', to: '2025', location: { cs: 'Brno, Česko', en: 'Brno, Czechia' }, brief: { cs: 'Dlouhá anotace. '.repeat(100), en: 'Long brief. '.repeat(100) }, blocks: [{ type: 'text', body: { cs: 'Lorem ipsum.', en: 'Long body.' } }] } },
     ],
   });
   expect(indexLinks(output).map((link) => link.href)).toEqual([
@@ -90,7 +89,7 @@ test('Markdown links preserve literal CMS titles and encoded paths', () => {
   const title = 'Dům [A] *B* _C_ `D` \\ E <F>';
   const output = llms.llmsTxt({
     ...input,
-    projects: [{ id: 'dům (A)', data: { ...project, title_cs: title, title_en: title, blocks: [{ type: 'text', body_cs: 'Text.', body_en: 'Text.' }] } }],
+    projects: [{ id: 'dům (A)', data: { ...project, title: { cs: title, en: title }, blocks: [{ type: 'text', body: { cs: 'Text.', en: 'Text.' } }] } }],
   });
   const link = indexLinks(output).find((entry) => entry.href.includes('/projects/'))!;
   expect(link.href).toBe('https://example.cz/cs/projects/d%C5%AFm%20(A)/');
@@ -106,8 +105,8 @@ test.each([
   const output = llms.llmsTxt({
     ...input,
     projects: [{ id: 'inline', data: {
-      ...project, title_cs: title, title_en: title,
-      blocks: [{ type: 'text', body_cs: 'Text.', body_en: 'Text.' }],
+      ...project, title: { cs: title, en: title },
+      blocks: [{ type: 'text', body: { cs: 'Text.', en: 'Text.' } }],
     } }],
   });
   const link = indexLinks(output).find((entry) => entry.href.includes('/projects/'))!;
@@ -120,8 +119,8 @@ test('multiline location notes keep the index link list intact', () => {
     ...input,
     projects: [{ id: 'inline', data: {
       ...project,
-      location_cs: 'Praha\n\n## Vložená sekce', location_en: 'Prague\n\n## Inserted section',
-      blocks: [{ type: 'text', body_cs: 'Text.', body_en: 'Text.' }],
+      location: { cs: 'Praha\n\n## Vložená sekce', en: 'Prague\n\n## Inserted section' },
+      blocks: [{ type: 'text', body: { cs: 'Text.', en: 'Text.' } }],
     } }],
   });
   indexLinks(output);
@@ -135,22 +134,22 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
     ...input,
     about: {
       ...about,
-      experience: [{ place_cs: 'Ateliér', place_en: 'Studio', from: '3/2024', title_cs: 'Architektka', title_en: 'Architect', description_cs: 'Rodinné domy.\nInteriéry.', description_en: 'Family houses.\nInteriors.' }],
-      services: [{ name_cs: 'Rodinné domy', name_en: 'Family houses' }],
-      education: [{ place_cs: 'Škola', place_en: 'School', from: '2020', to: '2024', title_cs: 'Architektura', title_en: 'Architecture' }],
-      awards: [{ place_cs: 'Soutěž', place_en: 'Competition', from: '2025', to: '2025', title_cs: '1. místo', title_en: '1st place' }],
+      experience: [{ place: { cs: 'Ateliér', en: 'Studio' }, from: '3/2024', title: { cs: 'Architektka', en: 'Architect' }, description: { cs: 'Rodinné domy.\nInteriéry.', en: 'Family houses.\nInteriors.' } }],
+      services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
+      education: [{ place: { cs: 'Škola', en: 'School' }, from: '2020', to: '2024', title: { cs: 'Architektura', en: 'Architecture' } }],
+      awards: [{ place: { cs: 'Soutěž', en: 'Competition' }, from: '2025', to: '2025', title: { cs: '1. místo', en: '1st place' } }],
     },
-    contact: { ...contact, phone: '+420 777 000 000', location_cs: 'Brno', location_en: 'Brno' },
+    contact: { ...contact, phone: '+420 777 000 000', location: { cs: 'Brno', en: 'Brno' } },
     projects: [{ id: 'library', data: {
       ...project, project_url, realization: 'built', studio: 'Ateliér A',
-      brief_cs: 'Knihovna s veřejnou zahradou.', brief_en: 'A library with a public garden.',
-      role_cs: 'Návrh interiéru', role_en: 'Interior design',
-      collaborators: [{ name: 'Jan Novák', role_cs: 'Statika', role_en: 'Structural design' }],
-      blocks: [{ type: 'text', body_cs: 'Text projektu.', body_en: 'Project text.' }],
+      brief: { cs: 'Knihovna s veřejnou zahradou.', en: 'A library with a public garden.' },
+      role: { cs: 'Návrh interiéru', en: 'Interior design' },
+      collaborators: [{ name: 'Jan Novák', role: { cs: 'Statika', en: 'Structural design' } }],
+      blocks: [{ type: 'text', body: { cs: 'Text projektu.', en: 'Project text.' } }],
     } }],
   });
   for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
-  for (const [cs, en] of [[about.body_cs, about.body_en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.']]) {
+  for (const [cs, en] of [[about.body.cs, about.body.en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.']]) {
     expect(output).toContain(`**Česky (cs):**\n\n${cs}\n\n**English (en):**\n\n${en}`);
   }
 });
@@ -159,11 +158,11 @@ test('the full export labels identical passages in both languages and links capt
   const output = llms.llmsFullTxt({
     ...input,
     projects: [{ id: 'gallery', data: { ...project, blocks: [
-      { type: 'text', body_cs: 'Lorem ipsum.', body_en: 'Lorem ipsum.' },
+      { type: 'text', body: { cs: 'Lorem ipsum.', en: 'Lorem ipsum.' } },
       { type: 'gallery', images: [
-        { image: '/uploads/plán (A).png', title_cs: 'Půdorys [A]', title_en: 'Plan [A]', description_cs: 'Popis.', description_en: 'Description.' },
+        { image: '/uploads/plán (A).png', title: { cs: 'Půdorys [A]', en: 'Plan [A]' }, description: { cs: 'Popis.', en: 'Description.' } },
         { image: '/uploads/untitled.png' },
-        { image: '/uploads/c.png', description_cs: 'Další popis.', description_en: 'Another description.' },
+        { image: '/uploads/c.png', description: { cs: 'Další popis.', en: 'Another description.' } },
       ] },
     ] } }],
   });
@@ -182,9 +181,9 @@ test('the full export includes projects without pages, excludes drafts and leave
   const output = llms.llmsFullTxt({
     ...input,
     projects: [
-      { id: 'old', data: { ...project, title_cs: 'Starý', title_en: 'Old', from: '2020', to: '2020' } },
-      { id: 'draft', data: { ...project, draft: true, title_cs: 'Koncept', title_en: 'Draft' } },
-      { id: 'new', data: { ...project, title_cs: 'Nový', title_en: 'New', from: '2025', to: '2025', blocks: [{ type: 'text', body_cs: 'Text.', body_en: 'Text.' }] } },
+      { id: 'old', data: { ...project, title: { cs: 'Starý', en: 'Old' }, from: '2020', to: '2020' } },
+      { id: 'draft', data: { ...project, draft: true, title: { cs: 'Koncept', en: 'Draft' } } },
+      { id: 'new', data: { ...project, title: { cs: 'Nový', en: 'New' }, from: '2025', to: '2025', blocks: [{ type: 'text', body: { cs: 'Text.', en: 'Text.' } }] } },
     ],
   });
   expect(output.indexOf('### Nový / New')).toBeLessThan(output.indexOf('### Starý / Old'));

@@ -5,10 +5,11 @@
 # to run. The architect edits content in the browser; saving commits to `master`,
 # which triggers the GitHub Pages deploy.
 #
-# The site is bilingual (Czech + English). Fields that differ per language come
-# in pairs suffixed _cs / _en; language-neutral fields (images, dates, email,
-# phone) are single. See FEATURES.md "Dual language (Czech + English)".
-# The build requires both translations whenever either field is filled.
+# The site is bilingual (Czech + English). A field that differs per language is
+# an object with required `cs` and `en` subfields. Pages CMS checks an optional
+# object only once either subfield is filled, so it saves both languages or
+# neither. Language-neutral fields (images, dates, email, phone) are single. See
+# FEATURES.md "Dual language (Czech + English)".
 
 media:
   input: public/uploads # uploaded files are committed here
@@ -23,11 +24,19 @@ content:
       template: '{primary}.md'
       field: true
     view:
-      primary: title_en
-      fields: [title_en, from, to, location_en]
+      primary: title.en
+      fields: [title.en, from, to, location.en]
+    # A list column is headed by its subfield's label, so the pairs in `view`
+    # name their field in it.
     fields:
-      - { name: title_cs, label: Název (česky), type: string, required: true }
-      - { name: title_en, label: Název (anglicky), type: string, required: true }
+      - name: title
+        label: Název
+        type: object
+        required: true
+        fields:
+          # `|^$` takes the empty value, which `required` reports on its own.
+          - { name: cs, label: Název (česky), type: string, required: true, pattern: &text { regex: '\S|^$', message: 'Zadejte text, ne jen mezery.' } }
+          - { name: en, label: Název (anglicky), type: string, required: true, pattern: *text }
       - { name: thumbnail, label: Náhled projektu, type: image, required: false, description: 'Obrázek pro karty projektu a náhledy sdílených odkazů. Když pole necháte prázdné, automaticky se použije první obrázek v obsahu stránky. Výběr nemění obsah ani pořadí obrázků na stránce.' }
       - name: from
         label: Moje zapojení od
@@ -36,10 +45,22 @@ content:
         pattern: &date { regex: '^((0?[1-9]|1[0-2])/)?[0-9]{4}$|^$', message: 'Zadejte rok, např. 2023, nebo měsíc a rok, např. 3/2023.' }
         description: 'Začátek mé práce na projektu: rok, např. 2023, nebo měsíc a rok, např. 3/2023.'
       - { name: to, label: Moje zapojení do, type: string, required: false, pattern: *date, description: 'Konec mé práce na projektu; u jednoho roku stejný rok jako začátek. Pokud moje zapojení trvá, nechte prázdné. Nejde o datum dokončení stavby.' }
-      - { name: location_cs, label: Místo (česky), type: string, required: false }
-      - { name: location_en, label: Místo (anglicky), type: string, required: false, description: &translations 'Vyplňte oba jazyky, nebo nechte obě pole prázdná. Chybějící překlad zabrání zveřejnění změn.' }
-      - { name: brief_cs, label: Brief (česky), type: text, required: false, description: 'Stručné představení projektu a mého zapojení do něj. Podrobnější popis patří do obsahu stránky.' }
-      - { name: brief_en, label: Brief (anglicky), type: text, required: false, description: *translations }
+      - name: location
+        label: Místo
+        type: object
+        required: false
+        description: &translations 'Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
+        fields:
+          - { name: cs, label: Místo (česky), type: string, required: true, pattern: *text }
+          - { name: en, label: Místo (anglicky), type: string, required: true, pattern: *text }
+      - name: brief
+        label: Brief
+        type: object
+        required: false
+        description: 'Stručné představení projektu a mého zapojení do něj. Podrobnější popis patří do obsahu stránky. Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
+        fields: &text-pair
+          - { name: cs, label: Česky, type: text, required: true, pattern: *text }
+          - { name: en, label: Anglicky, type: text, required: true, pattern: *text }
       - name: context
         label: Kontext projektu
         description: 'Původ celého projektu. Lze kombinovat, např. školní soutěž. Zakázkový projekt může být zakázkou ateliéru, nemusí jít o mého přímého klienta.'
@@ -89,8 +110,14 @@ content:
             - { name: built, label: Realizováno }
       - { name: project_url, label: Odkaz na projekt, type: string, required: false, pattern: { regex: '^https?://(?:[\w-]+\.)*[A-Za-z][\w-]*(?:[/?#]\S*)?$|^$', message: 'Zadejte úplnou adresu začínající http:// nebo https://, např. https://www.example.cz/projekt.' }, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
       - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména ostatních lidí patří do spolupráce.' }
-      - { name: role_cs, label: Moje role (česky), type: string, required: false, description: 'Stručný přehled mé práce, např. „Návrh interiéru, dokumentace“. Stejný formát jako role ostatních spolupracovníků; souvislosti patří do briefu. Nepovinné.' }
-      - { name: role_en, label: Moje role (anglicky), type: string, required: false, description: *translations }
+      - name: role
+        label: Moje role
+        type: object
+        required: false
+        description: 'Stručný přehled mé práce, např. „Návrh interiéru, dokumentace“. Stejný formát jako role ostatních spolupracovníků; souvislosti patří do briefu. Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
+        fields: &string-pair
+          - { name: cs, label: Česky, type: string, required: true, pattern: *text }
+          - { name: en, label: Anglicky, type: string, required: true, pattern: *text }
       - name: collaborators
         label: Spolupráce
         type: object
@@ -99,10 +126,20 @@ content:
         description: 'Ostatní lidé, kteří na projektu spolupracovali, jedna osoba na položku. Mou práci popisuje brief a nepovinné pole Moje role. Uveďte známou roli v obou jazycích; neznámou nechte prázdnou.'
         fields:
           - { name: name, label: Jméno, type: string, required: true, description: 'Společné pro oba jazyky, např. „Ing. Jiří Železný“.' }
-          - { name: role_cs, label: Role (česky), type: string, required: false, description: 'Např. „Autor návrhu“ nebo „vizualizace“.' }
-          - { name: role_en, label: Role (anglicky), type: string, required: false, description: 'Např. „Design author“ nebo „Visualizations“. Vyplňte oba jazyky, nebo nechte obě pole prázdná. Chybějící překlad zabrání zveřejnění změn.' }
-      - { name: award_cs, label: Ocenění (česky), type: string, required: false, description: 'Např. „Odměna za dílčí podnět“.' }
-      - { name: award_en, label: Ocenění (anglicky), type: string, required: false, description: *translations }
+          - name: role
+            label: Role
+            type: object
+            required: false
+            description: *translations
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Autor návrhu“ nebo „vizualizace“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Design author“ nebo „Visualizations“.' }
+      - name: award
+        label: Ocenění
+        type: object
+        required: false
+        description: 'Např. „Odměna za dílčí podnět“. Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
+        fields: *string-pair
       - { name: draft, label: Koncept (nezveřejňovat), type: boolean, default: false }
       - name: blocks
         label: Obsah stránky
@@ -114,8 +151,13 @@ content:
           - name: text
             label: Text
             fields:
-              - { name: body_cs, label: Text (česky), type: rich-text, required: true }
-              - { name: body_en, label: Text (anglicky), type: rich-text, required: true }
+              - name: body
+                label: Text
+                type: object
+                required: true
+                fields: &rich-text-pair
+                  - { name: cs, label: Česky, type: rich-text, required: true, pattern: *text }
+                  - { name: en, label: Anglicky, type: rich-text, required: true, pattern: *text }
           - name: gallery
             label: Galerie náhledů
             fields:
@@ -127,10 +169,8 @@ content:
                 fields:
                   - { name: image, label: Obrázek, type: image, required: true }
                   - { name: comparison_set, label: Srovnávací sada, type: string, required: false, description: "Obrázky se stejnou hodnotou tvoří v prohlížeči obrázků jednu sadu a přepínají se tlačítky." }
-                  - { name: title_cs, label: Název obrázku (česky), type: string, required: false }
-                  - { name: title_en, label: Název obrázku (anglicky), type: string, required: false, description: *translations }
-                  - { name: description_cs, label: Popis obrázku (česky), type: text, required: false }
-                  - { name: description_en, label: Popis obrázku (anglicky), type: text, required: false, description: *translations }
+                  - { name: title, label: Název obrázku, type: object, required: false, description: *translations, fields: *string-pair }
+                  - { name: description, label: Popis obrázku, type: object, required: false, description: *translations, fields: *text-pair }
           - name: image_set
             label: Obrázek nebo prezentace na celou šířku
             fields:
@@ -143,10 +183,8 @@ content:
                 fields:
                   - { name: image, label: Obrázek, type: image, required: true }
                   - { name: comparison_set, label: Srovnávací sada, type: string, required: false, description: "Obrázky se stejnou hodnotou tvoří v prohlížeči obrázků jednu sadu a přepínají se tlačítky." }
-                  - { name: title_cs, label: Název obrázku (česky), type: string, required: false }
-                  - { name: title_en, label: Název obrázku (anglicky), type: string, required: false, description: *translations }
-                  - { name: description_cs, label: Popis obrázku (česky), type: text, required: false }
-                  - { name: description_en, label: Popis obrázku (anglicky), type: text, required: false, description: *translations }
+                  - { name: title, label: Název obrázku, type: object, required: false, description: *translations, fields: *string-pair }
+                  - { name: description, label: Popis obrázku, type: object, required: false, description: *translations, fields: *text-pair }
 
   - name: landing
     label: Úvodní stránka
@@ -173,10 +211,8 @@ content:
         type: object
         list: true
         fields:
-          - { name: label_cs, label: Nadpis (česky), type: string, required: true }
-          - { name: label_en, label: Nadpis (anglicky), type: string, required: true }
-          - { name: text_cs, label: Text (česky), type: text, required: true }
-          - { name: text_en, label: Text (anglicky), type: text, required: true }
+          - { name: label, label: Nadpis, type: object, required: true, fields: *string-pair }
+          - { name: text, label: Text, type: object, required: true, fields: *text-pair }
           - name: icon
             label: Ikona
             type: select
@@ -188,64 +224,93 @@ content:
                 - { name: scale, label: Měřítko (pravítko) }
                 - { name: material, label: Materiál (vrstvy) }
                 - { name: thinking, label: Myšlení (žárovka) }
-      - { name: body_cs, label: Text o mně (česky), type: rich-text, required: true }
-      - { name: body_en, label: Text o mně (anglicky), type: rich-text, required: true }
+      - { name: body, label: Text o mně, type: object, required: true, fields: *rich-text-pair }
       - name: experience
         label: Praxe
         type: object
         list: true
         description: 'Jedna položka na ateliér nebo zaměstnavatele, nejnovější nahoře.'
         fields:
-          - { name: place_cs, label: Ateliér nebo zaměstnavatel (česky), type: string, required: true, description: 'Název a město, např. „Ateliér A, Brno“.' }
-          - { name: place_en, label: Ateliér nebo zaměstnavatel (anglicky), type: string, required: true, description: 'Název a město, např. „Studio A, Brno“.' }
-          - { name: department_cs, label: Oddělení nebo tým (česky), type: string, required: false }
-          - { name: department_en, label: Oddělení nebo tým (anglicky), type: string, required: false, description: *translations }
+          - name: place
+            label: Ateliér nebo zaměstnavatel
+            type: object
+            required: true
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Název a město, např. „Ateliér A, Brno“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Název a město, např. „Studio A, Brno“.' }
+          - { name: department, label: Oddělení nebo tým, type: object, required: false, description: *translations, fields: *string-pair }
           - { name: from, label: Od, type: string, required: false, pattern: *date, description: 'Začátek, společný pro oba jazyky: rok, např. 2023, nebo měsíc a rok, např. 3/2023. U položky bez období nechte „Od“ i „Do“ prázdné.' }
           - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec ve stejném tvaru; u jednoho roku stejný rok jako v poli „Od“. Pokud položka stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
-          - { name: title_cs, label: Pozice (česky), type: string, required: true, description: 'Např. „Architektka“.' }
-          - { name: title_en, label: Pozice (anglicky), type: string, required: true, description: 'Např. „Architect“.' }
-          - { name: description_cs, label: Popis (česky), type: text, required: false }
-          - { name: description_en, label: Popis (anglicky), type: text, required: false, description: *translations }
+          - name: title
+            label: Pozice
+            type: object
+            required: true
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Architektka“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Architect“.' }
+          - { name: description, label: Popis, type: object, required: false, description: *translations, fields: *text-pair }
       - name: services
         label: Služby
         type: object
         list: true
         description: Jedna služba na položku, pojmenovaná tak, jak by ji hledal klient. Služby se zobrazují na stránce O mně a pod obrázky na úvodní stránce.
         fields:
-          - { name: name_cs, label: Služba (česky), type: string, required: true }
-          - { name: name_en, label: Služba (anglicky), type: string, required: true }
+          - { name: name, label: Služba, type: object, required: true, fields: *string-pair }
       - name: education
         label: Vzdělání
         type: object
         list: true
         description: 'Jedna položka na studijní program, nejnovější nahoře.'
         fields:
-          - { name: place_cs, label: Škola (česky), type: string, required: true, description: 'Např. „VUT v Brně“.' }
-          - { name: place_en, label: Škola (anglicky), type: string, required: true, description: 'Např. „Brno University of Technology“.' }
-          - { name: department_cs, label: Fakulta nebo ústav (česky), type: string, required: false, description: 'Např. „Fakulta stavební, Ústav architektury“.' }
-          - { name: department_en, label: Fakulta nebo ústav (anglicky), type: string, required: false, description: 'Např. „Faculty of Civil Engineering, Institute of Architecture“. Vyplňte oba jazyky, nebo nechte obě pole prázdná. Chybějící překlad zabrání zveřejnění změn.' }
+          - name: place
+            label: Škola
+            type: object
+            required: true
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „VUT v Brně“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Brno University of Technology“.' }
+          - name: department
+            label: Fakulta nebo ústav
+            type: object
+            required: false
+            description: *translations
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Fakulta stavební, Ústav architektury“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Faculty of Civil Engineering, Institute of Architecture“.' }
           - { name: from, label: Od, type: string, required: false, pattern: *date, description: 'Začátek, společný pro oba jazyky: rok, např. 2023, nebo měsíc a rok, např. 3/2023. U položky bez období nechte „Od“ i „Do“ prázdné.' }
           - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec ve stejném tvaru; u jednoho roku stejný rok jako v poli „Od“. Pokud položka stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
-          - { name: title_cs, label: Studijní program (česky), type: string, required: true, description: 'Např. „Architektura a rozvoj sídel“.' }
-          - { name: title_en, label: Studijní program (anglicky), type: string, required: true, description: 'Např. „Architecture and Urban Development“.' }
-          - { name: description_cs, label: Popis (česky), type: text, required: false }
-          - { name: description_en, label: Popis (anglicky), type: text, required: false, description: *translations }
+          - name: title
+            label: Studijní program
+            type: object
+            required: true
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Architektura a rozvoj sídel“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Architecture and Urban Development“.' }
+          - { name: description, label: Popis, type: object, required: false, description: *translations, fields: *text-pair }
       - name: awards
         label: Ocenění
         type: object
         list: true
         description: 'Jedna položka na soutěž nebo ocenění, nejnovější nahoře.'
         fields:
-          - { name: place_cs, label: Soutěž nebo ocenění (česky), type: string, required: true, description: 'Např. „Cena Bohuslava Fuchse“.' }
-          - { name: place_en, label: Soutěž nebo ocenění (anglicky), type: string, required: true, description: 'Např. „Bohuslav Fuchs Award“.' }
-          - { name: department_cs, label: Kategorie nebo pořadatel (česky), type: string, required: false }
-          - { name: department_en, label: Kategorie nebo pořadatel (anglicky), type: string, required: false, description: *translations }
+          - name: place
+            label: Soutěž nebo ocenění
+            type: object
+            required: true
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Cena Bohuslava Fuchse“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Bohuslav Fuchs Award“.' }
+          - { name: department, label: Kategorie nebo pořadatel, type: object, required: false, description: *translations, fields: *string-pair }
           - { name: from, label: Od, type: string, required: false, pattern: *date, description: 'Začátek, společný pro oba jazyky: rok, např. 2023, nebo měsíc a rok, např. 3/2023. U položky bez období nechte „Od“ i „Do“ prázdné.' }
           - { name: to, label: Do, type: string, required: false, pattern: *date, description: 'Konec ve stejném tvaru; u jednoho roku stejný rok jako v poli „Od“. Pokud položka stále trvá, nechte pole prázdné: zobrazí se např. „2023–dosud“.' }
-          - { name: title_cs, label: Umístění (česky), type: string, required: true, description: 'Např. „2. místo“.' }
-          - { name: title_en, label: Umístění (anglicky), type: string, required: true, description: 'Např. „2nd place“.' }
-          - { name: description_cs, label: Popis (česky), type: text, required: false }
-          - { name: description_en, label: Popis (anglicky), type: text, required: false, description: *translations }
+          - name: title
+            label: Umístění
+            type: object
+            required: true
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „2. místo“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „2nd place“.' }
+          - { name: description, label: Popis, type: object, required: false, description: *translations, fields: *text-pair }
 
   - name: contact
     label: Kontakt (patička)
@@ -254,10 +319,20 @@ content:
     fields:
       - { name: email, label: E-mail, type: string, required: true }
       - { name: phone, label: Telefon, type: string, required: false }
-      - { name: location_cs, label: Místo (česky), type: string, required: false, description: 'Uveďte vaše město, např. „Brno“. Zobrazuje se pod obrázky na úvodní stránce.' }
-      - { name: location_en, label: Místo (anglicky), type: string, required: false, description: *translations }
-      - { name: hours_cs, label: Čas pro telefonické hovory (česky), type: string, required: false, description: 'Kdy přijímáte hovory, např. „Po–Pá 10–15“.' }
-      - { name: hours_en, label: Čas pro telefonické hovory (anglicky), type: string, required: false, description: 'Kdy přijímáte hovory, např. „Mon–Fri 10–15“. Vyplňte oba jazyky, nebo nechte obě pole prázdná. Chybějící překlad zabrání zveřejnění změn.' }
+      - name: location
+        label: Místo
+        type: object
+        required: false
+        description: 'Uveďte vaše město, např. „Brno“. Zobrazuje se pod obrázky na úvodní stránce. Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
+        fields: *string-pair
+      - name: hours
+        label: Čas pro telefonické hovory
+        type: object
+        required: false
+        description: *translations
+        fields:
+          - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Kdy přijímáte hovory, např. „Po–Pá 10–15“.' }
+          - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Kdy přijímáte hovory, např. „Mon–Fri 10–15“.' }
 
   - name: site
     label: Nastavení webu
@@ -266,5 +341,9 @@ content:
     fields:
       - { name: name, label: Jméno, type: string, required: true }
       - { name: credential, label: Titul (např. Ing. arch.), type: string }
-      - { name: description_cs, label: Popis pro vyhledávače (česky), type: text, required: true, description: 'Text, který vyhledávače a náhledy odkazů ukážou u stránek bez vlastního popisu. Jedna nebo dvě věty.' }
-      - { name: description_en, label: Popis pro vyhledávače (anglicky), type: text, required: true, description: 'Text, který vyhledávače a náhledy odkazů ukážou u stránek bez vlastního popisu. Jedna nebo dvě věty.' }
+      - name: description
+        label: Popis pro vyhledávače
+        type: object
+        required: true
+        description: 'Text, který vyhledávače a náhledy odkazů ukážou u stránek bez vlastního popisu. Jedna nebo dvě věty.'
+        fields: *text-pair

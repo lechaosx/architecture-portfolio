@@ -16,8 +16,8 @@ const { facts } = Astro.props;
 <div class="@container">
   <dl class="columns-[28rem_2] gap-12 text-sm">
     {
-      facts.map(({ label, lang, lines, badges, href }) => (
-        <div {lang} class="mb-3 grid break-inside-avoid items-baseline gap-y-0.5 @sm:grid-cols-[10rem_minmax(0,1fr)] @sm:gap-x-6">
+      facts.map(({ label, lines, badges, href }) => (
+        <div class="mb-3 grid break-inside-avoid items-baseline gap-y-0.5 @sm:grid-cols-[10rem_minmax(0,1fr)] @sm:gap-x-6">
           <dt class="text-xs tracking-widest text-neutral-500 uppercase">
             <T k={label} />
           </dt>
@@ -28,7 +28,7 @@ const { facts } = Astro.props;
                 {lines.map(({ names, cs, en }) => (
                   <li>
                     <span class="block whitespace-nowrap">{names.join(', ')}</span>
-                    {(cs.trim() || en.trim()) && (
+                    {cs && (
                       <T as="span" {cs} {en} class="block text-xs text-neutral-500" />
                     )}
                   </li>

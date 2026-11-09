@@ -69,24 +69,27 @@ npm run images       # regenerate responsive images (dev and build run it)
 
 **Change the content shape.** Edit `src/content.config.ts` and `.pages.yml` in
 the same change; the content-schema test fails if their fields or required flags
-differ. Translatable fields come as `_cs`/`_en` pairs in both places. Labels,
-help texts and option labels in `.pages.yml` are Czech, a pair's labels ending
-"(česky)" / "(anglicky)".
+differ. A translatable field is `bilingual` (or `bilingual.optional()`) in the
+schema and an object field in `.pages.yml` whose `cs`/`en` subfields are
+`required: true` with `pattern: *text`; the `*string-pair`, `*text-pair` and
+`*rich-text-pair` anchors supply them where no per-language help or label is
+needed. The content-schema test checks every subfield's `pattern`. Labels, help
+texts and option labels in `.pages.yml` are Czech.
 
-**Translate content.** Fill both `_cs`/`_en` fields, including captions, roles
-and nested descriptions, or leave both empty when optional. Whitespace is empty.
-The build reports incomplete pairs at their field paths and prevents deployment;
-Pages CMS can save them, so check the deployment result after editing.
+**Translate content.** Fill both `cs` and `en` of a field, including captions,
+roles and nested descriptions, or, when it is optional, leave out the whole
+field. Pages CMS refuses one language without the other and text that is only
+whitespace; by hand, the build rejects them.
 
 **Add a page.** Provide the neutral route and both static language variants through `src/pages/[lang]/`; use `localizedPath(path, lang)` for page links and keep assets rooted at `/uploads/…`. Check its canonical, alternate language links and sitemap entries. Pass language-dependent structured data to `Base` as paired `cs`/`en` graphs so in-place switching updates it too.
 
 **Add UI text.** Add a key with both languages to `src/i18n.ts` and render it
-with `<T k="key" />`. Bilingual content renders with `<T cs={…} en={…} />` or
-`<Prose cs={…} en={…} />`, never as a bare string.
+with `<T k="key" />`. Bilingual content renders with `<T {...project.title} />`
+or `<Prose {...block.body} />`, never as a bare string.
 
 **Add a project by hand.** Copy an existing file in `src/content/projects/`, put
 images in `public/uploads/` and reference them as `/uploads/<file>`. The owner
-normally does this in the CMS. `brief_cs` / `brief_en` introduce the project and her involvement in natural prose; optional top-level `role_cs` / `role_en` summarize her responsibilities in the same free-text format as collaborators’ roles. `from` / `to` describe her involvement period; longer project narrative belongs in `blocks`. Optional `context`, `intervention` and `scope` lists use the choices in `.pages.yml`; `design_in_progress` is independent of the single `realization` value. Select only confirmed facts. The optional `collaborators` list contains the other people involved, excluding Tereza, as records with `name` and optional paired `role_cs` / `role_en`. Her name is implicit; her work belongs in the brief and optional personal role. Fill an individual role only when it is explicitly supplied for that person; a collective team credit does not establish individual roles. Unknown roles stay unfilled.
+normally does this in the CMS. `brief` introduces the project and her involvement in natural prose; optional top-level `role` summarizes her responsibilities in the same free-text format as collaborators’ roles. `from` / `to` describe her involvement period; longer project narrative belongs in `blocks`. Optional `context`, `intervention` and `scope` lists use the choices in `.pages.yml`; `design_in_progress` is independent of the single `realization` value. Select only confirmed facts. The optional `collaborators` list contains the other people involved, excluding Tereza, as records with `name` and an optional bilingual `role`. Her name is implicit; her work belongs in the brief and optional personal role. Fill an individual role only when it is explicitly supplied for that person; a collective team credit does not establish individual roles. Unknown roles stay unfilled.
 
 **Choose a project thumbnail.** In Pages CMS, select **Náhled projektu**, or set
 optional top-level `thumbnail: /uploads/<file>` by hand. Clear it to use the first

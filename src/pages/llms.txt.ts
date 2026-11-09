@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ site: origin }) =>
     llmsTxt({
       site: new URL('/', origin),
       name: credentialedName,
-      description: { cs: site.description_cs, en: site.description_en },
+      description: site.description,
       projects,
     }),
     { headers: { 'Content-Type': 'text/plain; charset=utf-8' } },

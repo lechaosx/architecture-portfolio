@@ -6,20 +6,18 @@ import { canSplitProse } from '../prose';
 const lang = pageLanguage(Astro.url.pathname);
 
 interface Props {
-  cs?: string;
-  en?: string;
+  cs: string;
+  en: string;
   class?: string;
 }
 
 const { cs, en, class: cls } = Astro.props;
-const texts = { cs: cs ? bindOneLetterWords(cs) : '', en: en ?? '' };
+const texts = { cs: bindOneLetterWords(cs), en };
 const text = texts[lang];
 ---
 
 <p
   {lang}
-  hidden={!text.trim()}
-  data-translation-optional
   data-translation-cs={texts.cs} data-translation-en={texts.en}
   data-columns-cs={canSplitProse(texts.cs)} data-columns-en={canSplitProse(texts.en)}
   class:list={['running-text whitespace-pre-line', cls, { 'prose-columns': canSplitProse(text) }]}

@@ -151,11 +151,3 @@ export const ui = {
 } satisfies Record<Lang, Record<string, string>>;
 
 export type UiKey = keyof typeof ui.cs;
-
-/**
- * The one language a pair of texts is filled in, or undefined when both are.
- * An element carrying it is hidden by the language switch in the other
- * language, so a line filled in one language never shows empty in the other.
- */
-export const onlyIn = (cs?: string, en?: string): Lang | undefined =>
-  cs && en ? undefined : cs ? 'cs' : 'en';

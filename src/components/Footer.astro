@@ -1,7 +1,6 @@
 ---
 import { pageLanguage, localizedPath } from '../locale';
 import { contact, site } from '../singletons';
-import { onlyIn } from '../i18n';
 import ContactIcon from './ContactIcon.astro';
 import T from './T.astro';
 
@@ -10,7 +9,7 @@ const lang = pageLanguage(Astro.url.pathname);
 interface Props { bilingual?: boolean; }
 const { bilingual = false } = Astro.props;
 const year = new Date().getFullYear();
-const { email, phone, hours_cs, hours_en } = contact;
+const { email, phone, hours } = contact;
 const item = 'flex w-max items-center gap-2 whitespace-nowrap';
 const icon = 'size-3.5 shrink-0 text-neutral-500';
 ---
@@ -31,11 +30,11 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
           <a href={`tel:${phone.replace(/\s+/g, '')}`} class="text-link">{phone}</a>
         </li>
       )}
-      {(hours_cs || hours_en) && (
-        <li class={item} lang={onlyIn(hours_cs, hours_en)}>
+      {hours && (
+        <li class={item}>
           <ContactIcon icon="hours" class={icon} />
           <T {bilingual} k="callHours" class="sr-only" />
-          <T {bilingual} cs={hours_cs} en={hours_en} />
+          <T {bilingual} {...hours} />
         </li>
       )}
     </ul>
@@ -137,7 +136,7 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
   function fitFooter() {
     const style = getComputedStyle(row);
     const available = row.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    const widths = items.map((item) => item.getBoundingClientRect().width).filter((width) => width > 0);
+    const widths = items.map((item) => item.getBoundingClientRect().width);
     const contactWidth = widths.reduce((sum, width) => sum + width, 0)
       + Math.max(0, widths.length - 1) * parseFloat(getComputedStyle(contacts).columnGap);
     const fullWidth = contactWidth + copyright.getBoundingClientRect().width

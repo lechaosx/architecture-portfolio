@@ -35,14 +35,13 @@ const image = (caption: Partial<GalleryImage> = {}): GalleryImage => ({
 
 describe('imageText', () => {
   test('reads the field in the requested language', () => {
-    const captioned = image({ title_cs: 'Nadpis', description_en: ' Description ' });
+    const captioned = image({ title: { cs: 'Nadpis', en: 'Title' }, description: { cs: 'Popis', en: ' Description ' } });
     expect(imageText(captioned, 'title', 'cs')).toBe('Nadpis');
     expect(imageText(captioned, 'description', 'en')).toBe('Description');
   });
 
-  test('treats a missing or blank field as absent', () => {
-    expect(imageText(image({ title_cs: 'Nadpis' }), 'title', 'en')).toBeUndefined();
-    expect(imageText(image({ description_en: '  ' }), 'description', 'en')).toBeUndefined();
+  test('treats a missing field as absent', () => {
+    expect(imageText(image({ title: { cs: 'Nadpis', en: 'Title' } }), 'description', 'en')).toBeUndefined();
     expect(imageText(undefined, 'title', 'en')).toBeUndefined();
   });
 });

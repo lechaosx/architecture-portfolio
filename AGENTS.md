@@ -64,11 +64,20 @@ Only then reconcile them.
   animating, and the UI behaves exactly as it would with no animations at all.
   When a target changes mid-animation, the animation continues from where it is
   on screen towards the new target instead of jumping or restarting.
-- **All user-facing text is bilingual (cs + en).** Translatable fields come in
-  `_cs`/`_en` pairs (add both, in both schema places); baked-in UI labels live in
+- **All user-facing text is bilingual (cs + en).** A translatable field is a
+  `{ cs, en }` object: an object field with required `cs` and `en` subfields in
+  `.pages.yml`, `bilingual` in the schema. Baked-in UI labels live in
   `src/i18n.ts`. Render bilingual text through `T.astro`, `Prose.astro` or
-  `Paragraphs.astro` to select the route language — never emit a bare
-  user-facing string. See ARCHITECTURE.md → "Internationalization".
+  `Paragraphs.astro`, e.g. `<T {...project.title} />`, to select the route
+  language — never emit a bare user-facing string. See ARCHITECTURE.md →
+  "Internationalization".
+- **The build accepts everything the CMS can save.** Pages CMS commits straight
+  to `master` and every push deploys, so a save the build rejects blocks every
+  later deploy unnoticed. The CMS refuses what it can express (`required`,
+  `pattern`, required subfields of an optional object); the build tolerates
+  what it can't, and the loading modules (`src/singletons.ts`,
+  `src/published-projects.ts`) log a warning. See ARCHITECTURE.md → "A CMS save
+  never stops the deploy".
 
 ## Verifying a change
 

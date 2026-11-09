@@ -62,14 +62,13 @@ const cards = await Promise.all(
           />
         </div>
         <div class="mt-3 flex items-baseline justify-between gap-x-4">
-          <T as={heading} cs={data.title_cs} en={data.title_en} class="text-base font-medium" />
+          <T as={heading} {...data.title} class="text-base font-medium" />
           <T {...formatPeriod(data)} class="shrink-0 text-sm whitespace-nowrap text-neutral-500" />
         </div>
-        {(data.location_cs || data.location_en) && (
+        {data.location && (
           <T
             as="p"
-            cs={data.location_cs}
-            en={data.location_en}
+            {...data.location}
             class="text-sm text-neutral-500"
           />
         )}

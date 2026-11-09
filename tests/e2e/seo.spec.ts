@@ -246,7 +246,7 @@ test('llms.txt indexes canonical language pages and llms-full.txt retains publis
   const full = await fullResponse.text();
   expect(text.startsWith(`# ${owner}\n`)).toBe(true);
   expect(full.startsWith(`# ${owner}\n`)).toBe(true);
-  for (const description of [site.description_cs, site.description_en]) expect(text).toContain(description);
+  for (const description of [site.description.cs, site.description.en]) expect(text).toContain(description);
   expect(text).toContain('cs');
   expect(text).toContain('en');
   expect(full).toContain('**Česky (cs):**');
@@ -280,18 +280,17 @@ test('llms.txt indexes canonical language pages and llms-full.txt retains publis
   expect(urls.filter((url) => new URL(url).pathname.includes('/projects/'))).toHaveLength(pageProjects.length * 2);
   for (const data of projects) {
     if (data.draft) {
-      expect(text).not.toContain(data.title_cs);
-      expect(full).not.toContain(data.title_cs);
+      expect(text).not.toContain(data.title.cs);
+      expect(full).not.toContain(data.title.cs);
       continue;
     }
-    expect(full).toContain(data.title_cs);
-    expect(full).toContain(data.title_en);
-    if (data.brief_cs) expect(full).toContain(data.brief_cs.trim());
-    if (data.brief_en) expect(full).toContain(data.brief_en.trim());
-    const projectLink = links.find((link) => link.href.startsWith(`${origin}/cs/projects/`) && link.text.includes(data.title_cs));
+    expect(full).toContain(data.title.cs);
+    expect(full).toContain(data.title.en);
+    for (const brief of data.brief ? [data.brief.cs, data.brief.en] : []) expect(full).toContain(brief.trim());
+    const projectLink = links.find((link) => link.href.startsWith(`${origin}/cs/projects/`) && link.text.includes(data.title.cs));
     if (data.blocks?.length) {
       expect(projectLink).toBeDefined();
-      expect(links.some((link) => link.href.startsWith(`${origin}/en/projects/`) && link.text.includes(data.title_en))).toBe(true);
+      expect(links.some((link) => link.href.startsWith(`${origin}/en/projects/`) && link.text.includes(data.title.en))).toBe(true);
     } else expect(projectLink).toBeUndefined();
   }
   expect(text.length).toBeLessThan(full.length / 3);
