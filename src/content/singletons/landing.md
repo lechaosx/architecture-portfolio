@@ -12,7 +12,7 @@ images:
   - /uploads/09 AXONOMETRIE-3.webp
   - /uploads/10 AXONOMETRIE-2.webp
 projects:
-  - src/content/projects/Galerie Hangár.md
-  - src/content/projects/urban-study-kyjov.md
-  - src/content/projects/exotarium-brno-zoo.md
+  - src/content/projects/Jundrov.md
+  - src/content/projects/Křížovice.md
+  - src/content/projects/Hasička.md
 ---
