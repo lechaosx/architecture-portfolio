@@ -52,7 +52,7 @@ blocks:
       - image: /uploads/11 Axo 1.webp
         title_cs: Axonometrie
         title_en: Axonometry
-      - image: /uploads/12 Axo 2.webp
+      - image: /uploads/12 Axo 2-3.webp
         title_cs: Axonometrie
         title_en: Axonometry
 ---
