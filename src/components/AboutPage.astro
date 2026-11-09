@@ -3,6 +3,7 @@ import { localizedPath } from '../locale';
 import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ApproachIcon from './ApproachIcon.astro';
+import PageContent from './PageContent.astro';
 import T from './T.astro';
 import Paragraphs from './Paragraphs.astro';
 import Prose from './Prose.astro';
@@ -43,14 +44,9 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
     en: [profilePage({ site: origin, url: new URL(localizedPath(Astro.url.pathname, 'en'), origin).href })],
   }}
 >
-  {/* A portrait opens the page like the landing hero: first when stacked,
-      top-aligned with the bio beside it. */}
-  <div
-    class:list={[
-      'mx-auto max-w-6xl px-6 pb-16 sm:pb-24',
-      about.portrait ? 'pt-8' : 'pt-12 sm:pt-16',
-    ]}
-  >
+  {/* A portrait opens the page: first when stacked, top-aligned with the bio
+      beside it. */}
+  <PageContent imagery={!!about.portrait}>
     <T as="h1" k="about" class="sr-only" />
     <div class="flex flex-wrap-reverse items-end gap-12">
       <div class="reveal min-w-0 flex-[1_1_35ch]">
@@ -141,5 +137,5 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
         </div>
       )
     }
-  </div>
+  </PageContent>
 </Base>

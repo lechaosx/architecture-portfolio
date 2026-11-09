@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import Gallery from './Gallery.svelte';
 import ProjectBlocks from './ProjectBlocks.astro';
 import ProjectFacts from './ProjectFacts.astro';
+import PageContent from './PageContent.astro';
 import PlainProse from './PlainProse.astro';
 import T from './T.astro';
 import ProjectBadges from './ProjectBadges.astro';
@@ -56,7 +57,7 @@ const graph = (language: 'cs' | 'en') => [creativeWork({
   type="article"
   graph={{ cs: graph('cs'), en: graph('en') }}
 >
-  <article class="mx-auto max-w-6xl px-6 pt-12 pb-16 sm:pt-16 sm:pb-24">
+  <PageContent as="article">
     <a href={localizedPath('/work/', lang)} class="text-sm text-neutral-500 hover:text-neutral-900">
       <T k="backToWork" />
     </a>
@@ -83,5 +84,5 @@ const graph = (language: 'cs' | 'en') => [creativeWork({
 
     <ProjectBlocks projectId={project.id} blocks={d.blocks} {responsiveImages} coverPath={cover?.image} />
     {images.length > 0 && <Gallery {images} {responsiveImages} client:load />}
-  </article>
+  </PageContent>
 </Base>

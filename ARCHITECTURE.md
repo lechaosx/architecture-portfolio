@@ -267,6 +267,12 @@ the landing page, always as an `h2`: it never titles a page. Its default slot
 ends the row on the same rule and inherits the small caps, so a link onward,
 like the landing page's link to all work, needs no layout of its own.
 
+### One page container — [Implicit]
+
+`PageContent` holds the content width and padding every page shares, and the
+gap under the header: a page passes `imagery` when it opens with imagery, so the
+rule in FEATURES → "Pages open with their content" lives in one place.
+
 ### Page transitions: native View Transitions — [Implicit]
 
 `@view-transition { navigation: auto; }`, with no client router. The name

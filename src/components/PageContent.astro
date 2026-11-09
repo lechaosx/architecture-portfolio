@@ -1,0 +1,17 @@
+---
+import type { HTMLTag } from 'astro/types';
+
+// Imagery opening a page sits closer under the header than text does (FEATURES
+// → "Pages open with their content").
+interface Props {
+  imagery?: boolean;
+  as?: HTMLTag;
+}
+
+const { imagery = false, as = 'div' } = Astro.props;
+const Tag = as;
+---
+
+<Tag class:list={['mx-auto max-w-6xl px-6 pb-16 sm:pb-24', imagery ? 'pt-8' : 'pt-12 sm:pt-16']}>
+  <slot />
+</Tag>

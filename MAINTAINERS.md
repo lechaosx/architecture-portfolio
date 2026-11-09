@@ -54,6 +54,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/period.ts` | project and About periods: the date format, checks, display and project order |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
 | `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro` | the pages, also rendered by the e2e fixtures |
+| `src/components/PageContent.astro` | the page container: content width, padding and the gap under the header |
 | `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |
 | `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD, bilingual `/llms.txt` index and `/llms-full.txt` export, built from content |
