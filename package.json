@@ -26,6 +26,7 @@
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.5",
+    "github-slugger": "^2.0.0",
     "marked": "^18.0.14",
     "openseadragon": "^6.1.1",
     "svelte": "^5.57.1",

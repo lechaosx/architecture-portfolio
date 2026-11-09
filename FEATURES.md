@@ -147,14 +147,15 @@ page image eagerly — [Implicit].
 
 An image whose file is gone from the media library while content still refers
 to it is left out wherever it would appear: a block it empties goes too, and a
-missing thumbnail counts as unset. For a missing photo or other raster image
-(AVIF, JPEG, PNG, WebP), the build logs a warning naming the file and the
-content referring to it; other missing images are only left out.
+missing thumbnail counts as unset. For a missing image the site makes resized
+copies of, the build logs a warning naming the file and the content referring
+to it; other missing images are only left out.
 
 ### Project URL is the editable filename — [Explicit]
 
 The filename before `.md` is the URL segment, so renaming a project breaks old
-links.
+links. A filename with nothing the URL can use, such as `!!!.md`, gets a short
+code instead — [Implicit].
 
 ### Editable site settings — [Explicit]
 

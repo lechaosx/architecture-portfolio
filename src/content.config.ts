@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { slug } from 'github-slugger';
 import { DATE } from './period';
 import { PROJECT_URL } from './project-facts';
 
@@ -38,8 +40,17 @@ const projectImages = z.preprocess(
   z.array(projectImage).min(1),
 );
 
+/** A project's id and URL slug; see ARCHITECTURE.md → "A project id never comes out empty". */
+export const projectId = ({ entry }: { entry: string }) =>
+  entry
+    .replace(/\.md$/, '')
+    .split('/')
+    .map((segment) => slug(segment) || createHash('sha256').update(segment).digest('hex').slice(0, 8))
+    .join('/')
+    .replace(/\/index$/, '');
+
 const projects = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/projects' }),
+  loader: glob({ pattern: '**/*.md', base: './src/content/projects', generateId: projectId }),
   schema: z.object({
     title: bilingual,
     thumbnail: z.string().optional(),

@@ -388,10 +388,10 @@ deletion cannot stop the deploy — [Implicit].
 build for every page: they drop drafts and images whose file is missing from
 `public/`, and log period warnings. `src/singletons.ts` turns the landing
 page's chosen projects into published projects' cards, logging a warning for
-each choice it skips. These checks live here, not in the schema,
-because a schema can only fail an entry, not warn, and the content layer skips
-revalidating an entry until its file changes. An image the script could not read but whose file
-exists renders from the original, as SVGs do.
+each choice it skips. These checks live here, not in the schema, because a
+schema can only fail an entry, not warn, and the content layer skips
+revalidating an entry until its file changes. An image the script could not
+read but whose file exists renders from the original, as SVGs do.
 
 ### Deep-zoom pyramids for large drawings — [Explicit]
 
@@ -548,6 +548,14 @@ empty optional field in its form, and `src/content.config.test.ts` checks it
 against `DATE`. `src/period.ts` holds the rest: the cross-field checks (the
 loading modules log them as warnings so a CMS save cannot stop the deploy
 [Explicit]), the display and the project order.
+
+### A project id never comes out empty — [Implicit]
+
+Pages CMS saves any file name she types, and Astro rejects an empty id, so
+`projectId` in `src/content.config.ts` replaces the glob loader's default with
+the same ids, so existing URLs stay: `github-slugger` per path segment (the CMS
+allows folders), `/index` dropped. A segment with nothing to slug, such as
+`!!!`, becomes a hash of it.
 
 ### A project URL is a plain http(s) address — [Implicit]
 

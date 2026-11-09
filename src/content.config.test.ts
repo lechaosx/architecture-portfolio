@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { parse } from 'yaml';
 import { z } from 'astro/zod';
-import { collections, TEXT } from './content.config';
+import { collections, projectId, TEXT } from './content.config';
 import { DATE } from './period';
 import { PROJECT_URL } from './project-facts';
 
@@ -412,6 +412,14 @@ test.each(readdirSync('src/content/projects').filter((file) => file.endsWith('.m
     expect(projectSchema.safeParse(frontmatter(`src/content/projects/${file}`))).toMatchObject({ success: true });
   },
 );
+
+test('a project file name gives its URL, and one with nothing to slug still gets its own', () => {
+  expect(projectId({ entry: 'RD Doubravník.md' })).toBe('rd-doubravník');
+  const [bangs, emoji] = ['!!!.md', '🏠.md'].map((entry) => projectId({ entry }));
+  expect(bangs).toMatch(/^[\w-]+$/);
+  expect(emoji).toMatch(/^[\w-]+$/);
+  expect(bangs).not.toBe(emoji);
+});
 
 const aboutContent = { body: { cs: 'O mně', en: 'About me' } };
 const fact = { place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Stáž', en: 'Internship' } };
