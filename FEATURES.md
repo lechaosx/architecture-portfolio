@@ -75,7 +75,7 @@ Structural and design changes are made in code on the same repo.
 
 ### Most of the site is editable — [Explicit]
 
-Editable: projects, the landing page's images, the About page (bio, portrait,
+Editable: projects, the landing page's images and projects, the About page (bio, portrait,
 work experience, services, education, awards, Approach), the contact details in
 the footer, and the site settings (name, credential, description). Baked into
 code: page structure, navigation and section labels. CMS entries:
@@ -190,7 +190,7 @@ January and ends in December — [Implicit].
 ### Three pages: landing, Work and About — [Explicit]
 
 The landing page at `/` gives a visitor her context before the work: chosen
-images, what she is and where, and a few projects, even where that repeats Work
+images, what she is and where, and her chosen projects, even where that repeats Work
 and About. The work page lists every project; the About page holds her bio,
 approach and the facts behind them. The contacts are in the footer of every
 page, so there is no separate Contact page — [Explicit].
@@ -208,16 +208,23 @@ and search.
 Top to bottom: her chosen images, large, filling the content width just under
 the header; one quiet line saying what she is and where ("Architektka · Brno",
 the place from the contacts), followed by her services when there are any,
-with **O mně →**; then **Vybrané práce** with **Všechny práce →** over the three
-newest projects with covers and pages as the work page's cards, which end the page.
+with **O mně →**; then **Vybrané práce** with **Všechny práce →** over her
+chosen projects as the work page's cards, which end the page.
 No headline or introductory paragraph.
 
 The layout — [Implicit]: the line sits under the images like a caption, in the
 section headings' small caps, the services in grey; the place appears when
 filled. **O mně →** ends the line on the right,
 like **Všechny práce →** ends its heading row, both underlined on hover and
-focus. Three cards fill one row of the grid and open their projects with the
-same cover transition as on Work.
+focus. The cards open their projects with the same cover transition as on Work.
+
+### The architect chooses the landing projects — [Explicit]
+
+She picks and orders any number of projects on **Úvodní stránka**; with none
+chosen, **Vybrané práce** and **Všechny práce →** are left out. A draft or
+deleted project in the list is skipped with a build warning, so the deploy never
+fails on it — as are a project without a card (no image or no page content) and
+a repeated one [Implicit].
 
 ### Landing images or carousel — [Explicit]
 
@@ -556,8 +563,8 @@ description.
 ### Share image: the project cover — [Implicit]
 
 A project's link preview shows its cover, the work page's the first cover in its
-grid, the landing page's its first landing image that is not an SVG, else the
-work page's, and the About page's the portrait, as a JPEG about 1200px wide, the
+grid, the landing page's its first landing image that is not an SVG, else its
+first project's cover, and the About page's the portrait, as a JPEG about 1200px wide, the
 format every social site shows. Social sites do not show SVGs, so an SVG gives
 no preview image.
 

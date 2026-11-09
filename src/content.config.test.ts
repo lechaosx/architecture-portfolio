@@ -308,10 +308,10 @@ test('site settings need the description in both languages, the landing page int
   }
 });
 
-test('the landing page may have no images', () => {
+test('the landing page may have no images and no chosen projects', () => {
   expect(staticSchema('landing').safeParse({})).toMatchObject({
     success: true,
-    data: { images: [] },
+    data: { images: [], projects: [] },
   });
 });
 

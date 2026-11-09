@@ -135,7 +135,7 @@ test.describe(() => {
     );
   });
 
-  test('the landing page without a raster hero image shares the newest cover', async ({
+  test('the landing page without a raster hero image shares its first project\'s cover', async ({
     page,
   }) => {
     await page.goto('/cs/e2e/landing-single/');

@@ -60,8 +60,8 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
 - The About tests render `AboutPage.astro` with fixture data, everything filled
   and nothing optional filled — [Implicit].
 - The landing tests render `LandingPage.astro` with no image, one SVG, and an
-  SVG and two rasters, over fixture projects; services and the place are
-  filled only where there are images — [Implicit].
+  SVG and two rasters, over chosen fixture projects, and once with none chosen;
+  services and the place are filled only where there are images — [Implicit].
 - Metadata, structured-data and alt-text tests use fixture project pages; the
   AI export tests check both text endpoints against the shipped projects and
   follow their links — [Explicit].
@@ -241,10 +241,9 @@ cards, share previews and structured data — [Implicit].
 `LandingPage`, `WorkPage`, `AboutPage` and `ProjectPage` each render a whole
 page from the data passed in, so the e2e fixtures can render them with their
 own. Their routes in `src/pages/` only load the content and pass it on.
-`src/projects.ts` holds the one project order and splits the projects into
-cards with a cover and the index, so the share image that falls back to the
-newest cover always matches the first card, and both AI exports list projects in
-the same order.
+`src/projects.ts` holds the one project order and makes a project's card with
+its cover, so a share image that falls back to a page's first cover matches its
+first card, and both AI exports list projects in the same order.
 
 ### One project metadata model — [Implicit]
 
@@ -387,7 +386,9 @@ deletion cannot stop the deploy — [Implicit].
 
 `src/singletons.ts` and `src/published-projects.ts` load the content once per
 build for every page: they drop drafts and images whose file is missing from
-`public/`, and log period warnings. These checks live here, not in the schema,
+`public/`, and log period warnings. `src/singletons.ts` turns the landing
+page's chosen projects into published projects' cards, logging a warning for
+each choice it skips. These checks live here, not in the schema,
 because a schema can only fail an entry, not warn, and the content layer skips
 revalidating an entry until its file changes. An image the script could not read but whose file
 exists renders from the original, as SVGs do.
@@ -548,6 +549,15 @@ The schema and the CMS's `pattern` share `PROJECT_URL`, and
 `src/content.config.test.ts` checks one against the other, so the CMS refuses
 what the build would. It takes only addresses `new URL` parses, because the
 fact sheet shows the hostname.
+
+### Chosen projects are references by file path — [Implicit]
+
+The landing page's projects are a list of Pages CMS `reference` fields on the
+projects collection. Each stores the project's repository path, which is the
+entry's `filePath`, so the build matches it without mapping file names to ids.
+A list rather than one multi-select lets her drag choices into order. The
+picker shows and searches the collection's primary field, the English title,
+because file names need not match it.
 
 ### Empty block rows are dropped — [Explicit]
 

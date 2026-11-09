@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { projectCover, withoutMissingImages, workProjects, type Project } from './projects';
+import { chosenCards, projectCover, withoutMissingImages, workProjects, type Project } from './projects';
 
 const project = (id: string, year: number): Project => ({
   id,
@@ -65,4 +65,29 @@ test('images whose file is missing are left out, with any image block they empty
     thumbnail: undefined,
     blocks: [text, { type: 'gallery', images: [first, selected] }],
   });
+});
+
+test('the chosen projects become cards in the chosen order, leaving out and reporting any without a card', () => {
+  const card = (id: string, year: number) => ({
+    ...project(id, year),
+    filePath: `src/content/projects/${id}.md`,
+    data: { ...project(id, year).data, blocks: [{ type: 'image_set' as const, images: [first] }] },
+  });
+  const textOnly = {
+    ...project('text', 2026),
+    filePath: 'src/content/projects/text.md',
+    data: { ...project('text', 2026).data, blocks: [{ type: 'text' as const, body_cs: 'Text', body_en: 'Text' }] },
+  };
+  const { cards, issues } = chosenCards(
+    [
+      'src/content/projects/old.md',
+      'src/content/projects/draft.md',
+      'src/content/projects/new.md',
+      'src/content/projects/text.md',
+      'src/content/projects/old.md',
+    ],
+    [card('new', 2026), textOnly, card('old', 2020)],
+  );
+  expect(cards.map(({ id, cover }) => [id, cover])).toEqual([['old', first], ['new', first]]);
+  expect(issues.map(({ index }) => index)).toEqual([1, 3, 4]);
 });

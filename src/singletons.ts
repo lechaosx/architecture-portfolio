@@ -1,5 +1,7 @@
 import { getEntry } from 'astro:content';
 import { periodIssues } from './period';
+import { chosenCards } from './projects';
+import { projects } from './published-projects';
 import { fileExists } from './server-images';
 
 function data<T>(entry: { data: T } | undefined, name: string) {
@@ -20,9 +22,14 @@ for (const list of ['experience', 'education', 'awards'] as const) {
   });
 }
 
+const chosen = chosenCards(landingData.projects, projects);
+for (const { index, message } of chosen.issues) {
+  console.warn(`src/content/singletons/landing.md: projects[${index}]: ${message}`);
+}
+
 export const site = data(await getEntry('site', 'site'), 'site');
 // Images whose file is missing are left out, as if never added.
-export const landing = { ...landingData, images: landingData.images.filter(fileExists) };
+export const landing = { images: landingData.images.filter(fileExists), projects: chosen.cards };
 export const about = {
   ...aboutData,
   portrait: aboutData.portrait && fileExists(aboutData.portrait) ? aboutData.portrait : undefined,

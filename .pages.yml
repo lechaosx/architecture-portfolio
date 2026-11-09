@@ -154,6 +154,13 @@ content:
     path: src/content/singletons/landing.md
     fields:
       - { name: images, label: Obrázky, type: image, list: true, required: false, description: 'Zobrazují se nahoře na úvodní stránce v tomto pořadí: jeden obrázek samostatně, dva a více jako prezentace. Když pole necháte prázdné, stránka začne řádkem o tom, co děláte a kde.' }
+      - name: projects
+        label: Vybrané práce
+        type: reference
+        list: true
+        required: false
+        options: { collection: projects, label: '{primary}', search: primary }
+        description: 'Projekty v sekci Vybrané práce na úvodní stránce, v tomto pořadí. Koncepty a projekty bez obrázku nebo bez obsahu se nezobrazí. Když pole necháte prázdné, sekce se nezobrazí.'
 
   - name: about
     label: O mně

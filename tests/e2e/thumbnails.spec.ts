@@ -7,7 +7,6 @@ for (const listing of ['work', 'landing']) {
     const { images } = await (await page.request.get('/_responsive/manifest.json')).json() as ImageManifest;
     for (const [kind, source] of [['first', 'cover.png'], ['later', 'square-2.png'], ['standalone', 'wide.png'], ['text', 'wide.png']]) {
       const card = page.locator(`main .grid > a[href="/en/projects/e2e-thumbnail-${kind}/"]`);
-      if (listing === 'landing' && kind === 'text') continue;
       expect(await card.locator('img').getAttribute('srcset')).toContain(images[`/e2e/images/${source}`].variants[0].url);
     }
     await expect(page.locator('main .grid > a[href="/en/projects/e2e-thumbnail-empty/"]')).toHaveCount(0);

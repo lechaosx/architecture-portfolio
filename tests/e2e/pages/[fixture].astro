@@ -4,6 +4,7 @@
 // tests/e2e/images, served by images/[file].ts.
 import { thumbnailProjects } from '../thumbnail-projects';
 import type { CollectionEntry } from 'astro:content';
+import { projectCard, type Project } from '../../../src/projects';
 import Base from '../../../src/layouts/Base.astro';
 import AboutPage from '../../../src/components/AboutPage.astro';
 import LandingPage from '../../../src/components/LandingPage.astro';
@@ -239,31 +240,30 @@ export function getStaticPaths() {
   const bareAbout = { ...about, portrait: undefined, approaches: [], experience: [], services: [], education: [], awards: [] };
   const bareContact = { email: contact.email, location_cs: 'Brno' };
 
-  // Four projects with images, one more than the landing page shows.
-  const landingProjects = [
-    ...briefProjects,
-    ...[2025, 2024, 2023].map((year) =>
-      listed(String(year), {
-        title_en: `Project ${year}`,
-        title_cs: `Projekt ${year}`,
-        from: String(year),
-        to: String(year),
-        blocks: [{ type: 'image_set', images: [item('square-1.png')] }],
-      }),
-    ),
-  ];
-  const landing = (heroImages: string[]) => ({
-    landing: { images: heroImages },
-    projects: landingProjects,
+  const cards = (projects: Project[]) => projects.flatMap((project) => projectCard(project) ?? []);
+  const [project2025, project2024, project2023] = [2025, 2024, 2023].map((year) =>
+    listed(String(year), {
+      title_en: `Project ${year}`,
+      title_cs: `Projekt ${year}`,
+      from: String(year),
+      to: String(year),
+      blocks: [{ type: 'image_set', images: [item('square-1.png')] }],
+    }),
+  );
+  // Out of date order, and more than one row.
+  const chosen = cards([project2024, gridProject, project2023, project2025]);
+  const landing = (heroImages: string[], projects = chosen) => ({
+    landing: { images: heroImages, projects },
     ...(heroImages.length > 0 ? { about, contact } : { about: bareAbout, contact: bareContact }),
   });
 
   return [
     { params: { fixture: 'thumbnail-work' }, props: { projects: thumbnailProjects } },
-    { params: { fixture: 'thumbnail-landing' }, props: { ...landing([]), projects: thumbnailProjects } },
+    { params: { fixture: 'thumbnail-landing' }, props: landing([], cards(thumbnailProjects)) },
     { params: { fixture: 'landing' }, props: landing([images[0], '/e2e/images/wide.png', '/e2e/images/cover.png']) },
     { params: { fixture: 'landing-single' }, props: landing(images.slice(0, 1)) },
     { params: { fixture: 'landing-bare' }, props: landing([]) },
+    { params: { fixture: 'landing-no-work' }, props: landing([], []) },
     { params: { fixture: 'about' }, props: { about } },
     { params: { fixture: 'language-height' }, props: { about: { ...about, body_en: Array(20).fill(text(4).en).join('\n\n'), body_cs: text(2).cs } } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
@@ -361,7 +361,7 @@ const { about, contact, images, landing, paragraphs, project, projects } = Astro
   ) : project ? (
     <ProjectPage {project} />
   ) : landing ? (
-    <LandingPage {landing} {projects} {about} {contact} />
+    <LandingPage {landing} {about} {contact} />
   ) : about ? (
     <AboutPage {about} />
   ) : projects ? (

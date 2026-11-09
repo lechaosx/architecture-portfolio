@@ -135,6 +135,8 @@ const landing = defineCollection({
   loader: glob({ pattern: 'landing.md', base: singletons }),
   schema: z.object({
     images: z.array(z.string()).default([]),
+    // Project file paths from the repository root, as Pages CMS references store them.
+    projects: z.array(z.string()).default([]),
   }).superRefine(bilingualPairs),
 });
 

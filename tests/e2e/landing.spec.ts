@@ -21,9 +21,6 @@ const selectedWork = (page: Page) =>
     has: page.getByRole('heading', { level: 2, name: 'Selected work' }),
   });
 
-const cardLinks = (page: Page) =>
-  page.locator('main .grid > a').evaluateAll((cards) => cards.map((card) => card.getAttribute('href')));
-
 test('under the images one line says what she is, where and what she offers, and links to About', async ({
   page,
 }) => {
@@ -61,30 +58,25 @@ test('the landing page ends with the selected work', async ({ page }) => {
   await expect(page.locator('main').getByRole('heading', { level: 2 }).last()).toHaveText('Selected work');
 });
 
-test('selected work is the newest projects with images, with a link to all work', async ({
+test('selected work is the chosen projects in their order, with a link to all work', async ({
   page,
 }) => {
-  // tests/e2e/pages/[fixture].astro: four projects with images, three without.
+  // tests/e2e/pages/[fixture].astro: four projects, chosen out of date order.
   await page.goto('/e2e/landing/');
-  const section = page.locator('section', {
-    has: page.getByRole('heading', { level: 2, name: 'Selected work' }),
-  });
-  await expect(section.getByRole('heading', { level: 3 })).toHaveText([
-    'Grid project',
-    'Project 2025',
+  await expect(selectedWork(page).getByRole('heading', { level: 3 })).toHaveText([
     'Project 2024',
+    'Grid project',
+    'Project 2023',
+    'Project 2025',
   ]);
-  await section.getByRole('link', { name: 'All work →' }).click();
+  await selectedWork(page).getByRole('link', { name: 'All work →' }).click();
   await expect(page).toHaveURL(/\/work\/$/);
 });
 
-test('the landing page shows the first cards of the work page', async ({ page }) => {
-  await page.goto('/work/');
-  const work = await cardLinks(page);
-  await page.goto('/');
-  const landing = await cardLinks(page);
-  expect(landing.length).toBe(Math.min(work.length, 3));
-  expect(landing).toEqual(work.slice(0, landing.length));
+test('with no projects chosen there is no selected work', async ({ page }) => {
+  await page.goto('/e2e/landing-no-work/');
+  await expect(page.getByRole('heading', { name: 'Selected work' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'All work →' })).toHaveCount(0);
 });
 
 test('with no images the landing page starts with the identity line', async ({ page }) => {

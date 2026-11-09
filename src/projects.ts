@@ -40,7 +40,17 @@ export function withoutMissingImages(
 export const newestFirst = (a: Project, b: Project) =>
   latestFirst(a.data, b.data) || a.data.title_en.localeCompare(b.data.title_en);
 
-/** Cards need content blocks because projects without blocks have no page. */
+/** A card needs a cover and content blocks, because a project without blocks has no page. */
+export function projectCard(project: Project): CardProject | undefined {
+  const images = project.data.blocks.flatMap((block) =>
+    block.type === 'text' ? [] : block.images,
+  );
+  const cover = project.data.blocks.length > 0
+    ? projectCover(project.data.thumbnail, images)
+    : undefined;
+  return cover && { ...project, cover };
+}
+
 export function workProjects(projects: Project[]): {
   grid: CardProject[];
   listed: Project[];
@@ -48,14 +58,28 @@ export function workProjects(projects: Project[]): {
   const grid: CardProject[] = [];
   const listed: Project[] = [];
   for (const project of [...projects].sort(newestFirst)) {
-    const images = project.data.blocks.flatMap((block) =>
-      block.type === 'text' ? [] : block.images,
-    );
-    const cover = project.data.blocks.length > 0
-      ? projectCover(project.data.thumbnail, images)
-      : undefined;
-    if (cover) grid.push({ ...project, cover });
+    const card = projectCard(project);
+    if (card) grid.push(card);
     else listed.push(project);
   }
   return { grid, listed };
+}
+
+/**
+ * The cards of the projects chosen by file path, in the chosen order. A choice
+ * that is no published project, has no card or repeats an earlier one is left
+ * out and reported by its position.
+ */
+export function chosenCards(paths: string[], projects: Array<Project & { filePath?: string }>) {
+  const cards: CardProject[] = [];
+  const issues: { index: number; message: string }[] = [];
+  paths.forEach((path, index) => {
+    const project = projects.find(({ filePath }) => filePath === path);
+    const card = project && projectCard(project);
+    if (!project) issues.push({ index, message: `${path} is a draft or no longer exists` });
+    else if (!card) issues.push({ index, message: `${path} has no card (no image or no page content)` });
+    else if (cards.some(({ id }) => id === card.id)) issues.push({ index, message: `${path} is already chosen above` });
+    else cards.push(card);
+  });
+  return { cards, issues };
 }
