@@ -46,6 +46,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images), `about.md`, `contact.md` (the footer's contacts and the landing page's location) |
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
+| `src/singletons.ts`, `src/published-projects.ts` | content as pages read it: no drafts, no images whose file is missing, period warnings |
 | `src/i18n.ts` | baked-in UI labels |
 | `src/locale.ts`, `src/pages/[lang]/` | language selection, translated page paths and static locale routes |
 | `src/language-switch.ts` | in-place language changes, metadata, links and browser history |
@@ -93,8 +94,9 @@ image in the page's blocks again. The image can be independent of the page conte
 a project still needs content blocks to have a page and a card.
 
 **Link to a project's external page.** Set optional `project_url` to its complete
-HTTP or HTTPS address, shared by both languages, or leave it empty. Invalid web
-addresses fail content validation during the build.
+HTTP or HTTPS address, shared by both languages, or leave it empty. Pages CMS
+refuses other text through a `pattern` mirroring `PROJECT_URL` in
+`src/project-facts.ts`; the content-schema test keeps the two in step.
 
 **Check AI exports.** After `npm run build`, inspect `dist/llms.txt` for the
 page index and `dist/llms-full.txt` for the complete published project facts,

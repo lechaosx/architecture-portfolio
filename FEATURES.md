@@ -122,7 +122,7 @@ Only filled facts appear, with location and **Období zapojení / Involvement pe
 
 ### Optional project website — [Explicit]
 
-An optional external project link appears in the fact sheet on the project page and in an expanded index entry, including entries with no other details. Its hostname identifies the destination; the same address serves both languages and is preserved in machine-readable output.
+An optional external project link appears in the fact sheet on the project page and in an expanded index entry, including entries with no other details. Its hostname identifies the destination; the same address serves both languages and is preserved in machine-readable output. The CMS refuses anything but a complete http or https address with a plain hostname: no IP address, port or non-ASCII hostname — [Implicit].
 
 ### Project fact rows form two groups when they fit — [Explicit]
 
@@ -141,6 +141,14 @@ previews; leaving it empty uses the first image in page order. The chosen image
 may be outside the page's blocks and does not change their order or the lightbox.
 The project page keeps the blocks in the architect's order and loads its first
 page image eagerly — [Implicit].
+
+### A missing image is left out — [Implicit]
+
+An image whose file is gone from the media library while content still refers
+to it is left out wherever it would appear: a block it empties goes too, and a
+missing thumbnail counts as unset. For a missing photo or other raster image
+(AVIF, JPEG, PNG, WebP), the build logs a warning naming the file and the
+content referring to it; other missing images are only left out.
 
 ### Project URL is the editable filename — [Explicit]
 
@@ -164,8 +172,10 @@ that job, study or award. Both have the same two fields, "Od" and "Do", each a
 year or a month and year ("2023", "3/2023"), shared by both languages. A
 one-year project has the same year in both. An empty "Do" means ongoing, shown
 as "2023–dosud" / "2023–present"; an identical start and end shows once. The
-CMS refuses a malformed date; an end without a start or before it fails the
-build.
+CMS refuses a malformed date but cannot compare the two fields, so an end
+before the start shows as typed and an end without a start shows no period;
+the build logs a warning naming the entry and field instead of failing —
+[Explicit].
 
 The details — [Implicit]: a date shows as "3/2023" or "2023", a period joins
 them with an en dash, and a month may be typed with a leading zero.

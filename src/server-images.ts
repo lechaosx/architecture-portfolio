@@ -1,5 +1,6 @@
+import { statSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import type { ImageManifest } from './images';
 
 // Keyed on the file's modification time: a long-running dev server picks up a
@@ -23,3 +24,7 @@ async function imageManifest() {
 export async function getResponsiveImage(src: string) {
   return (await imageManifest()).images[src];
 }
+
+/** Whether public/ holds the file a content path names, e.g. `/uploads/plan.png`. */
+export const fileExists = (path: string) =>
+  statSync(join('public', path), { throwIfNoEntry: false })?.isFile() ?? false;

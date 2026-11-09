@@ -379,7 +379,18 @@ empty — [Implicit]. Markdown file bodies are unused: bilingual text lives in
 Content refers to uploads by root-absolute path (`/uploads/…`), as the CMS
 writes them. Before `dev` and `build`, `scripts/generate-responsive-images.ts`
 writes WebP derivatives and a manifest to the ignored `public/_responsive`,
-never enlarging or touching the original.
+never enlarging or touching the original. It skips an image it cannot read,
+with a warning naming it and the content referring to it, so a CMS media
+deletion cannot stop the deploy — [Implicit].
+
+### Pages read content through two loading modules — [Implicit]
+
+`src/singletons.ts` and `src/published-projects.ts` load the content once per
+build for every page: they drop drafts and images whose file is missing from
+`public/`, and log period warnings. These checks live here, not in the schema,
+because a schema can only fail an entry, not warn, and the content layer skips
+revalidating an entry until its file changes. An image the script could not read but whose file
+exists renders from the original, as SVGs do.
 
 ### Deep-zoom pyramids for large drawings — [Explicit]
 
@@ -527,8 +538,16 @@ Pages CMS has no conditional fields or cross-field validation, so each end of a
 period is one string, "2023" or "3/2023", whose `pattern` lets the CMS refuse a
 malformed date. That pattern also takes the empty string, the value of an
 empty optional field in its form, and `src/content.config.test.ts` checks it
-against `DATE`. `src/period.ts` holds the rest: the cross-field checks the
-build runs, the display and the project order.
+against `DATE`. `src/period.ts` holds the rest: the cross-field checks (the
+loading modules log them as warnings so a CMS save cannot stop the deploy
+[Explicit]), the display and the project order.
+
+### A project URL is a plain http(s) address — [Implicit]
+
+The schema and the CMS's `pattern` share `PROJECT_URL`, and
+`src/content.config.test.ts` checks one against the other, so the CMS refuses
+what the build would. It takes only addresses `new URL` parses, because the
+fact sheet shows the hostname.
 
 ### Empty block rows are dropped — [Explicit]
 

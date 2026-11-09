@@ -4,6 +4,14 @@ import { formatPeriod } from './period';
 
 type Data = CollectionEntry<'projects'>['data'];
 
+/**
+ * An http or https address with a plain hostname, e.g. "https://example.org/library".
+ * The hostname's last label starts with a letter, so `new URL`, which reads the
+ * hostname for the fact sheet, never takes it for a malformed IP address. The
+ * CMS's `pattern` in .pages.yml mirrors it.
+ */
+export const PROJECT_URL = /^https?:\/\/(?:[\w-]+\.)*[A-Za-z][\w-]*(?:[/?#]\S*)?$/;
+
 export interface FactLine extends Record<Lang, string> {
   names: string[];
 }

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { projectCover, workProjects, type Project } from './projects';
+import { projectCover, withoutMissingImages, workProjects, type Project } from './projects';
 
 const project = (id: string, year: number): Project => ({
   id,
@@ -50,4 +50,19 @@ test('a thumbnail makes a text-only page a card but leaves a project with no blo
   expect(grid.map(({ id }) => id)).toEqual(['text']);
   expect(grid[0].cover.image).toBe('/uploads/standalone.jpg');
   expect(listed.map(({ id }) => id)).toEqual(['empty']);
+});
+
+test('images whose file is missing are left out, with any image block they empty', () => {
+  const missing = { image: '/uploads/deleted.jpg' };
+  const text = { type: 'text' as const, body_cs: 'Text', body_en: 'Text' };
+  const data = { ...project('missing', 2026).data, thumbnail: missing.image, blocks: [
+    { type: 'image_set' as const, images: [missing] },
+    text,
+    { type: 'gallery' as const, images: [first, missing, selected] },
+  ] };
+  expect(withoutMissingImages(data, (path) => path !== missing.image)).toEqual({
+    ...data,
+    thumbnail: undefined,
+    blocks: [text, { type: 'gallery', images: [first, selected] }],
+  });
 });

@@ -87,7 +87,7 @@ content:
             - { name: planned, label: Plánovaná realizace }
             - { name: construction, label: Ve výstavbě }
             - { name: built, label: Realizováno }
-      - { name: project_url, label: Odkaz na projekt, type: string, required: false, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
+      - { name: project_url, label: Odkaz na projekt, type: string, required: false, pattern: { regex: '^https?://(?:[\w-]+\.)*[A-Za-z][\w-]*(?:[/?#]\S*)?$|^$', message: 'Zadejte úplnou adresu začínající http:// nebo https://, např. https://www.example.cz/projekt.' }, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
       - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména ostatních lidí patří do spolupráce.' }
       - { name: role_cs, label: Moje role (česky), type: string, required: false, description: 'Stručný přehled mé práce, např. „Návrh interiéru, dokumentace“. Stejný formát jako role ostatních spolupracovníků; souvislosti patří do briefu. Nepovinné.' }
       - { name: role_en, label: Moje role (anglicky), type: string, required: false, description: *translations }

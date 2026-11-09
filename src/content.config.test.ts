@@ -4,6 +4,7 @@ import { parse } from 'yaml';
 import { z } from 'astro/zod';
 import { collections } from './content.config';
 import { DATE } from './period';
+import { PROJECT_URL } from './project-facts';
 
 const projectSchema = staticSchema('projects');
 
@@ -119,6 +120,18 @@ describe.each(['projects', 'site', 'landing', 'about', 'contact'] as const)('%s 
   });
 });
 
+const webAddresses = ['https://example.org/projects/library?view=plan#drawings', 'http://example.org/library', 'https://www.example-studio.cz'];
+// The last three look like web addresses, but `new URL`, which reads the hostname for the fact sheet, throws on them.
+const nonWebAddresses = ['not a URL', '/projects/library/', 'example.org/library', 'https:example.org', 'https:/example.org', 'javascript:alert(1)', 'data:text/html,hello', 'mailto:architect@example.org', 'ftp://example.org/library', ' https://example.org', 'https://example.123', 'https://example.org:99999', 'https://[::1'];
+
+test('the project URL in Pages CMS takes the addresses the build takes, or nothing', () => {
+  const pattern = new RegExp(projectEditorFields.find((field) => field.name === 'project_url')!.pattern!.regex);
+  expect(pattern.test('')).toBe(true);
+  for (const text of [...webAddresses, ...nonWebAddresses]) {
+    expect(pattern.test(text), text).toBe(PROJECT_URL.test(text));
+  }
+});
+
 test('every period date in Pages CMS takes the dates the build takes, or nothing', () => {
   const dates = (fields: CmsField[]): CmsField[] =>
     fields.flatMap((field) => [
@@ -188,14 +201,14 @@ describe('project content schema', () => {
     });
   });
 
-  test.each([undefined, '', 'https://example.org/projects/library?view=plan#drawings', 'http://example.org/library'])('accepts an optional project website: %s', (project_url) => {
+  test.each([undefined, '', ...webAddresses])('accepts an optional project website: %s', (project_url) => {
     expect(projectSchema.safeParse({ ...project, project_url })).toMatchObject({
       success: true,
       data: { project_url },
     });
   });
 
-  test.each(['not a URL', '/projects/library/', 'example.org/library', 'https:example.org', 'https:/example.org', 'javascript:alert(1)', 'data:text/html,hello', 'mailto:architect@example.org', 'ftp://example.org/library'])('rejects a non-web project URL: %s', (project_url) => {
+  test.each(nonWebAddresses)('rejects a non-web project URL: %s', (project_url) => {
     expect(projectSchema.safeParse({ ...project, project_url }).success).toBe(false);
   });
 
@@ -247,9 +260,12 @@ describe('project content schema', () => {
   test.each([
     ['without a start', { from: undefined, to: undefined }],
     ['with a month that is none', { from: '13/2026' }],
-    ['ending before it starts', { to: '2025' }],
   ])('rejects a project %s', (_, period) => {
     expect(projectSchema.safeParse({ ...project, ...period }).success).toBe(false);
+  });
+
+  test('accepts a project ending before it starts, which the CMS cannot refuse', () => {
+    expect(projectSchema.safeParse({ ...project, to: '2025' }).success).toBe(true);
   });
 
   test('rejects an image block without images', () => {
@@ -352,8 +368,10 @@ describe('about content schema', () => {
     },
   );
 
-  test.each(['experience', 'education', 'awards'])('rejects a %s row whose period ends without a start', (field) => {
-    expect(aboutSchema.safeParse({ ...about, [field]: [{ ...bare, to: '2024' }] }).success).toBe(false);
+  test.each(['experience', 'education', 'awards'])('accepts a %s row whose period the CMS cannot check', (field) => {
+    for (const period of [{ to: '2024' }, { from: '2024', to: '2023' }]) {
+      expect(aboutSchema.safeParse({ ...about, [field]: [{ ...bare, ...period }] }).success, JSON.stringify(period)).toBe(true);
+    }
   });
 
   test('rejects a service in only one language', () => {
