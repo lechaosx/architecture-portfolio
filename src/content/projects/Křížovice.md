@@ -76,4 +76,12 @@ blocks:
         title:
           cs: Interiérový řez
           en: Interior section
+      - image: /uploads/D.1.1.12 AXO 1.webp
+        title:
+          cs: Axonometrie
+          en: Axonometry
+      - image: /uploads/D.1.1.13 AXO 2.webp
+        title:
+          cs: Axonometrie
+          en: Axonometry
 ---
