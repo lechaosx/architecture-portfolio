@@ -2,6 +2,7 @@
 title:
   cs: Čtyři pokoje
   en: Four Rooms
+thumbnail: /uploads/D.1.1.12 AXO 1-2.webp
 from: "2023"
 to: "2023"
 location:
@@ -16,7 +17,15 @@ brief:
     attic, with the aim of creating four individual bedrooms for four boys and a
     shared playroom designed for games, gatherings with friends, and new
     adventures for the four brothers.
+context:
+  - commissioned
+intervention:
+  - renovation
+  - extension
+scope:
+  - interior
 design_in_progress: false
+realization: construction
 collaborators:
   - name: Ing. Jiří Železný
 draft: false
@@ -28,17 +37,17 @@ blocks:
           cs: Situace místa
           en: Site plan
       - image: /uploads/Výkres krovu.webp
-        comparison_set: půdorays
+        comparison_set: půdorys
         title:
           cs: Výkres krovu
           en: Roof framing drawing
       - image: /uploads/Bourané konstrukce.webp
-        comparison_set: půdorays
+        comparison_set: půdorys
         title:
           cs: Bourané konstrukce
           en: Elements to be demolished
       - image: /uploads/Půdorys nového stavu.webp
-        comparison_set: půdorays
+        comparison_set: půdorys
         title:
           cs: Půdorys navrženého stavu
           en: Proposed floor plan
