@@ -2,7 +2,7 @@
 title:
   cs: RD Doubravník
   en: Family house Doubravník
-thumbnail: /uploads/11 Axo 1-1.webp
+thumbnail: /uploads/11 Axo 1-4.webp
 from: "2023"
 to: "2023"
 location:
@@ -26,7 +26,7 @@ draft: false
 blocks:
   - type: gallery
     images:
-      - image: /uploads/03 Půdorys 1.NP.webp
+      - image: /uploads/03 Půdorys 1.NP-1.webp
         title:
           cs: Půdorys 1.NP
           en: Floor plan 1st floor
@@ -62,11 +62,11 @@ blocks:
         title:
           cs: Pohled západní
           en: Western view
-      - image: /uploads/11 Axo 1.webp
+      - image: /uploads/11 Axo 1-5.webp
         title:
           cs: Axonometrie
           en: Axonometry
-      - image: /uploads/12 Axo 2-3.webp
+      - image: /uploads/12 Axo 2-4.webp
         title:
           cs: Axonometrie
           en: Axonometry
