@@ -2,11 +2,50 @@
 title:
   cs: Drobný urbanismus
   en: Urban Intervention
+thumbnail: /uploads/09 AXO s-1.webp
 from: "2025"
 to: "2025"
 location:
   cs: Kyjov, Česká republika
   en: Kyjov, Czech Republic
+brief:
+  cs: >-
+    Návrh revitalizace sportovního areálu v Kyjově vychází z myšlenky propojení
+    sportu, veřejného prostoru a komunitního života. Cílem je proměnit stávající
+    roztříštěné a nevyhovující území v soudržný, celoročně využitelný areál,
+    který přirozeně navazuje na okolní městskou strukturu.
+
+
+    Součástí návrhu je nová multifunkční sportovní hala, venkovní sportoviště a
+    atletické zázemí, doplněné o reorganizaci dopravy a parkovacích ploch.
+    Významnou roli hraje městský park, který propojuje jednotlivé funkce a
+    nabízí prostor pro odpočinek, setkávání i kulturní aktivity.
+
+
+    Urbanistická koncepce pracuje s prostupností území, návazností pěších a
+    cyklistických tras a propojením sportovních ploch s veřejnou zelení. Návrh
+    zahrnuje také nový amfiteátr, dětské hřiště, komunitní zázemí a pobytové
+    plochy, které podporují společenský život a posilují vztah obyvatel k místu.
+  en: >-
+    The revitalization of the sports complex in Kyjov is based on the idea of
+    connecting sports, public space, and community life. The aim is to transform
+    the existing fragmented and inadequate site into a cohesive, year-round
+    complex that naturally integrates with the surrounding urban structure.
+
+
+    The design includes a new multifunctional sports hall, outdoor sports
+    facilities, and athletics facilities, complemented by the reorganization of
+    traffic and parking areas. A key role is played by the urban park, which
+    connects the various functions and provides spaces for relaxation, social
+    gatherings, and cultural activities.
+
+
+    The urban concept emphasizes site permeability, connections between
+    pedestrian and cycling routes, and the integration of sports facilities with
+    public green spaces. The proposal also includes a new amphitheater, a
+    children's playground, community facilities, and recreational areas that
+    encourage social interaction and strengthen residents' connection to the
+    place.
 context:
   - academic
 intervention:
