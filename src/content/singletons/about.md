@@ -1,5 +1,5 @@
 ---
-portrait: /uploads/placeholder-portrait.svg
+portrait: /uploads/profil.webp
 approaches:
   - label:
       cs: Místo
@@ -46,42 +46,6 @@ approaches:
         Each one needs to be approached individually. And in the end, there is
         always a solution.
     icon: thinking
-body:
-  cs: >-
-    Jmenuji se Tereza Kalábková, jsem architektka v oblasti pozemních staveb a
-    věnuji se architektuře všech měřítek. Zajímají mne jak drobné zásahy, které
-    mají za úkol jen utužit něco již funkčního, návrhy interiérů do prostor,
-    které svou funkci teprve hledají, a stejně tak vyhledávám i projekty, které
-    mají být definovány od samého začátku – od studie, přes stavební povolení až
-    po realizaci. 
-
-
-    Na účelu nezáleží – se stejnou oblibou pracuji na rodinných domech,
-    veřejných stavbách i drobném urbanismu.
-
-
-    Jsem zvyklá na samostatnou práci a mám zkušenosti s celým povolovacím
-    procesem – od komunikace s úřady a správci technické infrastruktury až po
-    koordinaci jednotlivých profesí. To vše s použitím BIM.
-  en: >-
-    My name is Tereza Kalábková. I am an architect working in the field of
-    building design, and I am interested in architecture at every scale. I enjoy
-    small interventions that simply help strengthen something that already
-    works, interior projects for spaces that are still searching for their
-    purpose, as well as projects that need to be defined from the very beginning
-    – from the initial study, through the permitting process, all the way to
-    realisation.
-
-
-    The function itself is not what matters most to me. I enjoy working on
-    family houses, public buildings and small-scale urban projects with the same
-    interest.
-
-
-    I am used to working independently and I have experience with the entire
-    permitting process – from communication with authorities and technical
-    infrastructure administrators to the coordination of individual disciplines.
-    All of this with the use of BIM.
 experience:
   - place:
       cs: Fránek Architects s.r.o.
@@ -90,7 +54,16 @@ experience:
       cs: Architektura, projekce a inženýring
       en: Architecture, Design Documentation & Permitting
     from: "2022"
-    to: "2026"
+    title:
+      cs: Architektka
+      en: Architect
+  - place:
+      cs: Architektka na volné noze
+      en: Freelance Architect
+    department:
+      cs: Architektura, projekce
+      en: Architecture, Design and Planning
+    from: "2023"
     title:
       cs: Architektka
       en: Architect
@@ -118,3 +91,4 @@ education:
       cs: Architektura pozemních staveb
       en: Building Architecture
 ---
+[object Object]
