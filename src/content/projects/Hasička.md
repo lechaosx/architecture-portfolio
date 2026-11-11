@@ -42,19 +42,19 @@ blocks:
       - image: /uploads/05 POHLED VÝCHODNÍ.webp
         title:
           cs: Pohled východní
-          en: Eastern View
+          en: Eastern elevation
       - image: /uploads/06 POHLED ZÁPADNÍ.webp
         title:
           cs: Pohled západní
-          en: Western view
+          en: Western elevation
       - image: /uploads/07 POHLED SEVERNÍ.webp
         title:
           cs: Pohled severní
-          en: North view
+          en: North elevation
       - image: /uploads/08 POHLED JIŽNÍ.webp
         title:
           cs: Pohled jižní
-          en: Southern view
+          en: Southern elevation
       - image: /uploads/09 AXONOMETRIE.webp
         title:
           cs: Axonometrie
