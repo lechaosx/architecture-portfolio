@@ -2,7 +2,7 @@
 title:
   cs: Čtyři pokoje
   en: Four Rooms
-thumbnail: /uploads/D.1.1.12 AXO 1-2.webp
+thumbnail: /uploads/D.1.1.12 AXO 1-3.webp
 from: "2023"
 to: "2023"
 location:
@@ -85,11 +85,11 @@ blocks:
         title:
           cs: Interiérový řez
           en: Interior section
-      - image: /uploads/D.1.1.12 AXO 1.webp
+      - image: /uploads/D.1.1.12 AXO 1-4.webp
         title:
           cs: Axonometrie
           en: Axonometry
-      - image: /uploads/D.1.1.13 AXO 2.webp
+      - image: /uploads/D.1.1.13 AXO 2-1.webp
         title:
           cs: Axonometrie
           en: Axonometry
