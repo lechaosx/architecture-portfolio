@@ -2,16 +2,45 @@
 title:
   cs: Exotárium | ZOO Brno
   en: Exotarium | Brno Zoo
-from: '2024'
-to: '2024'
+from: "2024"
+to: "2024"
 location:
   cs: Česká republika, Brno
   en: Czech republic, Brno
+brief:
+  cs: Návrh nového Exotária v brněnské zoologické zahradě propojuje architekturu,
+    přírodu a environmentální vzdělávání. Soubor čtyř vzájemně propojených
+    objektů zahrnuje průchozí pavilon exotického ptactva, částečně zapuštěný
+    akvarijní pavilon s edukačními prostory, návštěvnické občerstvení a provozní
+    zázemí. Významným prvkem je vegetační plášť propojený se systémem
+    hospodaření s vodou, který podporuje místní mikroklima a biodiverzitu.
+    Krajinářské řešení přirozeně navazuje na okolní prostředí zoologické
+    zahrady.
+  en: "The design of the new Exotarium at Brno Zoo connects architecture, nature,
+    and environmental education. The complex consists of four interconnected
+    buildings: a walk-through exotic bird pavilion, a partially sunken aquarium
+    pavilion with educational spaces, visitor refreshments, and staff
+    facilities. A distinctive feature is the vegetated building envelope
+    integrated with a water management system, supporting the local microclimate
+    and biodiversity. The landscape design naturally blends into the surrounding
+    zoo environment."
+context:
+  - academic
+intervention:
+  - new_build
+scope:
+  - architecture
+  - landscape
+  - public_space
+design_in_progress: false
 draft: false
 blocks:
   - type: image_set
     images:
       - image: /uploads/01 Situační výkres širších vztahů-2.png
+        title:
+          cs: Situace širších vztahů
+          en: Wider context plan
   - type: text
     body:
       cs: >-
@@ -59,9 +88,27 @@ blocks:
   - type: gallery
     images:
       - image: /uploads/02 Situace místa stavby-1.png
+        title:
+          cs: Situace místa
+          en: Site plan
       - image: /uploads/03 Půdorys 1.NP-1.png
+        title:
+          cs: Půdorys 1.NP
+          en: First floor plan
       - image: /uploads/04 Půdorys 1.S-1.png
+        title:
+          cs: Půdorys 1.PP
+          en: Basement floor plan
       - image: /uploads/09 Řez AA, BB, CC-1.png
+        title:
+          cs: Řezy
+          en: Sections
       - image: /uploads/07 Pohledy SV a JZ-1.png
+        title:
+          cs: Pohledy
+          en: Elevations
       - image: /uploads/08 Pohledy JV, SZ, JZ-1.png
+        title:
+          cs: Pohledy
+          en: Elevations
 ---
