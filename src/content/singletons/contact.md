@@ -5,7 +5,7 @@ location:
   cs: Brno
   en: Brno
 hours:
-  cs: Po–Pá 10–15
-  en: Mon–Fri 10–15
-ico: '21330719'
+  cs: Po–Pá 9–15
+  en: Mon–Fri 9–15
+ico: "21330719"
 ---
