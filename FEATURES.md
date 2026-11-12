@@ -226,8 +226,8 @@ focus. The cards open their projects with the same cover transition as on Work.
 She picks and orders any number of projects on **Úvodní stránka**; with none
 chosen, **Vybrané práce** and **Všechny práce →** are left out. A draft or
 deleted project in the list is skipped with a build warning, so the deploy never
-fails on it — as are a project without a card (no image or no page content) and
-a repeated one [Implicit].
+fails on it, and so is a project without a card (no image or no page content):
+the CMS picker lists every project. A repeated one is skipped too — [Implicit].
 
 ### Landing images or carousel — [Explicit]
 
