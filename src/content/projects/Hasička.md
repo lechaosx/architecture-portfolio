@@ -18,10 +18,13 @@ context:
 intervention:
   - renovation
 scope:
-  - public_space
   - architecture
+  - public_space
 design_in_progress: false
 realization: construction
+role:
+  cs: Architektka
+  en: Architect
 collaborators:
   - name: Ing. Jiří Železný
     role:
