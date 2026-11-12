@@ -1,4 +1,5 @@
 ---
+portrait: /uploads/_MG_49675.webp
 approaches:
   - label:
       cs: Místo
