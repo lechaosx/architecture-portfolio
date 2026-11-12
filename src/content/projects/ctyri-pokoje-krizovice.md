@@ -66,12 +66,12 @@ blocks:
           en: Section – architectural
       - image: /uploads/Pohled V+Z.webp
         title:
-          cs: Pohledy
-          en: Elevations
+          cs: Pohledy V, Z
+          en: East and west elevations
       - image: /uploads/Pohled S+J.webp
         title:
-          cs: Pohledy
-          en: Elevations
+          cs: Pohledy J, S
+          en: South and north elevations
       - image: /uploads/INT1.webp
         title:
           cs: Interiérový řez
@@ -88,7 +88,7 @@ blocks:
         title:
           cs: Interiérový řez
           en: Interior section
-      - image: /uploads/D.1.1.12 AXO 1-6.webp
+      - image: /uploads/D.1.1.12 AXO 1-5.webp
         title:
           cs: Axonometrie
           en: Axonometry

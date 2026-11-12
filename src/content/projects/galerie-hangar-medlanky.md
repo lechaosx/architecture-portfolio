@@ -1,13 +1,13 @@
 ---
 title:
-  cs: Galerie Hangár
-  en: Gallery Hangar
+  cs: Galerie Hangár – Letiště Medlánky
+  en: Hangár Gallery – Medlánky Airfield
 thumbnail: /uploads/Scene 16_4.webp
 from: "2026"
 to: "2026"
 location:
-  cs: Brno, Medlánky
-  en: Brno, Medlánky
+  cs: Brno-Medlánky
+  en: Brno-Medlánky
 brief:
   cs: >-
     Návrh revitalizace Letiště Medlánky v Brně propojuje sportovní letectví,
@@ -179,32 +179,32 @@ blocks:
           en: Roof plan
       - image: /uploads/05 Pohled jižní a severní.webp
         title:
-          cs: Pohledy
-          en: Elevations
+          cs: Pohledy J, S
+          en: South and north elevations
       - image: /uploads/06 Pohled východní a západní.webp
         title:
-          cs: Pohledy
-          en: Elevations
+          cs: Pohledy V, Z
+          en: East and west elevations
       - image: /uploads/07 Řezy.webp
         title:
           cs: Řezy
           en: Sections
       - image: /uploads/08  AXONOMETRIE AREÁLU+.webp
         title:
-          cs: Axonometrie
-          en: Axonometry
+          cs: Axonometrie – areál
+          en: Axonometry – site
       - image: /uploads/09 AXONOMETRIE UBYTOVÁNÍ+.webp
         title:
-          cs: Axonometrie
-          en: Axonometry
+          cs: Axonometrie – ubytování
+          en: Axonometry – accommodation
       - image: /uploads/10 AXONOMETRIE PROVOZNÍ BUDOVY+.webp
         title:
-          cs: Axonometrie
-          en: Axonometry
+          cs: Axonometrie – provozní budova
+          en: Axonometry – operations building
       - image: /uploads/11 AXONOMETRIE DÍLNY+.webp
         title:
-          cs: Axonometrie
-          en: Axonometry
+          cs: Axonometrie – dílna
+          en: Axonometry – workshop
   - type: image_set
     images:
       - image: /uploads/12 3dkce+popisy-1.webp

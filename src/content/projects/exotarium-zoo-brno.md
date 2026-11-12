@@ -1,12 +1,12 @@
 ---
 title:
-  cs: Exotárium | ZOO Brno
-  en: Exotarium | Brno Zoo
+  cs: Exotárium v Zoo Brno
+  en: Exotarium at Brno Zoo
 from: "2024"
 to: "2024"
 location:
-  cs: Česká republika, Brno
-  en: Czech republic, Brno
+  cs: Brno-Bystrc
+  en: Brno-Bystrc
 brief:
   cs: Návrh nového Exotária v brněnské zoologické zahradě propojuje architekturu,
     přírodu a environmentální vzdělávání. Soubor čtyř vzájemně propojených
@@ -102,7 +102,7 @@ blocks:
       - image: /uploads/03 Půdorys 1.NP-1.png
         title:
           cs: Půdorys 1. NP
-          en: First floor plan
+          en: Ground floor plan
       - image: /uploads/04 Půdorys 1.S-1.png
         title:
           cs: Půdorys 1. PP
@@ -113,10 +113,10 @@ blocks:
           en: Sections
       - image: /uploads/07 Pohledy SV a JZ-1.png
         title:
-          cs: Pohledy
-          en: Elevations
+          cs: Pohledy SV, JZ
+          en: North-east and south-west elevations
       - image: /uploads/08 Pohledy JV, SZ, JZ-1.png
         title:
-          cs: Pohledy
-          en: Elevations
+          cs: Pohledy JV, SZ, JZ
+          en: South-east, north-west and south-west elevations
 ---

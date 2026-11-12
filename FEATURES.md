@@ -162,6 +162,11 @@ The filename before `.md` is the URL segment, so renaming a project breaks old
 links. A filename with nothing the URL can use, such as `!!!.md`, gets a short
 code instead — [Implicit].
 
+### A new project's filename comes from its Czech title — [Implicit]
+
+Pages CMS proposes the filename from the Czech title, without diacritics, in
+lowercase and with hyphens, so URLs match the Czech-named existing ones.
+
 ### Editable site settings — [Explicit]
 
 Name, credential and description in one CMS entry, feeding the wordmark,

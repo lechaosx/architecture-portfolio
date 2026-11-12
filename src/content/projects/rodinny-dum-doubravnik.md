@@ -1,7 +1,7 @@
 ---
 title:
-  cs: RD Doubravník
-  en: Family house Doubravník
+  cs: Rodinný dům Doubravník
+  en: Family House in Doubravník
 thumbnail: /uploads/11 Axo 1-6.webp
 from: "2023"
 to: "2023"
@@ -34,7 +34,7 @@ blocks:
       - image: /uploads/03 Půdorys 1.NP-1.webp
         title:
           cs: Půdorys 1. NP
-          en: Floor plan 1st floor
+          en: Ground floor plan
       - image: /uploads/02 Půdorys 1.PP.webp
         title:
           cs: Půdorys 1. PP

@@ -98,9 +98,9 @@ a project still needs content blocks to have a page and a card.
 
 **Choose the landing projects.** In Pages CMS, edit **Úvodní stránka →
 Vybrané práce**, or list project file paths by hand under `projects:` in
-`landing.md`, e.g. `src/content/projects/Hasička.md`. The build skips, with a
-warning, any that is a draft, missing, without a card (no image or no page
-content) or repeated.
+`landing.md`, e.g. `src/content/projects/hasicska-zbrojnice-doubravnik.md`.
+The build skips, with a warning, any that is a draft, missing, without a card
+(no image or no page content) or repeated.
 
 **Link to a project's external page.** Set optional `project_url` to its complete
 HTTP or HTTPS address, shared by both languages, or leave it empty. Pages CMS

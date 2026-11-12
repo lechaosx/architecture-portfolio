@@ -1,13 +1,13 @@
 ---
 title:
-  cs: Drobný urbanismus
-  en: Urban Intervention
+  cs: Sportovní areál a park v Kyjově
+  en: Kyjov Sports Grounds and Park
 thumbnail: /uploads/09 AXO s-1.webp
 from: "2025"
 to: "2025"
 location:
-  cs: Kyjov, Česká republika
-  en: Kyjov, Czech Republic
+  cs: Kyjov
+  en: Kyjov
 brief:
   cs: >-
     Návrh revitalizace sportovního areálu v Kyjově vychází z myšlenky propojení

@@ -24,7 +24,7 @@ content:
     type: collection
     path: src/content/projects
     filename:
-      template: '{primary}.md'
+      template: '{title.cs}.md'
       field: true
     view:
       primary: title.en

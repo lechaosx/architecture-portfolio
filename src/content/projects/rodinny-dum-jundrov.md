@@ -1,12 +1,12 @@
 ---
 title:
-  cs: RD Jundrov
-  en: Family house Jundrov
+  cs: Rodinný dům Jundrov
+  en: Family House in Jundrov
 from: "2024"
 to: "2024"
 location:
-  cs: Brno, Jundrov
-  en: Brno, Jundrov
+  cs: Brno-Jundrov
+  en: Brno-Jundrov
 brief:
   cs: Zpracování projektové dokumentace pro povolení stavby na základě dodané
     architektonické studie.

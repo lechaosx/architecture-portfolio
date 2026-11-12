@@ -1,7 +1,7 @@
 ---
 title:
-  cs: RD Moravské Prusy
-  en: Family house Moravské Prusy
+  cs: Rodinný dům Moravské Prusy
+  en: Family House in Moravské Prusy
 from: "2024"
 to: "2024"
 location:

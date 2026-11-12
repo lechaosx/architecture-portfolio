@@ -6,7 +6,7 @@ from: "2024"
 to: "2024"
 location:
   cs: Praha
-  en: Praha
+  en: Prague
 brief:
   cs: Zpracování projektové dokumentace pro povolení stavby, koordinace
     jednotlivých profesí a zajištění související inženýrské činnosti. Součástí

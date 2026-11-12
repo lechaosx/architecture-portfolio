@@ -1,6 +1,6 @@
 ---
 title:
-  cs: Hasičská stanice
+  cs: Hasičská zbrojnice
   en: Fire Station
 thumbnail: /uploads/09 AXONOMETRIE-4.webp
 from: "2023"
@@ -37,7 +37,7 @@ blocks:
       - image: /uploads/03 NOVÝ PŮDORYS 1.NP.webp
         title:
           cs: Půdorys 1. NP
-          en: Ground Floor Plan
+          en: Ground floor plan
       - image: /uploads/04 NOVÝ PŮDORYS 2.NP.webp
         title:
           cs: Půdorys 2. NP
@@ -58,7 +58,7 @@ blocks:
         title:
           cs: Pohled jižní
           en: Southern elevation
-      - image: /uploads/09 AXONOMETRIE-5.webp
+      - image: /uploads/09 AXONOMETRIE-4.webp
         title:
           cs: Axonometrie
           en: Axonometry
