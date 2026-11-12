@@ -43,12 +43,19 @@ The browser tests take most of CI's time, so Chromium and Firefox run as
 parallel jobs, which shortens the wait before a code push deploys. Static
 analysis and unit tests run once.
 
+### Tests never depend on the content — [Explicit]
+
+Content-only pushes deploy without the tests, so a test that read
+`src/content/` or `public/uploads/`, or needed a project, image or contact to
+exist, would fail a later, unrelated code push. Tests use fixture data instead,
+and visit a shipped route only for what any content leaves the same, such as the
+menu's links, the sitemap, the not-found page and whether the AI exports' links
+resolve.
+
 ### Browser tests bring their own pages — [Explicit] (shape [Implicit])
 
-The shipped content need not contain what a test needs, and the CMS changes it
-between runs, so the lightbox and carousel tests run against test-only pages
-under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
-[Explicit]:
+The browser tests run against test-only pages under `/e2e/` [Explicit], and
+nothing in `src/` or `scripts/` knows about them [Explicit]:
 
 - `astro.config.e2e.mjs` merges the site config with `injectRoute`s and builds
   to `dist-e2e/`, so the test build never replaces `dist/` — [Implicit].
@@ -56,6 +63,9 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
   arguments; only the test build passes the latter — [Explicit] (form
   [Implicit]). Both share `public/_responsive`: keys cannot collide, and the
   plain build's run removes the test images' derivatives — [Implicit].
+- Fixture pages show the architect's name, contacts and structured data from
+  `tests/e2e/architect.ts`, unless a page brings its own About and contact
+  data — [Implicit].
 - The carousel page renders a project image-set carousel with test-owned SVGs —
   [Implicit].
 - `/e2e/project/` renders through `ProjectPage.astro`, from data typed against
@@ -68,12 +78,9 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
 - The landing tests render `LandingPage.astro` with no image, one SVG, and an
   SVG and two rasters, over chosen fixture projects, and once with none chosen;
   services and the place are filled only where there are images — [Implicit].
-- Metadata, structured-data and alt-text tests use fixture project pages; the
-  AI export tests check both text endpoints against the shipped projects and
-  follow their links — [Explicit].
-- The work page's index, the card-to-cover morphs and the brief, credits and
-  text-only project pages are tested through fixture projects; other landing,
-  About, work-page, footer and transition tests use the shipped content —
+- The AI export tests follow the links of both shipped text endpoints
+  [Explicit], and check the exports' structure on the same exports built from
+  the thumbnail fixtures, at `/e2e/llms.txt` and `/e2e/llms-full.txt` —
   [Implicit].
 
 ---
@@ -246,8 +253,10 @@ cards, share previews and structured data — [Implicit].
 ### Pages are components the e2e fixtures render — [Implicit]
 
 `LandingPage`, `WorkPage`, `AboutPage` and `ProjectPage` each render a whole
-page from the data passed in, so the e2e fixtures can render them with their
-own. Their routes in `src/pages/` only load the content and pass it on.
+page, its frame included, from the data passed in, so the e2e fixtures can
+render them with their own. Their routes in `src/pages/` only load the content
+and pass it on; `Base`, `Nav` and `Footer` take the site, About and contact
+data they show as props.
 `src/projects.ts` holds the one project order and makes a project's card with
 its cover, so a share image that falls back to a page's first cover matches its
 first card, and both AI exports list projects in the same order.
@@ -531,8 +540,7 @@ sign-in, so the site needs no auth server.
 The shape is declared in `src/content.config.ts` (build) and `.pages.yml`
 (editor) and kept in sync by hand. Pages CMS fields are optional unless
 `required: true`, so `src/content.config.test.ts` checks that both declare the
-same fields, required in the same places, at every level, and that each
-committed content file is valid.
+same fields, required in the same places, at every level.
 
 ### A CMS save never stops the deploy — [Explicit] (loading modules [Implicit])
 

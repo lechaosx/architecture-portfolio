@@ -1,10 +1,5 @@
-import { readFileSync } from 'node:fs';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { parse } from 'yaml';
-
-const site = parse(
-  readFileSync('src/content/singletons/site.md', 'utf8').split('---')[1],
-);
+import { site } from './architect';
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -45,7 +40,7 @@ test('without services or a place the line is the profession', async ({ page }) 
 });
 
 test('the site description is not shown, only used as the page description', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/e2e/landing/');
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', site.description.en);
   await expect(page.locator('main')).not.toContainText(site.description.en);
 });

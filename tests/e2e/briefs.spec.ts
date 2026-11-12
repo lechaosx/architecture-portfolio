@@ -238,11 +238,11 @@ test('a text-only project page has no lightbox', async ({ page }) => {
 });
 
 
-test('expanded real project credits fit every screen without breaking names', async ({ page }) => {
+test('expanded project credits fit every screen without breaking names', async ({ page }) => {
   for (const width of [1280, 800, 390, 320]) {
     for (const language of ['en', 'cs']) {
       await page.setViewportSize({ width, height: 1000 });
-      await page.goto('/work/');
+      await page.goto('/e2e/work-credits/');
       if (await page.locator('html').getAttribute('data-lang') !== language) await page.locator('[data-lang-toggle]').click();
       await page.locator('details').evaluateAll((rows) => rows.forEach((row) => row.setAttribute('open', '')));
       expect(await page.evaluate(() => document.documentElement.scrollWidth), `${language} ${width}px`).toBe(width);

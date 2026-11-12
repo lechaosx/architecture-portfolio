@@ -23,11 +23,13 @@ const lang = pageLanguage(Astro.url.pathname);
 
 interface Props {
   landing: { images: string[]; projects: CardProject[] };
+  site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
   contact: CollectionEntry<'contact'>['data'];
 }
 
-const { landing, about, contact } = Astro.props;
+const { landing, site, about, contact } = Astro.props;
+const name = credentialedName(site);
 const identity = (lang: 'cs' | 'en') =>
   [ui[lang].tagline, contact.location?.[lang].trim()].filter(Boolean).join(' · ');
 const services = (lang: 'cs' | 'en') =>
@@ -44,11 +46,14 @@ const image =
 
 <Base
   title={{
-    cs: `${credentialedName} | ${ui.cs.tagline}`,
-    en: `${credentialedName} | ${ui.en.tagline}`,
+    cs: `${name} | ${ui.cs.tagline}`,
+    en: `${name} | ${ui.en.tagline}`,
   }}
   {image}
-  graph={[webSite({ site: new URL('/', Astro.site), name: credentialedName })]}
+  graph={[webSite({ site: new URL('/', Astro.site), name })]}
+  {site}
+  {about}
+  {contact}
 >
   <PageContent imagery={heroImages.length > 0}>
     {

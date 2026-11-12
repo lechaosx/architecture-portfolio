@@ -2,6 +2,7 @@
 // Pages the browser tests run against, so they do not depend on the shipped
 // content; astro.config.e2e.mjs adds them at /e2e/. Their images are
 // tests/e2e/images, served by images/[file].ts.
+import { about as frameAbout, contact as frameContact, site } from '../architect';
 import { thumbnailProjects } from '../thumbnail-projects';
 import type { CollectionEntry } from 'astro:content';
 import { projectCard, type Project } from '../../../src/projects';
@@ -204,15 +205,9 @@ export function getStaticPaths() {
       },
     ],
   };
-  const contact = {
-    email: 'jana@example.cz',
-    phone: '+420 777 000 000',
-    location: { cs: 'Brno', en: 'Brno' },
-    hours: { cs: 'Po–Pá 9–17', en: 'Mon–Fri 9–17' },
-  };
   // Nothing optional filled.
   const bareAbout = { ...about, portrait: undefined, approaches: [], experience: [], services: [], education: [], awards: [] };
-  const bareContact = { email: contact.email };
+  const bareContact = { email: frameContact.email };
 
   const cards = (projects: Project[]) => projects.flatMap((project) => projectCard(project) ?? []);
   const [project2025, project2024, project2023] = [2025, 2024, 2023].map((year) =>
@@ -227,10 +222,10 @@ export function getStaticPaths() {
   const chosen = cards([project2024, gridProject, project2023, project2025]);
   const landing = (heroImages: string[], projects = chosen) => ({
     landing: { images: heroImages, projects },
-    ...(heroImages.length > 0 ? { about, contact } : { about: bareAbout, contact: bareContact }),
+    ...(heroImages.length > 0 ? { about, contact: frameContact } : { about: bareAbout, contact: bareContact }),
   });
 
-  return [
+  const paths = [
     { params: { fixture: 'thumbnail-work' }, props: { projects: thumbnailProjects } },
     { params: { fixture: 'thumbnail-landing' }, props: landing([], cards(thumbnailProjects)) },
     { params: { fixture: 'landing' }, props: landing([images[0], '/e2e/images/wide.png', '/e2e/images/cover.png']) },
@@ -238,6 +233,7 @@ export function getStaticPaths() {
     { params: { fixture: 'landing-bare' }, props: landing([]) },
     { params: { fixture: 'landing-no-work' }, props: landing([], []) },
     { params: { fixture: 'about' }, props: { about } },
+    { params: { fixture: 'about-tall-portrait' }, props: { about: { ...about, portrait: '/e2e/images/tall.png' } } },
     { params: { fixture: 'language-height' }, props: { about: { ...about, bio: { cs: text(2).cs, en: Array(20).fill(text(4).en).join('\n\n') } } } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
     { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, bio: { cs: words(150).cs, en: words(150).en } } } },
@@ -275,7 +271,7 @@ export function getStaticPaths() {
     projectWith('credits-no-brief', project.blocks.slice(0, 1), credits),
     projectWith('text-only', [{ type: 'text', body: { cs: text(2).cs, en: text(2).en } }]),
     projectWith('vector-only', [{ type: 'gallery', images: [item('vector.svg')] }]),
-    projectWith('náměstí', [{ type: 'text', body: { cs: text(1).cs, en: text(1).en } }]),
+    projectWith('náměstí', [{ type: 'image_set', images: [item('wide.png')] }]),
     // A soft line break, emphasis and an image in the rich text.
     projectWith('markdown', [
       {
@@ -315,6 +311,9 @@ export function getStaticPaths() {
     },
     { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project } } },
   ];
+  // Each page's frame shows About and contact data: ../architect.ts's unless
+  // the page brings its own.
+  return paths.map((path) => ({ ...path, props: { about: frameAbout, contact: frameContact, ...path.props } }));
 }
 
 const { about, contact, images, landing, paragraphs, project, projects } = Astro.props;
@@ -322,19 +321,17 @@ const { about, contact, images, landing, paragraphs, project, projects } = Astro
 
 {
   paragraphs ? (
-    <Base title={{ cs: 'Text', en: 'Text' }}>
+    <Base title={{ cs: 'Text', en: 'Text' }} {site} {about} {contact}>
       <div class="mx-auto max-w-6xl px-6 pt-12"><Paragraphs {...paragraphs} class="space-y-4" /></div>
     </Base>
   ) : project ? (
-    <ProjectPage {project} />
+    <ProjectPage {project} {site} {about} {contact} />
   ) : landing ? (
-    <LandingPage {landing} {about} {contact} />
-  ) : about ? (
-    <AboutPage {about} />
+    <LandingPage {landing} {site} {about} {contact} />
   ) : projects ? (
-    <WorkPage {projects} />
-  ) : (
-    <Base title={{ cs: 'E2E', en: 'E2E' }}>
+    <WorkPage {projects} {site} {about} {contact} />
+  ) : images ? (
+    <Base title={{ cs: 'E2E', en: 'E2E' }} {site} {about} {contact}>
       <div class="mx-auto max-w-6xl px-6 pb-16">
         <ProjectBlocks
           projectId="e2e"
@@ -345,5 +342,7 @@ const { about, contact, images, landing, paragraphs, project, projects } = Astro
         />
       </div>
     </Base>
+  ) : (
+    <AboutPage {site} {about} {contact} />
   )
 }

@@ -1,5 +1,6 @@
 ---
 import { pageLanguage, localizedPath } from '../locale';
+import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Gallery from './Gallery.svelte';
 import ProjectBlocks from './ProjectBlocks.astro';
@@ -19,9 +20,12 @@ const lang = pageLanguage(Astro.url.pathname);
 
 interface Props {
   project: Project;
+  site: CollectionEntry<'site'>['data'];
+  about: CollectionEntry<'about'>['data'];
+  contact: CollectionEntry<'contact'>['data'];
 }
 
-const { project } = Astro.props;
+const { project, site, about, contact } = Astro.props;
 const d = project.data;
 const facts = projectFacts(d, { placeAndPeriod: true });
 
@@ -34,10 +38,10 @@ const responsiveImages = await Promise.all(
 const cover = projectCover(d.thumbnail, images);
 const responsiveCover = cover ? await getResponsiveImage(cover.image) : undefined;
 const description = projectDescription(d);
-const site = new URL('/', Astro.site);
+const origin = new URL('/', Astro.site);
 const graph = (language: 'cs' | 'en') => [creativeWork({
-  site,
-  url: new URL(localizedPath(Astro.url.pathname, language), site).href,
+  site: origin,
+  url: new URL(localizedPath(Astro.url.pathname, language), origin).href,
   project: d,
   description: description[language],
   lang: language,
@@ -49,13 +53,16 @@ const graph = (language: 'cs' | 'en') => [creativeWork({
 
 <Base
   title={{
-    cs: `${d.title.cs} | ${credentialedName}`,
-    en: `${d.title.en} | ${credentialedName}`,
+    cs: `${d.title.cs} | ${credentialedName(site)}`,
+    en: `${d.title.en} | ${credentialedName(site)}`,
   }}
   {description}
   image={responsiveCover?.share}
   type="article"
   graph={{ cs: graph('cs'), en: graph('en') }}
+  {site}
+  {about}
+  {contact}
 >
   <PageContent as="article">
     <a href={localizedPath('/work/', lang)} class="text-sm text-neutral-500 hover:text-neutral-900">

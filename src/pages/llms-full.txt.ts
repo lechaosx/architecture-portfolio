@@ -8,7 +8,7 @@ export const GET: APIRoute = async ({ site: origin }) =>
   new Response(
     llmsFullTxt({
       site: new URL('/', origin),
-      name: credentialedName,
+      name: credentialedName(site),
       description: site.description,
       about,
       contact,

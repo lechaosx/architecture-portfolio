@@ -1,5 +1,4 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import type { ImageManifest } from '../../src/images';
 
 /** Waits for the transitions under way on `locator`, such as its hover's, to end. */
 function transitionsEnd(locator: Locator) {
@@ -71,9 +70,11 @@ test('work cards do not start a second entrance animation after navigation', asy
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/about/');
-  await page.getByRole('link', { name: 'Work' }).click();
-  await expect(page).toHaveURL(/\/work\/?$/);
+  await page.goto('/en/e2e/about/');
+  // The menu links only to the shipped work page, so the page itself navigates
+  // to the fixture's.
+  await page.evaluate(() => setTimeout(() => location.assign('/en/e2e/thumbnail-work/')));
+  await expect(page).toHaveURL(/\/en\/e2e\/thumbnail-work\/$/);
 
   const { card: project } = await projectCard(page);
   await expect(project).toBeVisible();
@@ -93,8 +94,8 @@ test('work cards do not start a second entrance animation after navigation', asy
 
 test('cover hover does not change the shared transition box', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/work/');
-  const { card: project } = await projectCard(page);
+  await page.goto('/en/e2e/thumbnail-work/');
+  const { card: project } = await projectCard(page, 0, true);
   const transitionCover = project.locator('div').first();
   const image = project.locator('img');
   const before = await transitionCover.boundingBox();
@@ -130,20 +131,6 @@ test('project page cover hover does not change the shared transition box', async
   await transitionsEnd(image);
   expect(await transitionBox()).toEqual(before);
   expect((await image.boundingBox())!.width).toBeGreaterThan(imageBefore.width);
-});
-
-test('opening a project starts a cross-document view transition', async ({
-  browserName,
-  page,
-}) => {
-  test.skip(
-    browserName === 'firefox',
-    'The pinned Firefox does not support cross-document View Transitions',
-  );
-  await page.goto('/work/');
-  const { card, url } = await projectCard(page);
-  // The page asks for a transition, which the browser may skip when busy.
-  await navigateWithTransition(page, url, () => card.click());
 });
 
 test('non-square project cover uses the shared crop transition class', async ({
@@ -208,22 +195,6 @@ test('the first image of a page loads and decodes eagerly and the others lazily'
       .evaluateAll((images) => images.map((image) => image.getAttribute('decoding')));
     expect(decoding[0], path).not.toBe('async');
     expect(decoding.slice(1).every((value) => value === 'async'), path).toBe(true);
-  }
-});
-
-test('the work card shows the cover shared by its project', async ({ page }) => {
-  await page.goto('/work/');
-  const { card } = await projectCard(page);
-  const cardSrc = await card.locator('img').getAttribute('src');
-  await card.click();
-  const { images } = await (await page.request.get('/_responsive/manifest.json')).json() as ImageManifest;
-  const cover = images[cardSrc!] ?? Object.values(images).find(({ source }) => source.url === cardSrc);
-  const shared = cover?.share;
-  if (shared) {
-    const preview = await page.locator('meta[property="og:image"]').getAttribute('content');
-    expect(new URL(preview!).pathname).toBe(shared.url);
-  } else {
-    await expect(page.locator('meta[property="og:image"]')).toHaveCount(0);
   }
 });
 

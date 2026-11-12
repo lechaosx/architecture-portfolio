@@ -1,6 +1,6 @@
 ---
 import AboutPage from '../components/AboutPage.astro';
-import { about } from '../singletons';
+import { about, contact, site } from '../singletons';
 ---
 
-<AboutPage {about} />
+<AboutPage {site} {about} {contact} />

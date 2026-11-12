@@ -1,13 +1,16 @@
 ---
 import { pageLanguage, localizedPath } from '../locale';
-import { site } from '../singletons';
+import type { CollectionEntry } from 'astro:content';
 import type { UiKey } from '../i18n';
 import T from './T.astro';
 
 const lang = pageLanguage(Astro.url.pathname);
 
-interface Props { bilingual?: boolean; }
-const { bilingual = false } = Astro.props;
+interface Props {
+  site: Pick<CollectionEntry<'site'>['data'], 'credential' | 'name'>;
+  bilingual?: boolean;
+}
+const { site, bilingual = false } = Astro.props;
 const links: { href: string; key: UiKey }[] = [
   { href: '/work/', key: 'work' },
   { href: '/about/', key: 'about' },

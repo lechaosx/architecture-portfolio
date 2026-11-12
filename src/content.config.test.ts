@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { parse, stringify } from 'yaml';
 import { parseFrontmatter } from 'astro/markdown';
 import { z } from 'astro/zod';
@@ -39,8 +39,6 @@ function staticSchema(name: keyof typeof collections) {
   }
   return schema;
 }
-
-const frontmatter = (path: string) => parseFrontmatter(readFileSync(path, 'utf8')).frontmatter;
 
 /** A field, whether it may be left out, and the fields of its rows or blocks. */
 interface FieldShape {
@@ -379,18 +377,6 @@ test('contact reads where she is and when she is reachable, one line per languag
   ).toMatchObject({ success: true, data: lines });
 });
 
-test.each(['site', 'landing', 'about', 'contact'] as const)('the committed %s singleton is valid', (name) => {
-  const content = frontmatter(`src/content/singletons/${name}.md`);
-  expect(staticSchema(name).safeParse(content).success).toBe(true);
-});
-
-test.each(readdirSync('src/content/projects').filter((file) => file.endsWith('.md')))(
-  'the committed project %s is valid',
-  (file) => {
-    expect(projectSchema.safeParse(frontmatter(`src/content/projects/${file}`))).toMatchObject({ success: true });
-  },
-);
-
 test('a project file name gives its URL, and one with nothing to slug still gets its own', () => {
   expect(projectId({ entry: 'RD Doubravník.md' })).toBe('rd-doubravník');
   const [bangs, emoji] = ['!!!.md', '🏠.md'].map((entry) => projectId({ entry }));
@@ -555,16 +541,5 @@ test('CMS controlled choices and multiplicity match project metadata validation'
       const value = multiple ? [option.name] : option.name;
       expect(projectSchema.parse({ ...project, [name]: value })).toHaveProperty(name, value);
     }
-  }
-});
-
-
-test('project collaborators exclude the portfolio owner', () => {
-  const owner = frontmatter('src/content/singletons/site.md').name;
-  const projects = readdirSync('src/content/projects').filter((file) => file.endsWith('.md'));
-  for (const file of projects) {
-    const data = projectSchema.parse(frontmatter(`src/content/projects/${file}`));
-    if (!('collaborators' in data)) throw new TypeError('Expected project content');
-    expect(data.collaborators.filter(({ name }) => name.trim() === owner), file).toHaveLength(0);
   }
 });

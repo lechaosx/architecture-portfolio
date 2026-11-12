@@ -1,5 +1,4 @@
-import { site } from './singletons';
+import type { CollectionEntry } from 'astro:content';
 
-export const credentialedName = [site.credential, site.name]
-  .filter(Boolean)
-  .join(' ');
+export const credentialedName = ({ credential, name }: Pick<CollectionEntry<'site'>['data'], 'credential' | 'name'>) =>
+  [credential, name].filter(Boolean).join(' ');

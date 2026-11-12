@@ -25,6 +25,10 @@ export default mergeConfig(config, {
             injectRoute({ pattern, entrypoint: './tests/e2e/pages/thumbnail-project.astro' });
           }
           injectRoute({
+            pattern: '/e2e/[file].txt',
+            entrypoint: './tests/e2e/pages/ai-export.ts',
+          });
+          injectRoute({
             pattern: '/e2e/images/[file]',
             entrypoint: './tests/e2e/pages/images/[file].ts',
           });

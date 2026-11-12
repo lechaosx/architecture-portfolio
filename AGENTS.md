@@ -79,6 +79,11 @@ Only then reconcile them.
   later deploy unnoticed. The CMS refuses what it can express; the build
   tolerates the rest, warning about what it leaves out. See ARCHITECTURE.md →
   "A CMS save never stops the deploy".
+- **Tests never depend on the content.** No test reads `src/content/` or
+  `public/uploads/`, asserts on what a page built from them says, or needs a
+  project, image or contact to exist: tests use fixture data, passed to the
+  components as props like the content is. See ARCHITECTURE.md → "Tests never
+  depend on the content".
 
 ## Verifying a change
 

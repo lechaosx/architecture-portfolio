@@ -27,12 +27,10 @@ npm run images       # regenerate responsive images (dev and build run it)
 - `test:e2e` first builds `astro.config.e2e.mjs` into `dist-e2e/`, then serves it
   on port 4322, so it runs beside `dev` and `preview`. To run Playwright
   directly, run `npm run pretest:e2e` first.
-- Lightbox and carousel tests use test-only pages in `tests/e2e/pages/`, served
-  under `/e2e/`, `/cs/e2e/` and `/en/e2e/`, with images in `tests/e2e/images/`.
-  The work page's index, the card-to-cover morphs and the brief, credits and
-  text-only project pages are tested through fixture projects, the landing and
-  About pages through fixture data; other landing, About, work and footer tests
-  use the real content.
+- Browser tests use test-only pages in `tests/e2e/pages/`, served under
+  `/e2e/`, `/cs/e2e/` and `/en/e2e/`, with images in `tests/e2e/images/` and
+  the frame's name and contacts in `tests/e2e/architect.ts`; none depends on the
+  real content.
 - Thumbnail fixtures also render at `/projects/e2e-thumbnail-…/` and both language-prefixed equivalents so their cards
   navigate through the production project-page component.
 - `/e2e/project/` is frozen: tests address its images by position (`#image-N`).
@@ -112,8 +110,9 @@ refuses other text through a `pattern` mirroring `PROJECT_URL` in
 **Check AI exports.** After `npm run build`, inspect `dist/llms.txt` for the
 page index and `dist/llms-full.txt` for the complete published project facts,
 texts and linked image captions. Their section and language labels live in
-`src/i18n.ts`; `tests/e2e/seo.spec.ts` checks the shipped content and follows
-index and caption links.
+`src/i18n.ts`; `tests/e2e/seo.spec.ts` follows the shipped exports' index and
+caption links, and checks their structure on the exports of the thumbnail
+fixtures, at `/e2e/llms.txt` and `/e2e/llms-full.txt`.
 
 **Change the domain.** Edit `public/CNAME` and `site` in `astro.config.mjs`,
 then the domain under GitHub **Settings → Pages** and its DNS.

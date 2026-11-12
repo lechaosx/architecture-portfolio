@@ -106,7 +106,6 @@ for (const path of ['/e2e/project-role/', '/e2e/work-role-only/']) {
       } else {
         expect(await values(page)).toContain(collaborator);
         await expect(brief(page)).toContainText(language === 'en' ? 'A library with a public garden.' : 'Knihovna s veřejnou zahradou.');
-        await expect(sheet(page).getByText('Tereza Kalábková', { exact: true })).toHaveCount(0);
       }
       for (const width of [1280, 800, 390]) {
         await page.setViewportSize({ width, height: 900 });

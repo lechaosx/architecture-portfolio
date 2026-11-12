@@ -1,13 +1,17 @@
 ---
 import { pageLanguage, localizedPath } from '../locale';
-import { contact, site } from '../singletons';
+import type { CollectionEntry } from 'astro:content';
 import ContactIcon from './ContactIcon.astro';
 import T from './T.astro';
 
 const lang = pageLanguage(Astro.url.pathname);
 
-interface Props { bilingual?: boolean; }
-const { bilingual = false } = Astro.props;
+interface Props {
+  site: Pick<CollectionEntry<'site'>['data'], 'name'>;
+  contact: CollectionEntry<'contact'>['data'];
+  bilingual?: boolean;
+}
+const { site, contact, bilingual = false } = Astro.props;
 const year = new Date().getFullYear();
 const { email, phone, hours } = contact;
 const item = 'flex w-max items-center gap-2 whitespace-nowrap';

@@ -37,6 +37,23 @@ export function withoutMissingImages(
   };
 }
 
+/**
+ * The projects the site shows: no drafts, and no images whose file is missing.
+ * `found` says whether the file at an image's path exists, given that path and
+ * where the entry names it.
+ */
+export function publishedProjects<T extends Project & { filePath?: string }>(
+  entries: T[],
+  found: (path: string, location: string) => boolean,
+): T[] {
+  return entries
+    .filter(({ data }) => !data.draft)
+    .map((entry) => ({
+      ...entry,
+      data: withoutMissingImages(entry.data, (path, field) => found(path, `${entry.filePath}: ${field}`)),
+    }));
+}
+
 /** Latest period first, then by English title, so both languages list projects alike. */
 export const newestFirst = (a: Project, b: Project) =>
   latestFirst(a.data, b.data) || a.data.title.en.localeCompare(b.data.title.en);

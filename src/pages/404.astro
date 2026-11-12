@@ -3,15 +3,19 @@ import Base from '../layouts/Base.astro';
 import PageContent from '../components/PageContent.astro';
 import T from '../components/T.astro';
 import { credentialedName } from '../site-title';
+import { about, contact, site } from '../singletons';
 import { ui } from '../i18n';
 ---
 
 <Base
   title={{
-    cs: `${ui.cs.notFound} | ${credentialedName}`,
-    en: `${ui.en.notFound} | ${credentialedName}`,
+    cs: `${ui.cs.notFound} | ${credentialedName(site)}`,
+    en: `${ui.en.notFound} | ${credentialedName(site)}`,
   }}
   noindex
+  {site}
+  {about}
+  {contact}
 >
   <PageContent as="section">
     <T bilingual as="h1" k="notFoundHeading" class="text-3xl font-medium sm:text-4xl" />

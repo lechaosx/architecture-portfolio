@@ -236,7 +236,7 @@ test('the bio splits into columns only where each keeps a comfortable width', as
 });
 
 test('loaded portraits keep their natural aspect ratio at every intro layout', async ({ page }) => {
-  for (const path of ['/about/', '/e2e/about/']) {
+  for (const path of ['/e2e/about/', '/e2e/about-tall-portrait/']) {
     await page.goto(path);
     const portrait = page.locator('main img').first();
     for (const width of [700, 740, 1280]) {

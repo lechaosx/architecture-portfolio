@@ -4,7 +4,7 @@ import '@fontsource-variable/roboto/index.css';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import { about, contact, site } from '../singletons';
+import type { CollectionEntry } from 'astro:content';
 import { credentialedName } from '../site-title';
 import type { ImageVariant } from '../images';
 import { getResponsiveImage } from '../server-images';
@@ -21,9 +21,12 @@ interface Props {
   noindex?: boolean;
   /** schema.org nodes beside the architect's. */
   graph?: Record<string, unknown>[] | { cs: Record<string, unknown>[]; en: Record<string, unknown>[] };
+  site: CollectionEntry<'site'>['data'];
+  about: CollectionEntry<'about'>['data'];
+  contact: CollectionEntry<'contact'>['data'];
 }
 
-const { title, image, type = 'website', noindex = false, graph = [] } = Astro.props;
+const { title, image, type = 'website', noindex = false, graph = [], site, about, contact } = Astro.props;
 const description = {
   cs: Astro.props.description?.cs ?? site.description.cs,
   en: Astro.props.description?.en ?? site.description.en,
@@ -69,7 +72,7 @@ const structuredData = Object.fromEntries((['cs', 'en'] as const).map((language)
     <meta property="og:description" content={description[lang]} data-cs={description.cs} data-en={description.en} />
     <meta property="og:type" content={type} />
     {url && <meta property="og:url" content={url} />}
-    <meta property="og:site_name" content={credentialedName} />
+    <meta property="og:site_name" content={credentialedName(site)} />
     <meta property="og:locale" content={lang === 'cs' ? 'cs_CZ' : 'en_US'} data-cs="cs_CZ" data-en="en_US" />
     <meta property="og:locale:alternate" content={lang === 'cs' ? 'en_US' : 'cs_CZ'} data-cs="en_US" data-en="cs_CZ" />
     {
@@ -171,11 +174,11 @@ const structuredData = Object.fromEntries((['cs', 'en'] as const).map((language)
     </script>
   </head>
   <body class="min-h-screen bg-white font-sans text-black antialiased">
-    <Nav bilingual={noindex} />
+    <Nav {site} bilingual={noindex} />
     <main>
       <slot />
     </main>
-    <Footer bilingual={noindex} />
+    <Footer {site} {contact} bilingual={noindex} />
 
     <script>
       // Reveal elements as they enter the viewport, using the real scrollbar.

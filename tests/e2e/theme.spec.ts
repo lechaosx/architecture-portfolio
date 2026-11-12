@@ -4,7 +4,7 @@ test('follows live system color-scheme changes without a saved choice', async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/work/');
+  await page.goto('/e2e/work/');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
   await page.emulateMedia({ colorScheme: 'light' });
@@ -13,7 +13,7 @@ test('follows live system color-scheme changes without a saved choice', async ({
 
 test('an explicit theme choice overrides later system changes', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/work/');
+  await page.goto('/e2e/work/');
   await page.getByRole('button', { name: 'Toggle theme' }).click();
 
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');

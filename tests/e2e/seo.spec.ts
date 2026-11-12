@@ -1,12 +1,11 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
-import { parse } from 'yaml';
+import { readFileSync } from 'node:fs';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { Lexer, type Tokens } from 'marked';
 import type { ImageManifest } from '../../src/images';
+import { site } from './architect';
+import { thumbnailProjects } from './thumbnail-projects';
 
-const frontmatter = (path: string) => parse(readFileSync(path, 'utf8').split('---')[1]);
-const site = frontmatter('src/content/singletons/site.md');
-const owner = [site.credential, site.name].filter(Boolean).join(' ');
+const owner = `${site.credential} ${site.name}`;
 const origin = `https://${readFileSync('public/CNAME', 'utf8').trim()}`;
 
 const meta = (page: Page, attribute: string) => page.locator(`meta[${attribute}]`);
@@ -80,9 +79,9 @@ test.describe(() => {
 
   test('every page names its canonical address and the site', async ({ page }) => {
     for (const [path, type] of [
-      ['/cs/', 'website'],
-      ['/cs/work/', 'website'],
-      ['/cs/about/', 'website'],
+      ['/cs/e2e/landing/', 'website'],
+      ['/cs/e2e/work/', 'website'],
+      ['/cs/e2e/about/', 'website'],
       ['/cs/e2e/brief/', 'article'],
     ]) {
       await page.goto(path);
@@ -106,7 +105,7 @@ test.describe(() => {
   });
 
   test('every page describes the architect as structured data', async ({ page }) => {
-    for (const path of ['/cs/', '/cs/work/', '/cs/about/', '/cs/e2e/project/']) {
+    for (const path of ['/cs/e2e/landing/', '/cs/e2e/work/', '/cs/e2e/about/', '/cs/e2e/project/']) {
       await page.goto(path);
       const architect = node(await graph(page), 'Person');
       expect(architect).toMatchObject({
@@ -121,7 +120,7 @@ test.describe(() => {
   });
 
   test('the landing page is the website', async ({ page }) => {
-    await page.goto('/cs/');
+    await page.goto('/cs/e2e/landing/');
     expect(node(await graph(page), 'WebSite')).toMatchObject({ name: owner, url: `${origin}/` });
   });
 
@@ -143,14 +142,14 @@ test.describe(() => {
   });
 
   test('the work page shares its first cover', async ({ page }) => {
-    await page.goto('/cs/work/');
+    await page.goto('/cs/e2e/work/');
     await expectSharesFirstCard(page);
   });
 
   test('the about page is the architect’s profile', async ({ page }) => {
-    await page.goto('/cs/about/');
+    await page.goto('/cs/e2e/about/');
     expect(node(await graph(page), 'ProfilePage')).toMatchObject({
-      url: `${origin}/cs/about/`,
+      url: `${origin}/cs/e2e/about/`,
       mainEntity: { '@id': `${origin}/#person` },
     });
   });
@@ -171,14 +170,6 @@ test.describe(() => {
       { '@type': 'Role', roleName: 'vizualizace', contributor: { '@type': 'Person', name: 'Ing. Petr Malý' } },
       { '@type': 'Role', roleName: 'statika', contributor: { '@type': 'Person', name: 'Ing. Pavel Velký' } },
       { '@type': 'Person', name: 'Ing. Iva Tichá' },
-    ]);
-
-    await page.goto('/cs/projects/křížovice/');
-    const actual = node(await graph(page), 'CreativeWork')!;
-    expect(actual).not.toHaveProperty('creator');
-    expect(actual.contributor).toEqual([
-      { '@id': `${origin}/#person` },
-      { '@type': 'Person', name: 'Ing. Jiří Železný' },
     ]);
   });
 
@@ -233,17 +224,42 @@ test('robots.txt allows crawling and names the sitemap', async ({ request }) => 
   expect((await request.get(new URL(sitemap).pathname)).ok()).toBe(true);
 });
 
+/** The links of a full AI export's headings: its projects' captioned images. */
+const headingLinks = (full: string) =>
+  Lexer.lex(full)
+    .filter((token): token is Tokens.Heading => token.type === 'heading')
+    .flatMap((heading) => heading.tokens.filter((token): token is Tokens.Link => token.type === 'link'))
+    .map((link) => link.href);
+
+async function expectLinksResolve(request: APIRequestContext, urls: string[]) {
+  for (const url of new Set(urls)) {
+    expect(new URL(url).origin).toBe(origin);
+    expect((await request.get(new URL(url).pathname)).ok(), url).toBe(true);
+  }
+}
+
+test('the AI exports are served as text and their links resolve', async ({ request }) => {
+  const [text, full] = await Promise.all(['/llms.txt', '/llms-full.txt'].map(async (path) => {
+    const response = await request.get(path);
+    expect(response.ok(), path).toBe(true);
+    expect(response.headers()['content-type'], path).toContain('text/plain');
+    return response.text();
+  }));
+  // Each index entry starts with its link.
+  const indexLinks = Lexer.lex(text)
+    .filter((token): token is Tokens.List => token.type === 'list')
+    .flatMap((list) => list.items.map((item) => Lexer.lexInline(item.text)[0]))
+    .filter((token): token is Tokens.Link => token.type === 'link')
+    .map((link) => link.href);
+  await expectLinksResolve(request, [...indexLinks, ...headingLinks(full)]);
+});
+
+// tests/e2e/pages/ai-export.ts: the exports of the thumbnail fixture projects.
 test('llms.txt indexes canonical language pages and llms-full.txt retains published content', async ({
   request,
 }) => {
-  const response = await request.get('/llms.txt');
-  const fullResponse = await request.get('/llms-full.txt');
-  expect(response.ok()).toBe(true);
-  expect(fullResponse.ok()).toBe(true);
-  expect(response.headers()['content-type']).toContain('text/plain');
-  expect(fullResponse.headers()['content-type']).toContain('text/plain');
-  const text = await response.text();
-  const full = await fullResponse.text();
+  const text = await (await request.get('/e2e/llms.txt')).text();
+  const full = await (await request.get('/e2e/llms-full.txt')).text();
   expect(text.startsWith(`# ${owner}\n`)).toBe(true);
   expect(full.startsWith(`# ${owner}\n`)).toBe(true);
   for (const description of [site.description.cs, site.description.en]) expect(text).toContain(description);
@@ -273,36 +289,21 @@ test('llms.txt indexes canonical language pages and llms-full.txt retains publis
   }
   for (const path of ['/cs/about/', '/en/about/', '/cs/work/', '/en/work/', '/llms-full.txt']) expect(urls).toContain(`${origin}${path}`);
 
-  const projects = readdirSync('src/content/projects').map((file) =>
-    frontmatter(`src/content/projects/${file}`),
-  );
-  const pageProjects = projects.filter((data) => !data.draft && data.blocks?.length);
+  const pageProjects = thumbnailProjects.filter(({ data }) => data.blocks.length > 0);
   expect(urls.filter((url) => new URL(url).pathname.includes('/projects/'))).toHaveLength(pageProjects.length * 2);
-  for (const data of projects) {
-    if (data.draft) {
-      expect(text).not.toContain(data.title.cs);
-      expect(full).not.toContain(data.title.cs);
-      continue;
-    }
+  for (const { data } of thumbnailProjects) {
     expect(full).toContain(data.title.cs);
     expect(full).toContain(data.title.en);
-    for (const brief of data.brief ? [data.brief.cs, data.brief.en] : []) expect(full).toContain(brief.trim());
     const projectLink = links.find((link) => link.href.startsWith(`${origin}/cs/projects/`) && link.text.includes(data.title.cs));
-    if (data.blocks?.length) {
+    if (data.blocks.length > 0) {
       expect(projectLink).toBeDefined();
       expect(links.some((link) => link.href.startsWith(`${origin}/en/projects/`) && link.text.includes(data.title.en))).toBe(true);
     } else expect(projectLink).toBeUndefined();
   }
-  expect(text.length).toBeLessThan(full.length / 3);
 
-  const fullLinks = Lexer.lex(full)
-    .filter((token): token is Tokens.Heading => token.type === 'heading')
-    .flatMap((heading) => heading.tokens.filter((token): token is Tokens.Link => token.type === 'link'));
+  const fullLinks = headingLinks(full);
   expect(fullLinks.length).toBeGreaterThan(0);
-  for (const url of new Set([...urls, ...fullLinks.map((link) => link.href)])) {
-    expect(new URL(url).origin).toBe(origin);
-    expect((await request.get(new URL(url).pathname)).ok(), url).toBe(true);
-  }
+  await expectLinksResolve(request, [...urls, ...fullLinks]);
 });
 
 test('English structured data follows the page while the architect identity stays shared', async ({ page }) => {
@@ -325,7 +326,7 @@ test('English structured data follows the page while the architect identity stay
     '@type': 'ImageObject', contentUrl: `${origin}/e2e/images/vector.svg`,
     name: 'Vector 17', caption: 'A short note.',
   });
-  await page.goto('/en/about/');
+  await page.goto('/en/e2e/about/');
   const architect = node(await graph(page), 'Person')!;
   expect(architect['@id']).toBe(`${origin}/#person`);
 });

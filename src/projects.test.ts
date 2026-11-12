@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { chosenCards, projectCover, withoutMissingImages, workProjects, type Project } from './projects';
+import { chosenCards, projectCover, publishedProjects, withoutMissingImages, workProjects, type Project } from './projects';
 
 const project = (id: string, year: number): Project => ({
   id,
@@ -71,6 +71,20 @@ test('images whose file is missing are left out, each looked up by its field, wi
     blocks: [text, { type: 'gallery', images: [first, selected] }],
   });
   expect(reported).toEqual(['thumbnail', 'blocks[0].images[0].image', 'blocks[2].images[1].image']);
+});
+
+test('the published projects leave out drafts, and report a missing image at its file and field', () => {
+  const shown = { ...project('shown', 2026), filePath: 'src/content/projects/shown.md' };
+  const draft = { ...project('draft', 2026), filePath: 'src/content/projects/draft.md' };
+  shown.data = { ...shown.data, thumbnail: '/uploads/deleted.jpg' };
+  draft.data = { ...draft.data, draft: true };
+  const reported: string[] = [];
+  const found = (_path: string, location: string) => {
+    reported.push(location);
+    return false;
+  };
+  expect(publishedProjects([draft, shown], found)).toEqual([{ ...shown, data: { ...shown.data, thumbnail: undefined } }]);
+  expect(reported).toEqual(['src/content/projects/shown.md: thumbnail']);
 });
 
 test('the chosen projects become cards in the chosen order, leaving out and reporting any without a card', () => {

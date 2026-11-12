@@ -1,5 +1,6 @@
 ---
 import { pageLanguage, localizedPath } from '../locale';
+import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ProjectFacts from './ProjectFacts.astro';
 import PageContent from './PageContent.astro';
@@ -18,8 +19,12 @@ const lang = pageLanguage(Astro.url.pathname);
 
 interface Props {
   projects: Project[];
+  site: CollectionEntry<'site'>['data'];
+  about: CollectionEntry<'about'>['data'];
+  contact: CollectionEntry<'contact'>['data'];
 }
 
+const { site, about, contact } = Astro.props;
 const { grid, listed } = workProjects(Astro.props.projects);
 const image = grid[0] && (await getResponsiveImage(grid[0].cover.image))?.share;
 // One column template for every index row and its brief, so they line up. The
@@ -31,8 +36,11 @@ const marker = 'col-start-2 row-start-2 justify-self-end sm:col-start-4 sm:row-s
 ---
 
 <Base
-  title={{ cs: `${ui.cs.work} | ${credentialedName}`, en: `${ui.en.work} | ${credentialedName}` }}
+  title={{ cs: `${ui.cs.work} | ${credentialedName(site)}`, en: `${ui.en.work} | ${credentialedName(site)}` }}
   {image}
+  {site}
+  {about}
+  {contact}
 >
   <PageContent imagery={grid.length > 0}>
     <T as="h1" k="work" class="sr-only" />

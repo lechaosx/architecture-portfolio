@@ -17,10 +17,12 @@ import { profilePage } from '../structured-data';
 
 
 interface Props {
+  site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
+  contact: CollectionEntry<'contact'>['data'];
 }
 
-const { about } = Astro.props;
+const { site, about, contact } = Astro.props;
 const responsivePortrait = about.portrait
   ? await getResponsiveImage(about.portrait)
   : undefined;
@@ -35,14 +37,17 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
 
 <Base
   title={{
-    cs: `${ui.cs.about} | ${credentialedName}`,
-    en: `${ui.en.about} | ${credentialedName}`,
+    cs: `${ui.cs.about} | ${credentialedName(site)}`,
+    en: `${ui.en.about} | ${credentialedName(site)}`,
   }}
   image={responsivePortrait?.share}
   graph={{
     cs: [profilePage({ site: origin, url: new URL(localizedPath(Astro.url.pathname, 'cs'), origin).href })],
     en: [profilePage({ site: origin, url: new URL(localizedPath(Astro.url.pathname, 'en'), origin).href })],
   }}
+  {site}
+  {about}
+  {contact}
 >
   {/* A portrait opens the page: first when stacked, top-aligned with the bio
       beside it. */}
