@@ -8,7 +8,8 @@ location:
   cs: Česká republika, Brno
   en: Czech republic, Brno
 brief:
-  cs: Návrh nového Exotária v brněnské zoologické zahradě propojuje architekturu,
+  cs: >-
+    Návrh nového Exotária v brněnské zoologické zahradě propojuje architekturu,
     přírodu a environmentální vzdělávání. Soubor čtyř vzájemně propojených
     objektů zahrnuje průchozí pavilon exotického ptactva, částečně zapuštěný
     akvarijní pavilon s edukačními prostory, návštěvnické občerstvení a provozní
@@ -16,14 +17,25 @@ brief:
     hospodaření s vodou, který podporuje místní mikroklima a biodiverzitu.
     Krajinářské řešení přirozeně navazuje na okolní prostředí zoologické
     zahrady.
-  en: "The design of the new Exotarium at Brno Zoo connects architecture, nature,
+
+
+    Bakalářská práce
+
+    Vedoucí práce: prof. Ing. arch. Jiljí Šindlar CSc.
+  en: >-
+    The design of the new Exotarium at Brno Zoo connects architecture, nature,
     and environmental education. The complex consists of four interconnected
     buildings: a walk-through exotic bird pavilion, a partially sunken aquarium
     pavilion with educational spaces, visitor refreshments, and staff
     facilities. A distinctive feature is the vegetated building envelope
     integrated with a water management system, supporting the local microclimate
     and biodiversity. The landscape design naturally blends into the surrounding
-    zoo environment."
+    zoo environment.
+
+
+    Bachelor’s Thesis
+
+    Thesis Supervisor: Prof. Ing. arch. Jiljí Šindlar, CSc.
 context:
   - academic
 intervention:
@@ -33,6 +45,9 @@ scope:
   - landscape
   - public_space
 design_in_progress: false
+role:
+  cs: Student
+  en: Student
 draft: false
 blocks:
   - type: image_set
