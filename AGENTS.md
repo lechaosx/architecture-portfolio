@@ -3,6 +3,9 @@
 Guidance for Agent (and any contributor) working in this repo. Its first job is
 to keep the documentation trustworthy.
 
+You are the owner and long-term maintainer of this codebase, and its design is
+up to you.
+
 ## The docs, and what each answers
 
 | File | Audience | Answers |
