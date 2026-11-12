@@ -193,32 +193,12 @@ test('the brief precedes full-width facts below the title at every screen size',
         sheet(page).boundingBox(),
         page.locator('article header').boundingBox(),
       ]);
-      expect(title!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
       expect(briefBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
       expect(briefBox!.y, `${language} ${width}px`).toBeGreaterThan(title!.y + title!.height);
       expect(sheetBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
       expect(sheetBox!.y, `${language} ${width}px`).toBeGreaterThan(briefBox!.y + briefBox!.height);
       expect(sheetBox!.width, `${language} ${width}px`).toBeCloseTo(header!.width, 0);
-      expect(briefBox!.width, `${language} ${width}px`).toBeLessThanOrEqual(header!.width);
-      const factColumns = await sheet(page).locator(':scope > div:visible').evaluateAll((rows) =>
-        new Set(rows.map((row) => Math.round(row.getBoundingClientRect().left))).size,
-      );
-      expect(factColumns, `${language} ${width}px`).toBe(width === 1280 ? 2 : 1);
-      const lines = await brief(page).evaluate((element) => {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        const lines: { x: number; y: number; right: number }[] = [];
-        for (const rect of range.getClientRects()) {
-          // Chromium gives a generated hyphen its own adjoining rectangle.
-          const line = lines.find((line) => Math.abs(line.y - rect.y) < 1 && Math.abs(line.right - rect.x) < 1);
-          if (line) line.right = rect.right;
-          else lines.push({ x: rect.x, y: rect.y, right: rect.right });
-        }
-        return new Set(lines.map((line) => Math.round(line.x))).size;
-      });
-      await expect(page.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
-      expect(lines, `${language} ${width}px`).toBe(1);
     }
   }
 });

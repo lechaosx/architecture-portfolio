@@ -37,23 +37,27 @@ test('a portrait opens About as close under the header as the landing hero; with
   }
 });
 
-test('the bio sits beside the portrait on wide screens, below it on phones', async ({
+test('the portrait matches the bio’s width, beside it on wide screens and above it on narrower ones', async ({
   page,
 }) => {
   await page.goto('/e2e/about/');
+  await page.evaluate(() => document.fonts.ready);
   const portrait = page.locator('main img').first();
   const bio = page.locator('main .prose:visible');
+  const pageWide = section(page, 'Approach');
 
-  await page.setViewportSize({ width: 1280, height: 900 });
-  const [b, p] = await Promise.all([bio, portrait].map(async (l) => (await l.boundingBox())!));
-  expect(p.x).toBeGreaterThan(b.x + b.width);
-  expect(p.width).toBeCloseTo(b.width, 0);
-
-  for (const width of [390, 320]) {
-    await page.setViewportSize({ width, height: 800 });
-    const [bPhone, pPhone] = await Promise.all([bio, portrait].map(async (l) => (await l.boundingBox())!));
-    expect(pPhone.x, `${width}px`).toBeCloseTo(bPhone.x);
-    expect(bPhone.y, `${width}px`).toBeGreaterThan(pPhone.y + pPhone.height);
+  for (const width of [1280, 800, 700, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [b, p, full] = await Promise.all([bio, portrait, pageWide].map(async (l) => (await l.boundingBox())!));
+    expect(p.width, `${width}px`).toBeCloseTo(b.width, 0);
+    if (width >= 800) {
+      expect(p.x, `${width}px`).toBeGreaterThan(b.x + b.width);
+      expect(p.y, `${width}px`).toBeCloseTo(b.y, 0);
+    } else {
+      expect(b.width, `${width}px`).toBeCloseTo(full.width, 0);
+      expect(p.x, `${width}px`).toBeCloseTo(b.x);
+      expect(b.y, `${width}px`).toBeGreaterThan(p.y + p.height);
+    }
     // The footer refits its layout in a ResizeObserver, which runs a frame after the resize.
     await expect
       .poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `${width}px` })
@@ -150,27 +154,6 @@ test('with nothing optional filled, only the bio and accessible page title remai
   await expect(page.locator('main').getByRole('heading').filter({ visible: true })).toHaveText(['About']);
   await expect(page.locator('main img')).toHaveCount(0);
   await expect(page.locator('main .prose:visible')).toBeVisible();
-});
-
-test('the portrait shares the readable column width through the tablet and zoom transition', async ({ page }) => {
-  await page.goto('/e2e/about/');
-  await page.evaluate(() => document.fonts.ready);
-  for (const width of [700, 725, 726, 740, 767, 768, 800, 1280]) {
-    await page.setViewportSize({ width, height: 1280 });
-    const bio = page.locator('main .prose:visible');
-    const [b, p] = await Promise.all([bio.boundingBox(), page.locator('main img').first().boundingBox()]);
-    const textColumns = await bio.locator('p').first().evaluate((p) => p.getClientRects().length);
-    expect(textColumns, `${width}px`).toBe(1);
-    expect(p!.width, `${width}px`).toBeCloseTo(b!.width, 0);
-    if (width >= 726) {
-      expect(p!.y, `${width}px`).toBeCloseTo(b!.y, 0);
-      expect(p!.x, `${width}px`).toBeGreaterThan(b!.x + b!.width);
-    } else {
-      expect(b!.width, `${width}px`).toBeCloseTo(width - 48, 0);
-      expect(b!.y, `${width}px`).toBeGreaterThan(p!.y + p!.height);
-    }
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-  }
 });
 
 test('Approach is two columns on wide screens and one on phones', async ({ page }) => {

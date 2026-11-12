@@ -244,7 +244,6 @@ export function getStaticPaths() {
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },
-    { params: { fixture: 'work-readable' }, props: { projects: [{ ...alphaProject, data: { ...alphaProject.data, brief: { cs: text(12).cs, en: text(12).en } } }] } },
     { params: { fixture: 'work-credits' }, props: { projects: creditProjects } },
     { params: { fixture: 'work-project-link' }, props: { projects: [listed('link-only', { title: { cs: 'Externí projekt', en: 'External project' }, blocks: [], project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' })] } },
     { params: { fixture: 'work-role-only' }, props: { projects: [listed('role-only', {

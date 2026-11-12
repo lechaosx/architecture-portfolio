@@ -267,11 +267,13 @@ for (const interruption of ['reopen', 'scroll out'] as const) {
     await thumbnail.scrollIntoViewIfNeeded();
     await page.mouse.move(0, 0);
     await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(1, 3);
+    // CSS transitions run on real time; a transition starting shows the hover eases.
+    const image = thumbnail.locator('img');
+    await image.evaluate((element) =>
+      element.addEventListener('transitionrun', () => element.setAttribute('data-hover-eases', '')),
+    );
     await thumbnail.hover();
-    await page.waitForTimeout(50);
-    const easing = await renderedThumbnailScale(thumbnail);
-    expect(easing).toBeGreaterThan(1);
-    expect(easing).toBeLessThan(hovered);
+    await expect(image).toHaveAttribute('data-hover-eases');
     await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(hovered, 3);
   });
 }

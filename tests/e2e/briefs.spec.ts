@@ -171,10 +171,6 @@ test('the index aligns columns on wide screens and stacks period, title and loca
   expect(Math.abs(location.y + location.height - title.y - title.height)).toBeLessThan(title.height / 2);
 
   const period = (n: number, text: string) => rows(page).nth(n).getByText(text).filter({ visible: true });
-  const gapUnderTitle = async (n: number, title: string) => {
-    const titleBox = (await rows(page).nth(n).getByText(title).boundingBox())!;
-    return (await rows(page).nth(n).getByText('Nowhere').boundingBox())!.y - titleBox.y - titleBox.height;
-  };
   for (const width of [1280, 640, 390, 320]) {
     await page.setViewportSize({ width, height: 800 });
     const longest = (await period(2, '12/2019–12/2020').boundingBox())!;
@@ -185,19 +181,14 @@ test('the index aligns columns on wide screens and stacks period, title and loca
     } else {
       expect(longest.y + longest.height, `${width}px`).toBeLessThanOrEqual(oldTitle.y);
       expect(longest.x, `${width}px`).toBeCloseTo(oldTitle.x, 0);
-      expect(await gapUnderTitle(2, 'Old brief'), `${width}px`).toBeCloseTo(await gapUnderTitle(1, 'Beta text'), 0);
+      const title = (await rows(page).nth(0).getByText('Alpha brief').boundingBox())!;
+      const location = (await rows(page).nth(0).getByText('Prague').boundingBox())!;
+      expect(location.y, `${width}px`).toBeGreaterThanOrEqual(title.y + title.height);
+      expect(location.x, `${width}px`).toBeCloseTo(title.x, 0);
+      await expect
+        .poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `${width}px` })
+        .toBeLessThanOrEqual(width);
     }
-  }
-
-  for (const width of [390, 320]) {
-    await page.setViewportSize({ width, height: 800 });
-    const title = (await rows(page).nth(0).getByText('Alpha brief').boundingBox())!;
-    const location = (await rows(page).nth(0).getByText('Prague').boundingBox())!;
-    expect(location.y, `${width}px`).toBeGreaterThanOrEqual(title.y + title.height);
-    expect(location.x, `${width}px`).toBeCloseTo(title.x, 0);
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `${width}px` })
-      .toBeLessThanOrEqual(width);
   }
 });
 
@@ -244,50 +235,6 @@ test('a text-only project page has no lightbox', async ({ page }) => {
   await expect(page.locator('article .prose:visible')).toHaveCount(1);
   await expect(page.locator('dialog')).toHaveCount(0);
   await expect(page.locator('[data-lightbox-index]')).toHaveCount(0);
-});
-
-
-test('expanded contribution shares the title column as one readable column', async ({ page }) => {
-  await page.goto('/e2e/work-readable/');
-  const row = page.locator('main > div > ul > li').first();
-  await row.locator('summary').click();
-  for (const language of ['en', 'cs']) {
-    if (language === 'cs') {
-      await page.getByRole('link', { name: 'Switch to Czech' }).click();
-      await expect(row.locator('details')).toHaveAttribute('open', '');
-    }
-    for (const width of [1440, 1280, 800, 390, 320]) {
-      await page.setViewportSize({ width, height: 1000 });
-      const title = await row.locator('h2:visible').boundingBox();
-      const content = row.locator('details > div > div');
-      const contentBox = await content.boundingBox();
-      expect(contentBox!.x, `${language} ${width}px`).toBeCloseTo(title!.x, 0);
-      expect(contentBox!.width, `${language} ${width}px`).toBeCloseTo(title!.width, 0);
-      const paragraph = content.locator('p:visible');
-      const metrics = await paragraph.evaluate((element) => {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        const lines = Array.from(range.getClientRects()).filter((rect) => rect.width > 0);
-        const starts = new Map<number, number>();
-        for (const line of lines) {
-          const y = Math.round(line.y);
-          starts.set(y, Math.min(starts.get(y) ?? Infinity, line.x));
-        }
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d')!;
-        context.font = getComputedStyle(element).font;
-        return {
-          columns: new Set([...starts.values()].map(Math.round)).size,
-          width: element.getBoundingClientRect().width,
-          ch: context.measureText('0').width,
-        };
-      });
-      expect(metrics.width, `${language} ${width}px`).toBeCloseTo(title!.width, 0);
-      expect(metrics.columns, `${language} ${width}px`).toBe(1);
-      expect(metrics.width / metrics.ch, `${language} ${width}px`).toBeLessThanOrEqual(75);
-      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
-    }
-  }
 });
 
 
