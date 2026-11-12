@@ -15,7 +15,7 @@ images:
   - /uploads/11 AXONOMETRIE - VĚTŠÍ.webp
   - /uploads/12 AXONOMETRIE - VĚTŠÍ.webp
 projects:
-  - src/content/projects/Jundrov.md
+  - src/content/projects/RD Doubravník.md
   - src/content/projects/Křížovice.md
   - src/content/projects/Hasička.md
 ---
