@@ -4,9 +4,6 @@ images:
   - /uploads/Scene 2_2-1.webp
   - /uploads/Scene 13_8-2.webp
   - /uploads/Image_2-1.webp
-  - /uploads/09 AXONOMETRIE UBYTOVÁNÍ-1.webp
-  - /uploads/10 AXONOMETRIE PROVOZNÍ BUDOVY-2.webp
-  - /uploads/11 AXONOMETRIE DÍLNY3.webp
   - /uploads/D.1.1.14 AXO 1 - VĚTŠÍ-4.webp
   - /uploads/D.1.1.15 AXO 2 - VĚTŠÍ-3.webp
   - /uploads/11 AXONOMETRIE - VĚTŠÍ-2.webp
