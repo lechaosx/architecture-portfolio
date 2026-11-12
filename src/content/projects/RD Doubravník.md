@@ -18,7 +18,10 @@ intervention:
 scope:
   - architecture
 design_in_progress: false
-realization: construction
+realization: built
+role:
+  cs: Architektka, spoluautorka
+  en: Architect, co-author
 collaborators:
   - name: Ing. Jiří Železný
     role:
