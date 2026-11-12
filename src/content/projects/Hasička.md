@@ -36,11 +36,11 @@ blocks:
     images:
       - image: /uploads/03 NOVÝ PŮDORYS 1.NP.webp
         title:
-          cs: Půdorys 1.NP
+          cs: Půdorys 1. NP
           en: Ground Floor Plan
       - image: /uploads/04 NOVÝ PŮDORYS 2.NP.webp
         title:
-          cs: Půdorys 2.NP
+          cs: Půdorys 2. NP
           en: 2nd Floor
       - image: /uploads/05 POHLED VÝCHODNÍ.webp
         title:

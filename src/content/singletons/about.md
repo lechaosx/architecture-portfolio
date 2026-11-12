@@ -7,7 +7,7 @@ approaches:
     text:
       cs: "Kde není člověk, není místo. Kde není místo, chybí i člověk. Věřím, že
         zvláště v dnešní době plné informačního šumu, se lidé potřebují znovu
-        potkávat. Kde jinde než v kvalitních místech a prostorech. "
+        potkávat. Kde jinde než v kvalitních místech a prostorech."
       en: Where there are no people, there is no place. And where there is no place,
         people are missing too. I believe that, especially today, in a world
         full of information noise, people need to meet again. And where else, if
@@ -18,7 +18,7 @@ approaches:
       en: Scale
     text:
       cs: "Základním měřítkem je pro mne především výsledná spokojenost s návrhem.
-        Když nová intervence přiláká do místa či prostoru život. "
+        Když nová intervence přiláká do místa či prostoru život."
       en: For me, the most important measure of a successful design is the final sense
         of satisfaction it brings. When a new intervention draws life into a
         place or space.
@@ -41,7 +41,7 @@ approaches:
     text:
       cs: "Architektura je pokaždé jen nový složitý hlavolam bez jasného návodu. Je
         nutné ke každému přistupovat individuálně. A nakonec vždy se najde
-        řešení. "
+        řešení."
       en: Architecture is always a new and complex puzzle with no clear instructions.
         Each one needs to be approached individually. And in the end, there is
         always a solution.
@@ -53,7 +53,7 @@ bio:
     mají za úkol jen utužit něco již funkčního, návrhy interiérů do prostor,
     které svou funkci teprve hledají, a stejně tak vyhledávám i projekty, které
     mají být definovány od samého začátku – od studie, přes stavební povolení až
-    po realizaci. 
+    po realizaci.
 
 
     Na účelu nezáleží – se stejnou oblibou pracuji na rodinných domech,

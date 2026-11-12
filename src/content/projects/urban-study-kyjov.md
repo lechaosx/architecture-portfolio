@@ -43,8 +43,8 @@ brief:
     The urban concept emphasizes site permeability, connections between
     pedestrian and cycling routes, and the integration of sports facilities with
     public green spaces. The proposal also includes a new amphitheater, a
-    children's playground, community facilities, and recreational areas that
-    encourage social interaction and strengthen residents' connection to the
+    children’s playground, community facilities, and recreational areas that
+    encourage social interaction and strengthen residents’ connection to the
     place.
 context:
   - academic

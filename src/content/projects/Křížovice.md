@@ -13,7 +13,7 @@ brief:
     cílem vytvořit čtyři samostatné pokoje pro čtyři chlapce a společnou
     klubovnu, která poskytuje prostor pro společné hry, setkávání s přáteli a
     další dobrodružství této čtveřice.
-  en: Development of an architectural study for the renovation of a family home's
+  en: Development of an architectural study for the renovation of a family home’s
     attic, with the aim of creating four individual bedrooms for four boys and a
     shared playroom designed for games, gatherings with friends, and new
     adventures for the four brothers.
@@ -57,12 +57,12 @@ blocks:
       - image: /uploads/Řez techn.webp
         comparison_set: řez
         title:
-          cs: Řez - technický
+          cs: Řez – technický
           en: Technical section
       - image: /uploads/D.1.1.8 Řez A-A´ ARCHI.webp
         comparison_set: řez
         title:
-          cs: Řez - architektonický
+          cs: Řez – architektonický
           en: Section – architectural
       - image: /uploads/Pohled V+Z.webp
         title:

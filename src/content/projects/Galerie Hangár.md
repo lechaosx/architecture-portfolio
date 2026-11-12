@@ -121,7 +121,7 @@ blocks:
         The revitalization also includes new accommodation facilities, an
         aircraft assembly workshop, the renovation of the existing operations
         building with a restaurant, and the reorganization of public spaces. The
-        design respects the site's natural values, particularly the protected
+        design respects the site’s natural values, particularly the protected
         habitat of the European ground squirrel, while incorporating principles
         of energy efficiency and year-round use.
   - type: image_set

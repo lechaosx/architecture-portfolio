@@ -101,11 +101,11 @@ blocks:
           en: Site plan
       - image: /uploads/03 Půdorys 1.NP-1.png
         title:
-          cs: Půdorys 1.NP
+          cs: Půdorys 1. NP
           en: First floor plan
       - image: /uploads/04 Půdorys 1.S-1.png
         title:
-          cs: Půdorys 1.PP
+          cs: Půdorys 1. PP
           en: Basement floor plan
       - image: /uploads/09 Řez AA, BB, CC-1.png
         title:

@@ -33,11 +33,11 @@ blocks:
     images:
       - image: /uploads/03 Půdorys 1.NP-1.webp
         title:
-          cs: Půdorys 1.NP
+          cs: Půdorys 1. NP
           en: Floor plan 1st floor
       - image: /uploads/02 Půdorys 1.PP.webp
         title:
-          cs: Půdorys 1.PP
+          cs: Půdorys 1. PP
           en: Basement Floor Plan
       - image: /uploads/08 Řezy AA.webp
         title:
@@ -53,7 +53,7 @@ blocks:
           en: Section CC'
       - image: /uploads/04 Pohled jižní.webp
         title:
-          cs: "Pohled jižní "
+          cs: "Pohled jižní"
           en: South elevation
       - image: /uploads/05 Pohled severní.webp
         title:
