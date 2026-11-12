@@ -23,6 +23,11 @@ brief:
     letiště. Součástí revitalizace jsou také nové a rekonstruované provozní
     objekty, ubytování a úpravy veřejných prostranství. Návrh respektuje
     přírodní charakter území a ochranu kriticky ohroženého sysla obecného.
+
+
+    Diplomová práce
+
+    Vedoucí práce: prof. Ing. arch. Jiljí Šindlar CSc.
   en: >-
     The revitalization of Medlánky Airport in Brno connects sport aviation,
     architecture, public space, and community life. The aim is to transform the
@@ -40,6 +45,11 @@ brief:
     improvements to public spaces. The design respects the natural character of
     the site and the protection of the critically endangered European ground
     squirrel.
+
+
+    Master’s Thesis
+
+    Thesis Supervisor: Prof. Ing. arch. Jiljí Šindlar, CSc.
 context:
   - academic
 intervention:
@@ -53,6 +63,9 @@ scope:
   - landscape
   - public_space
 design_in_progress: false
+role:
+  cs: Architektka
+  en: Architect
 draft: false
 blocks:
   - type: image_set
