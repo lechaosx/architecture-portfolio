@@ -11,6 +11,8 @@ location:
 brief:
   cs: Zpracování architektonické studie rodinného domu v Doubravníku.
   en: Development of the architectural study for a family house in Doubravník.
+context:
+  - commissioned
 intervention:
   - new_build
 scope:
