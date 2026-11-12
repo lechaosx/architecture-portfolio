@@ -217,7 +217,7 @@ test('the brief precedes full-width facts below the title at every screen size',
         return new Set(lines.map((line) => Math.round(line.x))).size;
       });
       await expect(page.getByRole('heading', { name: /^(My contribution|Moje práce)$/ })).toHaveCount(0);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
       expect(lines, `${language} ${width}px`).toBe(1);
     }
   }

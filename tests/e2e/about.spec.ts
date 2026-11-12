@@ -54,10 +54,10 @@ test('the bio sits beside the portrait on wide screens, below it on phones', asy
     const [bPhone, pPhone] = await Promise.all([bio, portrait].map(async (l) => (await l.boundingBox())!));
     expect(pPhone.x, `${width}px`).toBeCloseTo(bPhone.x);
     expect(bPhone.y, `${width}px`).toBeGreaterThan(pPhone.y + pPhone.height);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-      `${width}px`,
-    ).toBe(true);
+    // The footer refits its layout in a ResizeObserver, which runs a frame after the resize.
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `${width}px` })
+      .toBeLessThanOrEqual(width);
   }
 });
 
@@ -169,7 +169,7 @@ test('the portrait shares the readable column width through the tablet and zoom 
       expect(b!.width, `${width}px`).toBeCloseTo(width - 48, 0);
       expect(b!.y, `${width}px`).toBeGreaterThan(p!.y + p!.height);
     }
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
 });
 

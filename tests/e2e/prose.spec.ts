@@ -30,7 +30,7 @@ test('149 visible Markdown words remain full width; 150 split only with room for
       expect(await columns(prose.nth(index)), `${width}px, block ${index}`).toBe(1);
     }
     expect(await columns(prose.nth(1)), `${width}px`).toBe(width >= 800 ? 2 : 1);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   }
 });
 

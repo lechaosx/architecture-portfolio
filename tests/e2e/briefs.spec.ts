@@ -195,10 +195,9 @@ test('the index aligns columns on wide screens and stacks period, title and loca
     const location = (await rows(page).nth(0).getByText('Prague').boundingBox())!;
     expect(location.y, `${width}px`).toBeGreaterThanOrEqual(title.y + title.height);
     expect(location.x, `${width}px`).toBeCloseTo(title.x, 0);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-      `${width}px`,
-    ).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `${width}px` })
+      .toBeLessThanOrEqual(width);
   }
 });
 
@@ -286,7 +285,7 @@ test('expanded contribution shares the title column as one readable column', asy
       expect(metrics.width, `${language} ${width}px`).toBeCloseTo(title!.width, 0);
       expect(metrics.columns, `${language} ${width}px`).toBe(1);
       expect(metrics.width / metrics.ch, `${language} ${width}px`).toBeLessThanOrEqual(75);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     }
   }
 });
