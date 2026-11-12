@@ -56,6 +56,10 @@ scope:
   - public_space
   - landscape
 design_in_progress: false
+project_url: https://www.mestokyjov.cz/novinky-mesto/2104-studenti-predstavili-vize-budoucnosti-kyjova
+role:
+  cs: Autor návrhu
+  en: Design author
 draft: false
 blocks:
   - type: image_set
