@@ -2,7 +2,7 @@
 title:
   cs: Hasičská stanice
   en: Fire Station
-thumbnail: /uploads/09 AXONOMETRIE-1.webp
+thumbnail: /uploads/09 AXONOMETRIE-4.webp
 from: "2023"
 to: "2023"
 location:
@@ -55,11 +55,11 @@ blocks:
         title:
           cs: Pohled jižní
           en: Southern elevation
-      - image: /uploads/09 AXONOMETRIE.webp
+      - image: /uploads/09 AXONOMETRIE-5.webp
         title:
           cs: Axonometrie
           en: Axonometry
-      - image: /uploads/10 AXONOMETRIE.webp
+      - image: /uploads/10 AXONOMETRIE-3.webp
         title:
           cs: Axonometrie
           en: Axonometry
