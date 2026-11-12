@@ -336,7 +336,8 @@ content:
         fields:
           - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Kdy přijímáte hovory, např. „Po–Pá 10–15“.' }
           - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Kdy přijímáte hovory, např. „Mon–Fri 10–15“.' }
-      - { name: ico, label: IČO, type: string, required: false, pattern: { regex: '^[0-9]{8}$|^$', message: 'Zadejte osm číslic bez mezer, např. 12345678.' }, description: 'Zobrazuje se v patičce pod jménem. Nepovinné.' }
+      - { name: ico, label: IČO, type: string, required: false, pattern: { regex: '^[0-9]{8}$|^$', message: 'Zadejte osm číslic bez mezer, např. 12345678.' }, description: 'Zobrazuje se na stránce Právní informace, spolu s údajem o zápisu v živnostenském rejstříku, a ve strojově čitelných údajích pro vyhledávače a AI asistenty. Nepovinné.' }
+      - { name: seat, label: Sídlo, type: string, required: false, pattern: *text, description: 'Adresa sídla, jak je zapsaná v živnostenském rejstříku, např. „Údolní 53, 602 00 Brno“. Zobrazuje se na stránce Právní informace. Nepovinné.' }
 
   - name: site
     label: Nastavení webu

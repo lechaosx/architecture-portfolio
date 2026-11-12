@@ -37,7 +37,9 @@ The same content generates `/llms.txt`, a bilingual index of pages, and
 
 The owner edits all of it through [Pages CMS](https://pagescms.org): the repo is
 connected at app.pagescms.org, which reads `.pages.yml` and commits straight to
-`master` as `pages-cms[bot]`, so pull before you push.
+`master` as `pages-cms[bot]`, so pull before you push. The legal texts are the
+exception: they are fixed in `src/components/LegalPage.astro` and fill in her
+details from the content.
 
 For a full-width project image, add **Obrázek nebo prezentace na celou šířku**
 under **Obsah stránky** and add one image. Multiple images in the same block

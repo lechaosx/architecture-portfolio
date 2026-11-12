@@ -194,7 +194,8 @@ The landing page at `/` gives a visitor her context before the work: chosen
 images, what she is and where, and her chosen projects, even where that repeats Work
 and About. The work page lists every project; the About page holds her bio,
 approach and the facts behind them. The contacts are in the footer of every
-page, so there is no separate Contact page — [Explicit].
+page, so there is no separate Contact page — [Explicit]. The legal information
+page stands outside the menu, linked from the footer — [Explicit].
 
 ### Pages open with their content; section headings mark sections — [Explicit]
 
@@ -299,7 +300,8 @@ paragraph, whether she typed one or two — [Implicit].
 Email, phone and when she receives calls (one short line per language, e.g.
 "Po–Pá 10–15") are in every page's footer; email and phone are links, and
 phone and hours show only when filled.
-Her IČO, which a Czech entrepreneur's site must show, is there too when filled —
+Under the © is a link to the legal information page, which holds the business
+details a Czech sole trader's site must show; the footer stays uncrowded —
 [Explicit].
 No contact form: there is no backend to receive one. The footer is the one
 place for contacts: no card or call to action above it repeats them —
@@ -310,9 +312,9 @@ Call hours use a clock icon and a call-hours label for screen readers —
 [Implicit].
 
 The layout — [Implicit]: on wide screens one row, the © on the left with the
-IČO on a line under it, the contacts in the middle and the theme and language
-switches on the right; each contact has its icon, which also separates it from
-the next.
+legal link on a line under it, the contacts in the middle and the theme and
+language switches on the right; each contact has its icon, which also separates
+it from the next.
 All of it is in the footer's small grey type — [Explicit]. When the complete
 row no longer fits, the contacts spread across the full first line, with the
 © block and the switches below. Only when that contact line does not fit do the
@@ -326,6 +328,22 @@ heading ("Na této parcele nic nestojí." / "Nothing stands on this plot."), a l
 asking whether the address is right and a link back to the studio, the landing
 page — copy [Explicit]. It is kept out of search engines and the sitemap, and nothing
 redirects.
+
+### Legal information page — [Explicit]
+
+**Právní informace** / **Legal information**, linked from the footer, opens
+with her business details: her name, registered seat and IČO when filled, and,
+with the IČO, that she is registered in the trade register. Then come the two
+notices her site must carry: how she handles the personal data of people who
+contact her (GDPR), and that Česká obchodní inspekce resolves consumer disputes
+out of court, with its web address. The texts are fixed in code, short and
+plain, and fill in her details from the content, so they follow her edits.
+They read in one column at every width, whatever their length — [Explicit].
+
+The details — [Implicit]: each part has a section heading and the page title is
+only for screen readers; her business details stand one per line. Like the
+other pages it switches language in place and is in the sitemap; the AI exports
+leave it out, as it says nothing about her work.
 
 ---
 
@@ -459,7 +477,7 @@ benefit from two; longer blocks split only when both columns retain a comfortabl
 minimum width. Each translation decides independently, and project briefs appear
 above the full-width facts. The length threshold and font-relative minimum follow
 the same rule across rich text, briefs, About descriptions and image descriptions
-— [Implicit].
+— [Implicit]. The legal information page is the exception — [Explicit].
 
 ### One lightbox per page, full-screen, controls in the corners — [Explicit]
 

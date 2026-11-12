@@ -42,7 +42,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | Path | What |
 |------|------|
 | `src/content/projects/*.md` | one file per project; the filename is the URL |
-| `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images and projects), `about.md`, `contact.md` (the footer's contacts and the landing page's location) |
+| `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images and projects), `about.md`, `contact.md` (the footer's contacts, the IČO and seat on the legal page, and the landing page's location) |
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/singletons.ts`, `src/published-projects.ts` | content as pages read it: no drafts, no images whose file is missing, warnings for those images and periods, the landing page's projects as cards |
@@ -52,7 +52,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/one-letter-words.ts` | Czech one-letter words kept off line ends, applied where text renders |
 | `src/period.ts` | project and About periods: the date format, checks, display and project order |
 | `src/layouts/Base.astro` | page shell; language, theme and reveal scripts |
-| `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro` | the pages, also rendered by the e2e fixtures |
+| `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro`, `LegalPage.astro` | the pages, also rendered by the e2e fixtures; `LegalPage` holds the legal texts, which name the mail provider (Seznam) and the hosting (GitHub Pages) and state that the site uses no cookies or analytics: update them when any of these changes |
 | `src/components/PageContent.astro` | the page container: content width, padding and the gap under the header |
 | `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |

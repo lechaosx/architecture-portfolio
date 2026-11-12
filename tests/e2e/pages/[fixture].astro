@@ -8,6 +8,7 @@ import type { CollectionEntry } from 'astro:content';
 import { projectCard, type Project } from '../../../src/projects';
 import Base from '../../../src/layouts/Base.astro';
 import AboutPage from '../../../src/components/AboutPage.astro';
+import LegalPage from '../../../src/components/LegalPage.astro';
 import LandingPage from '../../../src/components/LandingPage.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
 import ProjectPage from '../../../src/components/ProjectPage.astro';
@@ -236,6 +237,8 @@ export function getStaticPaths() {
     { params: { fixture: 'about-tall-portrait' }, props: { about: { ...about, portrait: '/e2e/images/tall.png' } } },
     { params: { fixture: 'language-height' }, props: { about: { ...about, bio: { cs: text(2).cs, en: Array(20).fill(text(4).en).join('\n\n') } } } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
+    { params: { fixture: 'legal' }, props: { legal: true } },
+    { params: { fixture: 'legal-bare' }, props: { legal: true, contact: bareContact } },
     { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, bio: { cs: words(150).cs, en: words(150).en } } } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
@@ -316,7 +319,7 @@ export function getStaticPaths() {
   return paths.map((path) => ({ ...path, props: { about: frameAbout, contact: frameContact, ...path.props } }));
 }
 
-const { about, contact, images, landing, paragraphs, project, projects } = Astro.props;
+const { about, contact, images, landing, legal, paragraphs, project, projects } = Astro.props;
 ---
 
 {
@@ -324,6 +327,8 @@ const { about, contact, images, landing, paragraphs, project, projects } = Astro
     <Base title={{ cs: 'Text', en: 'Text' }} {site} {about} {contact}>
       <div class="mx-auto max-w-6xl px-6 pt-12"><Paragraphs {...paragraphs} class="space-y-4" /></div>
     </Base>
+  ) : legal ? (
+    <LegalPage {site} {about} {contact} />
   ) : project ? (
     <ProjectPage {project} {site} {about} {contact} />
   ) : landing ? (

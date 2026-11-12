@@ -1,0 +1,77 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import PageContent from './PageContent.astro';
+import Prose from './Prose.astro';
+import SectionHeading from './SectionHeading.astro';
+import T from './T.astro';
+import { credentialedName } from '../site-title';
+import { ui } from '../i18n';
+
+interface Props {
+  site: CollectionEntry<'site'>['data'];
+  about: CollectionEntry<'about'>['data'];
+  contact: CollectionEntry<'contact'>['data'];
+}
+
+const { site, about, contact } = Astro.props;
+const { email, ico, seat } = contact;
+const mail = `[${email}](mailto:${email})`;
+const githubPrivacy = 'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement';
+const personalData = {
+  cs: `Správcem vašich osobních údajů jsem já, ${site.name}; napsat mi můžete na ${mail}.
+
+Když mi napíšete nebo zavoláte, zpracovávám, co mi sdělíte: jméno, kontaktní údaje a informace o vašem projektu. Údaje mi poskytujete dobrovolně; bez nich vám ale nemohu odpovědět ani uzavřít smlouvu. Potřebuji je k odpovědi na poptávku a k přípravě a plnění smlouvy, což umožňuje čl. 6 odst. 1 písm. b) GDPR, a k vedení záznamů, které mi ukládá zákon, podle písm. c) téhož odstavce. Uchovávám je po dobu poptávky nebo smlouvy a poté tak dlouho, jak vyžadují předpisy. Moji e-mailovou schránku provozuje Seznam.cz.
+
+Web běží na GitHub Pages. GitHub z bezpečnostních důvodů zaznamenává IP adresy návštěvníků a nakládá s nimi podle svého [prohlášení o ochraně osobních údajů](${githubPrivacy}). Web nepoužívá cookies ani analytické nástroje; váš prohlížeč si ukládá jen technická nastavení zobrazení, např. zvolený motiv a jazyk.
+
+Máte právo na přístup ke svým údajům, na jejich opravu, výmaz a omezení zpracování, na jejich přenositelnost a právo vznést námitku. Stížnost můžete podat u Úřadu pro ochranu osobních údajů, [uoou.gov.cz](https://uoou.gov.cz/).`,
+  en: `I, ${site.name}, am the controller of your personal data; you can write to me at ${mail}.
+
+When you email or call me, I process what you tell me: your name, contact details and information about your project. Providing it is voluntary, but without it I cannot reply or enter into a contract. I need it to answer your enquiry and to prepare and perform a contract (Article 6(1)(b) GDPR), and for the records the law requires me to keep (Article 6(1)(c) GDPR). I keep it for the duration of the enquiry or contract, then as long as the law requires. My mailbox is hosted by Seznam.cz.
+
+The site is hosted on GitHub Pages. GitHub logs visitors’ IP addresses for security purposes and handles them under its [privacy statement](${githubPrivacy}). The site uses no cookies or analytics; your browser stores only display settings such as the theme and language you choose.
+
+You have the right to access your data, to have it rectified, erased or its processing restricted, to data portability and to object. You can lodge a complaint with the Office for Personal Data Protection (Úřad pro ochranu osobních údajů), [uoou.gov.cz](https://uoou.gov.cz/).`,
+};
+const consumerDisputes = {
+  cs: 'Jste-li spotřebitel a spor ze smlouvy se mnou se nám nepodaří vyřešit dohodou, můžete navrhnout jeho mimosoudní řešení. Příslušným subjektem je Česká obchodní inspekce:\\\n[coi.gov.cz/informace-o-adr](https://coi.gov.cz/informace-o-adr/)',
+  en: 'If you are a consumer and we cannot settle a dispute over a contract with me, you can propose out-of-court resolution. The competent body is the Czech Trade Inspection Authority (Česká obchodní inspekce):\\\n[coi.gov.cz/en/information-about-adr](https://coi.gov.cz/en/information-about-adr/)',
+};
+---
+
+<Base
+  title={{
+    cs: `${ui.cs.legal} | ${credentialedName(site)}`,
+    en: `${ui.en.legal} | ${credentialedName(site)}`,
+  }}
+  {site}
+  {about}
+  {contact}
+>
+  <PageContent>
+    <T as="h1" k="legal" class="sr-only" />
+    {/* One column whatever the texts' length (FEATURES → "Legal information
+        page"). Important: global.css sets the columns outside Tailwind's
+        layers, where they outrank any utility. */}
+    <div class="[&_.prose-columns]:columns-1!">
+      <section>
+        <SectionHeading k="businessDetails" />
+        <div class="leading-7 text-neutral-700">
+          <p>{site.name}</p>
+          {seat && <p><T k="seat" />: {seat}</p>}
+          {ico && <p><T k="ico" />: {ico}</p>}
+          {ico && <T as="p" k="tradeRegister" />}
+        </div>
+      </section>
+      <section class="mt-16 sm:mt-24">
+        <SectionHeading k="personalData" />
+        <Prose {...personalData} />
+      </section>
+      <section class="mt-16 sm:mt-24">
+        <SectionHeading k="consumerDisputes" />
+        <Prose {...consumerDisputes} />
+      </section>
+    </div>
+  </PageContent>
+</Base>

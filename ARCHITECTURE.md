@@ -75,6 +75,8 @@ nothing in `src/` or `scripts/` knows about them [Explicit]:
   `tests/e2e/images`, served at `/e2e/images/` — [Implicit].
 - The About tests render `AboutPage.astro` with fixture data, everything filled
   and nothing optional filled — [Implicit].
+- The legal page tests render `LegalPage.astro` with the fixture architect and
+  with contacts holding only an email — [Implicit].
 - The landing tests render `LandingPage.astro` with no image, one SVG, and an
   SVG and two rasters, over chosen fixture projects, and once with none chosen;
   services and the place are filled only where there are images — [Implicit].
@@ -252,11 +254,13 @@ cards, share previews and structured data — [Implicit].
 
 ### Pages are components the e2e fixtures render — [Implicit]
 
-`LandingPage`, `WorkPage`, `AboutPage` and `ProjectPage` each render a whole
-page, its frame included, from the data passed in, so the e2e fixtures can
-render them with their own. Their routes in `src/pages/` only load the content
-and pass it on; `Base`, `Nav` and `Footer` take the site, About and contact
-data they show as props.
+`LandingPage`, `WorkPage`, `AboutPage`, `ProjectPage` and `LegalPage` each
+render a whole page, its frame included, from the data passed in, so the e2e
+fixtures can render them with their own. `LegalPage` keeps its notices as
+Markdown templates filled from the site and contact data and rendered through
+`Prose`. Their routes in `src/pages/` only load the content and pass it on;
+`Base`, `Nav` and `Footer` take the site, About and contact data they show as
+props.
 `src/projects.ts` holds the one project order and makes a project's card with
 its cover, so a share image that falls back to a page's first cover matches its
 first card, and both AI exports list projects in the same order.
@@ -363,7 +367,9 @@ do not inflate its length. Short blocks fill their container, while longer block
 balance across at most two columns only when each keeps a font-relative minimum
 width, without client-side measurement. About’s equal-width text and portrait
 tracks retain their own responsive layout; project facts occupy the full width
-below the brief, and the lightbox retains its card’s existing column limit.
+below the brief, the lightbox retains its card’s existing column limit, and the
+legal page keeps one column through an important utility in `LegalPage.astro`,
+since `global.css` sets `.prose-columns` outside Tailwind’s layers.
 
 ### Self-hosted Roboto via @fontsource — [Implicit]
 

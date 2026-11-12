@@ -1,0 +1,7 @@
+---
+export const getStaticPaths = () => ['cs', 'en'].map((lang) => ({ params: { lang } }));
+import LegalPage from '../../components/LegalPage.astro';
+import { about, contact, site } from '../../singletons';
+---
+
+<LegalPage {site} {about} {contact} />

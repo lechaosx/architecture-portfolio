@@ -205,7 +205,7 @@ test.describe(() => {
 
 test('the sitemap lists the pages but not the not-found page', async ({ request }) => {
   const sitemap = await (await request.get('/sitemap-0.xml')).text();
-  for (const path of ['/cs/', '/cs/work/', '/cs/about/', '/en/', '/en/work/', '/en/about/']) {
+  for (const path of ['/cs/', '/cs/work/', '/cs/about/', '/cs/legal/', '/en/', '/en/work/', '/en/about/', '/en/legal/']) {
     expect(sitemap).toContain(`<loc>${origin}${path}</loc>`);
   }
   for (const path of ['/404/', '/404.html', '/', '/about/', '/work/']) {

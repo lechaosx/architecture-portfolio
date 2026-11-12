@@ -13,7 +13,7 @@ interface Props {
 }
 const { site, contact, bilingual = false } = Astro.props;
 const year = new Date().getFullYear();
-const { email, phone, hours, ico } = contact;
+const { email, phone, hours } = contact;
 const item = 'flex w-max items-center gap-2 whitespace-nowrap';
 const icon = 'size-3.5 shrink-0 text-neutral-500';
 ---
@@ -46,7 +46,11 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
     <div class="footer-details flex items-center justify-between">
       <div class="footer-copyright w-max">
         <p>© {year} {site.name}</p>
-        {ico && <p><T {bilingual} k="ico" /> {ico}</p>}
+        <p>
+          <a href={localizedPath('/legal/', lang)} data-localized-path="/legal/" class="text-link">
+            <T {bilingual} k="legal" />
+          </a>
+        </p>
       </div>
 
       {/* Pulled out by the buttons' inner space, so the switches end on the page edge. */}

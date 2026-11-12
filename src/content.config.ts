@@ -168,6 +168,7 @@ const contact = defineCollection({
     location: bilingual.optional(),
     hours: bilingual.optional(),
     ico: z.string().optional(),
+    seat: z.string().optional(),
   }),
 });
 

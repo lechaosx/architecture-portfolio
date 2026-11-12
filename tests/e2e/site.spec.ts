@@ -231,22 +231,18 @@ const middle = async (item: Locator) => {
   return Math.round(box.y + box.height / 2);
 };
 
-// The © and the IČO under it form one block; its middle is the row's middle.
-const blockMiddle = async (top: Locator, bottom: Locator) => {
-  const [t, b] = await Promise.all([top.boundingBox(), bottom.boundingBox()]);
-  return Math.round((t!.y + b!.y + b!.height) / 2);
-};
-
 const footerParts = (page: Page) => {
   const footer = page.locator('footer');
+  const copyright = footer.getByText(`© ${new Date().getFullYear()} ${site.name}`);
   return {
     footer,
-    copyright: footer.getByText(`© ${new Date().getFullYear()} ${site.name}`),
+    copyright,
+    copyrightBlock: copyright.locator('..'),
     email: footer.getByRole('link', { name: contact.email }),
     phone: footer.getByRole('link', { name: contact.phone }),
     hours: (lang: 'en' | 'cs') => footer.getByText(contact.hours[lang], { exact: true }),
-    ico: (lang: 'en' | 'cs') =>
-      footer.getByText(`${lang === 'cs' ? 'IČO' : 'Business ID'} ${contact.ico}`, { exact: true }),
+    legal: (lang: 'en' | 'cs') =>
+      footer.getByRole('link', { name: lang === 'cs' ? 'Právní informace' : 'Legal information', exact: true }),
     theme: footer.locator('[data-theme-toggle]'),
     language: footer.locator('[data-lang-toggle]'),
   };
@@ -257,7 +253,7 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/e2e/work/');
-  const { footer, copyright, email, phone, hours, ico, theme, language } = footerParts(page);
+  const { footer, copyright, copyrightBlock, email, phone, hours, theme, language } = footerParts(page);
 
   await expect(email).toHaveAttribute('href', `mailto:${contact.email}`);
   await expect(phone).toHaveAttribute('href', `tel:${contact.phone.replace(/\s+/g, '')}`);
@@ -268,7 +264,7 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
       const at = `${lang} at ${width}px`;
       await page.setViewportSize({ width, height: 900 });
       const row = [copyright, email, phone, hours(lang), theme, language];
-      const middles = await Promise.all([blockMiddle(copyright, ico(lang)), ...row.slice(1).map(middle)]);
+      const middles = await Promise.all([middle(copyrightBlock), ...row.slice(1).map(middle)]);
       expect(new Set(middles).size, at).toBe(1);
       const lefts = await Promise.all(row.map(async (item) => (await item.boundingBox())!.x));
       expect(lefts, at).toEqual([...lefts].sort((a, b) => a - b));
@@ -278,33 +274,34 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
   await expect(footer.getByRole('heading')).toHaveCount(0);
 });
 
-test('the footer shows phone, hours and IČO only when filled', async ({ page }) => {
+test('the footer shows phone and hours only when filled', async ({ page }) => {
   // tests/e2e/pages/[fixture].astro: contacts with only an email.
   await page.goto('/e2e/landing-bare/');
   const { footer, email } = footerParts(page);
   await expect(email).toBeVisible();
   await expect(footer.getByRole('listitem')).toHaveCount(1);
-  await expect(footer.getByText(/IČO|Business ID/)).toHaveCount(0);
 });
 
-test('the footer shows the IČO under the ©, in the visitor’s language, in every layout', async ({ page }) => {
+test('the footer links to the legal information under the ©, in the visitor’s language, in every layout', async ({ page }) => {
   await page.goto('/e2e/work/');
   await page.evaluate(() => document.fonts.ready);
-  const { copyright, ico, language } = footerParts(page);
+  const { footer, copyright, legal, language } = footerParts(page);
+  // The IČO and the other business details are on the legal page.
+  await expect(footer.getByText(contact.ico)).toHaveCount(0);
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await language.click();
-    for (const width of [1280, 700, 360]) {
+    for (const width of [1280, 700, 360, 320]) {
       const at = `${lang} at ${width}px`;
       await page.setViewportSize({ width, height: 900 });
-      await expect(ico(lang), at).toBeVisible();
+      await expect(legal(lang), at).toBeVisible();
       await expect(async () => {
-        const [c, i] = await Promise.all([copyright.boundingBox(), ico(lang).boundingBox()]);
-        expect(Math.round(i!.x), at).toBe(Math.round(c!.x));
-        expect(i!.y, at).toBeGreaterThanOrEqual(c!.y + c!.height - 1);
+        const [c, l] = await Promise.all([copyright.boundingBox(), legal(lang).boundingBox()]);
+        expect(Math.round(l!.x), at).toBe(Math.round(c!.x));
+        expect(l!.y, at).toBeGreaterThanOrEqual(c!.y + c!.height - 1);
       }).toPass();
     }
   }
-  await expect(ico('en')).toBeHidden();
+  await expect(legal('en')).toBeHidden();
 });
 
 test('screen readers hear the footer hours as call hours, in the visitor’s language', async ({ page }) => {
@@ -321,7 +318,7 @@ test('when the contact line does not fit the footer stacks the contacts in a col
   page,
 }) => {
   await page.goto('/e2e/work/');
-  const { footer, copyright, email, phone, hours, ico, theme } = footerParts(page);
+  const { footer, copyright, copyrightBlock, email, phone, hours, theme } = footerParts(page);
   const icons = footer.getByRole('listitem').locator('svg');
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
@@ -348,7 +345,7 @@ test('when the contact line does not fit the footer stacks the contacts in a col
       );
       expect(iconLefts, `${at}: icon edge on the ©'s edge`).toEqual(iconLefts.map(() => Math.round(c.x)));
       expect(c.y, at).toBeGreaterThan(h.y + h.height);
-      expect(await middle(theme), at).toBe(await blockMiddle(copyright, ico(lang)));
+      expect(await middle(theme), at).toBe(await middle(copyrightBlock));
     }
   }
 });
@@ -652,7 +649,7 @@ for (const path of [
 test('the footer spreads a complete contact line across the width above copyright and switches when the full row does not fit', async ({ page }) => {
   await page.goto('/e2e/work/');
   await page.evaluate(() => document.fonts.ready);
-  const { copyright, email, phone, hours, ico, theme, language } = footerParts(page);
+  const { copyright, copyrightBlock, email, phone, hours, theme, language } = footerParts(page);
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await language.click();
     for (const width of [600, 640, 768]) {
@@ -669,7 +666,7 @@ test('the footer spreads a complete contact line across the width above copyrigh
         expect(firstContact!.x, at).toBeCloseTo(c!.x, 0);
         expect(lastContact!.x + lastContact!.width, at).toBeCloseTo(width - c!.x, 0);
         expect(c!.y, at).toBeGreaterThan(contacts!.y + contacts!.height);
-        expect(await middle(theme), at).toBe(await blockMiddle(copyright, ico(lang)));
+        expect(await middle(theme), at).toBe(await middle(copyrightBlock));
       }).toPass();
     }
   }
