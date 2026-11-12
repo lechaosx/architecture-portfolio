@@ -1,5 +1,4 @@
 ---
-portrait: /uploads/profil.webp
 approaches:
   - label:
       cs: Místo
