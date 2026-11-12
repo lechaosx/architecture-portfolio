@@ -7,10 +7,16 @@ images:
   - /uploads/09 AXONOMETRIE UBYTOVÁNÍ-1.webp
   - /uploads/10 AXONOMETRIE PROVOZNÍ BUDOVY-2.webp
   - /uploads/11 AXONOMETRIE DÍLNY3.webp
-  - /uploads/D.1.1.14 AXO 1 - VĚTŠÍ-2.webp
-  - /uploads/D.1.1.15 AXO 2 - VĚTŠÍ-1.webp
-  - /uploads/13 Axo 1 - větší-1.webp
-  - /uploads/14 Axo 2 - větší-1.webp
+  - /uploads/D.1.1.14 AXO 1 - VĚTŠÍ-4.webp
+  - /uploads/D.1.1.15 AXO 2 - VĚTŠÍ-3.webp
+  - /uploads/11 AXONOMETRIE - VĚTŠÍ-2.webp
+  - /uploads/12 AXONOMETRIE - VĚTŠÍ-1.webp
+  - /uploads/13 Axo 1 - větší-3.webp
+  - /uploads/14 Axo 2 - větší-2.webp
+  - /uploads/09 AXO s-2.webp
+  - /uploads/Image1.webp
+  - /uploads/Image3-2.webp
+  - /uploads/Image23_000-1.webp
 projects:
   - src/content/projects/RD Doubravník.md
   - src/content/projects/Křížovice.md
