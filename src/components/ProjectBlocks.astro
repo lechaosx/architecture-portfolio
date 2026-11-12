@@ -4,8 +4,8 @@ import type { CollectionEntry } from 'astro:content';
 import Carousel from './Carousel.astro';
 import Prose from './Prose.astro';
 import T from './T.astro';
-import { imageText } from './gallery';
-import { ui } from '../i18n';
+import { imageAlt, imageText, type GalleryImage, type ImageContext } from './gallery';
+import { ui, type Lang } from '../i18n';
 import {
   coverSizes,
   displayImageUrl,
@@ -21,12 +21,16 @@ type ProjectBlock = CollectionEntry<'projects'>['data']['blocks'][number];
 
 interface Props {
   projectId: string;
+  project: ImageContext;
   blocks: ProjectBlock[];
   responsiveImages: (ResponsiveImage | undefined)[];
   coverPath?: string;
 }
 
-const { projectId, blocks, responsiveImages, coverPath } = Astro.props;
+const { projectId, project, blocks, responsiveImages, coverPath } = Astro.props;
+// The button's own short name; the image's alt describes it to machines only.
+const buttonLabel = (item: GalleryImage, index: number, language: Lang) =>
+  [`${ui[language].openImage} ${index + 1}`, imageText(item, 'title', language)].filter(Boolean).join(': ');
 let pageImageIndex = 0;
 const displayBlocks = blocks.map((block, blockIndex) =>
   block.type === 'text'
@@ -39,9 +43,13 @@ const displayBlocks = blocks.map((block, blockIndex) =>
             item,
             index,
             responsive: responsiveImages[index],
-            title: {
-              cs: imageText(item, 'title', 'cs'),
-              en: imageText(item, 'title', 'en'),
+            alt: {
+              cs: imageAlt(item, project, 'cs') ?? '',
+              en: imageAlt(item, project, 'en') ?? '',
+            },
+            label: {
+              cs: buttonLabel(item, index, 'cs'),
+              en: buttonLabel(item, index, 'en'),
             },
             loading: index === 0 ? 'eager' : 'lazy',
             decoding: index === 0 ? 'auto' : 'async',
@@ -66,7 +74,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
       if (block.type === 'gallery') {
         return (
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {block.images.map(({ item, index, responsive, title, loading, decoding, morph }) => {
+            {block.images.map(({ item, index, responsive, alt, label, loading, decoding, morph }) => {
               const aspectRatio = responsive
                 ? responsive.source.width / responsive.source.height
                 : 1;
@@ -81,8 +89,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
                   style={morph ? morphName : undefined}
                 >
                   <T
-                    cs={`${ui.cs.openImage} ${index + 1}`}
-                    en={`${ui.en.openImage} ${index + 1}`}
+                    {...label}
                     class="sr-only"
                   />
                   <img
@@ -102,8 +109,9 @@ const morphName = `view-transition-name: cover-${projectId}`;
                       ],
                       1.05,
                     )}
-                    alt={title[lang] ?? ''}
-                    data-alt-cs={title.cs ?? ''} data-alt-en={title.en ?? ''}
+                    alt={alt[lang]}
+                    data-alt-cs={alt.cs} data-alt-en={alt.en}
+                    aria-hidden="true"
                     {loading}
                     {decoding}
                     style="--thumbnail-hover-scale: 1.05"
@@ -117,7 +125,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
       }
 
       if (block.images.length === 1) {
-        const [{ item, index, responsive, title, loading, decoding, morph }] = block.images;
+        const [{ item, index, responsive, alt, label, loading, decoding, morph }] = block.images;
         return (
           <button
             type="button"
@@ -129,8 +137,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
             style={morph ? morphName : undefined}
           >
             <T
-              cs={`${ui.cs.openImage} ${index + 1}`}
-              en={`${ui.en.openImage} ${index + 1}`}
+              {...label}
               class="sr-only"
             />
             <img
@@ -139,8 +146,9 @@ const morphName = `view-transition-name: cover-${projectId}`;
               sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
               width={responsive?.source.width}
               height={responsive?.source.height}
-              alt={title[lang] ?? ''}
-              data-alt-cs={title.cs ?? ''} data-alt-en={title.en ?? ''}
+              alt={alt[lang]}
+              data-alt-cs={alt.cs} data-alt-en={alt.en}
+              aria-hidden="true"
               {loading}
               {decoding}
               style="--thumbnail-hover-scale: 1.02"
@@ -152,7 +160,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
 
       return (
         <Carousel items={block.images}>
-          {({ item, index, responsive, title, loading, decoding, morph }: (typeof block.images)[number]) => (
+          {({ item, index, responsive, alt, label, loading, decoding, morph }: (typeof block.images)[number]) => (
             <button
               type="button"
               data-lightbox-index={index}
@@ -160,8 +168,7 @@ const morphName = `view-transition-name: cover-${projectId}`;
               style={morph ? morphName : undefined}
             >
               <T
-                cs={`${ui.cs.openImage} ${index + 1}`}
-                en={`${ui.en.openImage} ${index + 1}`}
+                {...label}
                 class="sr-only"
               />
               <img
@@ -170,8 +177,9 @@ const morphName = `view-transition-name: cover-${projectId}`;
                 sizes="(min-width: 1152px) 1104px, calc(100vw - 48px)"
                 width={responsive?.source.width}
                 height={responsive?.source.height}
-                alt={title[lang] ?? ''}
-                data-alt-cs={title.cs ?? ''} data-alt-en={title.en ?? ''}
+                alt={alt[lang]}
+                data-alt-cs={alt.cs} data-alt-en={alt.en}
+                aria-hidden="true"
                 {loading}
                 {decoding}
                 class="size-full object-contain"

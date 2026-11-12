@@ -195,7 +195,7 @@ test.describe(() => {
     expect(images).toContainEqual({
       '@type': 'ImageObject',
       contentUrl: `${origin}/e2e/images/vector.svg`,
-      name: 'Vektor 17',
+      name: 'Vektor 17 – Testovací projekt, Nikde',
       caption: 'Krátká poznámka.',
     });
     for (const image of images.slice(1)) expect(image.name ?? image.caption).toBeTruthy();
@@ -324,7 +324,7 @@ test('English structured data follows the page while the architect identity stay
   const work = node(await graph(page), 'CreativeWork')!;
   expect(work.image).toContainEqual({
     '@type': 'ImageObject', contentUrl: `${origin}/e2e/images/vector.svg`,
-    name: 'Vector 17', caption: 'A short note.',
+    name: 'Vector 17 – Test project, Nowhere', caption: 'A short note.',
   });
   await page.goto('/en/e2e/about/');
   const architect = node(await graph(page), 'Person')!;

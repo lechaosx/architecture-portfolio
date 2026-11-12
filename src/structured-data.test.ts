@@ -141,7 +141,7 @@ describe('creativeWork', () => {
         {
           '@type': 'ImageObject',
           contentUrl: 'https://example.cz/uploads/P%C5%AFdorys%201.svg',
-          name: 'Půdorys',
+          name: 'Půdorys – Galerie, Brno',
         },
         {
           '@type': 'ImageObject',
@@ -166,8 +166,8 @@ describe('creativeWork', () => {
       responsiveCover: drawing('selected'),
     });
     expect(image).toEqual([
-      { '@type': 'ImageObject', contentUrl: 'https://example.cz/_responsive/selected/2560.webp', name: 'Pohled', caption: 'Popis' },
-      { '@type': 'ImageObject', contentUrl: 'https://example.cz/_responsive/first/2560.webp', name: 'První' },
+      { '@type': 'ImageObject', contentUrl: 'https://example.cz/_responsive/selected/2560.webp', name: 'Pohled – Galerie, Brno', caption: 'Popis' },
+      { '@type': 'ImageObject', contentUrl: 'https://example.cz/_responsive/first/2560.webp', name: 'První – Galerie, Brno' },
     ]);
   });
 
@@ -194,7 +194,7 @@ describe('creativeWork', () => {
       {
         '@type': 'ImageObject',
         contentUrl: 'https://example.cz/_responsive/cover/2560.webp',
-        name: 'Pohled',
+        name: 'Pohled – Galerie, Brno',
       },
     ]);
   });

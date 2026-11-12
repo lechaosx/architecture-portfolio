@@ -1,5 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
-import type { GalleryImage } from './components/gallery';
+import { imageAlt, type GalleryImage } from './components/gallery';
 import { localizedPath } from './locale';
 import { ui, type Lang } from './i18n';
 import { largeImageUrl, type ResponsiveImage } from './images';
@@ -147,7 +147,7 @@ export function creativeWork({
     award: text(project.award?.[lang]),
     creativeWorkStatus: project.realization && ui[lang][project.realization],
     image: represented.map(({ item, responsive }) => {
-      const name = text(item.title?.[lang]);
+      const name = imageAlt(item, project, lang);
       const caption = text(item.description?.[lang]);
       return compact({
         '@type': 'ImageObject',

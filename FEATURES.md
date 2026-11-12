@@ -549,11 +549,19 @@ strip stays one row and scrolls sideways — [Implicit].
 ### Titles and descriptions; the card's back — [Explicit]
 
 Optional bilingual title and description per image, shown only in the lightbox.
-On the page, the title is also the image's alt text in the current language,
-and an untitled image has none — [Explicit]. Both are machine-readable in the
-structured data — [Implicit] — and `llms-full.txt` with links to the images —
-[Explicit]. The title shows in the top-left set strip: a titled image outside a set gets a strip of one, an image with
-neither title nor set gets none. A description lives on the card's back, reached
+Wherever an image is described to machines (alt text on the page and in the
+lightbox, the structured data's image name), a titled image is named by its
+title followed by its project's title and location in the current language, so
+the title can stay short — [Explicit]; a name the text already contains is left
+out — [Implicit]. An untitled image has none — [Explicit]. Screen readers hear
+an image's button on the page by its own short name, its position and title
+("Otevřít obrázek 2: Řezy", only the position when untitled), instead of the alt
+text — [Explicit]. Descriptions are machine-readable in the structured data —
+[Implicit] — and titles and descriptions are in `llms-full.txt` with links to
+the images — [Explicit]. There the titles stay plain, since each image is
+already under its project's heading — [Implicit]. The title shows in the
+top-left set strip: a titled image outside a set gets a strip of one, an image
+with neither title nor set gets none. A description lives on the card's back, reached
 with the bottom-left toggle, which turns the card over in 3D:
 
 - The back is paper in the page's theme, the drawing's shape and size, growing

@@ -12,6 +12,7 @@ import {
   containedImageSize,
   deepZoomViewport,
   displayedSwipeOffset,
+  imageAlt,
   imageText,
   layerPosition,
   lightboxAreas,
@@ -43,6 +44,40 @@ describe('imageText', () => {
   test('treats a missing field as absent', () => {
     expect(imageText(image({ title: { cs: 'Nadpis', en: 'Title' } }), 'description', 'en')).toBeUndefined();
     expect(imageText(undefined, 'title', 'en')).toBeUndefined();
+  });
+});
+
+describe('imageAlt', () => {
+  const project = {
+    title: { cs: 'Exotárium v Zoo Brno', en: 'Exotarium at Brno Zoo' },
+    location: { cs: 'Česká republika, Brno', en: 'Czech Republic, Brno' },
+  };
+  const titled = (cs: string, en = cs) => image({ title: { cs, en } });
+
+  test('places the title in its project and location, in the requested language', () => {
+    const jundrov = { title: { cs: 'RD Jundrov', en: 'Family house Jundrov' }, location: { cs: 'Brno', en: 'Brno' } };
+    expect(imageAlt(titled('Řezy', 'Sections'), jundrov, 'cs')).toBe('Řezy – RD Jundrov, Brno');
+    expect(imageAlt(titled('Řezy', 'Sections'), jundrov, 'en')).toBe('Sections – Family house Jundrov, Brno');
+  });
+
+  test('names each place once, matching word starts in any case', () => {
+    expect(imageAlt(titled('Řezy'), project, 'cs')).toBe('Řezy – Exotárium v Zoo Brno, Česká republika');
+    expect(imageAlt(titled('Exotárium v zoo Brno'), project, 'cs')).toBe('Exotárium v zoo Brno – Česká republika');
+    expect(imageAlt(titled('Přemostění'), { title: { cs: 'Most', en: 'Most' } }, 'cs')).toBe('Přemostění – Most');
+  });
+
+  test('a Czech inflection of a place still names it', () => {
+    const kyjov = { title: { cs: 'Sportovní areál a park v Kyjově', en: 'Sports grounds and park in Kyjov' }, location: { cs: 'Kyjov', en: 'Kyjov' } };
+    expect(imageAlt(titled('Řezy'), kyjov, 'cs')).toBe('Řezy – Sportovní areál a park v Kyjově');
+  });
+
+  test('leaves out a missing location', () => {
+    expect(imageAlt(titled(' Řezy '), { title: project.title }, 'cs')).toBe('Řezy – Exotárium v Zoo Brno');
+  });
+
+  test('an untitled image has none', () => {
+    expect(imageAlt(image(), project, 'cs')).toBeUndefined();
+    expect(imageAlt(titled(' '), project, 'cs')).toBeUndefined();
   });
 });
 

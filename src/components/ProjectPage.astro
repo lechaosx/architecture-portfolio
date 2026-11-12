@@ -35,6 +35,8 @@ const images = d.blocks.flatMap((block) =>
 const responsiveImages = await Promise.all(
   images.map(({ image }) => getResponsiveImage(image)),
 );
+// Only what the alt text needs: the gallery island's props are serialized into the page.
+const imageContext = { title: d.title, location: d.location };
 const cover = projectCover(d.thumbnail, images);
 const responsiveCover = cover ? await getResponsiveImage(cover.image) : undefined;
 const description = projectDescription(d);
@@ -89,7 +91,7 @@ const graph = (language: 'cs' | 'en') => [creativeWork({
       </div>
     </header>
 
-    <ProjectBlocks projectId={project.id} blocks={d.blocks} {responsiveImages} coverPath={cover?.image} />
-    {images.length > 0 && <Gallery {images} {responsiveImages} client:load />}
+    <ProjectBlocks projectId={project.id} project={imageContext} blocks={d.blocks} {responsiveImages} coverPath={cover?.image} />
+    {images.length > 0 && <Gallery {images} {responsiveImages} project={imageContext} client:load />}
   </PageContent>
 </Base>

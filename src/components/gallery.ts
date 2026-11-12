@@ -81,6 +81,35 @@ export function imageText(
   return image?.[field]?.[lang].trim();
 }
 
+/** What describes an image beyond its own title. */
+export type ImageContext = Pick<CollectionEntry<'projects'>['data'], 'title' | 'location'>;
+
+/**
+ * Lowercase words between single spaces, so a name matches at word starts:
+ * Czech inflects a name's ending (Kyjov, v Kyjově).
+ */
+const words = (text: string) =>
+  ` ${text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean).join(' ')} `;
+
+/**
+ * A titled image described for machines: its title, then its project's title
+ * and location's parts, each left out when the text before it names it.
+ */
+export function imageAlt(
+  image: GalleryImage | undefined,
+  project: ImageContext,
+  lang: Lang,
+) {
+  const title = imageText(image, 'title', lang);
+  if (!title) return undefined;
+  const context: string[] = [];
+  const names = [project.title[lang], ...(project.location?.[lang].split(',') ?? [])];
+  for (const name of names.map((name) => name.trim())) {
+    if (name && !words([title, ...context].join(' ')).includes(words(name).trimEnd())) context.push(name);
+  }
+  return context.length ? `${title} – ${context.join(', ')}` : title;
+}
+
 export function comparisonSetIndexes(
   images: GalleryImage[],
   currentIndex: number,

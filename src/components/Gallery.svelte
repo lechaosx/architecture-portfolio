@@ -18,6 +18,7 @@
     comparisonSetIndexes,
     containedImageSize,
     displayedSwipeOffset,
+    imageAlt,
     imageText,
     lightboxAreas,
     lightboxImageUrl,
@@ -32,6 +33,7 @@
     textColumnLimit,
     zoomFloor,
     type GalleryImage,
+    type ImageContext,
     type Point,
     type Rect,
     type Size,
@@ -49,9 +51,10 @@
   import LightboxTiles from './LightboxTiles.svelte';
   // Interactive island: a keyboard-navigable image lightbox.
   // This is the ONLY island that ships JS to the browser.
-  let { images, responsiveImages }: {
+  let { images, responsiveImages, project }: {
     images: GalleryImage[];
     responsiveImages: (ResponsiveImage | undefined)[];
+    project: ImageContext;
   } = $props();
 
   const slideDuration = 180;
@@ -377,6 +380,7 @@
       height: responsiveImages[imageIndex]?.source.height,
       size: restImageSize(imageIndex),
       title: imageText(images[imageIndex], 'title', lang),
+      alt: imageAlt(images[imageIndex], project, lang),
       description: imageText(images[imageIndex], 'description', lang),
     };
   }
@@ -1044,7 +1048,7 @@
                       src={previewUrl(slide.image)}
                       width={responsiveImages[slide.image]?.source.width}
                       height={responsiveImages[slide.image]?.source.height}
-                      alt={imageText(images[slide.image], 'title', lang) ?? ''}
+                      alt={imageAlt(images[slide.image], project, lang) ?? ''}
                       draggable="false"
                       decoding="async"
                       style:width={size ? `${size.width}px` : undefined}

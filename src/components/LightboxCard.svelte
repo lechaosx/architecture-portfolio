@@ -13,6 +13,7 @@
     /** The drawing's size at 100%, once known. */
     size: Size | undefined;
     title: string | undefined;
+    alt: string | undefined;
     description: string | undefined;
   }
 
@@ -399,7 +400,7 @@
         src={source(layer.image, view)}
         width={card.width}
         height={card.height}
-        alt={card.title ?? ''}
+        alt={card.alt ?? ''}
         draggable="false"
         style:width={card.size ? `${card.size.width}px` : undefined}
         style:height={card.size ? `${card.size.height}px` : undefined}
