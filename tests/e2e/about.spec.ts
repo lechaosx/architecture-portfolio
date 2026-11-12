@@ -260,9 +260,14 @@ test('loaded portraits keep their natural aspect ratio at every intro layout', a
       await page.setViewportSize({ width, height: 1280 });
       await portrait.scrollIntoViewIfNeeded();
       await portrait.evaluate((image: HTMLImageElement) => image.decode());
-      const ratios = await portrait.evaluate((image: HTMLImageElement) => {
+      const ratios = await portrait.evaluate(async (image: HTMLImageElement) => {
         const box = image.getBoundingClientRect();
-        return { rendered: box.width / box.height, natural: image.naturalWidth / image.naturalHeight };
+        // naturalWidth and naturalHeight are divided by the srcset candidate's
+        // density and rounded to whole pixels, so measure the chosen file itself.
+        const file = new Image();
+        file.src = image.currentSrc;
+        await file.decode();
+        return { rendered: box.width / box.height, natural: file.naturalWidth / file.naturalHeight };
       });
       expect(ratios.rendered, `${path} at ${width}px`).toBeCloseTo(ratios.natural, 3);
     }
