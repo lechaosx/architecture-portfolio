@@ -34,8 +34,14 @@ a 404, so a link missing its slash shows up locally.
 content-only pushes skip the tests so CMS edits go live sooner, and the build
 still validates content. A new run waits for the one in progress instead of
 cancelling it, so a deploy under way always finishes; only the deploy job can
-write to Pages. The test job caches `node_modules/.astro` under
+write to Pages. The test jobs cache `node_modules/.astro` under
 `withastro/action`'s cache key, so the build reuses the test prebuild's images.
+
+### CI tests one browser per job — [Explicit] (job layout [Implicit])
+
+The browser tests take most of CI's time, so Chromium and Firefox run as
+parallel jobs, which shortens the wait before a code push deploys. Static
+analysis and unit tests run once.
 
 ### Browser tests bring their own pages — [Explicit] (shape [Implicit])
 

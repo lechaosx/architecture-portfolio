@@ -36,6 +36,12 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      # A failure in one browser leaves the other to finish, so one run shows
+      # whether the failure is browser-specific.
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -53,14 +59,17 @@ jobs:
           key: astro-cache-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             astro-cache-${{ runner.os }}-
+      # Browser-independent, so run once.
       - name: Run static analysis
+        if: matrix.browser == 'chromium'
         run: npm run check
       - name: Run unit tests
+        if: matrix.browser == 'chromium'
         run: npm run test
-      - name: Install browsers
-        run: npx playwright install --with-deps chromium firefox
+      - name: Install browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run browser tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- --project=${{ matrix.browser }}
 
   build:
     needs: test
