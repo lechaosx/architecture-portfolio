@@ -24,4 +24,5 @@ export const contact = {
   phone: '+420 777 000 000',
   location: { cs: 'Brno', en: 'Brno' },
   hours: { cs: 'Po–Pá 9–17', en: 'Weekdays 9 am to 5 pm' },
+  ico: '12345678',
 };

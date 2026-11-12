@@ -167,6 +167,7 @@ const contact = defineCollection({
     phone: z.string().optional(),
     location: bilingual.optional(),
     hours: bilingual.optional(),
+    ico: z.string().optional(),
   }),
 });
 

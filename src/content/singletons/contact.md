@@ -7,4 +7,5 @@ location:
 hours:
   cs: Po–Pá 10–15
   en: Mon–Fri 10–15
+ico: '21330719'
 ---

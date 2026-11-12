@@ -109,7 +109,7 @@ export function llmsFullTxt({
   name: string;
   description: Record<Lang, string>;
   about: Pick<Data<'about'>, 'bio' | 'experience' | 'services' | 'education' | 'awards'>;
-  contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location'>;
+  contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location' | 'ico'>;
   /** The published projects. */
   projects: Project[];
 }) {
@@ -129,6 +129,7 @@ export function llmsFullTxt({
       list([
         `${label('email')}: ${contact.email}`,
         ...(contact.phone ? [`${label('phone')}: ${contact.phone}`] : []),
+        ...(contact.ico ? [`${label('ico')}: ${contact.ico}`] : []),
         ...line(pair(contact.location)).map(
           (location) => `${label('location')}: ${location}`,
         ),

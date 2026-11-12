@@ -299,6 +299,8 @@ paragraph, whether she typed one or two — [Implicit].
 Email, phone and when she receives calls (one short line per language, e.g.
 "Po–Pá 10–15") are in every page's footer; email and phone are links, and
 phone and hours show only when filled.
+Her IČO, which a Czech entrepreneur's site must show, is there too when filled —
+[Explicit].
 No contact form: there is no backend to receive one. The footer is the one
 place for contacts: no card or call to action above it repeats them —
 [Explicit].
@@ -307,12 +309,13 @@ The contacts have no label; the icons and links say what they are — [Explicit]
 Call hours use a clock icon and a call-hours label for screen readers —
 [Implicit].
 
-The layout — [Implicit]: on wide screens one line, the © on the left, the
-contacts in the middle and the theme and language switches on the right; each
-contact has its icon, which also separates it from the next.
+The layout — [Implicit]: on wide screens one row, the © on the left with the
+IČO on a line under it, the contacts in the middle and the theme and language
+switches on the right; each contact has its icon, which also separates it from
+the next.
 All of it is in the footer's small grey type — [Explicit]. When the complete
-row no longer fits, the contacts spread across the full first line, with © and
-the switches on the second. Only when that contact line does not fit do the
+row no longer fits, the contacts spread across the full first line, with the
+© block and the switches below. Only when that contact line does not fit do the
 contacts stack on the page's left edge, icons and text each in a column,
 followed by © and the switches in one row — [Explicit].
 
@@ -578,12 +581,13 @@ carries structured data (schema.org) about the architect: name, credential,
 contact, services and awards; a project page adds its project location, credits,
 award and status, its cover and its titled or described images, each linked at
 the size the lightbox opens it at.
+The architect's data includes her IČO when filled — [Explicit].
 
 ### Bilingual index and full export for AI assistants — [Explicit]
 
 `/llms.txt` is a compact bilingual index of About, Work and published project
 pages in both canonical languages, discovered through a link in each page's head; each link identifies Czech or English. `/llms-full.txt` gathers her bio, education,
-experience, services, contact details and every published project's facts,
+experience, services, contact details with her IČO and every published project's facts,
 texts and linked image captions, including projects without a separate page;
 long passages identify Czech (`cs`) and English (`en`) explicitly.
 

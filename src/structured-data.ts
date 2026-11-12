@@ -47,10 +47,11 @@ export function person({
   site: URL;
   owner: Pick<Data<'site'>, 'name' | 'credential'>;
   about: Pick<Data<'about'>, 'services' | 'awards'>;
-  contact: Pick<Data<'contact'>, 'email' | 'phone'>;
+  contact: Pick<Data<'contact'>, 'email' | 'phone' | 'ico'>;
   portrait?: string;
   lang?: Lang;
 }) {
+  const ico = text(contact.ico);
   return compact({
     '@type': 'Person',
     '@id': personId(site),
@@ -60,6 +61,8 @@ export function person({
     url: absolute(localizedPath('/', lang), site),
     email: contact.email,
     telephone: text(contact.phone),
+    // schema.org has no property for the Czech business ID; `taxID` would be the DIČ.
+    identifier: ico && { '@type': 'PropertyValue', propertyID: 'IČO', value: ico },
     image: portrait && absolute(portrait, site),
     makesOffer: texts(about.services.map((service) => service.name[lang])).map(
       (name) => ({

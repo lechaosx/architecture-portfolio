@@ -37,7 +37,7 @@ describe('person', () => {
         site,
         owner,
         about,
-        contact: { ...contact, phone: '+420 777 000 000' },
+        contact: { ...contact, phone: '+420 777 000 000', ico: '12345678' },
         portrait: '/_responsive/hash/1280.webp',
       }),
     ).toEqual({
@@ -49,6 +49,7 @@ describe('person', () => {
       url: 'https://example.cz/cs/',
       email: 'jana@example.cz',
       telephone: '+420 777 000 000',
+      identifier: { '@type': 'PropertyValue', propertyID: 'IČO', value: '12345678' },
       image: 'https://example.cz/_responsive/hash/1280.webp',
       makesOffer: [
         { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rodinné domy' } },

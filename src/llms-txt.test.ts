@@ -137,7 +137,7 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
       education: [{ place: { cs: 'Škola', en: 'School' }, from: '2020', to: '2024', title: { cs: 'Architektura', en: 'Architecture' } }],
       awards: [{ place: { cs: 'Soutěž', en: 'Competition' }, from: '2025', to: '2025', title: { cs: '1. místo', en: '1st place' } }],
     },
-    contact: { ...contact, phone: '+420 777 000 000', location: { cs: 'Brno', en: 'Brno' } },
+    contact: { ...contact, phone: '+420 777 000 000', location: { cs: 'Brno', en: 'Brno' }, ico: '12345678' },
     projects: [{ id: 'library', data: {
       ...project, project_url, realization: 'built', studio: 'Ateliér A',
       brief: { cs: 'Knihovna s veřejnou zahradou.', en: 'A library with a public garden.' },
@@ -146,7 +146,7 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
       blocks: [{ type: 'text', body: { cs: 'Text projektu.', en: 'Project text.' } }],
     } }],
   });
-  for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
+  for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'IČO / Business ID: 12345678', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
   for (const [cs, en] of [[about.bio.cs, about.bio.en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.']]) {
     expect(output).toContain(`**Česky (cs):**\n\n${cs}\n\n**English (en):**\n\n${en}`);
   }
@@ -190,4 +190,5 @@ test('the full export includes projects without pages, excludes drafts and leave
   expect(output).not.toContain('/projects/old/');
   expect(output).not.toContain('Koncept');
   for (const heading of ['Praxe', 'Služby', 'Vzdělání', 'Ocenění']) expect(output).not.toContain(`## ${heading}`);
+  expect(output).not.toContain('IČO');
 });

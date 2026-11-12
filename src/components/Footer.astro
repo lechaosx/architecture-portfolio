@@ -13,7 +13,7 @@ interface Props {
 }
 const { site, contact, bilingual = false } = Astro.props;
 const year = new Date().getFullYear();
-const { email, phone, hours } = contact;
+const { email, phone, hours, ico } = contact;
 const item = 'flex w-max items-center gap-2 whitespace-nowrap';
 const icon = 'size-3.5 shrink-0 text-neutral-500';
 ---
@@ -44,7 +44,10 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
     </ul>
 
     <div class="footer-details flex items-center justify-between">
-      <p class="footer-copyright w-max">© {year} {site.name}</p>
+      <div class="footer-copyright w-max">
+        <p>© {year} {site.name}</p>
+        {ico && <p><T {bilingual} k="ico" /> {ico}</p>}
+      </div>
 
       {/* Pulled out by the buttons' inner space, so the switches end on the page edge. */}
       <div class="footer-switches -mr-2 flex items-center gap-3">
