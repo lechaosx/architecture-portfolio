@@ -555,7 +555,17 @@ test('reveal content on screen at load shows without a fade', async ({ page }) =
   });
   await page.setViewportSize({ width: 1280, height: 1600 });
   await page.goto('/e2e/about/');
-  await page.waitForTimeout(1000);
+  // An observer made after the reveal script's is notified no earlier than
+  // it; two frames later, any fade the reveal script started has reported.
+  await page.evaluate(
+    () =>
+      new Promise((resolve) =>
+        new IntersectionObserver((_, observer) => {
+          observer.disconnect();
+          requestAnimationFrame(() => requestAnimationFrame(resolve));
+        }).observe(document.querySelector('.reveal')!),
+      ),
+  );
   const onScreen = await page.locator('.reveal').evaluateAll((elements) =>
     elements
       .filter((element) => element.getBoundingClientRect().top < innerHeight)

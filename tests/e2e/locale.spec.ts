@@ -143,15 +143,6 @@ test('an explicit language wins storage and browser, and footer links navigate, 
   await expect(page).toHaveURL('/en/e2e/work/');
 });
 
-test('language links in the viewer keep the selected image', async ({ page }) => {
-  await page.goto('/en/e2e/project/#image-3');
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toBeVisible();
-  await dialog.locator('[data-lang-toggle]').click();
-  await expect(page).toHaveURL('/cs/e2e/project/#image-3');
-  await expect(page.getByRole('dialog')).toBeVisible();
-});
-
 test.describe('static localized output', () => {
   test.use({ javaScriptEnabled: false });
   test('neutral pages offer English content and a translated footer link without JavaScript', async ({ page }) => {

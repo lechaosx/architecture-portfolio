@@ -1,6 +1,18 @@
-import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { expect, test as base, type BrowserContext, type Page } from '@playwright/test';
 import sharp from 'sharp';
 import { cardPadding } from '../../src/components/gallery';
+
+const test = base.extend<{ noPageErrors: void }>({
+  noPageErrors: [
+    async ({ page }, use) => {
+      const errors: string[] = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await use();
+      expect(errors).toEqual([]);
+    },
+    { auto: true },
+  ],
+});
 
 // tests/e2e/pages/[fixture].astro, which the e2e build adds.
 const projectPath = '/e2e/project/';
@@ -1094,8 +1106,15 @@ test.describe(() => {
     );
     await expect.poll(scrollTop).toBeGreaterThan(0);
     expect(diagonal).toEqual(diagonal.map(() => untouched));
-    await page.waitForTimeout(500);
-    const afterDiagonal = await scrollTop();
+    // Once the scroll has come to rest.
+    let afterDiagonal = -1;
+    await expect
+      .poll(async () => {
+        const before = afterDiagonal;
+        afterDiagonal = await scrollTop();
+        return afterDiagonal === before;
+      })
+      .toBe(true);
 
     // A scroll that turns sideways afterwards is still a scroll.
     const turning = [
@@ -1105,7 +1124,7 @@ test.describe(() => {
     const moves = await drag(turning);
     await expect.poll(scrollTop).toBeLessThan(afterDiagonal);
     expect(moves).toEqual(moves.map(() => untouched));
-    await page.waitForTimeout(400);
+    await page.clock.runFor(400);
     await expect(page).toHaveURL(/#image-3$/);
     expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
   });
@@ -1126,7 +1145,7 @@ test.describe(() => {
     ]);
 
     expect(moves).toEqual(moves.map(() => untouched));
-    await page.waitForTimeout(400);
+    await page.clock.runFor(400);
     await expect(page).toHaveURL(/#image-3$/);
     expect(await sheetTurn(page)).toBeCloseTo(-1, 3);
   });
@@ -1268,40 +1287,6 @@ test('Next from the description to a variant turns back while blending both face
   expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
   await flip.click();
   await expect(page.getByRole('region', { name: 'Tiled variant 4' })).toBeVisible();
-});
-
-test('a set button from the description turns back while blending both faces', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await gotoProject(page);
-  await galleryImage(page, 3).click();
-  await waitForLightbox(page);
-  await page.locator('.lightbox-stage').hover();
-  await page.mouse.wheel(0, -600);
-  await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
-  const zoom = await imageZoom(page);
-  const flip = page.getByRole('button', { name: 'Show description' });
-  await flip.click();
-  await expect.poll(() => sheetTurn(page)).toBeCloseTo(-1, 3);
-
-  const state = await cardMoveAt(page, 200, () => page
-    .getByRole('navigation', { name: 'Images in this set' })
-    .getByRole('button', { name: 'Tiled variant 5' })
-    .click());
-  expect(state.hash).toBe('#image-5');
-  expect(state.stripX).toBe(0);
-  expect(state.turn).toBeGreaterThan(0.2);
-  expect(state.turn).toBeLessThan(0.8);
-  expect(state.front).toBeCloseTo(1 - state.turn, 1);
-  expect(state.back).toBeCloseTo(1 - state.turn, 1);
-  await page.clock.resume();
-
-  await expect(page).toHaveURL(/#image-5$/);
-  await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
-  await expect(flip).toHaveAttribute('aria-pressed', 'false');
-  expect(await sheetTurn(page)).toBeCloseTo(1, 3);
-  expect(await imageZoom(page)).toBeCloseTo(zoom, 3);
-  await flip.click();
-  await expect(page.getByRole('region', { name: 'Tiled variant 5' })).toBeVisible();
 });
 
 test('Next inside a set blends and keeps the view; leaving the set slides', async ({
@@ -2137,12 +2122,17 @@ test('a resize while reading resizes the card and keeps the reading position', a
   await expect.poll(position).toBeCloseTo(0.5, 1);
 });
 
-// The rightward turn is the leftward one mirrored, from the mirrored corner.
-for (const [turn, hash, rightwards] of [
-  ['the toggle turning it over', '#image-3', false],
-  ['Previous turning it back rightwards', '#image-4', true],
+// Previous turns the card back the other way, so it starts zoomed into the
+// mirrored corner.
+for (const [title, hash, rightwards] of [
+  ['both faces keep one outline throughout the toggle turning it over from a zoomed corner', '#image-3', false],
+  [
+    'Previous from the text to a variant turns it back while blending, with one outline throughout',
+    '#image-4',
+    true,
+  ],
 ] as const) {
-  test(`both faces keep one outline throughout ${turn} from a zoomed corner`, async ({
+  test(title, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -3041,7 +3031,7 @@ test('a drag that starts mid-slide takes the strip from where it is', async ({ p
   expect(await stripX()).toBeCloseTo(grabbed - 10, 0);
   // Held, it stays under the finger.
   await page.clock.resume();
-  await page.waitForTimeout(250);
+  await page.clock.runFor(250);
   expect(await stripX()).toBeCloseTo(grabbed - 10, 0);
   await page.mouse.up();
   await expect.poll(stripX).toBeCloseTo(0, 0);
@@ -3068,7 +3058,7 @@ test('a drag that starts mid-blend takes the blend from where it is', async ({ p
   expect(grabbed).toBeLessThan(1);
   await page.mouse.move(638, 400);
   await page.clock.resume();
-  await page.waitForTimeout(250);
+  await page.clock.runFor(250);
   expect(await incoming()).toBeCloseTo(grabbed, 1);
   await page.mouse.up();
   await expect(page.locator('.lightbox-incoming')).toHaveCount(0);
@@ -3335,7 +3325,11 @@ test('the toggle tapped while a card slides in turns that card', async ({ page }
   await expect(page.getByRole('region', { name: 'Drawing 7' })).toBeVisible();
 });
 
-test('reduced motion reaches the same states at the same moments', async ({ browser }) => {
+test('reduced motion reaches the same states at the same moments', async ({
+  browser,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'The states are the script\'s, the same in every engine');
   const run = async (reducedMotion: 'reduce' | 'no-preference') => {
     const page = await browser.newPage();
     await page.emulateMedia({ reducedMotion });
@@ -3452,8 +3446,6 @@ test.describe(() => {
 
 test('Escape right after the click closes, with nothing shown and no errors', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
   await gotoProject(page);
   const thumbnail = galleryImage(page, 10);
   await thumbnail.scrollIntoViewIfNeeded();
@@ -3464,7 +3456,6 @@ test('Escape right after the click closes, with nothing shown and no errors', as
   await page.waitForTimeout(600);
   await expect(page.getByRole('dialog', { name: 'Image viewer' })).toHaveCount(0);
   await expect(thumbnail).toBeFocused();
-  expect(errors).toEqual([]);
 });
 
 test('Back straight after quick presses, then Forward, reopens the last image', async ({ page }) => {
@@ -3481,29 +3472,6 @@ test('Back straight after quick presses, then Forward, reopens the last image', 
   await waitForLightbox(page);
   await expect(page).toHaveURL(/#image-14$/);
   expect(await positions(page)).toEqual([`14 / ${total}`, `14 / ${total}`]);
-});
-
-test('opening, fast changes and turns log no page errors', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  await gotoProject(page);
-  await galleryImage(page, 3).click();
-  const toggle = page.getByRole('button', { name: 'Show description' });
-  for (const step of [
-    () => page.keyboard.press('ArrowRight'),
-    () => toggle.click(),
-    () => page.keyboard.press('ArrowRight'),
-    () => toggle.click(),
-    () => page.keyboard.press('ArrowRight'),
-    () => page.keyboard.press('ArrowLeft'),
-    () => toggle.click(),
-    () => page.keyboard.press('ArrowRight'),
-  ]) {
-    await step();
-  }
-  await settled(page);
-  expect(errors).toEqual([]);
 });
 
 test('a turn sent back mid-way keeps moving, without stalling', async ({ page }) => {

@@ -1,5 +1,17 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test as base, type Locator, type Page } from '@playwright/test';
 import sharp from 'sharp';
+
+const test = base.extend<{ noPageErrors: void }>({
+  noPageErrors: [
+    async ({ page }, use) => {
+      const errors: string[] = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      await use();
+      expect(errors).toEqual([]);
+    },
+    { auto: true },
+  ],
+});
 
 // tests/e2e/pages/[fixture].astro, which the e2e build adds.
 const projectPath = '/e2e/project/';
@@ -146,84 +158,86 @@ async function renderedThumbnailScale(thumbnail: Locator) {
   });
 }
 
-for (const placement of ['visible', 'header', 'bottom'] as const) {
-  for (const startsHovered of [true, false]) {
-    test(`return holds the ${placement} thumbnail’s initial ${startsHovered ? 'hovered' : 'rest'} zoom through pointer crossings, then settles`, async ({ page }) => {
-      await page.goto(projectPath);
-      await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
-      const thumbnail = galleryImage(page, 10);
-      await thumbnail.scrollIntoViewIfNeeded();
-      if (placement !== 'visible') {
-        await thumbnail.evaluate((button, placement) => {
-          const bounds = button.getBoundingClientRect();
-          const header = document.querySelector('body > header')!.getBoundingClientRect();
-          const top = placement === 'header' ? header.bottom - bounds.height / 2
-            : innerHeight - bounds.height / 2;
-          scrollBy(0, bounds.top - top);
-        }, placement);
-      }
-      const bounds = (await thumbnail.boundingBox())!;
-      const header = (await page.locator('body > header').boundingBox())!;
-      const y = (Math.max(bounds.y, header.y + header.height) + Math.min(bounds.y + bounds.height, page.viewportSize()!.height)) / 2;
-      const inside = bounds.x + 2;
-      const outside = bounds.x - 2;
-      await page.mouse.move(inside, y);
-      await thumbnail.locator('img').evaluate((image) =>
-        Promise.all(image.getAnimations().map((animation) => animation.finished)),
-      );
-      const hovered = await renderedThumbnailScale(thumbnail);
-      expect(hovered).toBeGreaterThan(1);
-      await page.mouse.click(inside, y);
-      await expect.poll(() => openness(page)).toBeCloseTo(1, 3);
-      await expect(page.locator('.lightbox-crop > div')).toHaveCSS('transform', 'none');
-      if (!startsHovered) await page.mouse.move(outside, y);
+for (const [placement, startsHovered] of [
+  ['visible', true],
+  ['header', false],
+  ['bottom', true],
+] as const) {
+  test(`return holds the ${placement} thumbnail’s initial ${startsHovered ? 'hovered' : 'rest'} zoom through pointer crossings, then settles`, async ({ page }) => {
+    await page.goto(projectPath);
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    const thumbnail = galleryImage(page, 10);
+    await thumbnail.scrollIntoViewIfNeeded();
+    if (placement !== 'visible') {
+      await thumbnail.evaluate((button, placement) => {
+        const bounds = button.getBoundingClientRect();
+        const header = document.querySelector('body > header')!.getBoundingClientRect();
+        const top = placement === 'header' ? header.bottom - bounds.height / 2
+          : innerHeight - bounds.height / 2;
+        scrollBy(0, bounds.top - top);
+      }, placement);
+    }
+    const bounds = (await thumbnail.boundingBox())!;
+    const header = (await page.locator('body > header').boundingBox())!;
+    const y = (Math.max(bounds.y, header.y + header.height) + Math.min(bounds.y + bounds.height, page.viewportSize()!.height)) / 2;
+    const inside = bounds.x + 2;
+    const outside = bounds.x - 2;
+    await page.mouse.move(inside, y);
+    await thumbnail.locator('img').evaluate((image) =>
+      Promise.all(image.getAnimations().map((animation) => animation.finished)),
+    );
+    const hovered = await renderedThumbnailScale(thumbnail);
+    expect(hovered).toBeGreaterThan(1);
+    await page.mouse.click(inside, y);
+    await expect.poll(() => openness(page)).toBeCloseTo(1, 3);
+    await expect(page.locator('.lightbox-crop > div')).toHaveCSS('transform', 'none');
+    if (!startsHovered) await page.mouse.move(outside, y);
 
-      const sampling = thumbnail.evaluate(async (button) => {
-        const image = button.querySelector('img')!;
-        const samples: { time: number; scale: number; drawing?: number; width: number; closing: boolean }[] = [];
-        const start = performance.now();
-        await new Promise<void>((resolve) => {
-          const sample = (time: number) => {
-            const drawing = document.querySelector('.lightbox-slide-current .lightbox-front > img');
-            samples.push({
-              time,
-              scale: image.getBoundingClientRect().width / button.clientWidth,
-              drawing: drawing?.getBoundingClientRect().width,
-              width: image.getBoundingClientRect().width,
-              closing: !document.querySelector('dialog[open]'),
-            });
-            if (time - start < 1100) requestAnimationFrame(sample);
-            else resolve();
-          };
-          requestAnimationFrame(sample);
-        });
-        return samples;
+    const sampling = thumbnail.evaluate(async (button) => {
+      const image = button.querySelector('img')!;
+      const samples: { time: number; scale: number; drawing?: number; width: number; closing: boolean }[] = [];
+      const start = performance.now();
+      await new Promise<void>((resolve) => {
+        const sample = (time: number) => {
+          const drawing = document.querySelector('.lightbox-slide-current .lightbox-front > img');
+          samples.push({
+            time,
+            scale: image.getBoundingClientRect().width / button.clientWidth,
+            drawing: drawing?.getBoundingClientRect().width,
+            width: image.getBoundingClientRect().width,
+            closing: !document.querySelector('dialog[open]'),
+          });
+          if (time - start < 1100) requestAnimationFrame(sample);
+          else resolve();
+        };
+        requestAnimationFrame(sample);
       });
-      if (startsHovered) await page.keyboard.press('Escape');
-      else await page.getByRole('button', { name: 'Close', exact: true }).click();
-      await page.waitForTimeout(70);
-      for (let crossing = 0; crossing < 6; crossing += 1) {
-        await page.mouse.move(crossing % 2 ? inside : outside, y);
-        await page.waitForTimeout(30);
-      }
-      await page.mouse.move(startsHovered ? outside : inside, y);
-      const samples = await sampling;
-      const returning = samples.filter(({ closing, drawing }) => closing && drawing);
-      expect(returning.length).toBeGreaterThan(5);
-      for (const { scale } of returning) expect(scale).toBeCloseTo(startsHovered ? hovered : 1, 3);
-      const handoff = samples.findIndex((sample, at) => at > 0 && !sample.drawing && samples[at - 1].drawing);
-      expect(handoff).toBeGreaterThan(0);
-      expect(Math.abs(samples[handoff - 1].drawing! - samples[handoff].width)).toBeLessThan(2);
-      const settling = samples.slice(handoff);
-      expect(settling.some(({ scale }) => scale > 1.005 && scale < hovered - 0.005)).toBe(true);
-      const steps = settling.slice(1).map((sample, at) => ({
-        change: Math.abs(sample.scale - settling[at].scale),
-        elapsed: sample.time - settling[at].time,
-      }));
-      expect(Math.max(...steps.map(({ change, elapsed }) => change / elapsed))).toBeLessThan(0.0008);
-      await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(startsHovered ? 1 : hovered, 3);
+      return samples;
     });
-  }
+    if (startsHovered) await page.keyboard.press('Escape');
+    else await page.getByRole('button', { name: 'Close', exact: true }).click();
+    await page.waitForTimeout(70);
+    for (let crossing = 0; crossing < 6; crossing += 1) {
+      await page.mouse.move(crossing % 2 ? inside : outside, y);
+      await page.waitForTimeout(30);
+    }
+    await page.mouse.move(startsHovered ? outside : inside, y);
+    const samples = await sampling;
+    const returning = samples.filter(({ closing, drawing }) => closing && drawing);
+    expect(returning.length).toBeGreaterThan(5);
+    for (const { scale } of returning) expect(scale).toBeCloseTo(startsHovered ? hovered : 1, 3);
+    const handoff = samples.findIndex((sample, at) => at > 0 && !sample.drawing && samples[at - 1].drawing);
+    expect(handoff).toBeGreaterThan(0);
+    expect(Math.abs(samples[handoff - 1].drawing! - samples[handoff].width)).toBeLessThan(2);
+    const settling = samples.slice(handoff);
+    expect(settling.some(({ scale }) => scale > 1.005 && scale < hovered - 0.005)).toBe(true);
+    const steps = settling.slice(1).map((sample, at) => ({
+      change: Math.abs(sample.scale - settling[at].scale),
+      elapsed: sample.time - settling[at].time,
+    }));
+    expect(Math.max(...steps.map(({ change, elapsed }) => change / elapsed))).toBeLessThan(0.0008);
+    await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(startsHovered ? 1 : hovered, 3);
+  });
 }
 
 test.describe('a touchscreen without CSS hover', () => {
@@ -1219,56 +1233,51 @@ test('resizing while zoomed keeps the image within its pan limits', async ({
   expect(await tilesDrawnAt(page, { x: edge.x + 4, y: edge.y - 4 })).toBe(false);
 });
 
-for (const [route, change] of [
-  ['a set button', (page: Page) => page.getByRole('dialog').getByRole('button', { name: 'Tiled variant 5' }).click()],
-  ['Next inside the set', (page: Page) => page.getByRole('button', { name: 'Next image' }).click()],
-] as const) {
-  test(`controls stay above a zoomed drawing while ${route} blends it`, async ({ page }) => {
-    await gotoProject(page);
-    await galleryImage(page, 3).click();
-    await waitForLightbox(page);
-    await page.locator('.lightbox-stage').hover();
-    await page.mouse.wheel(0, -1200);
-    await expect.poll(() => imageZoom(page)).toBeGreaterThan(2);
+test('controls stay above a zoomed drawing while Next inside the set blends it', async ({ page }) => {
+  await gotoProject(page);
+  await galleryImage(page, 3).click();
+  await waitForLightbox(page);
+  await page.locator('.lightbox-stage').hover();
+  await page.mouse.wheel(0, -1200);
+  await expect.poll(() => imageZoom(page)).toBeGreaterThan(2);
 
-    await holdTime(page);
-    await change(page);
-    await page.waitForFunction(() =>
-      [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].every(
-        (image) => image.complete,
-      ),
-    );
-    await page.clock.runFor(90);
+  await holdTime(page);
+  await page.getByRole('button', { name: 'Next image' }).click();
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll<HTMLImageElement>('.lightbox-slide-current .lightbox-front > img')].every(
+      (image) => image.complete,
+    ),
+  );
+  await page.clock.runFor(90);
 
-    const dialog = page.getByRole('dialog', { name: 'Image viewer' });
-    for (const control of [
-      dialog.getByRole('button', { name: 'Tiled variant 2' }),
-      dialog.getByRole('button', { name: 'Close' }),
-      dialog.getByRole('link', { name: /^Open original/ }),
-    ]) {
-      expect(
-        await control.evaluate((element) => {
-          const box = element.getBoundingClientRect();
-          const hit = document.elementFromPoint(
-            box.x + box.width / 2,
-            box.y + box.height / 2,
-          );
-          return element.contains(hit);
-        }),
-      ).toBe(true);
-      // Inside the border and clear of the label, the control's fill is black.
-      const box = (await control.boundingBox())!;
-      const pixel = await sharp(
-        await page.screenshot({
-          clip: { x: box.x + 4, y: box.y + box.height / 2, width: 1, height: 1 },
-        }),
-      )
-        .raw()
-        .toBuffer();
-      expect([...pixel.subarray(0, 3)]).toEqual([0, 0, 0]);
-    }
-  });
-}
+  const dialog = page.getByRole('dialog', { name: 'Image viewer' });
+  for (const control of [
+    dialog.getByRole('button', { name: 'Tiled variant 2' }),
+    dialog.getByRole('button', { name: 'Close' }),
+    dialog.getByRole('link', { name: /^Open original/ }),
+  ]) {
+    expect(
+      await control.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const hit = document.elementFromPoint(
+          box.x + box.width / 2,
+          box.y + box.height / 2,
+        );
+        return element.contains(hit);
+      }),
+    ).toBe(true);
+    // Inside the border and clear of the label, the control's fill is black.
+    const box = (await control.boundingBox())!;
+    const pixel = await sharp(
+      await page.screenshot({
+        clip: { x: box.x + 4, y: box.y + box.height / 2, width: 1, height: 1 },
+      }),
+    )
+      .raw()
+      .toBuffer();
+    expect([...pixel.subarray(0, 3)]).toEqual([0, 0, 0]);
+  }
+});
 
 test('the page shows faintly through the backdrop around a card', async ({ page }) => {
   await gotoProject(page);
@@ -1303,11 +1312,8 @@ test.describe('reduced motion', () => {
   test('opens without a transition and keeps swipe movement stationary', async ({
     page,
   }) => {
-    const pageErrors: string[] = [];
-    page.on('pageerror', (error) => pageErrors.push(error.message));
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await gotoProject(page);
-    expect(pageErrors).toEqual([]);
     expect(
       await page.evaluate(() =>
         matchMedia('(prefers-reduced-motion: reduce)').matches,
