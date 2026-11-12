@@ -2,7 +2,7 @@
 title:
   cs: RD Doubravník
   en: Family house Doubravník
-thumbnail: /uploads/11 Axo 1-4.webp
+thumbnail: /uploads/11 Axo 1-6.webp
 from: "2023"
 to: "2023"
 location:
