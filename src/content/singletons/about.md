@@ -1,5 +1,4 @@
 ---
-portrait: /uploads/_MG_49672-1.webp
 approaches:
   - label:
       cs: Místo
@@ -94,8 +93,8 @@ experience:
       cs: Architektka
       en: Architect
   - place:
-      cs: Architektka na volné noze
-      en: Freelance Architect
+      cs: Na volné noze
+      en: Freelance
     department:
       cs: Architektura, projekce
       en: Architecture, Design and Planning
