@@ -27,6 +27,20 @@ const parts = (page: Page) => {
   };
 };
 
+// Partway between two images.
+const midTurn = (page: Page) =>
+  parts(page).track.evaluate((element) => {
+    const offset = element.scrollLeft % element.clientWidth;
+    return offset >= 1 && offset <= element.clientWidth - 1;
+  });
+
+// Loads `path` with the page's clock held.
+async function gotoHeld(page: Page, path: string) {
+  await page.clock.install();
+  await page.goto(path);
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+}
+
 // The project image set and the landing page's hero are one carousel.
 for (const path of [fixture, '/e2e/landing/']) {
   test(`the carousel does not widen the page on mobile at ${path}`, async ({ page }) => {
@@ -442,10 +456,13 @@ test.describe('the carousel takes every input at once', () => {
   });
 
   test('resizing during a turn keeps its destination', async ({ page }) => {
+    await gotoHeld(page, fixture);
     await parts(page).next.click();
-    await page.waitForTimeout(60);
+    await page.clock.runFor(60);
+    expect(await midTurn(page)).toBe(true);
     await page.setViewportSize({ width: 640, height: 800 });
     expect(await currentSlide(page)).toBe(1);
+    await page.clock.resume();
     expect(await restsAt(page)).toBe(1);
   });
 
@@ -471,14 +488,17 @@ test.describe('the carousel takes every input at once', () => {
   test('a vertical wheel over a sliding strip leaves the current image', async ({
     page,
   }) => {
+    await gotoHeld(page, fixture);
     const { next, track } = parts(page);
     const box = (await track.boundingBox())!;
     await next.click();
-    await page.waitForTimeout(60);
+    await page.clock.runFor(60);
+    expect(await midTurn(page)).toBe(true);
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.wheel(0, 40);
     await next.click();
     expect(await currentSlide(page)).toBe(2);
+    await page.clock.resume();
     expect(await restsAt(page)).toBeCloseTo(2, 2);
   });
 
@@ -604,13 +624,16 @@ test('a native horizontal gesture can travel more than one image', async ({ page
 test('native scrolling takes over a skipped turn without losing its visible anchor', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/e2e/carousel-long/');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoHeld(page, '/e2e/carousel-long/');
   const { dots, track } = parts(page);
   await dots.nth(16).click();
-  await page.waitForTimeout(60);
+  await page.clock.runFor(60);
+  expect(await midTurn(page)).toBe(true);
   const bounds = (await track.boundingBox())!;
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   await page.mouse.wheel(bounds.width * 3, 0);
+  await page.clock.resume();
   await expect.poll(() => currentSlide(page)).not.toBe(16);
   await expect.poll(() => track.evaluate((element) => {
     const index = [...document.querySelectorAll('[data-carousel-dot]')]

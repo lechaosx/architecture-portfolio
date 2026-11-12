@@ -71,9 +71,10 @@ under `/e2e/` [Explicit], and nothing in `src/` or `scripts/` knows about them
 - Metadata, structured-data and alt-text tests use fixture project pages; the
   AI export tests check both text endpoints against the shipped projects and
   follow their links — [Explicit].
-- The work page's index and the brief, credits and text-only project pages
-  are tested through fixture projects; other landing, About, work-page, footer
-  and transition tests use the shipped content — [Implicit].
+- The work page's index, the card-to-cover morphs and the brief, credits and
+  text-only project pages are tested through fixture projects; other landing,
+  About, work-page, footer and transition tests use the shipped content —
+  [Implicit].
 
 ---
 

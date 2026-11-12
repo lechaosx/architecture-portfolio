@@ -59,7 +59,6 @@ async function navigateWithTransition(
  */
 async function projectCard(page: Page, nth = 0, morph = false) {
   const cards = page.locator(morph ? 'main .grid > a:has(.project-cover)' : 'main .grid > a');
-  test.skip(morph && (await cards.count()) <= nth, 'The published projects have no matching cover for this morph');
   const card = cards.nth(nth);
   const path = new URL((await card.getAttribute('href'))!, page.url()).pathname;
   const cover = await card
@@ -228,16 +227,9 @@ test('the work card shows the cover shared by its project', async ({ page }) => 
   }
 });
 
-// The work page's cards return through the project page's back link, the
-// landing page's through the wordmark.
-for (const { path, home, back } of [
-  {
-    path: '/work/',
-    home: /\/work\/?$/,
-    back: (page: Page) => page.getByRole('link', { name: 'Back to work' }),
-  },
-  { path: '/', home: /\/en\/$/, back: (page: Page) => page.locator('header nav > a') },
-]) {
+// tests/e2e/pages/[fixture].astro, which the e2e build adds: a work page and
+// a landing page listing the thumbnail fixtures.
+for (const path of ['/e2e/thumbnail-work/', '/e2e/thumbnail-landing/']) {
   test(`project covers morph one uncropped snapshot in both directions from ${path}`, async ({
     browserName,
     page,
@@ -272,6 +264,8 @@ for (const { path, home, back } of [
           sessionStorage.setItem(
             'cover-snapshots',
             JSON.stringify({
+              // The group animates only between an old and a new snapshot.
+              groupAnimated: animated('group').length > 0,
               oldAnimated: animated('old').length > 0,
               oldAnimation: style('old').animationName,
               newAnimated: animated('new').length > 0,
@@ -287,22 +281,31 @@ for (const { path, home, back } of [
         JSON.parse(sessionStorage.getItem('cover-snapshots') ?? 'null'),
       );
 
+    let hovered = 0;
     await navigateWithTransition(page, url, async () => {
       await project.hover();
       await transitionsEnd(project.locator('img'));
+      hovered = await project
+        .locator('.project-cover')
+        .evaluate((cover) => cover.querySelector('img')!.getBoundingClientRect().width / cover.clientWidth);
       await project.click();
     });
+    expect(hovered).toBeGreaterThan(1);
     await expect
       .poll(snapshots)
-      .toMatchObject({ oldAnimated: false, newAnimated: true });
-    expect((await snapshots()).newScale).toBeCloseTo(1.03, 2);
+      .toMatchObject({ groupAnimated: true, oldAnimated: false, newAnimated: true });
+    expect((await snapshots()).newScale).toBeCloseTo(hovered, 2);
 
     await page.evaluate(() => sessionStorage.removeItem('cover-snapshots'));
-    await navigateWithTransition(page, home, () => back(page).click());
+    // The project page links only to the shipped listings, so the page itself
+    // navigates back to the fixture's.
+    await navigateWithTransition(page, new RegExp(`${path}$`), () =>
+      page.evaluate((path) => setTimeout(() => location.assign(path)), path),
+    );
     // The retained project snapshot holds still while its box shrinks to the card.
     await expect
       .poll(snapshots)
-      .toMatchObject({ oldAnimation: 'none', newAnimated: false });
+      .toMatchObject({ groupAnimated: true, oldAnimation: 'none', newAnimated: false });
   });
 }
 
@@ -315,14 +318,10 @@ test('a keyboard-opened project starts from its own card, not the hovered one', 
     'The pinned Firefox does not support cross-document View Transitions',
   );
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.goto('/work/');
-  test.skip(
-    (await page.locator('main .grid > a').count()) < 2,
-    'It needs a second project to hover',
-  );
+  await page.goto('/e2e/thumbnail-work/');
   const opened = await projectCard(page, 0, true);
-  const openedHref = await opened.card.getAttribute('href');
-  const hovered = page.locator(`main .grid > a:not([href="${openedHref}"])`).first();
+  // Another card with a morph, whose hover zoom the opening could pick up.
+  const { card: hovered } = await projectCard(page, 1, true);
   await page.addInitScript((cover) => {
     addEventListener('pagereveal', (event) => {
       const transition = (event as PageRevealEvent).viewTransition;

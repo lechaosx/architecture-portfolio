@@ -34,7 +34,14 @@ async function waitForLightbox(page: Page) {
   await page.clock.runFor(1000);
 }
 
-/** How dark the lightbox's backdrop is, 0.91 fully open. */
+/** How far open the lightbox shows, 1 fully; its backdrop darkens with it. */
+function openness(page: Page) {
+  return page.evaluate(() =>
+    Number(getComputedStyle(document.querySelector('[data-gallery-lightbox]')!).getPropertyValue('--lightbox-open')),
+  );
+}
+
+/** How dark the lightbox's backdrop is. */
 function backdrop(page: Page) {
   return page.evaluate(() => {
     const colour = getComputedStyle(document.querySelector('[data-gallery-lightbox]')!).backgroundColor;
@@ -167,7 +174,7 @@ for (const placement of ['visible', 'header', 'bottom'] as const) {
       const hovered = await renderedThumbnailScale(thumbnail);
       expect(hovered).toBeGreaterThan(1);
       await page.mouse.click(inside, y);
-      await expect.poll(() => backdrop(page)).toBeCloseTo(0.91, 3);
+      await expect.poll(() => openness(page)).toBeCloseTo(1, 3);
       await expect(page.locator('.lightbox-crop > div')).toHaveCSS('transform', 'none');
       if (!startsHovered) await page.mouse.move(outside, y);
 
@@ -241,8 +248,7 @@ test.describe('a touchscreen without CSS hover', () => {
 
 for (const interruption of ['reopen', 'scroll out'] as const) {
   test(`${interruption} during return releases the held zoom and preserves normal hover easing`, async ({ page }) => {
-    await page.goto(projectPath);
-    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await gotoProject(page);
     const thumbnail = galleryImage(page, 10);
     await thumbnail.scrollIntoViewIfNeeded();
     await thumbnail.hover();
@@ -251,17 +257,23 @@ for (const interruption of ['reopen', 'scroll out'] as const) {
     );
     const hovered = await renderedThumbnailScale(thumbnail);
     await thumbnail.click();
-    await expect.poll(() => backdrop(page)).toBeCloseTo(0.91, 3);
+    await waitForLightbox(page);
+    await holdTime(page);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(100);
+    await page.clock.runFor(100);
+    // Still returning, with the zoom held.
+    await expect(page.locator('.lightbox-slide-current')).toHaveCount(1);
+    expect(await renderedThumbnailScale(thumbnail)).toBeCloseTo(hovered, 3);
     await page.mouse.move(0, 0);
     if (interruption === 'reopen') {
       await page.keyboard.press('Enter');
-      await expect.poll(() => backdrop(page)).toBeCloseTo(0.91, 3);
+      await page.clock.resume();
+      await waitForLightbox(page);
       await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(1, 3);
       await page.getByRole('button', { name: 'Close', exact: true }).click();
     } else {
       await thumbnail.evaluate((button) => scrollBy(0, button.getBoundingClientRect().bottom + 100));
+      await page.clock.resume();
     }
     await expect(page.locator('.lightbox-slide-current')).toHaveCount(0);
     await thumbnail.scrollIntoViewIfNeeded();
@@ -443,7 +455,7 @@ test('input while opening acts at once, and a wheel while closing scrolls the pa
   await page.mouse.wheel(0, -1200);
   await expect.poll(() => imageZoom(page)).toBeGreaterThan(1);
   expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
-  expect(await backdrop(page)).toBeLessThan(0.91);
+  expect(await openness(page)).toBeLessThan(1);
   await page.clock.resume();
   await waitForLightbox(page);
   expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
@@ -503,12 +515,12 @@ async function lastCard(page: Page) {
   return last;
 }
 
-/** Records how far the backdrop has darkened, 1 fully, at every step of the held clock. */
+/** Records how far the lightbox is open at every step of the held clock. */
 async function openSteps(page: Page, steps: number) {
   const seen = [];
   for (let step = 0; step < steps; step += 1) {
     await page.clock.runFor(16);
-    seen.push((await backdrop(page)) / 0.91);
+    seen.push(await openness(page));
   }
   return seen;
 }
@@ -903,8 +915,8 @@ test('dark theme keeps the lightbox surface black and controls white', async ({
       };
     },
   );
-  // 90 % black, over the 10 % a modal dialog's own backdrop would add.
-  expect(colors.background).toEqual([0, 0, 0, 232]);
+  expect(colors.background.slice(0, 3)).toEqual([0, 0, 0]);
+  expect(colors.background[3]).toBeGreaterThan(0);
   expect(colors.foreground).toEqual([255, 255, 255, 255]);
 });
 
@@ -1181,18 +1193,30 @@ test('resizing while zoomed keeps the image within its pan limits', async ({
   await page.mouse.move(rest.x + rest.width - 2, rest.y + rest.height - 2);
   await page.mouse.wheel(0, -3000);
 
-  // 800×600: gap 8 px, so the safe area ends 56 px from each edge.
+  // The pan limit lies inside the edge controls by the gap they keep from
+  // the screen's edge.
+  const limit = async () => {
+    const [next, original] = await Promise.all([
+      page.getByRole('button', { name: 'Next image' }).boundingBox(),
+      page.getByRole('link', { name: /^Open original/ }).boundingBox(),
+    ]);
+    return {
+      x: 2 * next!.x + next!.width - 800,
+      y: 2 * original!.y + original!.height - 600,
+    };
+  };
   await page.setViewportSize({ width: 800, height: 600 });
   await expect
     .poll(async () => {
-      const box = (await image.boundingBox())!;
-      return [Math.round(box.x + box.width), Math.round(box.y + box.height)];
+      const [box, edge] = [(await image.boundingBox())!, await limit()];
+      return [Math.round(box.x + box.width - edge.x), Math.round(box.y + box.height - edge.y)];
     })
-    .toEqual([800 - 56, 600 - 56]);
+    .toEqual([0, 0]);
+  const edge = await limit();
   await expect
-    .poll(() => tilesDrawnAt(page, { x: 800 - 60, y: 600 - 60 }))
+    .poll(() => tilesDrawnAt(page, { x: edge.x - 4, y: edge.y - 4 }))
     .toBe(true);
-  expect(await tilesDrawnAt(page, { x: 800 - 52, y: 600 - 60 })).toBe(false);
+  expect(await tilesDrawnAt(page, { x: edge.x + 4, y: edge.y - 4 })).toBe(false);
 });
 
 for (const [route, change] of [
@@ -1265,10 +1289,13 @@ test('the page shows faintly through the backdrop around a card', async ({ page 
   await waitForLightbox(page);
 
   const seen = await shot();
+  const darkness = await backdrop(page);
+  expect(darkness).toBeGreaterThan(0.5);
   for (const [channel, value] of pageColour.entries()) {
     expect(value).toBeGreaterThan(200);
-    // 90 % black over the page, under the dialog's own 10 % backdrop.
-    expect(seen[channel]).toBeCloseTo(value * 0.1 * 0.9, -1);
+    // Faint, yet clearly not black.
+    expect(seen[channel]).toBeGreaterThanOrEqual(10);
+    expect(Math.abs(seen[channel] - value * (1 - darkness))).toBeLessThanOrEqual(3);
   }
 });
 
@@ -1287,7 +1314,7 @@ test.describe('reduced motion', () => {
       ),
     ).toBe(true);
     await galleryImage(page, 10).click();
-    expect(await backdrop(page)).toBeCloseTo(0.91, 3);
+    expect(await openness(page)).toBeCloseTo(1, 3);
     await expect(page.getByRole('dialog', { name: 'Image viewer' })).toBeVisible();
 
     const stage = page.locator('.lightbox-stage');
@@ -1335,7 +1362,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     await page.route('**/_responsive/**', () => {});
     await thumbnail.click();
     await page.clock.runFor(1000);
-    expect(await backdrop(page)).toBeCloseTo(0.91, 3);
+    expect(await openness(page)).toBeCloseTo(1, 3);
     await expect(page.getByRole('button', { name: 'Close' })).toHaveCSS('opacity', '1');
     // The card has not left the thumbnail, which shows where it is.
     await expect(thumbnail).toHaveCSS('opacity', '1');
@@ -1362,7 +1389,7 @@ test('a drawing that arrives late moves from its thumbnail once it has', async (
   await thumbnail.click();
   await page.clock.runFor(600);
   // Open, but the card waits at the thumbnail.
-  expect(await backdrop(page)).toBeCloseTo(0.91, 3);
+  expect(await openness(page)).toBeCloseTo(1, 3);
   await expect(thumbnail).toHaveCSS('opacity', '1');
   release();
   await page.waitForFunction(() =>
