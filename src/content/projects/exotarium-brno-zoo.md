@@ -46,8 +46,8 @@ scope:
   - public_space
 design_in_progress: false
 role:
-  cs: Student
-  en: Student
+  cs: Autor návrhu
+  en: Design author
 draft: false
 blocks:
   - type: image_set
