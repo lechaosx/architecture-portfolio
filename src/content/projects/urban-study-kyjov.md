@@ -133,40 +133,6 @@ blocks:
         Kyjov.
   - type: gallery
     images:
-      - image: /uploads/04 SWOT - cyklostezky.png
-        comparison_set: kyjov-analyses
-        title:
-          cs: Analýza cyklodopravy
-          en: Cycling analysis
-        description:
-          cs: Analýza cyklodopravy se zaměřuje na hlavní cyklistické trasy procházející
-            Kyjovem, jejich směrování a návaznost na okolní krajinu. Město se
-            nachází na průsečíku tří významných tras – EuroVelo 4 – Trasy
-            střední Evropou, Moravské vinné stezky a Kyjovské vinařské stezky.
-            Díky jejich vysoké návštěvnosti projíždí Kyjovem každoročně velké
-            množství cyklistů, což představuje potenciál nejen pro rozvoj
-            cyklodopravy, ale také cestovního ruchu a místní ekonomiky.
-            Vytvoření atraktivních zastávkových bodů může cyklisty motivovat k
-            delšímu pobytu ve městě a využití místních služeb. V bezprostřední
-            blízkosti řešeného území procházejí všechny tři zmíněné trasy, a
-            nabízí se proto jejich přímé propojení s návrhem. Sportovní areál
-            navazující na městský park je přirozeným místem pro vznik
-            odpočinkového bodu s posezením, bezpečným odstavením kol, základním
-            servisem a možností dobíjení elektrokol.
-          en: The cycling analysis focuses on the main cycling routes passing through
-            Kyjov, their directions and connections to the surrounding
-            landscape. The town lies at the intersection of three important
-            routes – EuroVelo 4 – Central Europe Route, the Moravian Wine Trail
-            and the Kyjov Wine Trail. Their popularity brings a significant
-            number of cyclists through Kyjov every year, creating potential not
-            only for cycling infrastructure but also for tourism and the local
-            economy. Creating attractive stopping points can encourage cyclists
-            to spend more time in the town and use local services. All three
-            routes pass in the immediate vicinity of the project area, offering
-            an opportunity to integrate cycling infrastructure directly into the
-            proposal. The sports complex connected to the municipal park
-            provides a natural location for a rest point with seating, secure
-            bicycle parking, basic service facilities and e-bike charging.
       - image: /uploads/03 SWOT - život v Kyjově.png
         comparison_set: kyjov-analyses
         title:
@@ -241,6 +207,40 @@ blocks:
             identifies sports currently missing from the project area, whose
             introduction could broaden the range of activities, attract new user
             groups and enhance the overall appeal of the sports complex.
+      - image: /uploads/04 SWOT - cyklostezky.png
+        comparison_set: kyjov-analyses
+        title:
+          cs: Analýza cyklodopravy
+          en: Cycling analysis
+        description:
+          cs: Analýza cyklodopravy se zaměřuje na hlavní cyklistické trasy procházející
+            Kyjovem, jejich směrování a návaznost na okolní krajinu. Město se
+            nachází na průsečíku tří významných tras – EuroVelo 4 – Trasy
+            střední Evropou, Moravské vinné stezky a Kyjovské vinařské stezky.
+            Díky jejich vysoké návštěvnosti projíždí Kyjovem každoročně velké
+            množství cyklistů, což představuje potenciál nejen pro rozvoj
+            cyklodopravy, ale také cestovního ruchu a místní ekonomiky.
+            Vytvoření atraktivních zastávkových bodů může cyklisty motivovat k
+            delšímu pobytu ve městě a využití místních služeb. V bezprostřední
+            blízkosti řešeného území procházejí všechny tři zmíněné trasy, a
+            nabízí se proto jejich přímé propojení s návrhem. Sportovní areál
+            navazující na městský park je přirozeným místem pro vznik
+            odpočinkového bodu s posezením, bezpečným odstavením kol, základním
+            servisem a možností dobíjení elektrokol.
+          en: The cycling analysis focuses on the main cycling routes passing through
+            Kyjov, their directions and connections to the surrounding
+            landscape. The town lies at the intersection of three important
+            routes – EuroVelo 4 – Central Europe Route, the Moravian Wine Trail
+            and the Kyjov Wine Trail. Their popularity brings a significant
+            number of cyclists through Kyjov every year, creating potential not
+            only for cycling infrastructure but also for tourism and the local
+            economy. Creating attractive stopping points can encourage cyclists
+            to spend more time in the town and use local services. All three
+            routes pass in the immediate vicinity of the project area, offering
+            an opportunity to integrate cycling infrastructure directly into the
+            proposal. The sports complex connected to the municipal park
+            provides a natural location for a rest point with seating, secure
+            bicycle parking, basic service facilities and e-bike charging.
       - image: /uploads/01 Problémová mapa +.png
         comparison_set: kyjov-analyses
         title:

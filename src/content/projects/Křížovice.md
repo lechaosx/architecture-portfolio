@@ -80,11 +80,11 @@ blocks:
         title:
           cs: Interiérový řez
           en: Interior section
-      - image: /uploads/INT4.webp
+      - image: /uploads/INT3.webp
         title:
           cs: Interiérový řez
           en: Interior section
-      - image: /uploads/INT3.webp
+      - image: /uploads/INT4.webp
         title:
           cs: Interiérový řez
           en: Interior section

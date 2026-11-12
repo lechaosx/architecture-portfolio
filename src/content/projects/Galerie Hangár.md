@@ -162,16 +162,16 @@ blocks:
           en: Analysis of the history of Medlánky Airport
   - type: gallery
     images:
-      - image: /uploads/02 GALERIE - Půdorys 1NP+.webp
-        comparison_set: galerie-plans
-        title:
-          cs: Půdorys 1. NP
-          en: Ground floor plan
       - image: /uploads/03 GALERIE - Půdorys 1PP+.webp
         comparison_set: galerie-plans
         title:
           cs: Půdorys 1. PP
           en: Basement floor plan
+      - image: /uploads/02 GALERIE - Půdorys 1NP+.webp
+        comparison_set: galerie-plans
+        title:
+          cs: Půdorys 1. NP
+          en: Ground floor plan
       - image: /uploads/04 GALERIE - Půdorys - výkres střechy.webp
         comparison_set: galerie-plans
         title:
