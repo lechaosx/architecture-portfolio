@@ -214,7 +214,7 @@ for (const placement of ['visible', 'header', 'bottom'] as const) {
         elapsed: sample.time - settling[at].time,
       }));
       expect(Math.max(...steps.map(({ change, elapsed }) => change / elapsed))).toBeLessThan(0.0008);
-      expect(samples.at(-1)!.scale).toBeCloseTo(startsHovered ? 1 : hovered, 3);
+      await expect.poll(() => renderedThumbnailScale(thumbnail)).toBeCloseTo(startsHovered ? 1 : hovered, 3);
     });
   }
 }
