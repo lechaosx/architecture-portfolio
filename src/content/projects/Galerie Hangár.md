@@ -64,8 +64,8 @@ scope:
   - public_space
 design_in_progress: false
 role:
-  cs: Architektka
-  en: Architect
+  cs: Autor návrhu
+  en: Design author
 draft: false
 blocks:
   - type: image_set
