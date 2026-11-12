@@ -67,7 +67,7 @@ blocks:
         title:
           cs: Pohled západní
           en: Western elevation
-      - image: /uploads/11 Axo 1-5.webp
+      - image: /uploads/11 Axo 1-4.webp
         title:
           cs: Axonometrie
           en: Axonometry

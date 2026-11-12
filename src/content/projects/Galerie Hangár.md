@@ -2,7 +2,7 @@
 title:
   cs: Galerie Hangár
   en: Gallery Hangar
-thumbnail: /uploads/Scene 16_4-2.webp
+thumbnail: /uploads/Scene 16_4.webp
 from: "2026"
 to: "2026"
 location:

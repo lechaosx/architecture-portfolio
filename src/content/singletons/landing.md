@@ -1,6 +1,6 @@
 ---
 images:
-  - /uploads/Scene 4_3-1.webp
+  - /uploads/Scene 4_3.webp
   - /uploads/Scene 13_8-2.webp
   - /uploads/D.1.1.14 AXO 1 - VĚTŠÍ-4.webp
   - /uploads/11 AXONOMETRIE - VĚTŠÍ-2.webp

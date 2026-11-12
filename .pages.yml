@@ -40,7 +40,7 @@ content:
           # `|^$` takes the empty value, which `required` reports on its own.
           - { name: cs, label: Název (česky), type: string, required: true, pattern: &text { regex: '\S|^$', message: 'Zadejte text, ne jen mezery.' } }
           - { name: en, label: Název (anglicky), type: string, required: true, pattern: *text }
-      - { name: thumbnail, label: Náhled projektu, type: image, required: false, description: 'Obrázek pro karty projektu a náhledy sdílených odkazů. Když pole necháte prázdné, automaticky se použije první obrázek v obsahu stránky. Výběr nemění obsah ani pořadí obrázků na stránce.' }
+      - { name: thumbnail, label: Náhled projektu, type: image, required: false, description: 'Obrázek pro karty projektu a náhledy sdílených odkazů. Když pole necháte prázdné, automaticky se použije první obrázek v obsahu stránky. Výběr nemění obsah ani pořadí obrázků na stránce. Obrázek, který už na webu je, vyberte tlačítkem Select; Upload i přetažení souboru uloží novou kopii.' }
       - name: from
         label: Moje zapojení od
         type: string
@@ -170,7 +170,7 @@ content:
                 list: { min: 1 }
                 required: true
                 fields:
-                  - { name: image, label: Obrázek, type: image, required: true }
+                  - { name: image, label: Obrázek, type: image, required: true, description: &upload 'Obrázek, který už na webu je, vyberte tlačítkem Select; Upload i přetažení souboru uloží novou kopii.' }
                   - { name: comparison_set, label: Srovnávací sada, type: string, required: false, description: "Obrázky se stejnou hodnotou tvoří v prohlížeči obrázků jednu sadu a přepínají se tlačítky." }
                   - { name: title, label: Název obrázku, type: object, required: false, description: *translations, fields: *string-pair }
                   - { name: description, label: Popis obrázku, type: object, required: false, description: *translations, fields: *text-pair }
@@ -184,7 +184,7 @@ content:
                 list: { min: 1 }
                 required: true
                 fields:
-                  - { name: image, label: Obrázek, type: image, required: true }
+                  - { name: image, label: Obrázek, type: image, required: true, description: *upload }
                   - { name: comparison_set, label: Srovnávací sada, type: string, required: false, description: "Obrázky se stejnou hodnotou tvoří v prohlížeči obrázků jednu sadu a přepínají se tlačítky." }
                   - { name: title, label: Název obrázku, type: object, required: false, description: *translations, fields: *string-pair }
                   - { name: description, label: Popis obrázku, type: object, required: false, description: *translations, fields: *text-pair }
@@ -194,7 +194,7 @@ content:
     type: file
     path: src/content/singletons/landing.md
     fields:
-      - { name: images, label: Obrázky, type: image, list: true, required: false, description: 'Zobrazují se nahoře na úvodní stránce v tomto pořadí: jeden obrázek samostatně, dva a více jako prezentace. Když pole necháte prázdné, stránka začne řádkem o tom, co děláte a kde.' }
+      - { name: images, label: Obrázky, type: image, list: true, required: false, description: 'Zobrazují se nahoře na úvodní stránce v tomto pořadí: jeden obrázek samostatně, dva a více jako prezentace. Když pole necháte prázdné, stránka začne řádkem o tom, co děláte a kde. Obrázek, který už na webu je, vyberte tlačítkem Select; Upload i přetažení souboru uloží novou kopii.' }
       - name: projects
         label: Vybrané práce
         type: reference
@@ -208,7 +208,7 @@ content:
     type: file
     path: src/content/singletons/about.md
     fields:
-      - { name: portrait, label: Portrét, type: image, required: false }
+      - { name: portrait, label: Portrét, type: image, required: false, description: *upload }
       - name: approaches
         label: Přístup
         type: object

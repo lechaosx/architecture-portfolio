@@ -90,6 +90,12 @@ Czech, the architect's language. A field kept in both languages groups a
 list shows as columns, name the field too: "Název (česky)" / "Název (anglicky)"
 — [Implicit]. Pages CMS's own buttons and menus stay in English.
 
+### Image fields point to reusing uploads — [Explicit]
+
+Every image field's help text tells her to pick an image already on the site
+with **Select**, since **Upload** or dropping a file stores a new copy even of
+a file already uploaded.
+
 ### Required fields are what a page cannot do without — [Implicit]
 
 The name, both site descriptions (the search description), the contact email,
