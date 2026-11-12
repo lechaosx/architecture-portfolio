@@ -45,11 +45,6 @@ brief:
     improvements to public spaces. The design respects the natural character of
     the site and the protection of the critically endangered European ground
     squirrel.
-
-
-    Master’s Thesis
-
-    Thesis Supervisor: Prof. Ing. arch. Jiljí Šindlar, CSc.
 context:
   - academic
 intervention:
@@ -64,8 +59,13 @@ scope:
   - public_space
 design_in_progress: false
 role:
-  cs: Autor návrhu
+  cs: Autorka návrhu
   en: Design author
+collaborators:
+  - name: Prof. Ing. arch. Jiljí Šindlar, CSc.
+    role:
+      cs: Vedoucí práce
+      en: Supervisor
 draft: false
 blocks:
   - type: image_set
