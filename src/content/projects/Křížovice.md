@@ -26,6 +26,9 @@ scope:
   - interior
 design_in_progress: false
 realization: construction
+role:
+  cs: Architektka, spoluautorka
+  en: Architect, co-author
 collaborators:
   - name: Ing. Jiří Železný
 draft: false
