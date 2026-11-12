@@ -228,8 +228,10 @@ test('the work card shows the cover shared by its project', async ({ page }) => 
 });
 
 // tests/e2e/pages/[fixture].astro, which the e2e build adds: a work page and
-// a landing page listing the thumbnail fixtures.
-for (const path of ['/e2e/thumbnail-work/', '/e2e/thumbnail-landing/']) {
+// a landing page listing the thumbnail fixtures. Their unprefixed addresses
+// redirect to a language by script, and a page that leaves before it shows
+// gives the next one no view transition.
+for (const path of ['/en/e2e/thumbnail-work/', '/en/e2e/thumbnail-landing/']) {
   test(`project covers morph one uncropped snapshot in both directions from ${path}`, async ({
     browserName,
     page,
