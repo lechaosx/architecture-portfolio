@@ -66,7 +66,7 @@ blocks:
         title:
           cs: Axonometrie
           en: Axonometry
-      - image: /uploads/12 Axo 2-4.webp
+      - image: /uploads/14 Axo 2 - větší-3.webp
         title:
           cs: Axonometrie
           en: Axonometry
