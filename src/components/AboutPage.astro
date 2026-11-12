@@ -50,7 +50,7 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
     <T as="h1" k="about" class="sr-only" />
     <div class="flex flex-wrap-reverse items-end gap-12">
       <div class="reveal min-w-0 flex-[1_1_35ch]">
-        <Prose {...about.body} />
+        <Prose {...about.bio} />
       </div>
       {
         about.portrait && (

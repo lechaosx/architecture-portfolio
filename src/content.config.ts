@@ -152,7 +152,7 @@ const about = defineCollection({
         }),
       )
       .default([]),
-    body: bilingual,
+    bio: bilingual,
     experience: facts,
     services: z.array(z.object({ name: bilingual })).default([]),
     education: facts,

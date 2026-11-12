@@ -311,7 +311,7 @@ test('the landing page may have no images and no chosen projects', () => {
 
 describe('about content schema', () => {
   const aboutSchema = staticSchema('about');
-  const about = { body: { cs: 'O mně', en: 'About me' } };
+  const about = { bio: { cs: 'O mně', en: 'About me' } };
 
   const row = {
     place: { cs: 'Fakulta stavební VUT v Brně', en: 'Faculty of Civil Engineering, Brno University of Technology' },
@@ -400,8 +400,8 @@ test('a project file name gives its URL, and one with nothing to slug still gets
 });
 
 /** Content as Pages CMS writes it (YAML 1.2) and Astro reads it back (js-yaml). */
-const savedByCms = (content: Record<string, unknown>) =>
-  parseFrontmatter(`---\n${stringify(content)}---\n`).frontmatter;
+const savedByCms = ({ body, ...content }: Record<string, unknown>) =>
+  parseFrontmatter(`---\n${stringify(content)}---\n${body || ''}`).frontmatter;
 
 const dateLike = '2024-05-01';
 
@@ -417,7 +417,7 @@ test.each([
   expect(staticSchema(name).safeParse(savedByCms({ ...content, ...fields }))).toMatchObject({ success: true, data: fields });
 });
 
-const aboutContent = { body: { cs: 'O mně', en: 'About me' } };
+const aboutContent = { bio: { cs: 'O mně', en: 'About me' } };
 const fact = { place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Stáž', en: 'Internship' } };
 
 interface BilingualCase {
@@ -457,8 +457,8 @@ const bilingualCases: BilingualCase[] = [
     path: [], pair: 'description', optional: false,
   },
   {
-    name: 'About body', collection: 'about', content: aboutContent,
-    path: [], pair: 'body', optional: false,
+    name: 'About bio', collection: 'about', content: aboutContent,
+    path: [], pair: 'bio', optional: false,
   },
   ...['label', 'text'].map((pair) => ({
     name: `Approach ${pair}`, collection: 'about' as const,

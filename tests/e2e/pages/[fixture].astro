@@ -169,7 +169,7 @@ export function getStaticPaths() {
   };
   const about: CollectionEntry<'about'>['data'] = {
     portrait: '/e2e/images/square-1.png',
-    body: { cs: text(2).cs, en: text(2).en },
+    bio: { cs: text(2).cs, en: text(2).en },
     approaches: (['place', 'scale', 'material', 'thinking'] as const).map((icon) => ({ ...approach, icon })),
     experience: [
       {
@@ -238,9 +238,9 @@ export function getStaticPaths() {
     { params: { fixture: 'landing-bare' }, props: landing([]) },
     { params: { fixture: 'landing-no-work' }, props: landing([], []) },
     { params: { fixture: 'about' }, props: { about } },
-    { params: { fixture: 'language-height' }, props: { about: { ...about, body: { cs: text(2).cs, en: Array(20).fill(text(4).en).join('\n\n') } } } },
+    { params: { fixture: 'language-height' }, props: { about: { ...about, bio: { cs: text(2).cs, en: Array(20).fill(text(4).en).join('\n\n') } } } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
-    { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, body: { cs: words(150).cs, en: words(150).en } } } },
+    { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, bio: { cs: words(150).cs, en: words(150).en } } } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
     { params: { fixture: 'work-list-only' }, props: { projects: briefProjects.filter((p) => p !== gridProject) } },

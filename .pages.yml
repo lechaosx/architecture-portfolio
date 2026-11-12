@@ -10,6 +10,9 @@
 # object only once either subfield is filled, so it saves both languages or
 # neither. Language-neutral fields (images, dates, email, phone) are single. See
 # FEATURES.md "Dual language (Czech + English)".
+#
+# Pages CMS saves a top-level field named `body` as the Markdown below the
+# frontmatter, so no top-level field takes that name.
 
 media:
   input: public/uploads # uploaded files are committed here
@@ -224,7 +227,7 @@ content:
                 - { name: scale, label: Měřítko (pravítko) }
                 - { name: material, label: Materiál (vrstvy) }
                 - { name: thinking, label: Myšlení (žárovka) }
-      - { name: body, label: Text o mně, type: object, required: true, fields: *rich-text-pair }
+      - { name: bio, label: Text o mně, type: object, required: true, fields: *rich-text-pair }
       - name: experience
         label: Praxe
         type: object

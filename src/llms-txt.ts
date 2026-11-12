@@ -108,7 +108,7 @@ export function llmsFullTxt({
   /** The credentialed name. */
   name: string;
   description: Record<Lang, string>;
-  about: Pick<Data<'about'>, 'body' | 'experience' | 'services' | 'education' | 'awards'>;
+  about: Pick<Data<'about'>, 'bio' | 'experience' | 'services' | 'education' | 'awards'>;
   contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location'>;
   /** The published projects. */
   projects: Project[];
@@ -116,7 +116,7 @@ export function llmsFullTxt({
   const blocks = [
     `# ${name}`,
     ...line(both(description).map((text) => `> ${text}`).join('\n>\n')),
-    ...section(label('about'), passages(about.body)),
+    ...section(label('about'), passages(about.bio)),
     ...section(label('experience'), list(about.experience.map(factRow))),
     ...section(
       label('services'),

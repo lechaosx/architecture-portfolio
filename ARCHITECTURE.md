@@ -377,7 +377,8 @@ for no-JS.
 contact singletons [Explicit] with Zod, accepting everything Pages CMS can save
 (see "A CMS save never stops the deploy"). A field is required only when a page
 needs it; optional lists default to empty — [Implicit]. Markdown file bodies are
-unused: bilingual text lives in frontmatter `{ cs, en }` objects.
+unused: bilingual text lives in frontmatter `{ cs, en }` objects. Pages CMS
+saves a top-level field named `body` as the file body, so none is named that.
 
 ### Images: uploads plus responsive derivatives — [Explicit]
 

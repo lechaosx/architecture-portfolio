@@ -5,7 +5,7 @@ import * as llms from './llms-txt';
 const site = new URL('https://example.cz/');
 const name = 'Ing. arch. Jana Nováková';
 const about = {
-  body: { cs: 'Jsem **architektka**.', en: 'I am an **architect**.' },
+  bio: { cs: 'Jsem **architektka**.', en: 'I am an **architect**.' },
   experience: [], services: [], education: [], awards: [],
 };
 const contact = { email: 'jana@example.cz' };
@@ -57,7 +57,7 @@ test('llms.txt is a bilingual link index with a summary and language-specific ca
   ]);
   expect(output).toContain('O mně (cs)');
   expect(output).toContain('Work (en)');
-  expect(output).not.toContain(about.body.cs);
+  expect(output).not.toContain(about.bio.cs);
 });
 
 test('the index links only published project pages, newest first, with short factual notes', () => {
@@ -147,7 +147,7 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
     } }],
   });
   for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
-  for (const [cs, en] of [[about.body.cs, about.body.en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.']]) {
+  for (const [cs, en] of [[about.bio.cs, about.bio.en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.']]) {
     expect(output).toContain(`**Česky (cs):**\n\n${cs}\n\n**English (en):**\n\n${en}`);
   }
 });
