@@ -2,7 +2,7 @@
 export const getStaticPaths = () => ['cs', 'en'].map((lang) => ({ params: { lang } }));
 import WorkPage from '../../components/WorkPage.astro';
 import { projects } from '../../published-projects';
-import { about, contact, site } from '../../singletons';
+import { about, contact, cv, site } from '../../singletons';
 ---
 
-<WorkPage {projects} {site} {about} {contact} />
+<WorkPage {projects} {site} {about} {contact} {cv} />

@@ -23,8 +23,8 @@ Tests, build and other commands: [MAINTAINERS.md](MAINTAINERS.md).
 ## Content
 
 Projects are Markdown files in `src/content/projects/`, the landing page's
-images and projects, the About page, the contacts in the footer and the site
-settings are in `src/content/singletons/`, and images in `public/uploads/`.
+images and projects, the About page, what only the CV shows, the contacts in the
+footer and the site settings are in `src/content/singletons/`, and images in `public/uploads/`.
 Each project brief introduces the project and her involvement. Optional personal
 roles list her responsibilities; collaborators credit other people. Project
 classifications and realization describe the whole project. An optional project

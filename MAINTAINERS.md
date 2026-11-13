@@ -42,7 +42,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | Path | What |
 |------|------|
 | `src/content/projects/*.md` | one file per project; the filename is the URL |
-| `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images and projects), `about.md`, `contact.md` (the footer's contacts, the IČO and seat on the legal page, and the landing page's location) |
+| `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images and projects), `about.md`, `cv.md` (what only the CV PDF shows; its links are also the structured data's `sameAs`), `contact.md` (the footer's contacts, the IČO and seat on the legal page, and the landing page's location) |
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
 | `src/singletons.ts`, `src/published-projects.ts` | content as pages read it: no drafts, no images whose file is missing, warnings for those images, untitled images and periods, the landing page's projects as cards |
@@ -78,7 +78,10 @@ and an object field in `.pages.yml` whose `cs`/`en` subfields are
 `required: true` with `pattern: *text`; the `*string-pair`, `*text-pair` and
 `*rich-text-pair` anchors supply them where no per-language help or label is
 needed. The content-schema test checks every subfield's `pattern`. Labels, help
-texts and option labels in `.pages.yml` are Czech.
+texts and option labels in `.pages.yml` are Czech. Pages CMS parses
+`.pages.yml` with the `yaml` package's default alias limit, as the test does; if
+it reports an excessive alias count, write the new fields out instead of using
+an anchor.
 
 **Translate content.** Fill both `cs` and `en` of a field, including captions,
 roles and nested descriptions, or, when it is optional, leave out the whole
@@ -104,7 +107,7 @@ a project still needs content blocks to have a page and a card.
 Vybrané práce**, or list project file paths by hand under `projects:` in
 `landing.md`, e.g. `src/content/projects/hasicska-zbrojnice-doubravnik.md`.
 The build skips, with a warning, any that is a draft, missing, without a card
-(no image or no page content) or repeated.
+(no image or no page content) or repeated. The CV PDF lists the same projects.
 
 **Link to a project's external page.** Set optional `project_url` to its complete
 HTTP or HTTPS address, shared by both languages, or leave it empty. Pages CMS

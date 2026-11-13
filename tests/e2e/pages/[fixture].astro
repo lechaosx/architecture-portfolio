@@ -2,7 +2,7 @@
 // Pages the browser tests run against, so they do not depend on the shipped
 // content; astro.config.e2e.mjs adds them at /e2e/. Their images are
 // tests/e2e/images, served by images/[file].ts.
-import { about as frameAbout, contact as frameContact, site } from '../architect';
+import { about as frameAbout, contact as frameContact, cv as frameCv, site } from '../architect';
 import { thumbnailProjects } from '../thumbnail-projects';
 import type { CollectionEntry } from 'astro:content';
 import { projectCard, type Project } from '../../../src/projects';
@@ -243,6 +243,27 @@ export function getStaticPaths() {
     ...(heroImages.length > 0 ? { about, contact: frameContact } : { about: bareAbout, contact: bareContact }),
   });
 
+  const profile = {
+    cs: 'Navrhuji domy a interiéry od první studie po realizaci a provázím klienty povolováním stavby.',
+    en: 'I design houses and interiors from the first study to construction and guide clients through the building permit.',
+  };
+  // Every optional section filled, a link with an icon of its own and one
+  // without, and chosen projects out of date order, one with my roles.
+  const cv = {
+    // A site-relative link, which the PDF must point at the public site, and
+    // a link the CMS saves but no URL parser accepts.
+    profile: { cs: `${profile.cs}\n\n[Práce](/cs/work/) [x](http://)`, en: `${profile.en}\n\n[Work](/en/work/) [x](http://)` },
+    headline: { cs: 'Stavby od první studie po realizaci', en: 'Buildings from the first study to construction' },
+    interests: [{ cs: 'Turistika', en: 'Hiking' }, { cs: 'Kresba', en: 'Drawing' }],
+    links: [...frameCv.links, { label: 'klara.example.org', url: 'https://klara.example.org/' }],
+    exhibitions: [
+      { title: { cs: 'Výstava diplomových prací', en: 'Diploma exhibition' }, note: { cs: 'Kyjov, 2025', en: 'Kyjov, 2025' }, url: 'https://example.org/vystava' },
+      { title: { cs: 'Rozhovor v časopise', en: 'Magazine interview' } },
+    ],
+  };
+  const cvProjects = cards([{ ...project2024, data: { ...project2024.data, role: myRoles.slice(0, 2) } }, gridProject, project2023]);
+  const bareCv = { interests: [], links: [], exhibitions: [] };
+
   const paths = [
     { params: { fixture: 'thumbnail-work' }, props: { projects: thumbnailProjects } },
     { params: { fixture: 'thumbnail-landing' }, props: landing([], cards(thumbnailProjects)) },
@@ -259,11 +280,10 @@ export function getStaticPaths() {
     { params: { fixture: 'legal' }, props: { legal: true } },
     { params: { fixture: 'legal-bare' }, props: { legal: true, contact: bareContact } },
     { params: { fixture: 'legal-seat' }, props: { legal: true, contact: { ...bareContact, seat: frameContact.seat } } },
-    // A site-relative link in the bio, which the PDF must point at the public
-    // site, and a link the CMS saves but no URL parser accepts.
-    { params: { fixture: 'cv' }, props: { cv: true, about: { ...about, bio: { cs: `${text(2).cs}\n\n[Práce](/cs/work/) [x](http://)`, en: `${text(2).en}\n\n[Work](/en/work/) [x](http://)` } } } },
-    { params: { fixture: 'cv-long' }, props: { cv: true, about: { ...about, bio: { cs: Array(40).fill(text(4).cs).join('\n\n'), en: Array(40).fill(text(4).en).join('\n\n') } } } },
-    { params: { fixture: 'cv-bare' }, props: { cv: true, about: bareAbout, contact: bareContact } },
+    { params: { fixture: 'cv' }, props: { cvPage: true, about: { ...about, bio: { cs: 'Text pro stránku O mně.', en: 'Text for the About page.' } }, cv, projects: cvProjects } },
+    { params: { fixture: 'cv-long' }, props: { cvPage: true, about, cv: { ...cv, profile: { cs: Array(40).fill(text(4).cs).join('\n\n'), en: Array(40).fill(text(4).en).join('\n\n') } }, projects: cvProjects } },
+    // Nothing optional filled, and the profile a hand edit can drop.
+    { params: { fixture: 'cv-bare' }, props: { cvPage: true, about: bareAbout, contact: bareContact, cv: bareCv, projects: [] } },
     { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, bio: { cs: words(150).cs, en: words(150).en } } } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
@@ -339,31 +359,31 @@ export function getStaticPaths() {
     },
     { params: { fixture: 'project' }, props: { project: { id: 'e2e-project', data: project } } },
   ];
-  // Each page's frame shows About and contact data: ../architect.ts's unless
-  // the page brings its own.
-  return paths.map((path) => ({ ...path, props: { about: frameAbout, contact: frameContact, ...path.props } }));
+  // Each page's frame shows About, contact and CV data: ../architect.ts's
+  // unless the page brings its own.
+  return paths.map((path) => ({ ...path, props: { about: frameAbout, contact: frameContact, cv: frameCv, ...path.props } }));
 }
 
-const { about, contact, cv, images, landing, legal, paragraphs, project, projects } = Astro.props;
+const { about, contact, cv, cvPage, images, landing, legal, paragraphs, project, projects } = Astro.props;
 ---
 
 {
   paragraphs ? (
-    <Base title={{ cs: 'Text', en: 'Text' }} {site} {about} {contact}>
+    <Base title={{ cs: 'Text', en: 'Text' }} {site} {about} {contact} {cv}>
       <div class="mx-auto max-w-6xl px-6 pt-12"><Paragraphs {...paragraphs} class="space-y-4" /></div>
     </Base>
-  ) : cv ? (
-    <CvPage {site} {about} {contact} />
+  ) : cvPage ? (
+    <CvPage {site} {about} {contact} {cv} {projects} />
   ) : legal ? (
-    <LegalPage {site} {about} {contact} />
+    <LegalPage {site} {about} {contact} {cv} />
   ) : project ? (
-    <ProjectPage {project} {site} {about} {contact} />
+    <ProjectPage {project} {site} {about} {contact} {cv} />
   ) : landing ? (
-    <LandingPage {landing} {site} {about} {contact} />
+    <LandingPage {landing} {site} {about} {contact} {cv} />
   ) : projects ? (
-    <WorkPage {projects} {site} {about} {contact} />
+    <WorkPage {projects} {site} {about} {contact} {cv} />
   ) : images ? (
-    <Base title={{ cs: 'E2E', en: 'E2E' }} {site} {about} {contact}>
+    <Base title={{ cs: 'E2E', en: 'E2E' }} {site} {about} {contact} {cv}>
       <div class="mx-auto max-w-6xl px-6 pb-16">
         <ProjectBlocks
           projectId="e2e"
@@ -376,6 +396,6 @@ const { about, contact, cv, images, landing, legal, paragraphs, project, project
       </div>
     </Base>
   ) : (
-    <AboutPage {site} {about} {contact} />
+    <AboutPage {site} {about} {contact} {cv} />
   )
 }

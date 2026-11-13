@@ -24,9 +24,10 @@ interface Props {
   site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
   contact: CollectionEntry<'contact'>['data'];
+  cv: CollectionEntry<'cv'>['data'];
 }
 
-const { site, about, contact } = Astro.props;
+const { site, about, contact, cv } = Astro.props;
 const { grid, listed } = workProjects(Astro.props.projects);
 const image = grid[0] && (await getResponsiveImage(grid[0].cover.image))?.share;
 const origin = new URL('/', Astro.site);
@@ -55,6 +56,7 @@ const marker = 'col-start-2 row-start-2 justify-self-end sm:col-start-4 sm:row-s
   {site}
   {about}
   {contact}
+  {cv}
 >
   <PageContent imagery={grid.length > 0}>
     <T as="h1" k="work" class="sr-only" />

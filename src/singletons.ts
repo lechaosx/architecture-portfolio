@@ -38,3 +38,5 @@ export const about = {
   portrait: aboutData.portrait && fileFound(aboutData.portrait, 'src/content/singletons/about.md: portrait') ? aboutData.portrait : undefined,
 };
 export const contact = data(await getEntry('contact', 'contact'), 'contact');
+export const cv = data(await getEntry('cv', 'cv'), 'cv');
+if (!cv.profile) console.warn('src/content/singletons/cv.md: profile: missing; the CV prints without its profile');

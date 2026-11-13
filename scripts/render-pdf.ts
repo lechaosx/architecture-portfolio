@@ -7,7 +7,7 @@ const maximumBytes = 10_000_000;
 export function smallTextWarning(pdf: string, scale: number, bodyPx: number) {
   const pt = (bodyPx * 0.75 * scale) / 100;
   if (pt >= minimumBodyTextPt) return;
-  return `${pdf}: bio text prints at ${pt.toFixed(2)} pt at ${scale}% scale, below the ${minimumBodyTextPt} pt minimum; shorten the content to enlarge it.`;
+  return `${pdf}: profile text prints at ${pt.toFixed(2)} pt at ${scale}% scale, below the ${minimumBodyTextPt} pt minimum; shorten the content to enlarge it.`;
 }
 
 export function largeFileWarning(pdf: string, bytes: number) {
@@ -42,8 +42,8 @@ export async function renderPDF(browser: Browser, url: string, { site, onePage }
 
     const { bodyPx, brokenImages } = await page.evaluate(async (site) => {
       await document.fonts.ready;
-      for (const family of ['Roboto Variable', 'Roboto Condensed Variable']) {
-        if ((await document.fonts.load(`16px "${family}"`)).length === 0) throw new Error(`${family} did not load`);
+      for (const font of ['16px "Roboto Variable"', '16px "Roboto Condensed Variable"', 'italic 16px "Roboto Condensed Variable"']) {
+        if ((await document.fonts.load(font)).length === 0) throw new Error(`${font} did not load`);
       }
       const brokenImages = await Promise.all(
         [...document.images].map((image) => image.decode().then(() => '', () => image.currentSrc || image.src)),
@@ -56,8 +56,8 @@ export async function renderPDF(browser: Browser, url: string, { site, onePage }
         const target = new URL(link.href);
         if (target.origin === location.origin) link.href = new URL(target.pathname + target.search + target.hash, site).href;
       }
-      const bio = document.querySelector('main .prose p') ?? document.body;
-      return { bodyPx: parseFloat(getComputedStyle(bio).fontSize), brokenImages: brokenImages.filter(Boolean) };
+      const profile = document.querySelector('main .prose p') ?? document.body;
+      return { bodyPx: parseFloat(getComputedStyle(profile).fontSize), brokenImages: brokenImages.filter(Boolean) };
     }, site);
     warnings.push(...brokenImages.map((src) => `image could not be shown: ${src}`));
 

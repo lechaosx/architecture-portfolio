@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import { Lexer, type Tokens } from 'marked';
 import type { ImageManifest } from '../../src/images';
-import { contact, site } from './architect';
+import { contact, cv, site } from './architect';
 import { thumbnailProjects } from './thumbnail-projects';
 
 const owner = `${site.credential} ${site.name}`;
@@ -128,6 +128,7 @@ test.describe(() => {
         name: site.name,
         url: `${origin}/cs/`,
         workLocation: { '@type': 'Place', name: contact.location.cs },
+        sameAs: cv.links.map(({ url }) => url),
       });
       expect(architect).not.toHaveProperty('knowsLanguage');
     }

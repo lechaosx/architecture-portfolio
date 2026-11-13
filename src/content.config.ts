@@ -40,6 +40,9 @@ export const TEXT = /\S/;
 const text = z.string().regex(TEXT, 'Expected text, not only whitespace');
 // A translatable field: both languages, or neither where optional, as Pages CMS saves it.
 const bilingual = z.object({ cs: text, en: text });
+const webAddress = z.string().regex(PROJECT_URL, 'Expected an http or https address, e.g. https://example.org');
+// The CMS saves an optional address left empty as ''.
+const optionalWebAddress = z.union([webAddress, z.literal('')]).optional();
 
 const projectImage = z.object({
   // Image paths live under /public (served from root), so plain strings.
@@ -83,7 +86,7 @@ const projects = defineCollection({
     from: date,
     to: date.optional(),
     location: bilingual.optional(),
-    project_url: z.union([z.string().regex(PROJECT_URL, 'Expected an http or https address, e.g. https://example.org'), z.literal('')]).optional(),
+    project_url: optionalWebAddress,
     brief: bilingual.optional(),
     context: z.array(z.enum(['academic', 'competition', 'commissioned', 'self_initiated'])).default([]),
     intervention: z.array(z.enum(['new_build', 'renovation', 'extension', 'adaptive_reuse'])).default([]),
@@ -188,4 +191,18 @@ const contact = defineCollection({
   }),
 });
 
-export const collections = { projects, site, landing, about, contact };
+// What only the CV PDF shows.
+const cv = defineCollection({
+  loader: glob({ pattern: 'cv.md', base: singletons }),
+  schema: frontmatter({
+    // The CMS requires a profile, but a hand edit can drop it; the CV then
+    // leaves its section out and src/singletons.ts warns.
+    profile: bilingual.optional().meta({ requiredInCms: true }),
+    headline: bilingual.optional(),
+    interests: z.array(bilingual).default([]),
+    links: z.array(z.object({ label: text, url: webAddress })).default([]),
+    exhibitions: z.array(z.object({ title: bilingual, note: bilingual.optional(), url: optionalWebAddress })).default([]),
+  }),
+});
+
+export const collections = { projects, site, landing, about, contact, cv };

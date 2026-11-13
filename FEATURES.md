@@ -78,11 +78,11 @@ Structural and design changes are made in code on the same repo.
 ### Most of the site is editable — [Explicit]
 
 Editable: projects, the landing page's images and projects, the About page (bio, portrait,
-work experience, services, education, awards, Approach), the contact details in
-the footer, and the site settings (name, credential, description). Baked into
-code: page structure, navigation and section labels. CMS entries:
-**Projekty**, **Úvodní stránka**, **O mně**, **Kontakt (patička)**,
-**Nastavení webu**.
+work experience, services, education, awards, Approach), what only the CV shows,
+the contact details in the footer, and the site settings (name, credential,
+description). Baked into code: page structure, navigation and section labels.
+CMS entries: **Projekty**, **Úvodní stránka**, **O mně**, **Životopis**,
+**Kontakt (patička)**, **Nastavení webu**.
 
 ### The CMS speaks Czech — [Explicit]
 
@@ -303,18 +303,36 @@ as the bio and portrait; the period has a column of its own, on phones too —
 
 ### CV as a one-page PDF — [Explicit]
 
-Every deploy prints her CV from the About content as one A4 page in each
-language; About stays the web version. The file names her, such as
+Every deploy prints her CV as one A4 page in each language; About stays the web
+version. The file names her, such as
 `Tereza-Kalabkova-cv-cs.pdf`, so it reads well in a downloads folder or
 attached to an email.
 
 It has a dark sidebar beside a white main column in the site's greys, light
 Roboto text with bold Roboto Condensed titles, and experience and education on
 a timeline — [Explicit]. It shows her name, profession and contacts, portrait,
-links, bio, experience with skills, education with degrees and awards, but not
-Approach or services; content too long for the page prints smaller, the build
-warns once the bio prints below 9 pt, and its links lead to the public site —
-[Implicit].
+links, profile, experience with skills, education with degrees and awards, but
+not Approach or services; content too long for the page prints smaller, the
+build warns once the profile prints below 9 pt, and its links lead to the public
+site — [Implicit].
+
+### CV-only content in the Životopis entry — [Explicit]
+
+What belongs on the CV but not on the site is edited in **Životopis**: a short
+profile for studios, shown as **O mně** instead of About's longer bio; an
+optional headline under her name; interests as badges; links such as LinkedIn
+after the site's address; and exhibitions and publications, each with an
+optional note and link. The CV also lists the projects chosen for the landing
+page, in that order, each with its place, period and her roles and linking its
+page. It has no languages section: the profile says she works in Czech and
+English.
+
+Every optional section is left out when empty, and a profile a hand edit drops
+leaves its section out with a build warning; the headline is set in italic
+Roboto Condensed — [Explicit]. The sidebar holds the links, chosen projects,
+exhibitions and interests, and the main column the profile and the timelines,
+so the page stays balanced; a LinkedIn link gets LinkedIn's icon, any other a
+generic link icon — [Implicit].
 
 ### Work page: a grid of square covers — [Explicit]
 
@@ -685,7 +703,8 @@ description; the Work page lists every published project, including those
 without a page, and a project links an outside page about the project —
 [Explicit]. It states the degree a study's row names — [Explicit] — for
 finished studies only — [Implicit]. The skills from all experience rows are
-what she knows about — [Explicit].
+what she knows about — [Explicit]. Her CV links, such as LinkedIn, name her
+profiles elsewhere — [Implicit].
 
 ### Bilingual index and full export for AI assistants — [Explicit]
 

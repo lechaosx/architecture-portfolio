@@ -111,7 +111,7 @@ content:
             - { name: planned, label: Plánovaná realizace }
             - { name: construction, label: Ve výstavbě }
             - { name: built, label: Realizováno }
-      - { name: project_url, label: Odkaz na projekt, type: string, required: false, pattern: { regex: '^https?://(?:[\w-]+\.)*[A-Za-z][\w-]*(?:[/?#]\S*)?$|^$', message: 'Zadejte úplnou adresu začínající http:// nebo https://, s doménou bez diakritiky a bez čísla portu (např. :8080), např. https://www.example.cz/projekt.' }, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
+      - { name: project_url, label: Odkaz na projekt, type: string, required: false, pattern: &web-address { regex: '^https?://(?:[\w-]+\.)*[A-Za-z][\w-]*(?:[/?#]\S*)?$|^$', message: 'Zadejte úplnou adresu začínající http:// nebo https://, s doménou bez diakritiky a bez čísla portu (např. :8080), např. https://www.example.cz/projekt.' }, description: 'Úplná adresa externí stránky projektu začínající http:// nebo https://, společná pro oba jazyky. Nepovinné.' }
       - { name: studio, label: Ateliér, type: string, required: false, description: 'Pouze název ateliéru, např. „Fránek Architects“. Jména ostatních lidí patří do spolupráce.' }
       - name: role
         label: Moje role
@@ -323,6 +323,67 @@ content:
               - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „2. místo“.' }
               - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „2nd place“.' }
           - { name: description, label: Popis, type: object, required: false, description: *translations, fields: *text-pair }
+
+  - name: cv
+    label: Životopis
+    type: file
+    path: src/content/singletons/cv.md
+    fields:
+      - name: profile
+        label: Profil
+        type: object
+        required: true
+        description: 'Krátký profil pro ateliéry, dvě až čtyři věty: co navrhujete, jaké máte zkušenosti a kde působíte, např. „Architektka z Brna. Navrhuji rodinné domy od studie po realizaci.“ Zobrazuje se jen v životopisu (PDF), v sekci „O mně“ místo delšího textu ze stránky O mně.'
+        fields: *rich-text-pair
+      - name: headline
+        label: Podtitulek
+        type: object
+        required: false
+        description: 'Jedna krátká věta pod jménem a profesí. Zobrazuje se jen v životopisu (PDF). Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
+        fields:
+          - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Navrhuji stavby od první studie po realizaci.“' }
+          - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „I design buildings from the first study to construction.“' }
+      - name: interests
+        label: Zájmy
+        type: object
+        list: true
+        required: false
+        description: 'Zájmy a koníčky mimo práci, jeden na položku. Zobrazují se jen v životopisu (PDF), jako štítky. Nepovinné.'
+        fields:
+          - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Turistika“.' }
+          - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Hiking“.' }
+      - name: links
+        label: Odkazy
+        type: object
+        list: true
+        required: false
+        description: 'Vaše profily na jiných webech, jeden na položku, např. LinkedIn. Zobrazují se v životopisu (PDF) pod adresou tohoto webu; vyhledávačům a AI asistentům je web předává ve strojově čitelných údajích. Nepovinné.'
+        fields:
+          - { name: label, label: Text odkazu, type: string, required: true, pattern: *text, description: 'Jak se odkaz vypíše, např. „LinkedIn“.' }
+          - { name: url, label: Adresa, type: string, required: true, pattern: *web-address, description: 'Úplná adresa začínající https://, např. https://www.linkedin.com/in/jmeno-prijmeni.' }
+      - name: exhibitions
+        label: Výstavy a publikace
+        type: object
+        list: true
+        required: false
+        description: 'Výstavy vašich prací a publikace o nich, jedna na položku, nejnovější nahoře. Zobrazují se jen v životopisu (PDF). Nepovinné.'
+        fields:
+          - name: title
+            label: Název
+            type: object
+            required: true
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Výstava diplomových prací FAST VUT“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „FAST BUT diploma exhibition“.' }
+          - name: note
+            label: Poznámka
+            type: object
+            required: false
+            description: *translations
+            fields:
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Kde a kdy, např. „Kyjov, 2025“ nebo „časopis Stavitel, 3/2025“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Kde a kdy, např. „Kyjov, 2025“ nebo „Stavitel magazine, 3/2025“.' }
+          - { name: url, label: Odkaz, type: string, required: false, pattern: *web-address, description: 'Úplná adresa stránky o výstavě nebo publikaci začínající http:// nebo https://, např. https://www.example.cz/vystava. Nepovinné.' }
 
   - name: contact
     label: Kontakt (patička)

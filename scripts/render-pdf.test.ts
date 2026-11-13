@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { largeFileWarning, smallTextWarning } from './render-pdf';
 
-test('warns when the fitted bio text prints below 9 pt', () => {
+test('warns when the fitted profile text prints below 9 pt', () => {
   expect(smallTextWarning('/a-cv-cs.pdf', 74, 16)).toContain('8.88 pt at 74%');
   expect(smallTextWarning('/a-cv-cs.pdf', 75, 16)).toBeUndefined();
 });

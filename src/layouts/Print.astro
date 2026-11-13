@@ -1,8 +1,9 @@
 ---
 import '@fontsource-variable/roboto/index.css';
-// Linked rather than imported, so the font stays out of the stylesheet Astro
+// Linked rather than imported, so the fonts stay out of the stylesheet Astro
 // bundles for every page.
 import condensed from '@fontsource-variable/roboto-condensed/wght.css?url';
+import condensedItalic from '@fontsource-variable/roboto-condensed/wght-italic.css?url';
 import '../styles/global.css';
 import { pageLanguage } from '../locale';
 
@@ -23,6 +24,7 @@ const lang = pageLanguage(Astro.url.pathname);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href={condensed} />
+    <link rel="stylesheet" href={condensedItalic} />
     <title>{title}</title>
     <link rel="alternate" type="application/pdf" href={pdf} />
   </head>

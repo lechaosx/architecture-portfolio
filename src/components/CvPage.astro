@@ -9,6 +9,7 @@ import { localizedPath, pageLanguage } from '../locale';
 import { ui } from '../i18n';
 import { pdfPath } from '../pdf';
 import { formatPeriod } from '../period';
+import type { Project } from '../projects';
 import { getResponsiveImage } from '../server-images';
 import { credentialedName } from '../site-title';
 
@@ -16,9 +17,12 @@ interface Props {
   site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
   contact: CollectionEntry<'contact'>['data'];
+  cv: CollectionEntry<'cv'>['data'];
+  /** The projects chosen for the landing page, in their order. */
+  projects: Project[];
 }
 
-const { site, about, contact } = Astro.props;
+const { site, about, contact, cv, projects } = Astro.props;
 const { email, phone, location } = contact;
 const lang = pageLanguage(Astro.url.pathname);
 // The share JPEG is ample for print and keeps the file small.
@@ -28,6 +32,8 @@ const facts = [
   { k: 'education', rows: about.education },
   { k: 'awards', rows: about.awards },
 ] as const;
+const roles = (role: Project['data']['role']) => ({ cs: role.map(({ cs }) => cs).join(' · '), en: role.map(({ en }) => en).join(' · ') });
+const linkIcon = (url: string) => (/(^|\.)linkedin\.com$/.test(new URL(url).hostname) ? 'linkedin' : 'link');
 // Titles are set in Roboto Condensed, which only the print layout loads.
 const condensed = "font-['Roboto_Condensed_Variable',sans-serif] font-bold";
 // Section rules run to the column's edge, past its padding.
@@ -45,7 +51,7 @@ const icon = 'size-3.5 shrink-0 text-neutral-400';
     <div class="bg-neutral-900 px-8 py-6">
       {portrait && <img src={portrait} alt={credentialedName(site)} class="aspect-square w-full rounded-full object-cover" />}
     </div>
-    <header class="flex items-center justify-between gap-4 px-8 py-6">
+    <header class="grid grid-cols-[1fr_auto] items-center gap-x-4 px-8 py-6">
       <div>
         <h1 class={`${condensed} text-[2.25rem] leading-tight`}>
           {site.credential && <span class="block">{site.credential}</span>}
@@ -59,23 +65,64 @@ const icon = 'size-3.5 shrink-0 text-neutral-400';
         {phone && <div class={contactRow}><ContactIcon icon="phone" class={icon} /><a href={`tel:${phone.replace(/\s+/g, '')}`}>{phone}</a></div>}
         <div class={contactRow}><ContactIcon icon="email" class={icon} /><a href={`mailto:${email}`}>{email}</a></div>
       </address>
+      {cv.headline && <T as="p" {...cv.headline} class="col-span-full mt-3.5 font-['Roboto_Condensed_Variable',sans-serif] text-xl leading-tight font-[350] text-balance italic" />}
     </header>
-    <div class="bg-neutral-900 px-8 text-white">
+    <div class="space-y-5 bg-neutral-900 px-8 text-white">
       <section>
         <T as="h2" k="links" class={`${heading} border-white`} />
         <ul class="space-y-2">
           <li class="flex items-center gap-2"><ContactIcon icon="website" class={icon} /><a href={localizedPath('/', lang)}>{new URL(Astro.site!).host}</a></li>
+          {cv.links.map(({ label, url }) => (
+            <li class="flex items-center gap-2"><ContactIcon icon={linkIcon(url)} class={icon} /><a href={url} class="min-w-0 break-words">{label}</a></li>
+          ))}
         </ul>
       </section>
+      {projects.length > 0 && (
+        <section>
+          <T as="h2" k="selectedProjects" class={`${heading} border-white`} />
+          <ul class="space-y-2">
+            {projects.map(({ id, data }) => (
+              <li>
+                <a href={localizedPath(`/projects/${id}/`, lang)} class="font-normal"><T {...data.title} /></a>
+                <p class="text-sm text-neutral-300">{data.location && <><T {...data.location} />{' · '}</>}<T {...formatPeriod(data)} /></p>
+                {data.role.length > 0 && <T as="p" {...roles(data.role)} class="text-sm text-neutral-300" />}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {cv.exhibitions.length > 0 && (
+        <section>
+          <T as="h2" k="exhibitions" class={`${heading} border-white`} />
+          <ul class="space-y-2">
+            {cv.exhibitions.map(({ title, note, url }) => (
+              <li>
+                {url ? <a href={url} class="font-normal"><T {...title} /></a> : <T {...title} class="font-normal" />}
+                {note && <T as="p" {...note} class="text-sm text-neutral-300" />}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {cv.interests.length > 0 && (
+        <section>
+          <T as="h2" k="interests" class={`${heading} border-white`} />
+          <ul class="flex flex-wrap gap-1 text-[0.8125rem] font-normal">
+            {cv.interests.map((interest) => <li class="rounded-sm bg-neutral-700 px-1.25 py-0.75"><T {...interest} /></li>)}
+          </ul>
+        </section>
+      )}
     </div>
     <div class="space-y-5 px-8">
-      {/* One ragged-right bio column at any fitted scale, as justified lines
-          this short open wide gaps. The `!` overrides global.css, which sets
-          the columns and alignment outside Tailwind's layers. */}
-      <section class="[&_.prose]:leading-snug [&_.prose_p]:my-1.5 [&_.prose-columns]:columns-1! [&_.running-text]:text-left!">
-        <T as="h2" k="aboutMe" class={`${heading} border-black`} />
-        <Prose {...about.bio} />
-      </section>
+      {/* One ragged-right profile column at any fitted scale, as justified
+          lines this short open wide gaps. The `!` overrides global.css, which
+          sets the columns and alignment outside Tailwind's layers. */}
+      {cv.profile && (
+        <section class="[&_.prose]:leading-snug [&_.prose_p]:my-1.5 [&_.prose-columns]:columns-1! [&_.running-text]:text-left!">
+          <T as="h2" k="aboutMe" class={`${heading} border-black`} />
+          <Prose {...cv.profile} />
+        </section>
+      )}
       {facts.map(({ k, rows }) => rows.length > 0 && (
         <section class="[&_.running-text]:text-left!">
           <T as="h2" {k} class={`${heading} border-black`} />

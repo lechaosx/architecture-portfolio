@@ -9,7 +9,7 @@ import { hasPage, projectCover, type Project } from './projects';
 
 
 type Node = Record<string, unknown>;
-type Data<Collection extends 'site' | 'about' | 'contact' | 'projects'> =
+type Data<Collection extends 'site' | 'about' | 'contact' | 'cv' | 'projects'> =
   CollectionEntry<Collection>['data'];
 
 const text = (value?: string) => value?.trim() || undefined;
@@ -41,6 +41,7 @@ export function person({
   site,
   owner,
   about,
+  cv,
   contact,
   portrait,
   lang = 'cs',
@@ -48,6 +49,7 @@ export function person({
   site: URL;
   owner: Pick<Data<'site'>, 'name' | 'credential' | 'description'>;
   about: Pick<Data<'about'>, 'experience' | 'services' | 'education' | 'awards'>;
+  cv: Pick<Data<'cv'>, 'links'>;
   contact: Pick<Data<'contact'>, 'email' | 'phone' | 'ico' | 'location'>;
   portrait?: string;
   lang?: Lang;
@@ -92,6 +94,7 @@ export function person({
       }),
     ),
     award: factNames(about.awards, (row) => [row.place[lang], row.title[lang]], lang),
+    sameAs: cv.links.map(({ url }) => url),
   });
 }
 

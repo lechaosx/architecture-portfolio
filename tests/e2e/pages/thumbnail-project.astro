@@ -1,7 +1,7 @@
 ---
 import ProjectPage from '../../../src/components/ProjectPage.astro';
 import { hasPage } from '../../../src/projects';
-import { about, contact, site } from '../architect';
+import { about, contact, cv, site } from '../architect';
 import { thumbnailProjects } from '../thumbnail-projects';
 
 export function getStaticPaths() {
@@ -12,4 +12,4 @@ export function getStaticPaths() {
 
 const { project } = Astro.props;
 ---
-<ProjectPage {project} {site} {about} {contact} />
+<ProjectPage {project} {site} {about} {contact} {cv} />

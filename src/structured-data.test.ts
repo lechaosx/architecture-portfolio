@@ -16,6 +16,7 @@ const owner = {
   description: { cs: 'Portfolio architektky.', en: 'An architect’s portfolio.' },
 };
 const emptyAbout = { experience: [], services: [], education: [], awards: [] };
+const emptyCv = { links: [] };
 const contact = { email: 'jana@example.cz' };
 const skill = (cs: string, en: string) => ({ name: { cs, en } });
 
@@ -51,6 +52,7 @@ describe('person', () => {
         site,
         owner,
         about,
+        cv: { links: [{ label: 'linkedin.com/in/jana', url: 'https://www.linkedin.com/in/jana' }, { label: 'Instagram', url: 'https://instagram.com/jana' }] },
         contact: { ...contact, phone: '+420 777 000 000', ico: '12345678', location: { cs: 'Brno', en: 'Brno' } },
         portrait: '/_responsive/hash/1280.webp',
       }),
@@ -84,6 +86,7 @@ describe('person', () => {
         { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rodinné domy' } },
       ],
       award: ['Cena Bohuslava Fuchse, 2. místo (2025)', 'Soutěž, Finále (9/2025–dosud)'],
+      sameAs: ['https://www.linkedin.com/in/jana', 'https://instagram.com/jana'],
     });
   });
 
@@ -92,6 +95,7 @@ describe('person', () => {
       site,
       owner: { name: owner.name, description: owner.description },
       about: emptyAbout,
+      cv: emptyCv,
       contact,
     });
     expect(Object.keys(node)).toEqual(['@type', '@id', 'name', 'jobTitle', 'description', 'url', 'email']);
@@ -377,7 +381,7 @@ test('credits the architect implicitly and trims supplied collaborator names and
 
 test('English person facts use English service names, award text and ongoing periods', () => {
   const node = person({
-    site, owner, contact, lang: 'en',
+    site, owner, contact, cv: emptyCv, lang: 'en',
     about: {
       experience: [{ place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Architektka', en: 'Architect' }, skills: [skill('Vizualizace', 'Visualisation')] }],
       services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],

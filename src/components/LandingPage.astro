@@ -27,9 +27,10 @@ interface Props {
   site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
   contact: CollectionEntry<'contact'>['data'];
+  cv: CollectionEntry<'cv'>['data'];
 }
 
-const { landing, site, about, contact } = Astro.props;
+const { landing, site, about, contact, cv } = Astro.props;
 const name = credentialedName(site);
 const identity = (lang: 'cs' | 'en') =>
   [ui[lang].tagline, contact.location?.[lang].trim()].filter(Boolean).join(' · ');
@@ -53,6 +54,7 @@ const image =
   {site}
   {about}
   {contact}
+  {cv}
 >
   <PageContent imagery={heroImages.length > 0}>
     {

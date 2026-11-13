@@ -1,7 +1,7 @@
 ---
 export const getStaticPaths = () => ['cs', 'en'].map((lang) => ({ params: { lang } }));
 import LandingPage from '../../components/LandingPage.astro';
-import { about, contact, landing, site } from '../../singletons';
+import { about, contact, cv, landing, site } from '../../singletons';
 ---
 
-<LandingPage {landing} {site} {about} {contact} />
+<LandingPage {landing} {site} {about} {contact} {cv} />

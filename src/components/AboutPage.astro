@@ -23,11 +23,12 @@ interface Props {
   site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
   contact: CollectionEntry<'contact'>['data'];
+  cv: CollectionEntry<'cv'>['data'];
 }
 
-const { site, about, contact } = Astro.props;
+const { site, about, contact, cv } = Astro.props;
 const lang = pageLanguage(Astro.url.pathname);
-const cv = { cs: pdfPath(site.name, 'cv', 'cs'), en: pdfPath(site.name, 'cv', 'en') };
+const cvPdf = { cs: pdfPath(site.name, 'cv', 'cs'), en: pdfPath(site.name, 'cv', 'en') };
 const responsivePortrait = about.portrait
   ? await getResponsiveImage(about.portrait)
   : undefined;
@@ -54,6 +55,7 @@ const hasFacts = facts.some(({ rows }) => rows.length > 0);
   {site}
   {about}
   {contact}
+  {cv}
 >
   {/* A portrait opens the page: first when stacked, top-aligned with the bio
       beside it. */}
@@ -66,7 +68,7 @@ const hasFacts = facts.some(({ rows }) => rows.length > 0);
         <div>
           <Prose {...about.bio} />
           <p class="mt-6">
-            <a href={cv[lang]} data-href-cs={cv.cs} data-href-en={cv.en} class="text-link"><T k="cvPdf" /></a>
+            <a href={cvPdf[lang]} data-href-cs={cvPdf.cs} data-href-en={cvPdf.en} class="text-link"><T k="cvPdf" /></a>
           </p>
         </div>
         {about.services.length > 0 && (

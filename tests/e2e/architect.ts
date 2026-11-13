@@ -1,5 +1,5 @@
-// The site settings, About data and contacts of fixture pages that bring none
-// of their own. The English call hours are much longer than the Czech, so
+// The site settings, About data, contacts and CV of fixture pages that bring
+// none of their own. The English call hours are much longer than the Czech, so
 // translating them changes whether the contact line fits the footer.
 export const site = {
   name: 'Klára Svobodová',
@@ -26,4 +26,11 @@ export const contact = {
   hours: { cs: 'Po–Pá 9–17', en: 'Weekdays 9 am to 5 pm' },
   ico: '12345678',
   seat: 'Na Poříčí 1041/12, 110 00 Praha 1 – Nové Město',
+};
+
+export const cv = {
+  profile: { cs: 'Architektka z Brna.', en: 'An architect in Brno.' },
+  interests: [],
+  links: [{ label: 'linkedin.com/in/klara-svobodova', url: 'https://www.linkedin.com/in/klara-svobodova' }],
+  exhibitions: [],
 };

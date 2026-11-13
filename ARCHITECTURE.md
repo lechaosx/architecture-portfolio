@@ -59,7 +59,7 @@ scale.
 ### A PDF's content problems only warn — [Implicit]
 
 A CMS save never stops the deploy, so a failed request, an image that does not
-decode, a CV that fits one page only with its bio below 9 pt (or not at all)
+decode, a CV that fits one page only with its profile below 9 pt (or not at all)
 and a file above 10 MB become `::warning` annotations on the run, and the PDF
 is still written; only a broken setup, such as fonts that do not load, fails
 the build.
@@ -96,7 +96,7 @@ nothing in `src/` or `scripts/` knows about them [Explicit]:
   [Implicit]). Both share `public/_responsive`: keys cannot collide, and the
   plain build's run removes the test images' derivatives — [Implicit].
 - Fixture pages show the architect's name, contacts and structured data from
-  `tests/e2e/architect.ts`, unless a page brings its own About and contact
+  `tests/e2e/architect.ts`, unless a page brings its own About, contact and CV
   data — [Implicit].
 - The carousel page renders a project image-set carousel with test-owned SVGs —
   [Implicit].
@@ -107,9 +107,10 @@ nothing in `src/` or `scripts/` knows about them [Explicit]:
   `tests/e2e/images`, served at `/e2e/images/` — [Implicit].
 - The About tests render `AboutPage.astro` with fixture data, everything filled,
   nothing optional filled, and with long services — [Implicit].
-- The CV tests render `CvPage.astro` with the About fixture and, in the bio, a
-  site-relative link and one no URL parser accepts, with a bio far too long for one page, and
-  with nothing optional filled — [Implicit].
+- The CV tests render `CvPage.astro` with the About fixture, every CV section
+  filled, chosen fixture projects and, in the profile, a site-relative link and
+  one no URL parser accepts; with a profile far too long for one page; and with
+  nothing optional filled and no profile — [Implicit].
 - The legal page tests render `LegalPage.astro` with the fixture architect and
   with contacts holding only an email — [Implicit].
 - The landing tests render `LandingPage.astro` with no image, one SVG, and an
@@ -420,10 +421,10 @@ since `global.css` sets `.prose-columns` outside Tailwind’s layers.
 ### Self-hosted Roboto via @fontsource — [Implicit]
 
 No third-party font request. One token, `--font-sans`, for everything. The
-CV's titles use `@fontsource-variable/roboto-condensed`, which
-`src/layouts/Print.astro` links as a stylesheet of its own (a `?url` import),
+CV's titles use `@fontsource-variable/roboto-condensed`, whose upright and
+italic stylesheets `src/layouts/Print.astro` links on their own (`?url` imports),
 keeping it out of the stylesheet Astro bundles for every page; the PDF renderer
-fails the build if either face does not load.
+fails the build if Roboto or either Roboto Condensed face does not load.
 
 ### Motion durations as custom properties — [Implicit]
 
@@ -445,8 +446,8 @@ for no-JS.
 
 ### Content collections; singletons as one-entry collections — [Implicit] / [Explicit]
 
-`src/content.config.ts` validates projects and the site, landing, about and
-contact singletons [Explicit] with Zod, accepting everything Pages CMS can save
+`src/content.config.ts` validates projects and the site, landing, about,
+contact and cv singletons [Explicit] with Zod, accepting everything Pages CMS can save
 (see "A CMS save never stops the deploy"). A field is required only when a page
 needs it; optional lists default to empty — [Implicit]. Markdown file bodies are
 unused: bilingual text lives in frontmatter `{ cs, en }` objects. Pages CMS
@@ -526,6 +527,12 @@ which `Base` inlines as one `@graph` per page. Text follows the page language as
 Project sites use `contentLocation`; `contributor` links the architect’s Person node and lists collaborators, preserving supplied personal and collaborator roles through schema.org `Role`, one per person, her roles together as its several `roleName` values so she appears as one contributor, while realization supplies `creativeWorkStatus`.
 A study's title and the website languages do not establish an awarded degree or personal language proficiency.
 Personal involvement dates do not establish a project creation date, and free-text roles and studio credits do not establish a creator relationship.
+
+### The CV's links are the Person's `sameAs` — [Implicit]
+
+Search engines and AI assistants read `sameAs` for a person's profiles
+elsewhere, and the architect's Person is on every page, so `Base` and every
+page component take the cv singleton alongside about and contact.
 
 ### Workplace, schools and every project in the structured data — [Explicit]
 
@@ -625,7 +632,8 @@ accepts everything the CMS can save: the CMS refuses what it can express
 (`required`, `pattern`, the bilingual objects) and the build tolerates the rest.
 Pages read content through `src/published-projects.ts` and `src/singletons.ts`,
 which leave out what a CMS save broke (a missing image, a skipped landing
-choice) and warn about it, about wrong periods and about untitled images; the
+choice) and warn about it, about wrong periods, about untitled images and about
+a CV profile a hand edit dropped; the
 image script warns about an upload it cannot read. These checks live in the
 loading modules, not the schema, because a schema can only fail an entry, and
 the content layer skips revalidating an entry until its file changes.

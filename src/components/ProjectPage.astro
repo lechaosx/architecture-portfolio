@@ -24,9 +24,10 @@ interface Props {
   site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
   contact: CollectionEntry<'contact'>['data'];
+  cv: CollectionEntry<'cv'>['data'];
 }
 
-const { project, site, about, contact } = Astro.props;
+const { project, site, about, contact, cv } = Astro.props;
 const d = project.data;
 const facts = projectFacts(d, { placeAndPeriod: true });
 
@@ -66,6 +67,7 @@ const graph = (language: 'cs' | 'en') => [creativeWork({
   {site}
   {about}
   {contact}
+  {cv}
 >
   <PageContent as="article">
     <a href={localizedPath('/work/', lang)} class="text-sm text-neutral-500 hover:text-neutral-900">

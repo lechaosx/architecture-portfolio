@@ -24,9 +24,10 @@ interface Props {
   site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
   contact: CollectionEntry<'contact'>['data'];
+  cv: CollectionEntry<'cv'>['data'];
 }
 
-const { title, image, type = 'website', noindex = false, graph = [], site, about, contact } = Astro.props;
+const { title, image, type = 'website', noindex = false, graph = [], site, about, contact, cv } = Astro.props;
 const description = {
   cs: Astro.props.description?.cs ?? site.description.cs,
   en: Astro.props.description?.en ?? site.description.en,
@@ -41,7 +42,7 @@ const portrait = about.portrait
   ? await getResponsiveImage(about.portrait)
   : undefined;
 const structuredData = Object.fromEntries((['cs', 'en'] as const).map((language) => [language, jsonLd([
-  person({ site: origin, owner: site, about, contact, portrait: portrait?.share.url, lang: language }),
+  person({ site: origin, owner: site, about, cv, contact, portrait: portrait?.share.url, lang: language }),
   ...(Array.isArray(graph) ? graph : graph[language]),
 ])]));
 ---

@@ -1,7 +1,7 @@
 ---
 export const getStaticPaths = () => ['cs', 'en'].map((lang) => ({ params: { lang } }));
 import CvPage from '../../../components/CvPage.astro';
-import { about, contact, site } from '../../../singletons';
+import { about, contact, cv, landing, site } from '../../../singletons';
 ---
 
-<CvPage {site} {about} {contact} />
+<CvPage {site} {about} {contact} {cv} projects={landing.projects} />

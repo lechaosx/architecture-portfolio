@@ -27,7 +27,7 @@ test('the CV prints on one tagged A4 portrait page linking its contacts and the 
   expect(size.height).toBeCloseTo(a4.height, 0);
   expect(pdf.getTitle()).toBe('Životopis | Ing. arch. Klára Svobodová');
   expect(pdf.catalog.has(PDFName.of('StructTreeRoot'))).toBe(true);
-  expect(links(pdf)).toEqual(expect.arrayContaining([`mailto:${contact.email}`, 'tel:+420777000000', `${site}/cs/`, `${site}/cs/work/`]));
+  expect(links(pdf)).toEqual(expect.arrayContaining([`mailto:${contact.email}`, 'tel:+420777000000', `${site}/cs/`, `${site}/cs/work/`, `${site}/cs/projects/e2e-2024/`, 'https://www.linkedin.com/in/klara-svobodova']));
   expect(links(pdf).filter((link) => link.startsWith(baseURL!))).toEqual([]);
 });
 

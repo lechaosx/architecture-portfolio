@@ -107,7 +107,7 @@ const project = {
   blocks: [imageSet],
 };
 
-describe.each(['projects', 'site', 'landing', 'about', 'contact'] as const)('%s schema', (name) => {
+describe.each(['projects', 'site', 'landing', 'about', 'contact', 'cv'] as const)('%s schema', (name) => {
   test('declares the same fields as Pages CMS, required in the same places', () => {
     const editor = pagesConfig.content.find((entry) => entry.name === name);
     expect(editorShape(editor?.fields ?? [])).toEqual(rowShape(staticSchema(name)));
@@ -127,7 +127,7 @@ const allFields = (fields: CmsField[]): CmsField[] =>
 const cmsFields = pagesConfig.content.flatMap((entry) => allFields(entry.fields ?? []));
 
 test.each([
-  ['project URL', ['project_url'], PROJECT_URL, [...webAddresses, ...nonWebAddresses]],
+  ['web address', ['project_url', 'url'], PROJECT_URL, [...webAddresses, ...nonWebAddresses]],
   ['translation', ['cs', 'en'], TEXT, ['Brno', ' Brno ', '\nBrno', ' ', ' \n\t ', '\u00a0', '&nbsp;']],
   ['period date', ['from', 'to'], DATE, ['2023', '3/2023', '03/2023', '12/2023', '0/2023', '13/2023', '3/', '2023/3', '23', ' 2023']],
 ])('every %s in Pages CMS takes the text the build takes, or nothing', (_, names, regex, samples) => {
@@ -388,6 +388,44 @@ test('contact reads where she is and when she is reachable, one line per languag
   expect(
     staticSchema('contact').safeParse({ email: 'jana@example.cz', ...lines }),
   ).toMatchObject({ success: true, data: lines });
+});
+
+describe('CV content schema', () => {
+  const cvSchema = staticSchema('cv');
+  const profile = { cs: 'Architektka z Brna.', en: 'An architect in Brno.' };
+
+  test('reads interests, links and exhibitions, dropping empty CMS rows', () => {
+    const lists = {
+      interests: [{ cs: 'Turistika', en: 'Hiking' }],
+      links: [{ label: 'linkedin.com/in/jana', url: 'https://www.linkedin.com/in/jana' }],
+      exhibitions: [
+        { title: { cs: 'Výstava diplomových prací', en: 'Diploma exhibition' }, note: { cs: 'Kyjov, 2025', en: 'Kyjov, 2025' }, url: 'https://example.org/vystava' },
+        { title: { cs: 'Článek', en: 'Article' }, url: '' },
+      ],
+    };
+    expect(
+      cvSchema.safeParse({ profile, ...lists, interests: [{}, ...lists.interests], links: [...lists.links, {}], exhibitions: [{}, ...lists.exhibitions] }),
+    ).toMatchObject({ success: true, data: { profile, ...lists } });
+  });
+
+  test('leaves everything but the profile empty when it is not filled', () => {
+    expect(cvSchema.safeParse({ profile })).toMatchObject({
+      success: true,
+      data: { profile, interests: [], links: [], exhibitions: [] },
+    });
+  });
+
+  test('accepts a hand edit that drops the profile the CMS requires', () => {
+    expect(cvSchema.safeParse({}).success).toBe(true);
+  });
+
+  test.each([
+    ['a link without an address', { links: [{ label: 'LinkedIn' }] }],
+    ['a link to a non-web address', { links: [{ label: 'E-mail', url: 'mailto:jana@example.cz' }] }],
+    ['an exhibition without a title', { exhibitions: [{ note: { cs: 'Kyjov', en: 'Kyjov' } }] }],
+  ])('rejects %s', (_, fields) => {
+    expect(cvSchema.safeParse({ profile, ...fields }).success).toBe(false);
+  });
 });
 
 test('a project file name gives its URL, and one with nothing to slug still gets its own', () => {

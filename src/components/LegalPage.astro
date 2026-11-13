@@ -12,9 +12,10 @@ interface Props {
   site: CollectionEntry<'site'>['data'];
   about: CollectionEntry<'about'>['data'];
   contact: CollectionEntry<'contact'>['data'];
+  cv: CollectionEntry<'cv'>['data'];
 }
 
-const { site, about, contact } = Astro.props;
+const { site, about, contact, cv } = Astro.props;
 const { email, ico, seat } = contact;
 const mail = `[${email}](mailto:${email})`;
 const githubPrivacy = 'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement';
@@ -51,6 +52,7 @@ const description = ico ? 'legalDescription' : 'legalDescriptionNoIco';
   {site}
   {about}
   {contact}
+  {cv}
 >
   <PageContent>
     <T as="h1" k="legal" class="sr-only" />
