@@ -371,8 +371,9 @@ They read in one column at every width, whatever their length — [Explicit].
 
 The details — [Implicit]: each part has a section heading and the page title is
 only for screen readers; her business details stand one per line. Like the
-other pages it switches language in place and is in the sitemap; the AI exports
-leave it out, as it says nothing about her work.
+other pages it switches language in place and is in the sitemap. `llms-full.txt`
+carries her business details — [Explicit] — but not the notices, which say
+nothing about her work.
 
 ---
 
@@ -573,7 +574,8 @@ Images sharing a comparison set stay ordinary images on the page; in the
 lightbox they are variants of one card, switched by a set strip of named
 buttons. Moving to a variant blends in place and keeps zoom and pan, so aligned
 plans can be compared, and a sideways drag towards it scrubs the blend. The
-strip stays one row and scrolls sideways — [Implicit].
+strip stays one row and scrolls sideways — [Implicit]. In `llms-full.txt` each
+image of a set, untitled ones too, names the others in it — [Explicit].
 
 ### Titles and descriptions; the card's back — [Explicit]
 
@@ -587,8 +589,9 @@ an image's button on the page by its own short name, its position and title
 ("Otevřít obrázek 2: Řezy", only the position when untitled), instead of the alt
 text — [Explicit]. Descriptions are machine-readable in the structured data —
 [Implicit] — and titles and descriptions are in `llms-full.txt` with links to
-the images — [Explicit]. There the titles stay plain, since each image is
-already under its project's heading — [Implicit]. The title shows in the
+the images and to where the project page opens them in the lightbox —
+[Explicit]. There the titles stay plain, since each image is already under its
+project's heading — [Implicit]. The title shows in the
 top-left set strip: a titled image outside a set gets a strip of one, an image
 with neither title nor set gets none. A description lives on the card's back, reached
 with the bottom-left toggle, which turns the card over in 3D:
@@ -656,12 +659,15 @@ without a page, and a project links an outside page about the project — [Expli
 
 ### Bilingual index and full export for AI assistants — [Explicit]
 
-`/llms.txt` is her contact line and a compact bilingual index of About, Work and
-every published project in both canonical languages (a project without its own
-page links to Work), discovered through a link in each page's head; each link identifies Czech or English. `/llms-full.txt` gathers her bio, education,
-experience, services, contact details with her IČO and every published project's facts,
-texts and linked image captions, including projects without a separate page;
-long passages identify Czech (`cs`) and English (`en`) explicitly.
+`/llms.txt`, linked from each page's head, is her contact line and a compact
+index of About, Work and every published project, each linked in both canonical
+languages with the language named (a project without its own page links to
+Work) and noted with its place, period and build status — [Explicit] — and its
+other title badges — [Implicit]. `/llms-full.txt` gathers her profession, bio,
+approach, experience, services, education, awards, contact details with call
+hours, IČO and seat, and every published project in the Work page's order with
+its facts, texts and image captions, including projects without a separate
+page. Long passages identify Czech (`cs`) and English (`en`) explicitly.
 
 ### The landing page's tab title says what she is — [Explicit]
 

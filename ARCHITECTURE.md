@@ -503,11 +503,13 @@ and `public/CNAME`.
 
 `/llms.txt` follows the [llms.txt proposal](https://llmstxt.org/): a name,
 summary, language guidance, a contact line and H2 sections containing only annotated Markdown
-links, with short project notes drawn from location and involvement period; a
-project without its own page links to the Work page.
-`/llms-full.txt` retains the full content with language-labelled prose and
-absolute links for titled or described images; both exports use the same
-canonical origin and project order as the pages, and `Base.astro` advertises
+links, with short project notes drawn from location, involvement period and
+title badges; a project without its own page links to the Work page.
+`/llms-full.txt` retains the full content with language-labelled prose; a titled,
+described or grouped image links its file and its `#image-N` lightbox address on
+both project pages, and names its set's other images, through the lightbox's own
+`galleryImageHash` and `comparisonSetIndexes`. Both exports
+use the same canonical origin and project order as the pages, and `Base.astro` advertises
 `/llms.txt` through `rel="describedby"`.
 
 ---

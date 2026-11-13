@@ -1,9 +1,11 @@
 import type { CollectionEntry } from 'astro:content';
+import { comparisonSetIndexes } from './components/gallery';
+import { galleryImageHash } from './components/lightbox-history';
 import { localizedPath } from './locale';
 import { ui, type Lang, type UiKey } from './i18n';
 import { formatPeriod, type Period } from './period';
 import { projectBadges, projectFacts } from './project-facts';
-import { hasPage, newestFirst, workProjects, type Project } from './projects';
+import { hasPage, workProjects, type Project } from './projects';
 
 type Data<Collection extends 'about' | 'contact' | 'projects'> =
   CollectionEntry<Collection>['data'];
@@ -62,6 +64,8 @@ function project(site: URL, { id, data }: Project) {
   const images = data.blocks.flatMap((block) =>
     block.type === 'text' ? [] : block.images,
   );
+  const imageName = (index: number) =>
+    pair(images[index].title) || pair({ cs: `${ui.cs.image} ${index + 1}`, en: `${ui.en.image} ${index + 1}` });
   return [
     `### ${pair(data.title)}`,
     [pair(data.location), `${label('involvement')}: ${period(data)}`]
@@ -84,12 +88,17 @@ function project(site: URL, { id, data }: Project) {
       block.type === 'text' ? passages(block.body) : [],
     ),
     ...images.flatMap((image, index) => {
-      const title = pair(image.title);
       const description = passages(image.description);
-      if (!title && description.length === 0) return [];
-      const position = index + 1;
+      const set = comparisonSetIndexes(images, index).filter((other) => other !== index);
+      if (!pair(image.title) && description.length === 0 && set.length === 0) return [];
       return [
-        `#### ${textLink(title || pair({ cs: `${ui.cs.image} ${position}`, en: `${ui.en.image} ${position}` }), new URL(image.image, site))}`,
+        `#### ${textLink(imageName(index), new URL(image.image, site))}`,
+        ...list([
+          `${label('llmsOnPage')}: ${(['cs', 'en'] as const)
+            .map((lang) => textLink(lang, new URL(`/${lang}/projects/${id}/${galleryImageHash(index)}`, site)))
+            .join(' · ')}`,
+          set.length ? `${label('imageSet')}: ${set.map(imageName).join('; ')}` : '',
+        ]),
         ...description,
       ];
     }),
@@ -108,15 +117,21 @@ export function llmsFullTxt({
   /** The credentialed name. */
   name: string;
   description: Record<Lang, string>;
-  about: Pick<Data<'about'>, 'bio' | 'experience' | 'services' | 'education' | 'awards'>;
-  contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location' | 'ico'>;
+  about: Pick<Data<'about'>, 'bio' | 'approaches' | 'experience' | 'services' | 'education' | 'awards'>;
+  contact: Pick<Data<'contact'>, 'email' | 'phone' | 'hours' | 'location' | 'ico' | 'seat'>;
   /** The published projects. */
   projects: Project[];
 }) {
+  const { grid, listed } = workProjects(projects.filter(({ data }) => !data.draft));
   const blocks = [
     `# ${name}`,
     ...line(both(description).map((text) => `> ${text}`).join('\n>\n')),
+    label('tagline'),
     ...section(label('about'), passages(about.bio)),
+    ...section(
+      label('approach'),
+      about.approaches.flatMap((item) => [`### ${pair(item.label)}`, ...passages(item.text)]),
+    ),
     ...section(label('experience'), list(about.experience.map(factRow))),
     ...section(
       label('services'),
@@ -129,7 +144,11 @@ export function llmsFullTxt({
       list([
         `${label('email')}: ${contact.email}`,
         ...(contact.phone ? [`${label('phone')}: ${contact.phone}`] : []),
-        ...(contact.ico ? [`${label('ico')}: ${contact.ico}`] : []),
+        ...(contact.hours
+          ? [pair({ cs: `${ui.cs.callHours} ${contact.hours.cs}`, en: `${ui.en.callHours} ${contact.hours.en}` })]
+          : []),
+        ...(contact.ico ? [`${label('ico')}: ${contact.ico}`, label('tradeRegister')] : []),
+        ...(contact.seat ? [`${label('seat')}: ${contact.seat}`] : []),
         ...line(pair(contact.location)).map(
           (location) => `${label('location')}: ${location}`,
         ),
@@ -137,7 +156,7 @@ export function llmsFullTxt({
     ),
     ...section(
       label('work'),
-      projects.filter(({ data }) => !data.draft).sort(newestFirst).flatMap((entry) => project(site, entry)),
+      [...grid, ...listed].flatMap((entry) => project(site, entry)),
     ),
   ];
   return `${blocks.join('\n\n')}\n`;
@@ -172,6 +191,7 @@ export function llmsTxt({
       [...grid, ...listed].flatMap(({ id, data }) => (['cs', 'en'] as const).map((lang) => `${textLink(`${data.title[lang]} (${lang})`, new URL(localizedPath(hasPage(data) ? `/projects/${id}/` : '/work/', lang), site))}: ${[
         data.location?.[lang].replace(/\s+/g, ' '),
         `${ui[lang].involvement}: ${formatPeriod(data)?.[lang]}`,
+        ...projectBadges(data).map((badge) => ui[lang][badge]),
       ].filter(Boolean).join(' · ')}`)),
     )),
     ...section(label('llmsResources'), list([

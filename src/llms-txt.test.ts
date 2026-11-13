@@ -6,7 +6,7 @@ const site = new URL('https://example.cz/');
 const name = 'Ing. arch. Jana Nováková';
 const about = {
   bio: { cs: 'Jsem **architektka**.', en: 'I am an **architect**.' },
-  experience: [], services: [], education: [], awards: [],
+  approaches: [], experience: [], services: [], education: [], awards: [],
 };
 const contact = { email: 'jana@example.cz' };
 const project = {
@@ -87,6 +87,21 @@ test('the index lists every published project in the work page’s order, linkin
   expect(output.length).toBeLessThan(2500);
 });
 
+test('an index entry notes its project’s title badges, build status included, in its own language', () => {
+  const output = llms.llmsTxt({
+    ...input,
+    projects: [{ id: 'hall', data: {
+      ...project, context: ['competition'], design_in_progress: true, realization: 'construction',
+      blocks: [{ type: 'text', body: { cs: 'Text.', en: 'Text.' } }],
+    } }],
+  });
+  const entry = (lang: string) => output.split('\n').find((row) => row.includes(`(${lang})](<https://example.cz/${lang}/projects/hall/>)`))!;
+  for (const badge of ['Soutěžní návrh', 'Probíhá projektování', 'Ve výstavbě']) expect(entry('cs')).toContain(badge);
+  for (const badge of ['Competition entry', 'Design in progress', 'Under construction']) expect(entry('en')).toContain(badge);
+  expect(entry('cs')).not.toContain('Under construction');
+  expect(entry('en')).not.toContain('Ve výstavbě');
+});
+
 test('the index says how to reach the architect', () => {
   expect(llms.llmsTxt({
     ...input,
@@ -144,12 +159,13 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
     ...input,
     about: {
       ...about,
+      approaches: [{ label: { cs: 'Místo', en: 'Place' }, text: { cs: 'Stavím z místa.', en: 'I build from the place.' }, icon: 'place' }],
       experience: [{ place: { cs: 'Ateliér', en: 'Studio' }, from: '3/2024', title: { cs: 'Architektka', en: 'Architect' }, description: { cs: 'Rodinné domy.\nInteriéry.', en: 'Family houses.\nInteriors.' } }],
       services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
       education: [{ place: { cs: 'Škola', en: 'School' }, from: '2020', to: '2024', title: { cs: 'Architektura', en: 'Architecture' } }],
       awards: [{ place: { cs: 'Soutěž', en: 'Competition' }, from: '2025', to: '2025', title: { cs: '1. místo', en: '1st place' } }],
     },
-    contact: { ...contact, phone: '+420 777 000 000', location: { cs: 'Brno', en: 'Brno' }, ico: '12345678' },
+    contact: { ...contact, phone: '+420 777 000 000', location: { cs: 'Brno', en: 'Brno' }, hours: { cs: 'Po–Pá 9–17', en: 'Weekdays 9 am to 5 pm' }, ico: '12345678', seat: 'Na Poříčí 12, Praha' },
     projects: [{ id: 'library', data: {
       ...project, project_url, realization: 'built', studio: 'Ateliér A',
       brief: { cs: 'Knihovna s veřejnou zahradou.', en: 'A library with a public garden.' },
@@ -158,8 +174,8 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
       blocks: [{ type: 'text', body: { cs: 'Text projektu.', en: 'Project text.' } }],
     } }],
   });
-  for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design; Dokumentace / Documentation', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'IČO / Business ID: 12345678', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
-  for (const [cs, en] of [[about.bio.cs, about.bio.en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.']]) {
+  for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design; Dokumentace / Documentation', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'IČO / Business ID: 12345678', 'Fyzická osoba zapsaná v živnostenském rejstříku / Sole trader registered in the Czech Trade Register', 'Sídlo / Registered office: Na Poříčí 12, Praha', 'Čas pro telefonické hovory: Po–Pá 9–17 / Phone call hours: Weekdays 9 am to 5 pm', 'Architektka / Architect', '## Přístup / Approach', '### Místo / Place', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
+  for (const [cs, en] of [[about.bio.cs, about.bio.en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.'], ['Stavím z místa.', 'I build from the place.']]) {
     expect(output).toContain(`**Česky (cs):**\n\n${cs}\n\n**English (en):**\n\n${en}`);
   }
 });
@@ -185,22 +201,53 @@ test('the full export labels identical passages in both languages and links capt
   expect(links[1].text).toBe('Obrázek 3 / Image 3');
   expect(output).toContain('**Česky (cs):**\n\nPopis.\n\n**English (en):**\n\nDescription.');
   expect(output).not.toContain('untitled.png');
+  // The page numbers every image, untitled ones too.
+  for (const position of [1, 3]) {
+    expect(output).toContain(`- Na stránce / On the page: [cs](<https://example.cz/cs/projects/gallery/#image-${position}>) · [en](<https://example.cz/en/projects/gallery/#image-${position}>)`);
+  }
+  expect(output).not.toContain('#image-2');
 });
 
-test('the full export includes projects without pages, excludes drafts and leaves out empty sections', () => {
+test('the full export names the other images of each image’s comparison set', () => {
+  const output = llms.llmsFullTxt({
+    ...input,
+    projects: [{ id: 'sets', data: { ...project, blocks: [
+      { type: 'gallery', images: [
+        { image: '/uploads/a.png', comparison_set: 'plans', title: { cs: 'Půdorys', en: 'Plan' } },
+        { image: '/uploads/b.png', comparison_set: 'plans' },
+        { image: '/uploads/c.png', title: { cs: 'Řez', en: 'Section' } },
+      ] },
+      { type: 'image_set', images: [
+        { image: '/uploads/d.png', comparison_set: ' plans ' },
+        { image: '/uploads/e.png', comparison_set: 'alone', title: { cs: 'Sám', en: 'Alone' } },
+      ] },
+    ] } }],
+  });
+  const headings = Lexer.lex(output).filter((token): token is Tokens.Heading => token.type === 'heading' && token.depth === 4);
+  expect(headings.map((heading) => heading.text)).toEqual(expect.arrayContaining([expect.stringContaining('Obrázek 2 / Image 2'), expect.stringContaining('Obrázek 4 / Image 4')]));
+  expect(output).toContain('- Obrázky v sadě / Images in this set: Obrázek 2 / Image 2; Obrázek 4 / Image 4');
+  expect(output).toContain('- Obrázky v sadě / Images in this set: Půdorys / Plan; Obrázek 4 / Image 4');
+  expect(output).toContain('- Obrázky v sadě / Images in this set: Půdorys / Plan; Obrázek 2 / Image 2');
+  expect(output.match(/Obrázky v sadě/g)).toHaveLength(3);
+});
+
+test('the full export lists projects in the work page’s order, includes projects without pages, excludes drafts and leaves out empty sections', () => {
   const output = llms.llmsFullTxt({
     ...input,
     projects: [
+      // A card: the work page's grid comes before its newer listed projects.
+      { id: 'card', data: { ...project, title: { cs: 'Karta', en: 'Card' }, from: '2019', to: '2019', blocks: [{ type: 'gallery', images: [{ image: '/uploads/card.png' }] }] } },
       { id: 'old', data: { ...project, title: { cs: 'Starý', en: 'Old' }, from: '2020', to: '2020' } },
       { id: 'draft', data: { ...project, draft: true, title: { cs: 'Koncept', en: 'Draft' } } },
       { id: 'new', data: { ...project, title: { cs: 'Nový', en: 'New' }, from: '2025', to: '2025', blocks: [{ type: 'text', body: { cs: 'Text.', en: 'Text.' } }] } },
     ],
   });
+  expect(output.indexOf('### Karta / Card')).toBeLessThan(output.indexOf('### Nový / New'));
   expect(output.indexOf('### Nový / New')).toBeLessThan(output.indexOf('### Starý / Old'));
   expect(output).toContain('https://example.cz/cs/projects/new/')
   expect(output).toContain('https://example.cz/en/projects/new/');
   expect(output).not.toContain('/projects/old/');
   expect(output).not.toContain('Koncept');
-  for (const heading of ['Praxe', 'Služby', 'Vzdělání', 'Ocenění']) expect(output).not.toContain(`## ${heading}`);
-  expect(output).not.toContain('IČO');
+  for (const heading of ['Přístup', 'Praxe', 'Služby', 'Vzdělání', 'Ocenění']) expect(output).not.toContain(`## ${heading}`);
+  for (const fact of ['IČO', 'živnostenském', 'Sídlo', 'hovory']) expect(output).not.toContain(fact);
 });
