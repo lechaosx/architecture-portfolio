@@ -82,11 +82,11 @@ test('the services follow the bio and the facts, whose rows keep their order, co
     'Approach',
   ]);
   await expect(section(page, 'Experience').locator(':scope > ul > li')).toHaveText(
-    [/^2024–present\s*Skills\s*Archicad\s*Visualisation\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],
+    [/^2024\s–\spresent\s*Skills\s*Archicad\s*Visualisation\s*Architect, Studio A, Brno/, /^2022\s–\s2024\s*Intern, Studio B, Prague$/],
     visibleText,
   );
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
-  await expect(section(page, 'Praxe').locator(':scope > ul > li').first()).toHaveText(/^2024–dosud\s*Dovednosti\s*Archicad\s*Vizualizace\s*Architektka/, visibleText);
+  await expect(section(page, 'Praxe').locator(':scope > ul > li').first()).toHaveText(/^2024\s–\sdosud\s*Dovednosti\s*Archicad\s*Vizualizace\s*Architektka/, visibleText);
 });
 
 test('a fact row reads its period, then title and place, with the department under them', async ({
@@ -95,10 +95,10 @@ test('a fact row reads its period, then title and place, with the department und
   await page.goto('/e2e/about/');
   for (const width of [1280, 768, 640, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    const longest = await box(page, '12/2024–12/2026');
+    const longest = await box(page, '12/2024\u00a0– 12/2026');
     expect(longest.x + longest.width, `${width}px`).toBeLessThan((await box(page, 'Architecture and Urban Development')).x);
-    if (width >= 640) expect(longest.height, `${width}px`).toBeCloseTo((await box(page, '2022–2024')).height, 0);
-    const period = await box(page, '2024–present');
+    if (width >= 640) expect(longest.height, `${width}px`).toBeCloseTo((await box(page, '2022\u00a0– 2024')).height, 0);
+    const period = await box(page, '2024\u00a0– present');
     const title = await box(page, 'Architect');
     const department = await box(page, 'Housing team');
     expect(period.x + period.width, `${width}px`).toBeLessThan(title.x);
@@ -113,7 +113,7 @@ test('an education row names its degree under the period, beside the title', asy
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const [period, degree, title] = await Promise.all(
-      ['12/2024–12/2026', 'Ing. arch.', 'Architecture and Urban Development'].map((text) => box(page, text)),
+      ['12/2024\u00a0– 12/2026', 'Ing. arch.', 'Architecture and Urban Development'].map((text) => box(page, text)),
     );
     expect(degree.x, `${width}px`).toBeCloseTo(period.x, 0);
     expect(degree.y, `${width}px`).toBeGreaterThanOrEqual(period.y + period.height);
@@ -129,7 +129,7 @@ test('an experience row shows its skills as badges under the period, a row witho
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const [period, skill, title] = await Promise.all(
-      ['2024–present', 'Archicad', 'Architect'].map((text) => box(page, text)),
+      ['2024\u00a0– present', 'Archicad', 'Architect'].map((text) => box(page, text)),
     );
     expect(skill.x, `${width}px`).toBeGreaterThanOrEqual(period.x);
     expect(skill.y, `${width}px`).toBeGreaterThanOrEqual(period.y + period.height);
@@ -163,7 +163,7 @@ test('a fact description sits under the title on wide screens and spans the row 
     await page.setViewportSize({ width, height: 900 });
     const [description, period, title, department] = await Promise.all([
       box(page, 'Permit drawings.'),
-      box(page, '2024–present'),
+      box(page, '2024\u00a0– present'),
       box(page, 'Architect'),
       box(page, 'Housing team'),
     ]);
@@ -223,7 +223,7 @@ test('experience and education sit side by side on wide screens, top-aligned wit
     );
     if (width >= 768) {
       const [period, title, educationPeriod, educationTitle] = await Promise.all(
-        ['2024–present', 'Architect', '12/2024–12/2026', 'Architecture and Urban Development'].map((text) => box(page, text)),
+        ['2024\u00a0– present', 'Architect', '12/2024\u00a0– 12/2026', 'Architecture and Urban Development'].map((text) => box(page, text)),
       );
       expect(education.x, `${width}px`).toBeGreaterThan(experience.x + experience.width);
       expect(education.y, `${width}px`).toBeCloseTo(experience.y, 0);

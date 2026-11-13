@@ -41,14 +41,17 @@ const linkIcon = (url: string) => (/(^|\.)linkedin\.com$/.test(new URL(url).host
 const condensed = "font-['Roboto_Condensed_Variable',sans-serif] font-bold";
 // Section rules run to the column's edge, past its padding.
 const heading = `${condensed} -mr-10 mb-5 border-b text-[1.17rem] uppercase`;
-// The contacts' rules, like the section rules, run to the column's edge.
-const contactRow = 'flex items-center gap-2 border-b border-neutral-200 py-1.25 pr-10 last:border-b-0';
+// The contacts' rules start after the icon and, like the section rules, run to
+// the column's edge.
+const contactText = 'border-b border-neutral-200 py-1.25 pr-10 last:border-b-0';
 const icon = 'size-3.5 shrink-0 text-neutral-400';
 // A timeline row: where and when on the left of the line, what on the right.
-const timelineStart = 'relative border-r border-black pr-5 pb-5 text-right after:absolute after:top-2.5 after:right-0 after:size-3.5 after:translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-black';
+// Each dot draws the line down to the next row's dot, which sits as far below
+// this row's bottom as this dot below its top: rows have no gap.
+const timelineStart = 'relative pr-5 pb-5 text-right before:absolute before:top-2.5 before:-bottom-2.5 before:right-0 before:w-px before:translate-x-1/2 before:bg-black in-[li:last-child]:before:hidden after:absolute after:top-2.5 after:right-0 after:size-3.5 after:translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-black';
 const timelineEnd = 'pb-5 pl-5';
 const secondary = 'text-neutral-600 empty:hidden';
-const description = 'mt-1 space-y-1 text-neutral-700';
+const description = 'mt-1 space-y-2 text-neutral-700';
 ---
 
 <Print title={`${ui[lang].cv} | ${credentialedName(site)}`} pdf={pdfPath(site.name, 'cv', lang)}>
@@ -59,19 +62,19 @@ const description = 'mt-1 space-y-1 text-neutral-700';
     <div class="bg-neutral-900 p-10">
       {portrait && <img src={portrait} alt={credentialedName(site)} class="aspect-square w-full rounded-full object-cover" />}
     </div>
-    <header class="grid grid-cols-[1fr_auto] content-center items-center gap-x-4 px-10 py-10">
+    <header class="grid grid-cols-[1fr_auto] content-center items-center gap-x-8 px-10 py-10">
       <div>
         <h1 class={`${condensed} text-[2.5rem]`}>
           {site.credential && <span class="block">{site.credential}</span>}
           {' '}
           <span class="block uppercase">{site.name}</span>
         </h1>
-        <T as="p" k="tagline" class={`${condensed} text-2xl text-neutral-500 uppercase`} />
+        <T as="p" k="tagline" class={`${condensed} text-2xl leading-[normal] text-neutral-500 uppercase`} />
       </div>
-      <address class="-mr-10 shrink-0 not-italic">
-        {location && <div class={contactRow}><ContactIcon icon="location" class={icon} /><T {...location} /></div>}
-        {phone && <div class={contactRow}><ContactIcon icon="phone" class={icon} /><a href={`tel:${phone.replace(/\s+/g, '')}`}>{phone}</a></div>}
-        <div class={contactRow}><ContactIcon icon="email" class={icon} /><a href={`mailto:${email}`}>{email}</a></div>
+      <address class="-mr-10 grid shrink-0 grid-cols-[auto_1fr] items-center gap-x-2 not-italic">
+        {location && <><ContactIcon icon="location" class={icon} /><span class={contactText}><T {...location} /></span></>}
+        {phone && <><ContactIcon icon="phone" class={icon} /><a href={`tel:${phone.replace(/\s+/g, '')}`} class={contactText}>{phone}</a></>}
+        <ContactIcon icon="email" class={icon} /><a href={`mailto:${email}`} class={contactText}>{email}</a>
       </address>
       {cv.headline && <T as="p" {...cv.headline} class="col-span-full mt-3.5 font-['Roboto_Condensed_Variable',sans-serif] text-xl leading-tight font-[350] text-balance italic" />}
     </header>
@@ -79,7 +82,7 @@ const description = 'mt-1 space-y-1 text-neutral-700';
       {/* One profile column at any fitted scale. The `!` overrides global.css,
           which sets the columns outside Tailwind's layers. */}
       {cv.profile && (
-        <section class="[&_.prose]:leading-[normal] [&_.prose]:text-white [&_.prose]:prose-invert [&_.prose_p]:my-1.5 [&_.prose-columns]:columns-1!">
+        <section class="[&_.prose]:leading-[normal] [&_.prose]:text-white [&_.prose]:prose-invert [&_.prose_p]:my-2 [&_.prose-columns]:columns-1!">
           <T as="h2" k="aboutMe" class={`${heading} border-white`} />
           <Prose {...cv.profile} />
         </section>
@@ -101,7 +104,7 @@ const description = 'mt-1 space-y-1 text-neutral-700';
         <section>
           <T as="h2" k="interests" class={`${heading} border-white`} />
           <ul class="flex flex-wrap gap-1 text-[0.8125rem]">
-            {cv.interests.map((interest) => <li class="rounded-sm bg-neutral-700 px-1.25 py-0.75"><T {...interest} /></li>)}
+            {cv.interests.map((interest) => <li class="rounded-[0.5em] bg-neutral-700 px-1.25 py-0.75"><T {...interest} /></li>)}
           </ul>
         </section>
       )}
@@ -150,7 +153,7 @@ const description = 'mt-1 space-y-1 text-neutral-700';
                     <>
                       <T k="skills" class="sr-only" />
                       <ul class="mt-2 flex flex-wrap justify-end gap-1 text-[0.8125rem] text-neutral-600">
-                        {row.skills.map((skill) => <li class="rounded-sm bg-neutral-100 px-1.25 py-0.75"><T {...skill.name} /></li>)}
+                        {row.skills.map((skill) => <li class="rounded-[0.5em] bg-neutral-100 px-1.25 py-0.75"><T {...skill.name} /></li>)}
                       </ul>
                     </>
                   )}

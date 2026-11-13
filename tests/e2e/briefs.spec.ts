@@ -58,9 +58,9 @@ test('a card shows its period, an ongoing one running until now in the visitor�
 }) => {
   await page.goto('/e2e/work/');
   const card = page.locator('main .grid > a').first();
-  await expect(card.getByText('2025–present')).toBeVisible();
+  await expect(card.getByText('2025\u00a0– present')).toBeVisible();
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
-  await expect(card.getByText('2025–dosud')).toBeVisible();
+  await expect(card.getByText('2025\u00a0– dosud')).toBeVisible();
 });
 
 test('a row with a brief expands in place to show it with the author line breaks', async ({
@@ -161,7 +161,7 @@ test('the index aligns columns on wide screens and stacks period, title and loca
     );
 
   await page.setViewportSize({ width: 1280, height: 900 });
-  const periods = await lefts(['2025', '2025', '12/2019–12/2020']);
+  const periods = await lefts(['2025', '2025', '12/2019\u00a0– 12/2020']);
   const titles = await lefts(['Alpha brief', 'Beta text', 'Old brief']);
   expect(new Set(periods.map(Math.round)).size).toBe(1);
   expect(new Set(titles.map(Math.round)).size).toBe(1);
@@ -173,7 +173,7 @@ test('the index aligns columns on wide screens and stacks period, title and loca
   const period = (n: number, text: string) => rows(page).nth(n).getByText(text).filter({ visible: true });
   for (const width of [1280, 640, 390, 320]) {
     await page.setViewportSize({ width, height: 800 });
-    const longest = (await period(2, '12/2019–12/2020').boundingBox())!;
+    const longest = (await period(2, '12/2019\u00a0– 12/2020').boundingBox())!;
     const oldTitle = (await rows(page).nth(2).getByText('Old brief').boundingBox())!;
     if (width >= 640) {
       expect(longest.x + longest.width, `${width}px`).toBeLessThan(oldTitle.x);

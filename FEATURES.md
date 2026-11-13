@@ -185,14 +185,15 @@ A project's period is when she worked on it; an About row's is the period of
 that job, study or award. Both have the same two fields, "Od" and "Do", each a
 year or a month and year ("2023", "3/2023"), shared by both languages. A
 one-year project has the same year in both. An empty "Do" means ongoing, shown
-as "2023–dosud" / "2023–present"; an identical start and end shows once. The
+as "2023 – dosud" / "2023 – present"; an identical start and end shows once. The
 CMS refuses a malformed date but cannot compare the two fields, so an end
 before the start shows as typed and an end without a start shows no period;
 the build logs a warning naming the entry and field instead of failing —
 [Explicit].
 
-The details — [Implicit]: a date shows as "3/2023" or "2023", a period joins
-them with an en dash, and a month may be typed with a leading zero.
+A period joins its dates with a spaced en dash, on the site and the CV alike —
+[Explicit]. The details — [Implicit]: a date shows as "3/2023" or "2023", the
+dash never starts a line, and a month may be typed with a leading zero.
 
 ### Projects sort ongoing first, then by end, then by start — [Explicit]
 
@@ -310,10 +311,11 @@ attached to an email.
 
 It has a dark sidebar beside a white main column in the site's greys, light
 Roboto text with bold Roboto Condensed titles, and experience and education on
-a timeline — [Explicit]. Its type is as small and dense as the developer's own
-CV — [Explicit]. It shows her name, profession and contacts, portrait, links,
-profile, experience with skills, education with degrees and awards, but not
-Approach or services, and its links lead to the public site — [Implicit].
+a timeline whose line runs from the first dot to the last — [Explicit]. Its
+type and spacing are as small and dense as the developer's own CV — [Explicit].
+It shows her name, profession and contacts, portrait, links, profile,
+experience with skills, education with degrees and awards, but not Approach or
+services, and its links lead to the public site — [Implicit].
 Content that does not fit the page prints smaller; body text starts just above
 the 9 pt minimum, so the build warns almost as soon as it has to shrink —
 [Implicit].

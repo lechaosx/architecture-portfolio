@@ -49,7 +49,7 @@ test('lists the filled credits, award and status in sheet order, names kept as i
 test('leads with the place and period where asked', () => {
   expect(projectFacts({ ...project, to: undefined }, { placeAndPeriod: true })).toEqual([
     { label: 'location', lines: [{ names: [], cs: 'Brno', en: 'Brno' }] },
-    { label: 'involvement', lines: [{ names: [], cs: '2024–dosud', en: '2024–present' }] },
+    { label: 'involvement', lines: [{ names: [], cs: '2024\u00a0– dosud', en: '2024\u00a0– present' }] },
   ]);
 });
 

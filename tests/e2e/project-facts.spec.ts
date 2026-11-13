@@ -24,7 +24,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   expect(await labels(page)).toEqual(['Location', 'Involvement period', 'Intervention', 'Scope', 'Studio', 'Collaborators', 'Award']);
   expect(await values(page)).toEqual([
     'Nowhere',
-    '3/2025–6/2026',
+    '3/2025\u00a0– 6/2026',
     'Renovation',
     'Extension',
     'Architecture',
@@ -50,7 +50,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
   ]);
   expect(await values(page)).toEqual([
     'Nikde',
-    '3/2025–6/2026',
+    '3/2025\u00a0– 6/2026',
     'Rekonstrukce',
     'Přístavba',
     'Architektura',
@@ -68,7 +68,7 @@ test('a project page’s fact sheet shows its filled rows in the visitor’s lan
 test('a project without credits shows only its place and period', async ({ page }) => {
   await page.goto('/e2e/project/');
   expect(await labels(page)).toEqual(['Location', 'Involvement period']);
-  expect(await values(page)).toEqual(['Nowhere', '3/2025–6/2026']);
+  expect(await values(page)).toEqual(['Nowhere', '3/2025\u00a0– 6/2026']);
   await expect(brief(page)).toHaveCount(0);
   await expect(sheet(page).getByRole('link')).toHaveCount(0);
 });

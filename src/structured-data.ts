@@ -20,7 +20,7 @@ type FactRow = Data<'about'>['awards'][number];
 const factNames = (rows: FactRow[], parts: (row: FactRow) => (string | undefined)[], lang: Lang) =>
   rows.map((row) => {
     const name = texts(parts(row)).join(', ');
-    const period = formatPeriod(row)?.[lang];
+    const period = formatPeriod(row, { plain: true })?.[lang];
     return period ? `${name} (${period})` : name;
   });
 

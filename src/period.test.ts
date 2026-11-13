@@ -20,17 +20,17 @@ test.each([
 describe('formatPeriod', () => {
   test.each([
     ['a one-year period once', '2025', '2025', '2025'],
-    ['years', '2023', '2024', '2023–2024'],
-    ['months', '3/2023', '6/2024', '3/2023–6/2024'],
-    ['a month on one side only', '2023', '6/2024', '2023–6/2024'],
+    ['years', '2023', '2024', '2023\u00a0– 2024'],
+    ['months', '3/2023', '6/2024', '3/2023\u00a0– 6/2024'],
+    ['a month on one side only', '2023', '6/2024', '2023\u00a0– 6/2024'],
     ['a one-month period once', '3/2024', '03/2024', '3/2024'],
-    ['a year and a month of it as two dates', '2024', '3/2024', '2024–3/2024'],
+    ['a year and a month of it as two dates', '2024', '3/2024', '2024\u00a0– 3/2024'],
   ])('shows %s', (_, from, to, text) => {
     expect(formatPeriod({ from, to })).toEqual({ cs: text, en: text });
   });
 
   test('shows an ongoing period as running until now, in each language', () => {
-    expect(formatPeriod({ from: '3/2024' })).toEqual({ cs: '3/2024–dosud', en: '3/2024–present' });
+    expect(formatPeriod({ from: '3/2024' })).toEqual({ cs: '3/2024\u00a0– dosud', en: '3/2024\u00a0– present' });
   });
 
   test('shows nothing without a start', () => {

@@ -85,7 +85,7 @@ describe('person', () => {
       makesOffer: [
         { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rodinné domy' } },
       ],
-      award: ['Cena Bohuslava Fuchse, 2. místo (2025)', 'Soutěž, Finále (9/2025–dosud)'],
+      award: ['Cena Bohuslava Fuchse, 2. místo (2025)', 'Soutěž, Finále (9/2025 – dosud)'],
       sameAs: ['https://www.linkedin.com/in/jana', 'https://instagram.com/jana'],
     });
   });
@@ -395,6 +395,6 @@ test('English person facts use English service names, award text and ongoing per
     alumniOf: [{ '@type': 'EducationalOrganization', name: 'Brno University of Technology' }],
     knowsAbout: ['Visualisation'],
     makesOffer: [{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Family houses' } }],
-    award: ['Competition, Final (9/2025–present)'],
+    award: ['Competition, Final (9/2025 – present)'],
   });
 });

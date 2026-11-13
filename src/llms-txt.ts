@@ -28,7 +28,7 @@ function passages(texts: Texts) {
   });
 }
 
-const period = (value: Period) => pair(formatPeriod(value));
+const period = (value: Period) => pair(formatPeriod(value, { plain: true }));
 
 const line = (text: string) => (text ? [text] : []);
 
@@ -194,7 +194,7 @@ export function llmsTxt({
     ...section(label('work'), list(
       [...grid, ...listed].flatMap(({ id, data }) => (['cs', 'en'] as const).map((lang) => `${textLink(`${data.title[lang]} (${lang})`, new URL(localizedPath(hasPage(data) ? `/projects/${id}/` : '/work/', lang), site))}: ${[
         data.location?.[lang].replace(/\s+/g, ' '),
-        `${ui[lang].involvement}: ${formatPeriod(data)?.[lang]}`,
+        `${ui[lang].involvement}: ${formatPeriod(data, { plain: true })?.[lang]}`,
         ...projectBadges(data).map((badge) => ui[lang][badge]),
       ].filter(Boolean).join(' · ')}`)),
     )),

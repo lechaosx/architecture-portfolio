@@ -43,11 +43,15 @@ const format = (text: string) => {
   return month ? `${month}/${year}` : String(year);
 };
 
-/** "3/2023–6/2024"; an identical start and end once; an ongoing period up to "dosud"/"present". */
-export function formatPeriod(period: Period): Record<Lang, string> | undefined {
+/**
+ * "3/2023 – 6/2024"; an identical start and end once; an ongoing period up to "dosud"/"present".
+ * On a page, a no-break space keeps the dash off the start of a wrapped line; `plain` text for
+ * structured data and the AI exports has an ordinary space instead.
+ */
+export function formatPeriod(period: Period, { plain = false } = {}): Record<Lang, string> | undefined {
   if (period.from === undefined) return undefined;
   const from = format(period.from);
-  const until = (to: string) => (to === from ? from : `${from}–${to}`);
+  const until = (to: string) => (to === from ? from : `${from}${plain ? ' ' : '\u00a0'}– ${to}`);
   if (period.to === undefined) {
     return { cs: until(ui.cs.ongoing), en: until(ui.en.ongoing) };
   }

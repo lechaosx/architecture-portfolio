@@ -672,7 +672,10 @@ period is one string, "2023" or "3/2023", whose `pattern` lets the CMS refuse a
 malformed date. That pattern also takes the empty string, the value of an
 empty optional field in its form, and `src/content.config.test.ts` checks it
 against `DATE`. `src/period.ts` holds the rest: the cross-field checks (logged
-as warnings [Explicit]), the display and the project order.
+as warnings [Explicit]), the display and the project order. A page binds a
+period's dash to its start with a no-break space; JSON-LD and the AI exports
+ask `formatPeriod` for plain text, as they keep text as written (see "One-letter
+words bound where Czech text is rendered") — [Implicit].
 
 ### A project id never comes out empty — [Implicit] (filename as slug [Explicit])
 
