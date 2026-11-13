@@ -9,29 +9,17 @@ location:
   cs: Kyjov
   en: Kyjov
 brief:
-  cs: Návrh revitalizace sportovního areálu v Kyjově vychází z myšlenky propojení
-    sportu, veřejného prostoru a komunitního života. Cílem je proměnit stávající
-    roztříštěné území v soudržný, celoročně využitelný areál přirozeně
-    navazující na okolní městskou strukturu. Součástí návrhu je nová
-    multifunkční sportovní hala, venkovní sportoviště, atletické zázemí a
-    reorganizace dopravy a parkování. Významným prvkem je městský park, který
-    propojuje jednotlivé funkce a společně s novým amfiteátrem, dětským hřištěm
-    a komunitními prostory vytváří příležitosti pro odpočinek, setkávání a
-    kulturní aktivity. Urbanistická koncepce klade důraz na prostupnost území,
-    návaznost pěších a cyklistických tras a propojení sportovních ploch s
-    veřejnou zelení.
-  en: The revitalization proposal for the sports complex in Kyjov is based on the
-    idea of connecting sports, public space, and community life. The aim is to
-    transform the existing fragmented site into a cohesive, year-round
-    recreational complex that naturally integrates with the surrounding urban
-    fabric. The design includes a new multifunctional sports hall, outdoor
-    sports facilities, athletics facilities, and a reorganization of traffic and
-    parking areas. A key element is the urban park, which connects the various
-    functions and, together with a new amphitheatre, children's playground, and
-    community spaces, creates opportunities for relaxation, social interaction,
-    and cultural activities. The urban concept emphasizes permeability,
-    connections between pedestrian and cycling routes, and the integration of
-    sports facilities with public green spaces.
+  cs: Návrh revitalizace sportovního areálu v Kyjově propojuje sport, veřejný
+    prostor a komunitní život. Součástí je nová multifunkční sportovní hala,
+    venkovní sportoviště, atletické zázemí a městský park s amfiteátrem a
+    pobytovými plochami. Urbanistická koncepce klade důraz na prostupnost území,
+    propojení se zelení a vytvoření soudržného, celoročně využitelného areálu.
+  en: The revitalization of the sports complex in Kyjov connects sports, public
+    space, and community life. The proposal includes a new multifunctional
+    sports hall, outdoor sports facilities, athletics facilities, and an urban
+    park with an amphitheatre and recreational areas. The urban concept
+    emphasizes permeability, integration with green spaces, and the creation of
+    a cohesive, year-round destination.
 context:
   - academic
 intervention:
