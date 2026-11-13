@@ -222,18 +222,27 @@ imagery opens like a text page.
 
 Top to bottom: her chosen images, large, filling the content width just under
 the header; one quiet line saying what she is and where ("Architektka · Brno",
-the place from the contacts), followed by her services when there are any,
-with **O mně →**; then **Vybrané práce** with **Všechny práce →** over her
+the place from the contacts), ending in **O mně →**, with her services under
+it when there are any; then **Vybrané práce** with **Všechny práce →** over her
 chosen projects as the work page's cards, which end the page.
 No headline or introductory paragraph. For machines the line starts with her
 credentialed name, hidden from view, so the page's main heading names her —
 [Explicit].
 
 The layout — [Implicit]: the line sits under the images like a caption, in the
-section headings' small caps, the services in grey; the place appears when
-filled. **O mně →** ends the line on the right,
-like **Všechny práce →** ends its heading row, both underlined on hover and
-focus. The cards open their projects with the same cover transition as on Work.
+section headings' small caps; the place appears when filled. **O mně →** ends
+the line on the right, like **Všechny práce →** ends its heading row, both
+underlined on hover and focus. The services follow on a line of their own.
+The cards open their projects with the same cover transition as on Work.
+
+### Services as one quiet line — [Explicit]
+
+Her services are a line, not a section: under the landing page's identity line,
+and closing the About bio column, level with the portrait's foot beside a
+shorter bio and right after the bio otherwise. The line is small grey text, as
+typed, with middle dots between services; a service moves to the next line
+whole unless it alone is wider than the line, and no dot starts or ends a line.
+On About a **Služby** heading names it for screen readers only.
 
 ### The architect chooses the landing projects — [Explicit]
 
@@ -260,9 +269,10 @@ priority — [Implicit].
 The intro opens the page, with an accessible About heading; the name already
 appears in the header. The portrait sits in an equal-width column on the
 right when both columns keep a comfortable text measure; otherwise the bio
-and portrait each fill the page width, portrait first. Approach and the facts
-follow, all edited in the one **O mně** entry. The portrait is described by her
-credentialed name and loads first, since it opens the page.
+and portrait each fill the page width, portrait first. Her services close the
+bio column, then Approach and the facts follow, all edited in the one **O mně**
+entry. The portrait is described by her credentialed name and loads first,
+since it opens the page.
 
 The bio follows the general prose rule: longer text can form balanced columns
 where each keeps a comfortable width — [Explicit]. Beside the portrait it is
@@ -270,16 +280,16 @@ one column; without one it spans the page — [Implicit].
 
 ### Experience, education and awards as facts — [Explicit]
 
-Services, work experience, education and awards are each a quiet plain-text
-list under its own section heading. A row reads period, then title and place,
-with the department or category under it in grey and its description, if
-filled, below. Services are a plain list. An empty group shows no heading, so
-with nothing filled About is the bio. Rows keep the order they are
-entered in.
+Work experience, education and awards are each a quiet plain-text list under
+its own section heading. A row reads period, then title and place, with the
+department or category under it in grey and its description, if filled, below.
+An empty group shows no heading, so with nothing filled About is the bio. Rows
+keep the order they are entered in.
 
-The layout — [Implicit]: the groups pair up in two columns on wide screens, on
-the same columns as the bio and portrait, services first; the period has a
-column of its own, on phones too.
+Experience and education sit side by side on wide screens, top-aligned with
+matching period columns — [Explicit]. Awards follow below, on the same columns
+as the bio and portrait; the period has a column of its own, on phones too —
+[Implicit].
 
 ### Work page: a grid of square covers — [Explicit]
 

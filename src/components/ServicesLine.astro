@@ -1,0 +1,22 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import T from './T.astro';
+
+interface Props {
+  services: CollectionEntry<'about'>['data']['services'];
+  class?: string;
+}
+
+const { services, class: cls } = Astro.props;
+---
+
+{/* Each service's separator sits in the gap before it, and the list clips the
+    one before a line's first service, so no separator starts or ends a line. */}
+<ul class:list={['flex flex-wrap gap-x-6 overflow-x-clip text-sm tracking-normal text-neutral-500 normal-case', cls]}>
+  {services.map((service) => (
+    <li class="relative">
+      <span aria-hidden="true" class="absolute right-full w-6 text-center select-none">·</span>
+      <T {...service.name} />
+    </li>
+  ))}
+</ul>

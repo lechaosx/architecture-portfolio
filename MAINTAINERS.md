@@ -55,6 +55,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/components/LandingPage.astro`, `WorkPage.astro`, `AboutPage.astro`, `ProjectPage.astro`, `LegalPage.astro` | the pages, also rendered by the e2e fixtures; `LegalPage` holds the legal texts, which name the mail provider (Seznam) and the hosting (GitHub Pages) and state that the site uses no cookies or analytics: update them when any of these changes |
 | `src/components/PageContent.astro` | the page container: content width, padding and the gap under the header |
 | `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
+| `src/components/ServicesLine.astro` | the services line, on the landing page and About |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |
 | `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD, bilingual `/llms.txt` index and `/llms-full.txt` export, built from content |
 | `src/pages/llms.txt.ts`, `src/pages/llms-full.txt.ts`, `src/pages/robots.txt.ts` | static text endpoints |

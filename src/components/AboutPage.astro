@@ -8,6 +8,7 @@ import T from './T.astro';
 import Paragraphs from './Paragraphs.astro';
 import Prose from './Prose.astro';
 import SectionHeading from './SectionHeading.astro';
+import ServicesLine from './ServicesLine.astro';
 import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { getResponsiveImage } from '../server-images';
@@ -33,7 +34,7 @@ const facts = [
   { k: 'education', rows: about.education },
   { k: 'awards', rows: about.awards },
 ] as const;
-const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.length > 0);
+const hasFacts = facts.some(({ rows }) => rows.length > 0);
 ---
 
 <Base
@@ -56,8 +57,16 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
   <PageContent imagery={!!about.portrait}>
     <T as="h1" k="about" class="sr-only" />
     <div class="flex flex-wrap-reverse items-end gap-12">
-      <div class="reveal min-w-0 flex-[1_1_35ch]">
+      {/* Beside a taller portrait the column stretches, so the services
+          line meets the portrait's foot. */}
+      <div class="reveal flex min-w-0 flex-[1_1_35ch] flex-col justify-between self-stretch">
         <Prose {...about.bio} />
+        {about.services.length > 0 && (
+          <section class="mt-6">
+            <T as="h2" k="services" class="sr-only" />
+            <ServicesLine services={about.services} />
+          </section>
+        )}
       </div>
       {
         about.portrait && (
@@ -98,18 +107,6 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
     {
       hasFacts && (
         <div class="mt-16 grid gap-x-12 gap-y-14 sm:mt-24 md:grid-cols-2">
-          {about.services.length > 0 && (
-            <section class="reveal">
-              <SectionHeading k="services" />
-              <ul class="space-y-1">
-                {about.services.map((service) => (
-                  <li>
-                    <T {...service.name} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
           {facts.map(
             ({ k, rows }) =>
               rows.length > 0 && (

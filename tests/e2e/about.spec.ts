@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { site } from './architect';
+import { expectServicesWrapWhole } from './services-line';
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -71,11 +72,11 @@ test('the portrait matches the bio’s width, beside it on wide screens and abov
   }
 });
 
-test('Approach comes before the facts, whose rows keep their order', async ({ page }) => {
+test('the services follow the bio and Approach comes before the facts, whose rows keep their order', async ({ page }) => {
   await page.goto('/e2e/about/');
   await expect(page.locator('main').getByRole('heading', { level: 2 })).toHaveText([
-    'Approach',
     'Services',
+    'Approach',
     'Experience',
     'Education',
     'Awards',
@@ -142,17 +143,54 @@ test('a fact description sits under the title on wide screens and spans the row 
   }
 });
 
-test('services are a plain list in the visitor’s language', async ({ page }) => {
+test('services are listed in the visitor’s language', async ({ page }) => {
   await page.goto('/e2e/about/');
-  await expect(section(page, 'Services').getByRole('listitem')).toHaveText(
-    ['Family houses', 'Renovations', 'Interiors'],
-    visibleText,
-  );
+  await expect(section(page, 'Services').getByRole('listitem')).toHaveText([/^·?\s*Family houses$/, /^·?\s*Renovations$/, /^·?\s*Interiors$/]);
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
-  await expect(section(page, 'Služby').getByRole('listitem')).toHaveText(
-    ['Rodinné domy', 'Rekonstrukce', 'Interiéry'],
-    visibleText,
-  );
+  await expect(section(page, 'Služby').getByRole('listitem')).toHaveText([/^·?\s*Rodinné domy$/, /^·?\s*Rekonstrukce$/, /^·?\s*Interiéry$/]);
+});
+
+test('the services close the bio column, level with the portrait’s foot beside it', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  const services = section(page, 'Services').getByRole('list');
+  const bio = page.locator('main .prose:visible');
+  const portrait = page.locator('main img');
+  for (const width of [1280, 1024, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [s, b, p] = await Promise.all([services, bio, portrait].map(async (l) => (await l.boundingBox())!));
+    expect(s.x, `${width}px`).toBeCloseTo(b.x, 0);
+    expect(s.y, `${width}px`).toBeGreaterThan(b.y + b.height);
+    if (width >= 1024) expect(s.y + s.height, `${width}px`).toBeCloseTo(p.y + p.height, 0);
+    else expect(s.y, `${width}px`).toBeGreaterThan(p.y + p.height);
+  }
+});
+
+test('a service wraps to the next line whole, and no separator starts or ends a line', async ({ page }) => {
+  await expectServicesWrapWhole(page, 'about-long-services', (page) => section(page, /^(Services|Služby)$/).getByRole('list'));
+});
+
+test('experience and education sit side by side on wide screens, top-aligned with matching period columns', async ({
+  page,
+}) => {
+  await page.goto('/e2e/about/');
+  for (const width of [1280, 1024, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [experience, education] = await Promise.all(
+      ['Experience', 'Education'].map(async (heading) => (await section(page, heading).boundingBox())!),
+    );
+    if (width >= 768) {
+      const [period, title, educationPeriod, educationTitle] = await Promise.all(
+        ['2024–present', 'Architect', '12/2024–12/2026', 'Architecture and Urban Development'].map((text) => box(page, text)),
+      );
+      expect(education.x, `${width}px`).toBeGreaterThan(experience.x + experience.width);
+      expect(education.y, `${width}px`).toBeCloseTo(experience.y, 0);
+      expect(educationPeriod.y, `${width}px`).toBeCloseTo(period.y, 0);
+      expect(educationPeriod.x - education.x, `${width}px`).toBeCloseTo(period.x - experience.x, 0);
+      expect(educationTitle.x - education.x, `${width}px`).toBeCloseTo(title.x - experience.x, 0);
+    } else {
+      expect(education.y, `${width}px`).toBeGreaterThan(experience.y + experience.height);
+    }
+  }
 });
 
 test('with nothing optional filled, only the bio and accessible page title remain', async ({ page }) => {

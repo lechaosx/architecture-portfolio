@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { site } from './architect';
+import { expectServicesWrapWhole } from './services-line';
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -18,17 +19,18 @@ const selectedWork = (page: Page) =>
     has: page.getByRole('heading', { level: 2, name: 'Selected work' }),
   });
 
-test('under the images one line says what she is, where and what she offers, and links to About', async ({
+test('the caption under the images says what she is, where and what she offers, and links to About', async ({
   page,
 }) => {
   // tests/e2e/pages/[fixture].astro: located in Brno, with three services.
   await page.goto('/e2e/landing/');
-  const services = page.getByText('Family houses · Renovations · Interiors', { exact: true });
+  const services = page.locator('main div:has(> h1)').getByRole('list');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name} – Architect · Brno`);
   await expect(services).toBeVisible();
+  await expect(services.getByRole('listitem')).toHaveText([/^·?\s*Family houses$/, /^·?\s*Renovations$/, /^·?\s*Interiors$/]);
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name} – Architektka · Brno`);
-  await expect(page.getByText('Rodinné domy · Rekonstrukce · Interiéry', { exact: true })).toBeVisible();
+  await expect(services.getByRole('listitem')).toHaveText([/^·?\s*Rodinné domy$/, /^·?\s*Rekonstrukce$/, /^·?\s*Interiéry$/]);
   await page.getByRole('link', { name: 'O mně →' }).click();
   await expect(page).toHaveURL(/\/about\/$/);
 });
@@ -39,6 +41,10 @@ test('without services or a place the line is the profession', async ({ page }) 
   await expect(page.getByText(/Family houses/)).toHaveCount(0);
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name} – Architektka`);
+});
+
+test('a service wraps to the next line whole, and no separator starts or ends a line', async ({ page }) => {
+  await expectServicesWrapWhole(page, 'landing-long-services', (page) => page.locator('main div:has(> h1)').getByRole('list'));
 });
 
 test('the site description is not shown, only used as the page description', async ({ page }) => {
@@ -99,6 +105,8 @@ test('the About link ends the identity row, on phones too', async ({ page }) => 
   for (const [fixture, width] of [
     ['landing', 1280],
     ['landing-bare', 390],
+    ['landing-long-services', 1280],
+    ['landing-long-services', 320],
   ] as const) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto(`/e2e/${fixture}/`);

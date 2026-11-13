@@ -73,13 +73,14 @@ nothing in `src/` or `scripts/` knows about them [Explicit]:
   comparison sets and descriptions [Explicit], so it is frozen and a new case
   gets its own fixture entry [Implicit]. Its images are small line drawings in
   `tests/e2e/images`, served at `/e2e/images/` — [Implicit].
-- The About tests render `AboutPage.astro` with fixture data, everything filled
-  and nothing optional filled — [Implicit].
+- The About tests render `AboutPage.astro` with fixture data, everything filled,
+  nothing optional filled, and with long services — [Implicit].
 - The legal page tests render `LegalPage.astro` with the fixture architect and
   with contacts holding only an email — [Implicit].
 - The landing tests render `LandingPage.astro` with no image, one SVG, and an
   SVG and two rasters, over chosen fixture projects, and once with none chosen;
-  services and the place are filled only where there are images — [Implicit].
+  services and the place are filled only where there are images, and once
+  with long services and no images — [Implicit].
 - The AI export tests follow the links of both shipped text endpoints
   [Explicit], and check the exports' structure on the same exports built from
   the thumbnail fixtures, at `/e2e/llms.txt` and `/e2e/llms-full.txt` —
@@ -289,6 +290,13 @@ and the active language.
 the landing page, always as an `h2`: it never titles a page. Its default slot
 ends the row on the same rule and inherits the small caps, so a link onward,
 like the landing page's link to all work, needs no layout of its own.
+
+### One services line — [Implicit]
+
+`ServicesLine` renders the services on the landing page and About. Each
+separator sits in the gap before its service and the list clips horizontally,
+so the separator before a line's first service is cut off in CSS, without a
+script measuring where lines break.
 
 ### One page container — [Implicit]
 

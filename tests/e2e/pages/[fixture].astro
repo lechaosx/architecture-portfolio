@@ -206,6 +206,14 @@ export function getStaticPaths() {
       },
     ],
   };
+  // Some longer than a phone's line.
+  const longServices = [
+    service('Architectural studies', 'Architektonické studie'),
+    service('Documentation for the building permit', 'Projektová dokumentace pro povolení stavby'),
+    service('Permitting and dealing with the authorities', 'Povolovací proces a jednání s úřady'),
+    service('Interior design', 'Návrhy interiérů'),
+    service('Coordination of disciplines (BIM)', 'Koordinace profesí (BIM)'),
+  ];
   // Nothing optional filled.
   const bareAbout = { ...about, portrait: undefined, approaches: [], experience: [], services: [], education: [], awards: [] };
   const bareContact = { email: frameContact.email };
@@ -233,10 +241,12 @@ export function getStaticPaths() {
     { params: { fixture: 'landing-single' }, props: landing(images.slice(0, 1)) },
     { params: { fixture: 'landing-bare' }, props: landing([]) },
     { params: { fixture: 'landing-no-work' }, props: landing([], []) },
+    { params: { fixture: 'landing-long-services' }, props: { ...landing([]), contact: frameContact, about: { ...about, services: longServices } } },
     { params: { fixture: 'about' }, props: { about } },
     { params: { fixture: 'about-tall-portrait' }, props: { about: { ...about, portrait: '/e2e/images/tall.png' } } },
     { params: { fixture: 'language-height' }, props: { about: { ...about, bio: { cs: text(2).cs, en: Array(20).fill(text(4).en).join('\n\n') } } } },
     { params: { fixture: 'about-bare' }, props: { about: bareAbout } },
+    { params: { fixture: 'about-long-services' }, props: { about: { ...about, services: longServices } } },
     { params: { fixture: 'legal' }, props: { legal: true } },
     { params: { fixture: 'legal-bare' }, props: { legal: true, contact: bareContact } },
     { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, bio: { cs: words(150).cs, en: words(150).en } } } },
