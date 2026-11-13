@@ -156,6 +156,7 @@ async function responsiveImage(path: string, sourcePath: string): Promise<Respon
   const output = webpPolicy(
     sourceMetadata.format,
     Boolean(sourceMetadata.hasAlpha),
+    source,
   );
   const cacheKey = imageCacheKey(source, { ...recipe, output });
   const originalUrl = path

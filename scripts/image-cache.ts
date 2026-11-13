@@ -37,8 +37,32 @@ export function displaySourceUrl(
     : originalUrl;
 }
 
-export function webpPolicy(format: string, hasAlpha: boolean) {
-  if (format === 'png' || hasAlpha) {
+// Read from the chunks because sharp's metadata does not say which codec a WebP
+// uses. A lossless WebP holds a VP8L bitstream, first or after the extended
+// format's VP8X and metadata chunks. An animated one keeps its frames in ANMF
+// chunks and counts as lossy.
+function isLosslessWebp(file: Uint8Array) {
+  const view = new DataView(file.buffer, file.byteOffset, file.byteLength);
+  for (let offset = 12; offset + 8 <= file.byteLength; ) {
+    const chunk = String.fromCharCode(...file.subarray(offset, offset + 4));
+    if (chunk === 'VP8L') return true;
+    if (chunk === 'VP8 ') return false;
+    const size = view.getUint32(offset + 4, true);
+    offset += 8 + size + (size % 2);
+  }
+  return false;
+}
+
+export function webpPolicy(
+  format: string,
+  hasAlpha: boolean,
+  source: Uint8Array,
+) {
+  if (
+    format === 'png' ||
+    hasAlpha ||
+    (format === 'webp' && isLosslessWebp(source))
+  ) {
     return { lossless: true, effort: 4 } as const;
   }
 

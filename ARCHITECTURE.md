@@ -469,6 +469,13 @@ never enlarging or touching the original. It skips an image it cannot read,
 with a warning naming it; if the file exists, pages show the original, as they
 do SVGs.
 
+### Lossless sources stay lossless — [Explicit]
+
+A PNG or lossless WebP upload gets lossless WebP derivatives and deep-zoom
+tiles, so downsizing a drawing adds no codec artifacts. A lossy upload with
+transparency stays lossless too; other lossy uploads get high-quality lossy
+WebP — [Implicit].
+
 ### Deep-zoom pyramids for large drawings — [Explicit]
 
 Above a size threshold, a DZI pyramid of WebP tiles, each level resized straight

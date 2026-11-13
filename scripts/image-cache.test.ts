@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { describe, expect, test } from 'vitest';
 import {
   deepZoomLevels,
@@ -55,12 +56,29 @@ describe('derivative selection', () => {
   });
 
   test('preserves lossless and alpha-bearing sources losslessly', () => {
-    expect(webpPolicy('png', false)).toEqual({ lossless: true, effort: 4 });
-    expect(webpPolicy('jpeg', true)).toEqual({ lossless: true, effort: 4 });
+    expect(webpPolicy('png', false, source)).toEqual({ lossless: true, effort: 4 });
+    expect(webpPolicy('jpeg', true, source)).toEqual({ lossless: true, effort: 4 });
+  });
+
+  test('keeps lossless WebP sources lossless, with or without extended chunks', async () => {
+    const pixels = sharp({
+      create: { width: 8, height: 8, channels: 3, background: '#808080' },
+    });
+    const simple = await pixels.clone().webp({ lossless: true }).toBuffer();
+    const extended = await pixels
+      .clone()
+      .withIccProfile('srgb')
+      .webp({ lossless: true })
+      .toBuffer();
+    const lossy = await pixels.clone().webp({ quality: 90 }).toBuffer();
+
+    expect(webpPolicy('webp', false, simple)).toEqual({ lossless: true, effort: 4 });
+    expect(webpPolicy('webp', false, extended)).toEqual({ lossless: true, effort: 4 });
+    expect(webpPolicy('webp', false, lossy).lossless).toBe(false);
   });
 
   test('uses conservative lossy settings for already-lossy sources', () => {
-    expect(webpPolicy('jpeg', false)).toEqual({
+    expect(webpPolicy('jpeg', false, source)).toEqual({
       lossless: false,
       quality: 90,
       alphaQuality: 100,
