@@ -6,7 +6,7 @@ import Paragraphs from './Paragraphs.astro';
 import Prose from './Prose.astro';
 import T from './T.astro';
 import { localizedPath, pageLanguage } from '../locale';
-import { ui } from '../i18n';
+import { ui, type Lang } from '../i18n';
 import { pdfPath } from '../pdf';
 import { formatPeriod } from '../period';
 import type { Project } from '../projects';
@@ -32,63 +32,56 @@ const facts = [
   { k: 'education', rows: about.education },
   { k: 'awards', rows: about.awards },
 ] as const;
-const roles = (role: Project['data']['role']) => ({ cs: role.map(({ cs }) => cs).join(' · '), en: role.map(({ en }) => en).join(' · ') });
+const credit = ({ role, studio }: Project['data']) => {
+  const line = (language: Lang) => [role.map((r) => r[language]).join(' · '), studio].filter(Boolean).join(' – ');
+  return { cs: line('cs'), en: line('en') };
+};
 const linkIcon = (url: string) => (/(^|\.)linkedin\.com$/.test(new URL(url).hostname) ? 'linkedin' : 'link');
 // Titles are set in Roboto Condensed, which only the print layout loads.
 const condensed = "font-['Roboto_Condensed_Variable',sans-serif] font-bold";
 // Section rules run to the column's edge, past its padding.
-const heading = `${condensed} -mr-8 mb-4 border-b text-[1.17rem] uppercase`;
+const heading = `${condensed} -mr-10 mb-5 border-b text-[1.17rem] uppercase`;
 // The contacts' rules, like the section rules, run to the column's edge.
-const contactRow = 'flex items-center gap-2 border-b border-neutral-200 py-1 pr-8 last:border-b-0';
+const contactRow = 'flex items-center gap-2 border-b border-neutral-200 py-1.25 pr-10 last:border-b-0';
 const icon = 'size-3.5 shrink-0 text-neutral-400';
+// A timeline row: where and when on the left of the line, what on the right.
+const timelineStart = 'relative border-r border-black pr-5 pb-5 text-right after:absolute after:top-2.5 after:right-0 after:size-3.5 after:translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-black';
+const timelineEnd = 'pb-5 pl-5';
+const secondary = 'text-neutral-600 empty:hidden';
+const description = 'mt-1 space-y-1 text-neutral-700';
 ---
 
 <Print title={`${ui[lang].cv} | ${credentialedName(site)}`} pdf={pdfPath(site.name, 'cv', lang)}>
   {/* A4's width on screen; in print the fitted scale widens the layout. The
       dark cells form the sidebar, the first row pairs the portrait with the
       name. */}
-  <main class="mx-auto grid min-h-full max-w-[210mm] grid-cols-[3fr_7fr] grid-rows-[auto_1fr] font-light leading-snug print:max-w-none">
-    <div class="bg-neutral-900 px-8 py-6">
+  <main class="mx-auto grid min-h-full max-w-[210mm] grid-cols-[minmax(0,1fr)_minmax(0,2fr)] grid-rows-[auto_1fr] font-light leading-[normal] print:max-w-none">
+    <div class="bg-neutral-900 p-10">
       {portrait && <img src={portrait} alt={credentialedName(site)} class="aspect-square w-full rounded-full object-cover" />}
     </div>
-    <header class="grid grid-cols-[1fr_auto] items-center gap-x-4 px-8 py-6">
+    <header class="grid grid-cols-[1fr_auto] content-center items-center gap-x-4 px-10 py-10">
       <div>
-        <h1 class={`${condensed} text-[2.25rem] leading-tight`}>
+        <h1 class={`${condensed} text-[2.5rem]`}>
           {site.credential && <span class="block">{site.credential}</span>}
           {' '}
           <span class="block uppercase">{site.name}</span>
         </h1>
         <T as="p" k="tagline" class={`${condensed} text-2xl text-neutral-500 uppercase`} />
       </div>
-      <address class="-mr-8 shrink-0 not-italic">
+      <address class="-mr-10 shrink-0 not-italic">
         {location && <div class={contactRow}><ContactIcon icon="location" class={icon} /><T {...location} /></div>}
         {phone && <div class={contactRow}><ContactIcon icon="phone" class={icon} /><a href={`tel:${phone.replace(/\s+/g, '')}`}>{phone}</a></div>}
         <div class={contactRow}><ContactIcon icon="email" class={icon} /><a href={`mailto:${email}`}>{email}</a></div>
       </address>
       {cv.headline && <T as="p" {...cv.headline} class="col-span-full mt-3.5 font-['Roboto_Condensed_Variable',sans-serif] text-xl leading-tight font-[350] text-balance italic" />}
     </header>
-    <div class="space-y-5 bg-neutral-900 px-8 text-white">
-      <section>
-        <T as="h2" k="links" class={`${heading} border-white`} />
-        <ul class="space-y-2">
-          <li class="flex items-center gap-2"><ContactIcon icon="website" class={icon} /><a href={localizedPath('/', lang)}>{new URL(Astro.site!).host}</a></li>
-          {cv.links.map(({ label, url }) => (
-            <li class="flex items-center gap-2"><ContactIcon icon={linkIcon(url)} class={icon} /><a href={url} class="min-w-0 break-words">{label}</a></li>
-          ))}
-        </ul>
-      </section>
-      {projects.length > 0 && (
-        <section>
-          <T as="h2" k="selectedProjects" class={`${heading} border-white`} />
-          <ul class="space-y-2">
-            {projects.map(({ id, data }) => (
-              <li>
-                <a href={localizedPath(`/projects/${id}/`, lang)} class="font-normal"><T {...data.title} /></a>
-                <p class="text-sm text-neutral-300">{data.location && <><T {...data.location} />{' · '}</>}<T {...formatPeriod(data)} /></p>
-                {data.role.length > 0 && <T as="p" {...roles(data.role)} class="text-sm text-neutral-300" />}
-              </li>
-            ))}
-          </ul>
+    <div class="space-y-5 bg-neutral-900 px-10 text-white wrap-anywhere">
+      {/* One profile column at any fitted scale. The `!` overrides global.css,
+          which sets the columns outside Tailwind's layers. */}
+      {cv.profile && (
+        <section class="[&_.prose]:leading-[normal] [&_.prose]:text-white [&_.prose]:prose-invert [&_.prose_p]:my-1.5 [&_.prose-columns]:columns-1!">
+          <T as="h2" k="aboutMe" class={`${heading} border-white`} />
+          <Prose {...cv.profile} />
         </section>
       )}
       {cv.exhibitions.length > 0 && (
@@ -98,7 +91,7 @@ const icon = 'size-3.5 shrink-0 text-neutral-400';
             {cv.exhibitions.map(({ title, note, url }) => (
               <li>
                 {url ? <a href={url} class="font-normal"><T {...title} /></a> : <T {...title} class="font-normal" />}
-                {note && <T as="p" {...note} class="text-sm text-neutral-300" />}
+                {note && <T as="p" {...note} class="text-neutral-300" />}
               </li>
             ))}
           </ul>
@@ -107,45 +100,65 @@ const icon = 'size-3.5 shrink-0 text-neutral-400';
       {cv.interests.length > 0 && (
         <section>
           <T as="h2" k="interests" class={`${heading} border-white`} />
-          <ul class="flex flex-wrap gap-1 text-[0.8125rem] font-normal">
+          <ul class="flex flex-wrap gap-1 text-[0.8125rem]">
             {cv.interests.map((interest) => <li class="rounded-sm bg-neutral-700 px-1.25 py-0.75"><T {...interest} /></li>)}
           </ul>
         </section>
       )}
+      <section>
+        <T as="h2" k="links" class={`${heading} border-white`} />
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2"><ContactIcon icon="website" class={icon} /><a href={localizedPath('/', lang)} class="min-w-0">{new URL(Astro.site!).host}</a></li>
+          {cv.links.map(({ label, url }) => (
+            <li class="flex items-center gap-2"><ContactIcon icon={linkIcon(url)} class={icon} /><a href={url} class="min-w-0">{label}</a></li>
+          ))}
+        </ul>
+      </section>
     </div>
-    <div class="space-y-5 px-8">
-      {/* One ragged-right profile column at any fitted scale, as justified
-          lines this short open wide gaps. The `!` overrides global.css, which
-          sets the columns and alignment outside Tailwind's layers. */}
-      {cv.profile && (
-        <section class="[&_.prose]:leading-snug [&_.prose_p]:my-1.5 [&_.prose-columns]:columns-1! [&_.running-text]:text-left!">
-          <T as="h2" k="aboutMe" class={`${heading} border-black`} />
-          <Prose {...cv.profile} />
+    <div class="space-y-5 px-10">
+      {projects.length > 0 && (
+        <section>
+          <T as="h2" k="selectedProjects" class={`${heading} border-black`} />
+          <ul class="grid grid-cols-[1fr_2fr]">
+            {projects.map(({ id, data }) => (
+              <li class="contents">
+                <div class={timelineStart}>
+                  {data.location && <T {...data.location} class="block font-normal uppercase" />}
+                  <T {...formatPeriod(data)} class="block tabular-nums" />
+                </div>
+                <div class={timelineEnd}>
+                  <a href={localizedPath(`/projects/${id}/`, lang)} class="block font-normal"><T {...data.title} /></a>
+                  <T as="p" {...credit(data)} class={secondary} />
+                  {data.brief && <Paragraphs {...data.brief} class={description} />}
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       {facts.map(({ k, rows }) => rows.length > 0 && (
-        <section class="[&_.running-text]:text-left!">
+        <section>
           <T as="h2" {k} class={`${heading} border-black`} />
           <ul class="grid grid-cols-[1fr_2fr]">
             {rows.map((row) => (
               <li class="contents">
-                <div class="relative border-r border-black pr-5 pb-5 text-right after:absolute after:top-2.5 after:right-0 after:size-3.5 after:translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-black">
+                <div class={timelineStart}>
                   <T {...row.place} class="block font-normal uppercase" />
                   <T {...formatPeriod(row)} class="block tabular-nums" />
                   {'degree' in row && row.degree && <p>{row.degree}</p>}
                   {'skills' in row && row.skills.length > 0 && (
                     <>
                       <T k="skills" class="sr-only" />
-                      <ul class="mt-2 flex flex-wrap justify-end gap-1 text-[0.8125rem] font-normal text-neutral-600">
+                      <ul class="mt-2 flex flex-wrap justify-end gap-1 text-[0.8125rem] text-neutral-600">
                         {row.skills.map((skill) => <li class="rounded-sm bg-neutral-100 px-1.25 py-0.75"><T {...skill.name} /></li>)}
                       </ul>
                     </>
                   )}
                 </div>
-                <div class="pb-5 pl-5">
+                <div class={timelineEnd}>
                   <T {...row.title} class="block font-normal" />
-                  <T as="p" {...row.department} class="text-sm font-normal text-neutral-600 empty:hidden" />
-                  {row.description && <Paragraphs {...row.description} class="mt-1 space-y-1 text-neutral-700" />}
+                  <T as="p" {...row.department} class={secondary} />
+                  {row.description && <Paragraphs {...row.description} class={description} />}
                 </div>
               </li>
             ))}

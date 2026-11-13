@@ -2,6 +2,9 @@ import type { Browser } from '@playwright/test';
 import { PDFDocument } from 'pdf-lib';
 
 const minimumBodyTextPt = 9;
+// The scale a page prints at, where the CV's 16 px body text is 9.12 pt, just
+// above the minimum; fitting one page only scales down from here.
+const printScale = 76;
 const maximumBytes = 10_000_000;
 
 export function smallTextWarning(pdf: string, scale: number, bodyPx: number) {
@@ -65,7 +68,7 @@ export async function renderPDF(browser: Browser, url: string, { site, onePage }
       const bytes = await page.pdf({ preferCSSPageSize: true, scale: scale / 100, printBackground: true, tagged: true });
       return { bytes, scale, pages: (await PDFDocument.load(bytes)).getPageCount() };
     };
-    let result = await render(100);
+    let result = await render(printScale);
     if (onePage && result.pages > 1) {
       // Chromium prints at 10% to 200%.
       const smallest = await render(10);
@@ -73,7 +76,7 @@ export async function renderPDF(browser: Browser, url: string, { site, onePage }
         warnings.push(`${pdf}: does not fit one page even at 10% scale; printed on ${result.pages} pages.`);
       } else {
         result = smallest;
-        let upper = 99;
+        let upper = printScale - 1;
         while (result.scale < upper) {
           const attempt = await render(Math.ceil((result.scale + upper) / 2));
           if (attempt.pages === 1) result = attempt;

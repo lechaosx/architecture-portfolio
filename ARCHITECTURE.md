@@ -56,6 +56,13 @@ blocked. The CV's `@page` has no margin and the page fills the
 paper's height, so its dark sidebar reaches the paper's edges at any fitted
 scale.
 
+### PDFs print at 76% — [Explicit] (mechanism [Implicit])
+
+`scripts/render-pdf.ts` prints at 76% and fits one page only below it, so the
+CV keeps the site's 16 px root and rem sizes yet prints body text at 9.12 pt and
+1px rules at 0.57 pt. That is just above the 9 pt minimum, so the build warns
+almost as soon as a CV has to shrink.
+
 ### A PDF's content problems only warn — [Implicit]
 
 A CMS save never stops the deploy, so a failed request, an image that does not

@@ -56,8 +56,8 @@ descriptions, and image descriptions — is justified with automatic hyphenation
 in the right language's rules; a brief's own line breaks still end their lines
 short. Labels, metadata, credits and titles are not justified. On phones,
 About descriptions span their row's full width, so justified
-lines keep a comfortable measure — [Implicit]. The CV PDF's columns are too
-narrow for it and stay ragged-right — [Implicit].
+lines keep a comfortable measure — [Implicit]. The CV PDF justifies its
+profile and descriptions too, like the developer's own CV — [Explicit].
 
 ### Czech one-letter words never end a line — [Explicit]
 
@@ -310,11 +310,13 @@ attached to an email.
 
 It has a dark sidebar beside a white main column in the site's greys, light
 Roboto text with bold Roboto Condensed titles, and experience and education on
-a timeline — [Explicit]. It shows her name, profession and contacts, portrait,
-links, profile, experience with skills, education with degrees and awards, but
-not Approach or services; content too long for the page prints smaller, the
-build warns once the profile prints below 9 pt, and its links lead to the public
-site — [Implicit].
+a timeline — [Explicit]. Its type is as small and dense as the developer's own
+CV — [Explicit]. It shows her name, profession and contacts, portrait, links,
+profile, experience with skills, education with degrees and awards, but not
+Approach or services, and its links lead to the public site — [Implicit].
+Content that does not fit the page prints smaller; body text starts just above
+the 9 pt minimum, so the build warns almost as soon as it has to shrink —
+[Implicit].
 
 ### CV-only content in the Životopis entry — [Explicit]
 
@@ -323,16 +325,17 @@ profile for studios, shown as **O mně** instead of About's longer bio; an
 optional headline under her name; interests as badges; links such as LinkedIn
 after the site's address; and exhibitions and publications, each with an
 optional note and link. The CV also lists the projects chosen for the landing
-page, in that order, each with its place, period and her roles and linking its
-page. It has no languages section: the profile says she works in Czech and
-English.
+page, in that order, each with its place, period, her roles, its studio when it
+has one and its brief, linking its page. It has no languages section: the
+profile says she works in Czech and English.
 
 Every optional section is left out when empty, and a profile a hand edit drops
 leaves its section out with a build warning; the headline is set in italic
-Roboto Condensed — [Explicit]. The sidebar holds the links, chosen projects,
-exhibitions and interests, and the main column the profile and the timelines,
-so the page stays balanced; a LinkedIn link gets LinkedIn's icon, any other a
-generic link icon — [Implicit].
+Roboto Condensed — [Explicit]. The profile sits under the portrait, and the
+chosen projects open the main column, before her experience — [Explicit]. The
+projects are on a timeline like her experience, the sidebar goes on with
+exhibitions, interests and links, and a LinkedIn link gets LinkedIn's icon, any
+other a generic link icon — [Implicit].
 
 ### Work page: a grid of square covers — [Explicit]
 

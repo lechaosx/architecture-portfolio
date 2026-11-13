@@ -34,6 +34,6 @@ test('the CV prints on one tagged A4 portrait page linking its contacts and the 
 test('a CV too long for one page shrinks onto one and warns that its text is below 9 pt', async ({ browser, baseURL }) => {
   const result = await renderPDF(browser, `${baseURL}/en/e2e/cv-long/`, { site, onePage: true });
   expect((await PDFDocument.load(result.bytes)).getPageCount()).toBe(1);
-  expect(result.scale).toBeLessThan(100);
+  expect(result.scale).toBeLessThan(76);
   expect(result.warnings).toEqual([expect.stringContaining('below the 9 pt minimum')]);
 });

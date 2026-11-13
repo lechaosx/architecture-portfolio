@@ -248,7 +248,8 @@ export function getStaticPaths() {
     en: 'I design houses and interiors from the first study to construction and guide clients through the building permit.',
   };
   // Every optional section filled, a link with an icon of its own and one
-  // without, and chosen projects out of date order, one with my roles.
+  // without, and chosen projects out of date order, one with my roles, a
+  // studio and a brief.
   const cv = {
     // A site-relative link, which the PDF must point at the public site, and
     // a link the CMS saves but no URL parser accepts.
@@ -261,7 +262,11 @@ export function getStaticPaths() {
       { title: { cs: 'Rozhovor v časopise', en: 'Magazine interview' } },
     ],
   };
-  const cvProjects = cards([{ ...project2024, data: { ...project2024.data, role: myRoles.slice(0, 2) } }, gridProject, project2023]);
+  const cvProjects = cards([
+    { ...project2024, data: { ...project2024.data, role: myRoles.slice(0, 2), studio: 'Studio North', brief: { cs: 'Studie rodinného domu.', en: 'A study for a family house.' } } },
+    gridProject,
+    project2023,
+  ]);
   const bareCv = { interests: [], links: [], exhibitions: [] };
 
   const paths = [
