@@ -37,6 +37,17 @@ export function withoutMissingImages(
   };
 }
 
+/** The images a save from before the CMS required titles left untitled, each at its field. */
+export function untitledImages(data: Pick<Project['data'], 'blocks'>) {
+  return data.blocks.flatMap((block, blockIndex) =>
+    block.type === 'text'
+      ? []
+      : block.images.flatMap(({ image, title }, index) =>
+          title ? [] : [{ field: `blocks[${blockIndex}].images[${index}].title`, message: `${image} has no title` }],
+        ),
+  );
+}
+
 /**
  * The projects the site shows: no drafts, and no images whose file is missing.
  * `found` says whether the file at an image's path exists, given that path and

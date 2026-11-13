@@ -110,12 +110,12 @@ without them.
 The CMS refuses to save a project without both titles and the start of its
 involvement period. The end, brief, personal role, credits, award, classification and
 content blocks are optional; so is the location — [Implicit]. A text block
-needs both languages, an image block at least one image, a collaborator a
-name.
+needs both languages, an image block at least one image, each image a title in
+both languages — [Explicit] — and a collaborator a name.
 
 ### Project brief and personal role — [Explicit]
 
-The brief introduces the project and her involvement in natural prose; an optional **Moje role / My role** fact lists her roles, free-text items worded like collaborators’ roles, one per line, with her name implicit. On a project page, the title and badges precede the brief, with full-width facts beneath it; an absent brief leaves the facts directly below the title — [Explicit]. The brief follows the general prose column rule, preserves its line breaks and appears without a preset heading — [Implicit].
+The brief introduces the project and her involvement in natural prose; an optional **Moje role / My role** fact lists her roles, free-text items worded like collaborators’ roles, one per line, with her name implicit. On a project page, the title and badges precede the brief, with full-width facts beneath it; an absent brief leaves the facts directly below the title — [Explicit]. The brief follows the general prose column rule, preserves its line breaks and appears without a preset heading — [Implicit]; its CMS hint guides the wording (the project first, then her part), a hint, not a length limit — [Explicit].
 
 ### Project context and progress badges — [Explicit]
 
@@ -579,22 +579,23 @@ image of a set, untitled ones too, names the others in it — [Explicit].
 
 ### Titles and descriptions; the card's back — [Explicit]
 
-Optional bilingual title and description per image, shown only in the lightbox.
-Wherever an image is described to machines (alt text on the page and in the
-lightbox, the structured data's image name), a titled image is named by its
-title followed by its project's title and location in the current language, so
-the title can stay short — [Explicit]; a name the text already contains is left
-out — [Implicit]. An untitled image has none — [Explicit]. Screen readers hear
-an image's button on the page by its own short name, its position and title
-("Otevřít obrázek 2: Řezy", only the position when untitled), instead of the alt
-text — [Explicit]. Descriptions are machine-readable in the structured data —
-[Implicit] — and titles and descriptions are in `llms-full.txt` with links to
-the images and to where the project page opens them in the lightbox —
-[Explicit]. There the titles stay plain, since each image is already under its
-project's heading — [Implicit]. The title shows in the
-top-left set strip: a titled image outside a set gets a strip of one, an image
-with neither title nor set gets none. A description lives on the card's back, reached
-with the bottom-left toggle, which turns the card over in 3D:
+A bilingual title per image, which the CMS requires and asks to keep short, and
+an optional description, shown only in the lightbox — [Explicit]. Wherever an
+image is described to machines (alt text on the page and in the lightbox, the
+structured data's image name), a titled image is named by its title followed by
+its project's title and location in the current language, so the title can stay
+short — [Explicit]; a name the text already contains is left out — [Implicit].
+An untitled image has none — [Explicit]. Screen readers hear an image's button
+on the page by its own short name, its position and title ("Otevřít obrázek 2:
+Řezy", only the position when untitled), instead of the alt text — [Explicit].
+Descriptions are machine-readable in the structured data — [Implicit] — and
+titles and descriptions are in `llms-full.txt` with links to the images and to
+where the project page opens them in the lightbox — [Explicit]. There the titles
+stay plain, since each image is already under its project's heading —
+[Implicit]. The title shows in the top-left set strip: a titled image outside a
+set gets a strip of one, an image with neither title nor set gets none. A
+description lives on the card's back, reached with the bottom-left toggle, which
+turns the card over in 3D:
 
 - The back is paper in the page's theme, the drawing's shape and size, growing
   only as far as its text needs — [Explicit]; a card taller than the screen

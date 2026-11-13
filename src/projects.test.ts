@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { chosenCards, projectCover, publishedProjects, withoutMissingImages, workProjects, type Project } from './projects';
+import { chosenCards, projectCover, publishedProjects, untitledImages, withoutMissingImages, workProjects, type Project } from './projects';
 
 const project = (id: string, year: number): Project => ({
   id,
@@ -85,6 +85,18 @@ test('the published projects leave out drafts, and report a missing image at its
   };
   expect(publishedProjects([draft, shown], found)).toEqual([{ ...shown, data: { ...shown.data, thumbnail: undefined } }]);
   expect(reported).toEqual(['src/content/projects/shown.md: thumbnail']);
+});
+
+test('an untitled image, which an older save can hold, is reported at its field by its file', () => {
+  const blocks = [
+    { type: 'gallery' as const, images: [selected, first] },
+    { type: 'text' as const, body: { cs: 'Text', en: 'Text' } },
+    { type: 'image_set' as const, images: [{ image: '/uploads/untitled.jpg' }] },
+  ];
+  expect(untitledImages({ blocks })).toEqual([
+    { field: 'blocks[0].images[1].title', message: '/uploads/first.jpg has no title' },
+    { field: 'blocks[2].images[0].title', message: '/uploads/untitled.jpg has no title' },
+  ]);
 });
 
 test('the chosen projects become cards in the chosen order, leaving out and reporting any without a card', () => {

@@ -60,7 +60,7 @@ content:
         label: Brief
         type: object
         required: false
-        description: 'Stručné představení projektu a mého zapojení do něj. Podrobnější popis patří do obsahu stránky. Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
+        description: 'Jedna nebo dvě věty: nejdřív projekt (co, kde, pro koho a kam až se dostal), potom moje práce na něm. Výsledky vyhledávání ukážou jen zhruba prvních 160 znaků, proto to, co lidé hledají, napište na začátek. Popis samotného návrhu patří do obsahu stránky. Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
         fields: &text-pair
           - { name: cs, label: Česky, type: text, required: true, pattern: *text }
           - { name: en, label: Anglicky, type: text, required: true, pattern: *text }
@@ -173,7 +173,7 @@ content:
                 fields:
                   - { name: image, label: Obrázek, type: image, required: true, description: &upload 'Obrázek, který už na webu je, vyberte tlačítkem Select; Upload i přetažení souboru uloží novou kopii.' }
                   - { name: comparison_set, label: Srovnávací sada, type: string, required: false, description: "Obrázky se stejnou hodnotou tvoří v prohlížeči obrázků jednu sadu a přepínají se tlačítky." }
-                  - { name: title, label: Název obrázku, type: object, required: false, description: *translations, fields: *string-pair }
+                  - { name: title, label: Název obrázku, type: object, required: true, description: &image-title 'Krátký název v obou jazycích, např. „Půdorys 1. NP“, „Řezy“ nebo „Vizualizace“. Zobrazí se i na tlačítku obrázku. Podrobnosti patří do popisu obrázku.', fields: *string-pair }
                   - { name: description, label: Popis obrázku, type: object, required: false, description: *translations, fields: *text-pair }
           - name: image_set
             label: Obrázek nebo prezentace na celou šířku
@@ -187,7 +187,7 @@ content:
                 fields:
                   - { name: image, label: Obrázek, type: image, required: true, description: *upload }
                   - { name: comparison_set, label: Srovnávací sada, type: string, required: false, description: "Obrázky se stejnou hodnotou tvoří v prohlížeči obrázků jednu sadu a přepínají se tlačítky." }
-                  - { name: title, label: Název obrázku, type: object, required: false, description: *translations, fields: *string-pair }
+                  - { name: title, label: Název obrázku, type: object, required: true, description: *image-title, fields: *string-pair }
                   - { name: description, label: Popis obrázku, type: object, required: false, description: *translations, fields: *text-pair }
 
   - name: landing

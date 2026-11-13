@@ -69,7 +69,7 @@ function schemaShape(shape: Record<string, z.ZodType>, discriminator?: string): 
     .filter(([name]) => name !== discriminator)
     .map(([name, schema]) => ({
       name,
-      required: !schema.safeParse(undefined).success,
+      required: !schema.safeParse(undefined).success || schema.meta()?.requiredInCms === true,
       fields: rowShape(schema),
     }))
     .sort(byName);

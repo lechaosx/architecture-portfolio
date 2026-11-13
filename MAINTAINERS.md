@@ -45,7 +45,7 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/content/singletons/` | `site.md`, `landing.md` (the landing page's images and projects), `about.md`, `contact.md` (the footer's contacts, the IČO and seat on the legal page, and the landing page's location) |
 | `public/uploads/` | uploaded originals |
 | `src/content.config.ts` + `.pages.yml` | content schema: build and CMS (keep in sync) |
-| `src/singletons.ts`, `src/published-projects.ts` | content as pages read it: no drafts, no images whose file is missing, warnings for those images and periods, the landing page's projects as cards |
+| `src/singletons.ts`, `src/published-projects.ts` | content as pages read it: no drafts, no images whose file is missing, warnings for those images, untitled images and periods, the landing page's projects as cards |
 | `src/i18n.ts` | baked-in UI labels |
 | `src/locale.ts`, `src/pages/[lang]/` | language selection, translated page paths and static locale routes |
 | `src/language-switch.ts` | in-place language changes, metadata, links and browser history |
@@ -70,8 +70,9 @@ npm run images       # regenerate responsive images (dev and build run it)
 
 **Change the content shape.** Edit `src/content.config.ts` and `.pages.yml` in
 the same change; the content-schema test fails if their fields or required flags
-differ. A translatable field is `bilingual` (or `bilingual.optional()`) in the
-schema and an object field in `.pages.yml` whose `cs`/`en` subfields are
+differ, except where the schema marks a field `.meta({ requiredInCms: true })`.
+A translatable field is `bilingual` (or `bilingual.optional()`) in the schema
+and an object field in `.pages.yml` whose `cs`/`en` subfields are
 `required: true` with `pattern: *text`; the `*string-pair`, `*text-pair` and
 `*rich-text-pair` anchors supply them where no per-language help or label is
 needed. The content-schema test checks every subfield's `pattern`. Labels, help

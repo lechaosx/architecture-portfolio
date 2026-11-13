@@ -45,7 +45,9 @@ const projectImage = z.object({
   // Image paths live under /public (served from root), so plain strings.
   image: z.string(),
   comparison_set: z.string().optional(),
-  title: bilingual.optional(),
+  // The CMS requires a title, but an image saved untitled before it did still builds, and
+  // `untitledImages` reports it; `requiredInCms` tells the content-schema test.
+  title: bilingual.optional().meta({ requiredInCms: true }),
   description: bilingual.optional(),
 });
 

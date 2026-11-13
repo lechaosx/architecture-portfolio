@@ -441,9 +441,9 @@ only build platform.
 
 ### Image items are caption records — [Explicit]
 
-Each gallery or image-set item keeps its image, optional bilingual title and
-description, and optional `comparison_set` together, so reordering in the CMS
-keeps them associated. Both block types share the shape.
+Each gallery or image-set item keeps its image, bilingual title, optional
+bilingual description and optional `comparison_set` together, so reordering in
+the CMS keeps them associated. Both block types share the shape.
 
 ### Sitemap — [Implicit]
 
@@ -571,7 +571,8 @@ sign-in, so the site needs no auth server.
 The shape is declared in `src/content.config.ts` (build) and `.pages.yml`
 (editor) and kept in sync by hand. Pages CMS fields are optional unless
 `required: true`, so `src/content.config.test.ts` checks that both declare the
-same fields, required in the same places, at every level.
+same fields, required in the same places, at every level. A field the CMS
+requires but the build tolerates is marked `requiredInCms` in the schema.
 
 ### A CMS save never stops the deploy — [Explicit] (loading modules [Implicit])
 
@@ -580,18 +581,23 @@ accepts everything the CMS can save: the CMS refuses what it can express
 (`required`, `pattern`, the bilingual objects) and the build tolerates the rest.
 Pages read content through `src/published-projects.ts` and `src/singletons.ts`,
 which leave out what a CMS save broke (a missing image, a skipped landing
-choice) and warn about it and about wrong periods; the image script warns about
-an upload it cannot read. These checks live in the loading modules, not the
-schema, because a schema can only fail an entry, and the content layer skips
-revalidating an entry until its file changes.
+choice) and warn about it, about wrong periods and about untitled images; the
+image script warns about an upload it cannot read. These checks live in the
+loading modules, not the schema, because a schema can only fail an entry, and
+the content layer skips revalidating an entry until its file changes.
 
-One shape is tolerated in the schema: *My role* as a single pair, from before it
-became a list. The CMS server validates every save against its copy of
-`.pages.yml`, which GitHub's push webhook refreshes, so until that arrives a
-form loaded earlier still saves the pair. It reads as one role. The CMS shows
-it as an empty list and would drop it on the next save, so the schema warns,
-naming the text but not the file, which it cannot see, and only on the build
-after the save — [Implicit].
+The schema also tolerates two shapes an older config allowed. The CMS server
+validates every save against its copy of `.pages.yml`, which GitHub's push
+webhook refreshes, so until that arrives a form loaded earlier still saves
+them, and files saved before keep them:
+
+- *My role* as a single pair, from before it became a list, reads as one role.
+  The CMS shows it as an empty list and would drop it on the next save, so the
+  schema warns, naming the text but not the file, which it cannot see, and only
+  on the build after the save — [Implicit].
+- An untitled image, from before the CMS required titles, builds under the
+  "Obrázek N / Image N" fallback; `src/published-projects.ts` warns, naming
+  the file — [Explicit].
 
 ### Frontmatter text reads as typed — [Implicit]
 
