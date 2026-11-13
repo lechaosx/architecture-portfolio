@@ -32,7 +32,7 @@ collaborators:
   - name: Jan Žahour
   - name: Michal Škoda
   - name: Olivia Dimitrishina
-  - name: Libor Šenekel
+  - name: Ing. arch. Libor Šenekel
   - name: Pavel Lauš
   - name: Adam Schwarz
   - name: Jakub Jurásek
