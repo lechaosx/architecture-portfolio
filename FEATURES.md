@@ -364,12 +364,14 @@ redirects.
 
 **Právní informace** / **Legal information**, linked from the footer, opens
 with her business details: her name, registered seat and IČO when filled, and,
-with the IČO, that she is registered in the trade register. Then come the two
+with the IČO, that she is registered in the trade register. Then come the
 notices her site must carry: how she handles the personal data of people who
-contact her (GDPR), and that Česká obchodní inspekce resolves consumer disputes
-out of court, with its web address. The texts are fixed in code, short and
-plain, and fill in her details from the content, so they follow her edits.
-They read in one column at every width, whatever their length — [Explicit].
+contact her (GDPR), and, with the IČO, that Česká obchodní inspekce resolves
+consumer disputes out of court, with its web address; the page description
+names consumer disputes only then too. So if she stops freelancing, emptying
+the IČO takes these off. The texts are fixed in code, short and plain, and fill
+in her details from the content, so they follow her edits. They read in one
+column at every width, whatever their length — [Explicit].
 
 The details — [Implicit]: each part has a section heading and the page title is
 only for screen readers; her business details stand one per line. Like the

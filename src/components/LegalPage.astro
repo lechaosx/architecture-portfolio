@@ -38,6 +38,8 @@ const consumerDisputes = {
   cs: 'Jste-li spotřebitel a spor ze smlouvy se mnou se nám nepodaří vyřešit dohodou, můžete navrhnout jeho mimosoudní řešení. Příslušným subjektem je Česká obchodní inspekce:\\\n[coi.gov.cz/informace-o-adr](https://coi.gov.cz/informace-o-adr/)',
   en: 'If you are a consumer and we cannot settle a dispute over a contract with me, you can propose out-of-court resolution. The competent body is the Czech Trade Inspection Authority (Česká obchodní inspekce):\\\n[coi.gov.cz/en/information-about-adr](https://coi.gov.cz/en/information-about-adr/)',
 };
+// The IČO stands for her business; consumer disputes concern only that.
+const description = ico ? 'legalDescription' : 'legalDescriptionNoIco';
 ---
 
 <Base
@@ -45,7 +47,7 @@ const consumerDisputes = {
     cs: `${ui.cs.legal} | ${credentialedName(site)}`,
     en: `${ui.en.legal} | ${credentialedName(site)}`,
   }}
-  description={{ cs: ui.cs.legalDescription, en: ui.en.legalDescription }}
+  description={{ cs: ui.cs[description], en: ui.en[description] }}
   {site}
   {about}
   {contact}
@@ -69,10 +71,12 @@ const consumerDisputes = {
         <SectionHeading k="personalData" />
         <Prose {...personalData} />
       </section>
-      <section class="mt-16 sm:mt-24">
-        <SectionHeading k="consumerDisputes" />
-        <Prose {...consumerDisputes} />
-      </section>
+      {ico && (
+        <section class="mt-16 sm:mt-24">
+          <SectionHeading k="consumerDisputes" />
+          <Prose {...consumerDisputes} />
+        </section>
+      )}
     </div>
   </PageContent>
 </Base>

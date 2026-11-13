@@ -55,6 +55,18 @@ test('the legal page leaves out the IČO, trade registration and seat when they 
   }
 });
 
+test('without an IČO, the legal page keeps the seat but leaves out the trade registration and the consumer dispute notice', async ({ page }) => {
+  await page.goto('/e2e/legal-seat/');
+  const main = page.locator('main');
+  for (const lang of ['en', 'cs'] as const) {
+    if (lang === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
+    await expect(main.getByText(site.name, { exact: true })).toBeVisible();
+    await expect(main.getByText(businessDetails[lang].seat, { exact: true })).toBeVisible();
+    await expect(main.getByRole('link', { name: contact.email })).toBeVisible();
+    await expect(main).not.toContainText(/IČO|Business ID|rejstřík|trade register|spotřebitel|consumer|inspekce|inspection|coi\.gov|undefined/i);
+  }
+});
+
 test('the footer links to the legal page in the visitor’s language', async ({ page }) => {
   await page.goto('/e2e/work/');
   const footer = page.locator('footer');

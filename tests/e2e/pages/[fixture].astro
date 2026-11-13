@@ -255,6 +255,7 @@ export function getStaticPaths() {
     { params: { fixture: 'about-long-services' }, props: { about: { ...about, services: longServices } } },
     { params: { fixture: 'legal' }, props: { legal: true } },
     { params: { fixture: 'legal-bare' }, props: { legal: true, contact: bareContact } },
+    { params: { fixture: 'legal-seat' }, props: { legal: true, contact: { ...bareContact, seat: frameContact.seat } } },
     { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, bio: { cs: words(150).cs, en: words(150).en } } } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },

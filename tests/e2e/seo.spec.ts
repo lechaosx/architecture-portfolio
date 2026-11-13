@@ -60,6 +60,8 @@ test.describe(() => {
       ['/cs/e2e/about/', 'Výkres sleduje, jak se náměstí, park a stadion potkávají podél řeky a kudy by je mohla spojit nová cesta. Výkres sleduje, jak se náměstí, park a stadion…'],
       ['/en/e2e/work/', 'Grid project, Alpha brief, Beta text, Old brief'],
       ['/cs/e2e/legal/', 'Identifikační údaje, ochrana osobních údajů a spotřebitelské spory.'],
+      ['/cs/e2e/legal-bare/', 'Identifikační údaje a ochrana osobních údajů.'],
+      ['/en/e2e/legal-bare/', 'Business details and personal data protection.'],
     ]) {
       await page.goto(path);
       await expect(meta(page, 'name="description"'), path).toHaveAttribute('content', description);
