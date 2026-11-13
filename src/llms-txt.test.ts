@@ -60,11 +60,12 @@ test('llms.txt is a bilingual link index with a summary and language-specific ca
   expect(output).not.toContain(about.bio.cs);
 });
 
-test('the index links only published project pages, newest first, with short factual notes', () => {
+test('the index lists every published project in the work page’s order, linking its page or else the work page, with short factual notes', () => {
   const output = llms.llmsTxt({
     ...input,
     projects: [
-      { id: 'old', data: { ...project, from: '2020', to: '2020', blocks: [{ type: 'text', body: { cs: 'Starý text.', en: 'Old text.' } }] } },
+      // A card: the work page's grid comes before its newer listed projects.
+      { id: 'old', data: { ...project, from: '2020', to: '2020', blocks: [{ type: 'gallery', images: [{ image: '/uploads/old.png' }] }] } },
       { id: 'no-page', data: { ...project, title: { cs: 'Bez stránky', en: 'No page' } } },
       { id: 'draft', data: { ...project, draft: true, title: { cs: 'Koncept', en: 'Draft' }, blocks: [{ type: 'text', body: { cs: 'Koncept.', en: 'Draft.' } }] } },
       { id: 'new', data: { ...project, from: '2025', to: '2025', location: { cs: 'Brno, Česko', en: 'Brno, Czechia' }, brief: { cs: 'Dlouhá anotace. '.repeat(100), en: 'Long brief. '.repeat(100) }, blocks: [{ type: 'text', body: { cs: 'Lorem ipsum.', en: 'Long body.' } }] } },
@@ -73,14 +74,25 @@ test('the index links only published project pages, newest first, with short fac
   expect(indexLinks(output).map((link) => link.href)).toEqual([
     'https://example.cz/cs/about/', 'https://example.cz/cs/work/',
     'https://example.cz/en/about/', 'https://example.cz/en/work/',
-    'https://example.cz/cs/projects/new/', 'https://example.cz/en/projects/new/',
     'https://example.cz/cs/projects/old/', 'https://example.cz/en/projects/old/',
+    'https://example.cz/cs/projects/new/', 'https://example.cz/en/projects/new/',
+    'https://example.cz/cs/work/', 'https://example.cz/en/work/',
     'https://example.cz/llms-full.txt',
   ]);
   expect(output).toContain('2025');
   expect(output).toContain('Brno, Česko');
-  for (const omitted of ['Bez stránky', 'Koncept', 'Dlouhá anotace', 'Lorem ipsum', 'Long body']) expect(output).not.toContain(omitted);
+  expect(output).toContain('[Bez stránky (cs)]');
+  expect(output).toContain('[No page (en)]');
+  for (const omitted of ['Koncept', 'Dlouhá anotace', 'Lorem ipsum', 'Long body']) expect(output).not.toContain(omitted);
   expect(output.length).toBeLessThan(2500);
+});
+
+test('the index says how to reach the architect', () => {
+  expect(llms.llmsTxt({
+    ...input,
+    contact: { ...contact, phone: '+420 777 000 000', location: { cs: 'Brno', en: 'Brno' } },
+  })).toContain('\n\nKontakt / Contact: jana@example.cz · +420 777 000 000 · Brno\n\n');
+  expect(llms.llmsTxt(input)).toContain('\n\nKontakt / Contact: jana@example.cz\n\n');
 });
 
 test('Markdown links preserve literal CMS titles and encoded paths', () => {

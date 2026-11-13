@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  collectionPage,
   creativeWork,
   jsonLd,
   person,
@@ -9,8 +10,12 @@ import {
 import type { ResponsiveImage } from './images';
 
 const site = new URL('https://example.cz/');
-const owner = { name: 'Jana Nováková', credential: 'Ing. arch.' };
-const emptyAbout = { services: [], awards: [] };
+const owner = {
+  name: 'Jana Nováková',
+  credential: 'Ing. arch.',
+  description: { cs: 'Portfolio architektky.', en: 'An architect’s portfolio.' },
+};
+const emptyAbout = { services: [], education: [], awards: [] };
 const contact = { email: 'jana@example.cz' };
 
 describe('person', () => {
@@ -26,6 +31,8 @@ describe('person', () => {
           title: { cs: 'Architektura a rozvoj sídel', en: 'Architecture and Urban Development' },
         },
         { place: { cs: 'SPŠ stavební', en: 'Building school' }, title: { cs: 'Maturita', en: 'School-leaving exam' } },
+        { place: { cs: 'Fakulta stavební VUT v Brně', en: 'Faculty of Civil Engineering, BUT' }, title: { cs: 'Bc.', en: 'Bc.' } },
+        { place: { cs: 'Probíhající studium', en: 'Ongoing study' }, from: '2025', title: { cs: 'Ph.D.', en: 'Ph.D.' } },
       ],
       awards: [
         { place: { cs: 'Cena Bohuslava Fuchse', en: 'Bohuslav Fuchs Award' }, from: '2025', to: '2025', title: { cs: '2. místo', en: '2nd place' } },
@@ -37,7 +44,7 @@ describe('person', () => {
         site,
         owner,
         about,
-        contact: { ...contact, phone: '+420 777 000 000', ico: '12345678' },
+        contact: { ...contact, phone: '+420 777 000 000', ico: '12345678', location: { cs: 'Brno', en: 'Brno' } },
         portrait: '/_responsive/hash/1280.webp',
       }),
     ).toEqual({
@@ -46,11 +53,17 @@ describe('person', () => {
       name: 'Jana Nováková',
       honorificPrefix: 'Ing. arch.',
       jobTitle: 'Architektka',
+      description: 'Portfolio architektky.',
       url: 'https://example.cz/cs/',
       email: 'jana@example.cz',
       telephone: '+420 777 000 000',
       identifier: { '@type': 'PropertyValue', propertyID: 'IČO', value: '12345678' },
       image: 'https://example.cz/_responsive/hash/1280.webp',
+      workLocation: { '@type': 'Place', name: 'Brno' },
+      alumniOf: [
+        { '@type': 'EducationalOrganization', name: 'Fakulta stavební VUT v Brně' },
+        { '@type': 'EducationalOrganization', name: 'SPŠ stavební' },
+      ],
       makesOffer: [
         { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rodinné domy' } },
       ],
@@ -61,11 +74,11 @@ describe('person', () => {
   test('leaves out what the content leaves empty', () => {
     const node = person({
       site,
-      owner: { name: owner.name },
+      owner: { name: owner.name, description: owner.description },
       about: emptyAbout,
       contact,
     });
-    expect(Object.keys(node)).toEqual(['@type', '@id', 'name', 'jobTitle', 'url', 'email']);
+    expect(Object.keys(node)).toEqual(['@type', '@id', 'name', 'jobTitle', 'description', 'url', 'email']);
   });
 });
 
@@ -263,6 +276,44 @@ describe('creativeWork', () => {
   });
 });
 
+test('names the outside page about the project, unless the CMS left it empty', () => {
+  const work = (project_url: string) => creativeWork({
+    site, url: 'https://example.cz/project/',
+    project: { title: { cs: 'Projekt', en: 'Project' }, collaborators: [], project_url },
+    images: [], responsiveImages: [],
+  });
+  expect(work('https://example.org/news/library')).toMatchObject({
+    subjectOf: { '@type': 'WebPage', url: 'https://example.org/news/library' },
+  });
+  expect(work('')).not.toHaveProperty('subjectOf');
+});
+
+test('the work page lists every project in page order, linking those with a page', () => {
+  const project = {
+    from: '2024', draft: false, context: [], intervention: [], scope: [],
+    design_in_progress: false, collaborators: [], blocks: [],
+  };
+  const node = collectionPage({
+    site, url: 'https://example.cz/en/work/', lang: 'en',
+    projects: [
+      { id: 'library', data: { ...project, title: { cs: 'Knihovna', en: 'Library' }, blocks: [{ type: 'text', body: { cs: 'Text.', en: 'Text.' } }] } },
+      { id: 'competition', data: {
+        ...project, title: { cs: 'Soutěž', en: 'Competition' },
+        project_url: 'https://example.org/competition',
+      } },
+    ],
+  });
+  expect(node).toMatchObject({ '@type': 'CollectionPage', url: 'https://example.cz/en/work/' });
+  const items = node.mainEntity.itemListElement;
+  expect(items.map(({ position, item }) => [position, item.name, item.url])).toEqual([
+    [1, 'Library', 'https://example.cz/en/projects/library/'],
+    [2, 'Competition', undefined],
+  ]);
+  expect(items[1].item).toMatchObject({
+    subjectOf: { '@type': 'WebPage', url: 'https://example.org/competition' },
+  });
+});
+
 describe('jsonLd', () => {
   test('is a schema.org graph', () => {
     expect(JSON.parse(jsonLd([{ '@type': 'Thing' }]))).toEqual({
@@ -313,11 +364,14 @@ test('English person facts use English service names, award text and ongoing per
     site, owner, contact, lang: 'en',
     about: {
       services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
+      education: [{ place: { cs: 'VUT v Brně', en: 'Brno University of Technology' }, title: { cs: 'Architektura', en: 'Architecture' } }],
       awards: [{ place: { cs: 'Soutěž', en: 'Competition' }, title: { cs: 'Finále', en: 'Final' }, from: '9/2025' }],
     },
   });
   expect(node).toMatchObject({
     '@id': 'https://example.cz/#person', jobTitle: 'Architect', url: 'https://example.cz/en/',
+    description: 'An architect’s portfolio.',
+    alumniOf: [{ '@type': 'EducationalOrganization', name: 'Brno University of Technology' }],
     makesOffer: [{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Family houses' } }],
     award: ['Competition, Final (9/2025–present)'],
   });

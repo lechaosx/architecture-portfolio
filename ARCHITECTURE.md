@@ -466,8 +466,13 @@ which `Base` inlines as one `@graph` per page. Text follows the page language as
 ### Structured data preserves supplied meaning — [Implicit]
 
 Project sites use `contentLocation`; `contributor` links the architect’s Person node and lists collaborators, preserving supplied personal and collaborator roles through schema.org `Role`, while realization supplies `creativeWorkStatus`.
-Studies, a generic contact area and website languages do not establish awarded credentials, a workplace or personal language proficiency.
+Studies and website languages do not establish awarded credentials or personal language proficiency.
 Personal involvement dates do not establish a project creation date, and free-text roles and studio credits do not establish a creator relationship.
+
+### Workplace, schools and every project in the structured data — [Explicit]
+
+The contact area is the architect's `workLocation`, the places of her finished studies in About her `alumniOf` schools and the site description her `description`.
+The Work page is a `CollectionPage` listing every published project in page order, with a `url` where it has a page; a project's external link is a `subjectOf` web page, an outside page about the project.
 
 ### AI exports and `robots.txt` as static endpoints — [Implicit]
 
@@ -480,8 +485,9 @@ and `public/CNAME`.
 ### Bilingual AI index and complete export — [Explicit]
 
 `/llms.txt` follows the [llms.txt proposal](https://llmstxt.org/): a name,
-summary, language guidance and H2 sections containing only annotated Markdown
-links, with short project notes drawn from location and involvement period.
+summary, language guidance, a contact line and H2 sections containing only annotated Markdown
+links, with short project notes drawn from location and involvement period; a
+project without its own page links to the Work page.
 `/llms-full.txt` retains the full content with language-labelled prose and
 absolute links for titled or described images; both exports use the same
 canonical origin and project order as the pages, and `Base.astro` advertises

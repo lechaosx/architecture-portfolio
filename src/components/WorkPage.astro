@@ -14,6 +14,7 @@ import { formatPeriod } from '../period';
 import { projectBadges, projectFacts } from '../project-facts';
 import { workProjects, type Project } from '../projects';
 import { getResponsiveImage } from '../server-images';
+import { collectionPage } from '../structured-data';
 
 const lang = pageLanguage(Astro.url.pathname);
 
@@ -27,6 +28,13 @@ interface Props {
 const { site, about, contact } = Astro.props;
 const { grid, listed } = workProjects(Astro.props.projects);
 const image = grid[0] && (await getResponsiveImage(grid[0].cover.image))?.share;
+const origin = new URL('/', Astro.site);
+const graph = (language: 'cs' | 'en') => [collectionPage({
+  site: origin,
+  url: new URL(localizedPath(Astro.url.pathname, language), origin).href,
+  projects: [...grid, ...listed],
+  lang: language,
+})];
 // One column template for every index row and its brief, so they line up. The
 // period column matches the About facts' so a period reads alike on both; change
 // them together.
@@ -38,6 +46,7 @@ const marker = 'col-start-2 row-start-2 justify-self-end sm:col-start-4 sm:row-s
 <Base
   title={{ cs: `${ui.cs.work} | ${credentialedName(site)}`, en: `${ui.en.work} | ${credentialedName(site)}` }}
   {image}
+  graph={{ cs: graph('cs'), en: graph('en') }}
   {site}
   {about}
   {contact}

@@ -619,11 +619,15 @@ contact, services and awards; a project page adds its project location, credits,
 award and status, its cover and its titled or described images, each linked at
 the size the lightbox opens it at.
 The architect's data includes her IČO when filled — [Explicit].
+It also says where she works, the schools she studied at (not a degree) and the
+site description; the Work page lists every published project, including those
+without a page, and a project links an outside page about the project — [Explicit].
 
 ### Bilingual index and full export for AI assistants — [Explicit]
 
-`/llms.txt` is a compact bilingual index of About, Work and published project
-pages in both canonical languages, discovered through a link in each page's head; each link identifies Czech or English. `/llms-full.txt` gathers her bio, education,
+`/llms.txt` is her contact line and a compact bilingual index of About, Work and
+every published project in both canonical languages (a project without its own
+page links to Work), discovered through a link in each page's head; each link identifies Czech or English. `/llms-full.txt` gathers her bio, education,
 experience, services, contact details with her IČO and every published project's facts,
 texts and linked image captions, including projects without a separate page;
 long passages identify Czech (`cs`) and English (`en`) explicitly.

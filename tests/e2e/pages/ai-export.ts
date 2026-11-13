@@ -8,9 +8,9 @@ import { thumbnailProjects } from '../thumbnail-projects';
 export const getStaticPaths = () => ['llms', 'llms-full'].map((file) => ({ params: { file } }));
 
 export const GET: APIRoute = ({ params, site: origin }) => {
-  const data = { site: new URL('/', origin), name: credentialedName(site), description: site.description, projects: thumbnailProjects };
+  const data = { site: new URL('/', origin), name: credentialedName(site), description: site.description, contact, projects: thumbnailProjects };
   return new Response(
-    params.file === 'llms' ? llmsTxt(data) : llmsFullTxt({ ...data, about, contact }),
+    params.file === 'llms' ? llmsTxt(data) : llmsFullTxt({ ...data, about }),
     { headers: { 'Content-Type': 'text/plain; charset=utf-8' } },
   );
 };

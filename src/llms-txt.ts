@@ -3,7 +3,7 @@ import { localizedPath } from './locale';
 import { ui, type Lang, type UiKey } from './i18n';
 import { formatPeriod, type Period } from './period';
 import { projectBadges, projectFacts } from './project-facts';
-import { newestFirst, type Project } from './projects';
+import { newestFirst, workProjects, type Project } from './projects';
 
 type Data<Collection extends 'about' | 'contact' | 'projects'> =
   CollectionEntry<Collection>['data'];
@@ -147,17 +147,21 @@ export function llmsTxt({
   site,
   name,
   description,
+  contact,
   projects,
 }: {
   site: URL;
   name: string;
   description: Record<Lang, string>;
+  contact: Pick<Data<'contact'>, 'email' | 'phone' | 'location'>;
   projects: Project[];
 }) {
+  const { grid, listed } = workProjects(projects.filter(({ data }) => !data.draft));
   const blocks = [
     `# ${name}`,
     ...line(both(description).map((text) => `> ${text}`).join('\n>\n')),
     label('llmsLanguages'),
+    `${label('contact')}: ${[contact.email, contact.phone?.trim(), pair(contact.location)].filter(Boolean).join(' · ')}`,
     ...section(label('llmsPages'), list([
       ...(['cs', 'en'] as const).flatMap((lang) => [
         `${textLink(`${ui[lang].about} (${lang})`, new URL(localizedPath('/about/', lang), site))}: ${ui[lang].llmsAbout}`,
@@ -165,12 +169,10 @@ export function llmsTxt({
       ]),
     ])),
     ...section(label('work'), list(
-      projects.filter(({ data }) => !data.draft && data.blocks.length > 0)
-        .sort(newestFirst)
-        .flatMap(({ id, data }) => (['cs', 'en'] as const).map((lang) => `${textLink(`${data.title[lang]} (${lang})`, new URL(localizedPath(`/projects/${id}/`, lang), site))}: ${[
-          data.location?.[lang].replace(/\s+/g, ' '),
-          `${ui[lang].involvement}: ${formatPeriod(data)?.[lang]}`,
-        ].filter(Boolean).join(' · ')}`)),
+      [...grid, ...listed].flatMap(({ id, data }) => (['cs', 'en'] as const).map((lang) => `${textLink(`${data.title[lang]} (${lang})`, new URL(localizedPath(data.blocks.length > 0 ? `/projects/${id}/` : '/work/', lang), site))}: ${[
+        data.location?.[lang].replace(/\s+/g, ' '),
+        `${ui[lang].involvement}: ${formatPeriod(data)?.[lang]}`,
+      ].filter(Boolean).join(' · ')}`)),
     )),
     ...section(label('llmsResources'), list([
       `${textLink(label('llmsFull'), new URL('/llms-full.txt', site))}: ${label('llmsFullDescription')}`,
