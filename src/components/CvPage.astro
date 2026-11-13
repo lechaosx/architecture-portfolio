@@ -1,0 +1,117 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Print from '../layouts/Print.astro';
+import ContactIcon from './ContactIcon.astro';
+import Paragraphs from './Paragraphs.astro';
+import Prose from './Prose.astro';
+import T from './T.astro';
+import { localizedPath, pageLanguage } from '../locale';
+import { ui } from '../i18n';
+import { pdfPath } from '../pdf';
+import { formatPeriod } from '../period';
+import { getResponsiveImage } from '../server-images';
+import { credentialedName } from '../site-title';
+
+interface Props {
+  site: CollectionEntry<'site'>['data'];
+  about: CollectionEntry<'about'>['data'];
+  contact: CollectionEntry<'contact'>['data'];
+}
+
+const { site, about, contact } = Astro.props;
+const { email, phone, location } = contact;
+const lang = pageLanguage(Astro.url.pathname);
+// The share JPEG is ample for print and keeps the file small.
+const portrait = about.portrait && ((await getResponsiveImage(about.portrait))?.share.url ?? about.portrait);
+const facts = [
+  { k: 'experience', rows: about.experience },
+  { k: 'education', rows: about.education },
+  { k: 'awards', rows: about.awards },
+] as const;
+// Titles are set in Roboto Condensed, which only the print layout loads.
+const condensed = "font-['Roboto_Condensed_Variable',sans-serif] font-bold";
+// Section rules run to the column's edge, past its padding.
+const heading = `${condensed} -mr-8 mb-4 border-b text-[1.17rem] uppercase`;
+// The contacts' rules, like the section rules, run to the column's edge.
+const contactRow = 'flex items-center gap-2 border-b border-neutral-200 py-1 pr-8 last:border-b-0';
+const icon = 'size-3.5 shrink-0 text-neutral-400';
+---
+
+<Print title={`${ui[lang].cv} | ${credentialedName(site)}`} pdf={pdfPath(site.name, 'cv', lang)}>
+  {/* A4's width on screen; in print the fitted scale widens the layout. The
+      dark cells form the sidebar, the first row pairs the portrait with the
+      name. */}
+  <main class="mx-auto grid min-h-full max-w-[210mm] grid-cols-[3fr_7fr] grid-rows-[auto_1fr] font-light leading-snug print:max-w-none">
+    <div class="bg-neutral-900 px-8 py-6">
+      {portrait && <img src={portrait} alt={credentialedName(site)} class="aspect-square w-full rounded-full object-cover" />}
+    </div>
+    <header class="flex items-center justify-between gap-4 px-8 py-6">
+      <div>
+        <h1 class={`${condensed} text-[2.25rem] leading-tight`}>
+          {site.credential && <span class="block">{site.credential}</span>}
+          {' '}
+          <span class="block uppercase">{site.name}</span>
+        </h1>
+        <T as="p" k="tagline" class={`${condensed} text-2xl text-neutral-500 uppercase`} />
+      </div>
+      <address class="-mr-8 shrink-0 not-italic">
+        {location && <div class={contactRow}><ContactIcon icon="location" class={icon} /><T {...location} /></div>}
+        {phone && <div class={contactRow}><ContactIcon icon="phone" class={icon} /><a href={`tel:${phone.replace(/\s+/g, '')}`}>{phone}</a></div>}
+        <div class={contactRow}><ContactIcon icon="email" class={icon} /><a href={`mailto:${email}`}>{email}</a></div>
+      </address>
+    </header>
+    <div class="bg-neutral-900 px-8 text-white">
+      <section>
+        <T as="h2" k="links" class={`${heading} border-white`} />
+        <ul class="space-y-2">
+          <li class="flex items-center gap-2"><ContactIcon icon="website" class={icon} /><a href={localizedPath('/', lang)}>{new URL(Astro.site!).host}</a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="space-y-5 px-8">
+      {/* One ragged-right bio column at any fitted scale, as justified lines
+          this short open wide gaps. The `!` overrides global.css, which sets
+          the columns and alignment outside Tailwind's layers. */}
+      <section class="[&_.prose]:leading-snug [&_.prose_p]:my-1.5 [&_.prose-columns]:columns-1! [&_.running-text]:text-left!">
+        <T as="h2" k="aboutMe" class={`${heading} border-black`} />
+        <Prose {...about.bio} />
+      </section>
+      {facts.map(({ k, rows }) => rows.length > 0 && (
+        <section class="[&_.running-text]:text-left!">
+          <T as="h2" {k} class={`${heading} border-black`} />
+          <ul class="grid grid-cols-[1fr_2fr]">
+            {rows.map((row) => (
+              <li class="contents">
+                <div class="relative border-r border-black pr-5 pb-5 text-right after:absolute after:top-2.5 after:right-0 after:size-3.5 after:translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-black">
+                  <T {...row.place} class="block font-normal uppercase" />
+                  <T {...formatPeriod(row)} class="block tabular-nums" />
+                  {'degree' in row && row.degree && <p>{row.degree}</p>}
+                  {'skills' in row && row.skills.length > 0 && (
+                    <>
+                      <T k="skills" class="sr-only" />
+                      <ul class="mt-2 flex flex-wrap justify-end gap-1 text-[0.8125rem] font-normal text-neutral-600">
+                        {row.skills.map((skill) => <li class="rounded-sm bg-neutral-100 px-1.25 py-0.75"><T {...skill.name} /></li>)}
+                      </ul>
+                    </>
+                  )}
+                </div>
+                <div class="pb-5 pl-5">
+                  <T {...row.title} class="block font-normal" />
+                  <T as="p" {...row.department} class="text-sm font-normal text-neutral-600 empty:hidden" />
+                  {row.description && <Paragraphs {...row.description} class="mt-1 space-y-1 text-neutral-700" />}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  </main>
+</Print>
+
+<style is:global>
+  @page {
+    size: A4;
+    margin: 0;
+  }
+</style>

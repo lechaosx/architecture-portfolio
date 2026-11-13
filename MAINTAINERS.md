@@ -17,7 +17,7 @@ npm run check        # Astro + Svelte diagnostics; any warning fails
 npm run test         # unit tests (Vitest)
 npm run test:e2e     # browser tests (Chromium + Firefox)
 npm run test:all     # check, unit and browser tests
-npm run build        # production build -> dist/
+npm run build        # production build -> dist/, then the PDFs (needs Chromium)
 npm run preview      # serve dist/
 npm run images       # regenerate responsive images (dev and build run it)
 ```
@@ -56,6 +56,8 @@ npm run images       # regenerate responsive images (dev and build run it)
 | `src/components/PageContent.astro` | the page container: content width, padding and the gap under the header |
 | `src/components/ProjectGrid.astro` | the project cards, on Work and the landing page |
 | `src/components/ServicesLine.astro` | the services line, on the landing page and About |
+| `src/layouts/Print.astro`, `src/components/CvPage.astro`, `src/pages/[lang]/print/` | the print pages the PDFs are printed from |
+| `src/pdf.ts`, `scripts/generate-pdfs.ts`, `scripts/render-pdf.ts` | the PDFs' file names; printing them after `astro build`, fitting and warnings |
 | `src/components/Carousel.astro` | the carousel of project image sets and the landing images |
 | `src/structured-data.ts`, `src/llms-txt.ts` | JSON-LD, bilingual `/llms.txt` index and `/llms-full.txt` export, built from content |
 | `src/pages/llms.txt.ts`, `src/pages/llms-full.txt.ts`, `src/pages/robots.txt.ts` | static text endpoints |
@@ -115,6 +117,10 @@ texts and linked image captions. Their section and language labels live in
 `src/i18n.ts`; `tests/e2e/seo.spec.ts` follows the shipped exports' index and
 caption links, and checks their structure on the exports of the thumbnail
 fixtures, at `/e2e/llms.txt` and `/e2e/llms-full.txt`.
+
+**See a PDF.** `npm run dev` shows a print page's HTML, e.g. `/cs/print/cv/`;
+About's PDF links 404 there. `npm run build` prints the PDFs, logging each
+one's scale, size and warnings, and `npm run preview` then serves them.
 
 **Change the domain.** Edit `public/CNAME` and `site` in `astro.config.mjs`,
 then the domain under GitHub **Settings → Pages** and its DNS.

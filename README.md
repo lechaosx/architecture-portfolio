@@ -34,6 +34,7 @@ for the editing fields.
 
 The same content generates `/llms.txt`, a bilingual index of pages, and
 `/llms-full.txt`, the full text and facts with passages labelled by language.
+It also prints her CV as a one-page PDF in each language, linked from About.
 
 The owner edits all of it through [Pages CMS](https://pagescms.org): the repo is
 connected at app.pagescms.org, which reads `.pages.yml` and commits straight to
@@ -48,7 +49,8 @@ form a manual slideshow.
 ## Deploys
 
 Every push to `master`, from the CMS or from code, runs
-`.github/workflows/deploy.yml`: tests, build, deploy to GitHub Pages. A push
+`.github/workflows/deploy.yml`: tests, build (which prints the PDFs with
+headless Chromium), deploy to GitHub Pages. A push
 that only touches `src/content/` and `public/uploads/` skips the tests; the
 build still validates the content. Manual runs of the workflow always run the
 tests.

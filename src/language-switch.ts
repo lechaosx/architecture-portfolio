@@ -13,6 +13,8 @@ export function initLanguageSwitch() {
         const other = lang === 'cs' ? 'en' : 'cs';
         link.href = localizedPath(location.pathname + location.search + location.hash, other);
         link.hreflang = other;
+      } else if (link.hasAttribute(`data-href-${lang}`)) {
+        link.href = link.getAttribute(`data-href-${lang}`)!;
       } else if (routeLanguage(url.pathname) || link.hasAttribute('data-localized-path')) {
         link.href = localizedPath(url.pathname + url.search + url.hash, lang);
       }

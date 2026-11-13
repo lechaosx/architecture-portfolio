@@ -43,6 +43,38 @@ The browser tests take most of CI's time, so Chromium and Firefox run as
 parallel jobs, which shortens the wait before a code push deploys. Static
 analysis and unit tests run once.
 
+### PDFs printed by headless Chromium after the build — [Explicit] (shape [Implicit])
+
+`npm run build` ends with `scripts/generate-pdfs.ts`, which serves `dist/` and
+prints each language's page under `/{lang}/print/` with Playwright's Chromium
+through `scripts/render-pdf.ts`; the deploy's build job installs Chromium for
+it. A print page renders from the same content and components as the site,
+names its output in a PDF `rel="alternate"` link and its paper in `@page`; it
+stays out of the sitemap and is deleted once printed. Links to the build's
+preview server are pointed at `site`, and requests to other origins are
+blocked. The CV's `@page` has no margin and the page fills the
+paper's height, so its dark sidebar reaches the paper's edges at any fitted
+scale.
+
+### A PDF's content problems only warn — [Implicit]
+
+A CMS save never stops the deploy, so a failed request, an image that does not
+decode, a CV that fits one page only with its bio below 9 pt (or not at all)
+and a file above 10 MB become `::warning` annotations on the run, and the PDF
+is still written; only a broken setup, such as fonts that do not load, fails
+the build.
+
+### No PDFs in development — [Implicit]
+
+`npm run dev` serves the print pages but no PDFs, so About's PDF links 404
+there; printing on request would launch Chromium from the dev server for a
+file the build already makes.
+
+### PDF tests run in Chromium only — [Implicit]
+
+`page.pdf` exists only in Chromium, so `tests/e2e/pdf.spec.ts` skips Firefox;
+the print pages' HTML is tested in both browsers.
+
 ### Tests never depend on the content — [Explicit]
 
 Content-only pushes deploy without the tests, so a test that read
@@ -75,6 +107,9 @@ nothing in `src/` or `scripts/` knows about them [Explicit]:
   `tests/e2e/images`, served at `/e2e/images/` — [Implicit].
 - The About tests render `AboutPage.astro` with fixture data, everything filled,
   nothing optional filled, and with long services — [Implicit].
+- The CV tests render `CvPage.astro` with the About fixture and, in the bio, a
+  site-relative link and one no URL parser accepts, with a bio far too long for one page, and
+  with nothing optional filled — [Implicit].
 - The legal page tests render `LegalPage.astro` with the fixture architect and
   with contacts holding only an email — [Implicit].
 - The landing tests render `LandingPage.astro` with no image, one SVG, and an
@@ -258,9 +293,9 @@ cards, share previews and structured data — [Implicit].
 
 ### Pages are components the e2e fixtures render — [Implicit]
 
-`LandingPage`, `WorkPage`, `AboutPage`, `ProjectPage` and `LegalPage` each
-render a whole page, its frame included, from the data passed in, so the e2e
-fixtures can render them with their own. `LegalPage` keeps its notices as
+`LandingPage`, `WorkPage`, `AboutPage`, `ProjectPage`, `LegalPage` and the
+print page `CvPage` each render a whole page, its frame included, from the data
+passed in, so the e2e fixtures can render them with their own. `LegalPage` keeps its notices as
 Markdown templates filled from the site and contact data and rendered through
 `Prose`. Their routes in `src/pages/` only load the content and pass it on;
 `Base`, `Nav` and `Footer` take the site, About and contact data they show as
@@ -384,7 +419,11 @@ since `global.css` sets `.prose-columns` outside Tailwind’s layers.
 
 ### Self-hosted Roboto via @fontsource — [Implicit]
 
-No third-party font request. One token, `--font-sans`, for everything.
+No third-party font request. One token, `--font-sans`, for everything. The
+CV's titles use `@fontsource-variable/roboto-condensed`, which
+`src/layouts/Print.astro` links as a stylesheet of its own (a `?url` import),
+keeping it out of the stylesheet Astro bundles for every page; the PDF renderer
+fails the build if either face does not load.
 
 ### Motion durations as custom properties — [Implicit]
 
@@ -449,7 +488,7 @@ the CMS keeps them associated. Both block types share the shape.
 
 `@astrojs/sitemap` writes `sitemap-index.xml`, using `site` for absolute URLs;
 `robots.txt` points crawlers to it. The integration leaves out the 404 page
-itself.
+itself; its filter keeps only language routes, without the print pages.
 
 ---
 
@@ -473,7 +512,9 @@ so the two can't disagree.
 ### Share images come from the responsive pipeline — [Implicit]
 
 The image script also writes each raster as a JPEG about 1200px wide, flattened
-onto white, because LinkedIn is reported to drop WebP previews.
+onto white, because LinkedIn is reported to drop WebP previews. The CV prints
+the portrait's share JPEG too: Chromium embeds a JPEG as it is, so the PDF
+stays small.
 
 ### JSON-LD from pure functions — [Implicit]
 
@@ -531,7 +572,7 @@ The footer and viewer retain ordinary translated page links, enhanced for unmodi
 
 ### Inert translations keep switching synchronous — [Implicit]
 
-Localized HTML carries alternate text and structured data in escaped attributes, rendered only when selected. This adds text payload in exchange for immediate switching without a network request or client router; project images, carousels and the gallery stay mounted. Rich text replaces its own contents, including any embedded Markdown images.
+Localized HTML carries alternate text and structured data in escaped attributes, rendered only when selected; a link whose target is not a language route, such as a PDF, carries both targets in `data-href-cs` and `data-href-en`. This adds text payload in exchange for immediate switching without a network request or client router; project images, carousels and the gallery stay mounted. Rich text replaces its own contents, including any embedded Markdown images.
 
 ### A bilingual shell for the static 404 — [Implicit]
 

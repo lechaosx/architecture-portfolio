@@ -8,6 +8,7 @@ import type { CollectionEntry } from 'astro:content';
 import { projectCard, type Project } from '../../../src/projects';
 import Base from '../../../src/layouts/Base.astro';
 import AboutPage from '../../../src/components/AboutPage.astro';
+import CvPage from '../../../src/components/CvPage.astro';
 import LegalPage from '../../../src/components/LegalPage.astro';
 import LandingPage from '../../../src/components/LandingPage.astro';
 import ProjectBlocks from '../../../src/components/ProjectBlocks.astro';
@@ -258,6 +259,11 @@ export function getStaticPaths() {
     { params: { fixture: 'legal' }, props: { legal: true } },
     { params: { fixture: 'legal-bare' }, props: { legal: true, contact: bareContact } },
     { params: { fixture: 'legal-seat' }, props: { legal: true, contact: { ...bareContact, seat: frameContact.seat } } },
+    // A site-relative link in the bio, which the PDF must point at the public
+    // site, and a link the CMS saves but no URL parser accepts.
+    { params: { fixture: 'cv' }, props: { cv: true, about: { ...about, bio: { cs: `${text(2).cs}\n\n[Práce](/cs/work/) [x](http://)`, en: `${text(2).en}\n\n[Work](/en/work/) [x](http://)` } } } },
+    { params: { fixture: 'cv-long' }, props: { cv: true, about: { ...about, bio: { cs: Array(40).fill(text(4).cs).join('\n\n'), en: Array(40).fill(text(4).en).join('\n\n') } } } },
+    { params: { fixture: 'cv-bare' }, props: { cv: true, about: bareAbout, contact: bareContact } },
     { params: { fixture: 'about-long-bare' }, props: { about: { ...bareAbout, bio: { cs: words(150).cs, en: words(150).en } } } },
     { params: { fixture: 'work' }, props: { projects: briefProjects } },
     { params: { fixture: 'work-grid-only' }, props: { projects: [gridProject] } },
@@ -338,7 +344,7 @@ export function getStaticPaths() {
   return paths.map((path) => ({ ...path, props: { about: frameAbout, contact: frameContact, ...path.props } }));
 }
 
-const { about, contact, images, landing, legal, paragraphs, project, projects } = Astro.props;
+const { about, contact, cv, images, landing, legal, paragraphs, project, projects } = Astro.props;
 ---
 
 {
@@ -346,6 +352,8 @@ const { about, contact, images, landing, legal, paragraphs, project, projects } 
     <Base title={{ cs: 'Text', en: 'Text' }} {site} {about} {contact}>
       <div class="mx-auto max-w-6xl px-6 pt-12"><Paragraphs {...paragraphs} class="space-y-4" /></div>
     </Base>
+  ) : cv ? (
+    <CvPage {site} {about} {contact} />
   ) : legal ? (
     <LegalPage {site} {about} {contact} />
   ) : project ? (

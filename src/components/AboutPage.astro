@@ -1,5 +1,5 @@
 ---
-import { localizedPath } from '../locale';
+import { localizedPath, pageLanguage } from '../locale';
 import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ApproachIcon from './ApproachIcon.astro';
@@ -16,6 +16,7 @@ import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
 import { formatPeriod } from '../period';
 import { profilePage } from '../structured-data';
 import { excerpt } from '../project-description';
+import { pdfPath } from '../pdf';
 
 
 interface Props {
@@ -25,6 +26,8 @@ interface Props {
 }
 
 const { site, about, contact } = Astro.props;
+const lang = pageLanguage(Astro.url.pathname);
+const cv = { cs: pdfPath(site.name, 'cv', 'cs'), en: pdfPath(site.name, 'cv', 'en') };
 const responsivePortrait = about.portrait
   ? await getResponsiveImage(about.portrait)
   : undefined;
@@ -60,7 +63,12 @@ const hasFacts = facts.some(({ rows }) => rows.length > 0);
       {/* Beside a taller portrait the column stretches, so the services
           line meets the portrait's foot. */}
       <div class="reveal flex min-w-0 flex-[1_1_35ch] flex-col justify-between self-stretch">
-        <Prose {...about.bio} />
+        <div>
+          <Prose {...about.bio} />
+          <p class="mt-6">
+            <a href={cv[lang]} data-href-cs={cv.cs} data-href-en={cv.en} class="text-link"><T k="cvPdf" /></a>
+          </p>
+        </div>
         {about.services.length > 0 && (
           <section class="mt-6">
             <T as="h2" k="services" class="sr-only" />

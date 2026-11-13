@@ -217,12 +217,12 @@ test.describe(() => {
 
 });
 
-test('the sitemap lists the pages but not the not-found page', async ({ request }) => {
+test('the sitemap lists the pages but not the not-found or print pages', async ({ request }) => {
   const sitemap = await (await request.get('/sitemap-0.xml')).text();
   for (const path of ['/cs/', '/cs/work/', '/cs/about/', '/cs/legal/', '/en/', '/en/work/', '/en/about/', '/en/legal/']) {
     expect(sitemap).toContain(`<loc>${origin}${path}</loc>`);
   }
-  for (const path of ['/404/', '/404.html', '/', '/about/', '/work/']) {
+  for (const path of ['/404/', '/404.html', '/', '/about/', '/work/', '/cs/print/cv/', '/en/print/cv/']) {
     expect(sitemap).not.toContain(`<loc>${origin}${path}</loc>`);
   }
 });

@@ -46,7 +46,8 @@ underline.
 ### Roboto throughout — [Explicit]
 
 One typeface for the whole page, at the architect's request. DIN Pro, also on
-her list, has no free web licence.
+her list, has no free web licence. The CV PDF sets its titles in Roboto
+Condensed — [Explicit].
 
 ### Justified, hyphenated prose — [Explicit]
 
@@ -55,7 +56,8 @@ descriptions, and image descriptions — is justified with automatic hyphenation
 in the right language's rules; a brief's own line breaks still end their lines
 short. Labels, metadata, credits and titles are not justified. On phones,
 About descriptions span their row's full width, so justified
-lines keep a comfortable measure — [Implicit].
+lines keep a comfortable measure — [Implicit]. The CV PDF's columns are too
+narrow for it and stay ragged-right — [Implicit].
 
 ### Czech one-letter words never end a line — [Explicit]
 
@@ -269,9 +271,11 @@ priority — [Implicit].
 The intro opens the page, with an accessible About heading; the name already
 appears in the header. The portrait sits in an equal-width column on the
 right when both columns keep a comfortable text measure; otherwise the bio
-and portrait each fill the page width, portrait first. Her services close the
-bio column. The facts follow right after the intro, so studios hiring meet her
-experience and education before Approach, which ends the page — [Explicit].
+and portrait each fill the page width, portrait first. A link to her CV as a
+PDF, **Životopis (PDF)**, follows the bio, and her services close the bio
+column — [Explicit]. The facts follow right after the intro, so studios hiring
+meet her experience and education before Approach, which ends the page —
+[Explicit].
 All of it is edited in the one **O mně** entry. The portrait is described by
 her credentialed name and loads first, since it opens the page.
 
@@ -295,6 +299,21 @@ keep the order they are entered in.
 Experience and education sit side by side on wide screens, top-aligned with
 matching period columns — [Explicit]. Awards follow below, on the same columns
 as the bio and portrait; the period has a column of its own, on phones too —
+[Implicit].
+
+### CV as a one-page PDF — [Explicit]
+
+Every deploy prints her CV from the About content as one A4 page in each
+language; About stays the web version. The file names her, such as
+`Tereza-Kalabkova-cv-cs.pdf`, so it reads well in a downloads folder or
+attached to an email.
+
+It has a dark sidebar beside a white main column in the site's greys, light
+Roboto text with bold Roboto Condensed titles, and experience and education on
+a timeline — [Explicit]. It shows her name, profession and contacts, portrait,
+links, bio, experience with skills, education with degrees and awards, but not
+Approach or services; content too long for the page prints smaller, the build
+warns once the bio prints below 9 pt, and its links lead to the public site —
 [Implicit].
 
 ### Work page: a grid of square covers — [Explicit]

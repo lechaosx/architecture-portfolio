@@ -1,6 +1,6 @@
 ---
 interface Props {
-  icon: 'phone' | 'email' | 'hours';
+  icon: 'phone' | 'email' | 'hours' | 'location' | 'website';
   class: string;
 }
 
@@ -24,6 +24,19 @@ const { icon, class: cls } = Astro.props;
     <>
       <rect x="2" y="4" width="20" height="16" />
       <path d="m22 7-10 6L2 7" />
+    </>
+  )}
+  {icon === 'location' && (
+    <>
+      <path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0" />
+      <circle cx="12" cy="10" r="3" />
+    </>
+  )}
+  {icon === 'website' && (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+      <path d="M2 12h20" />
     </>
   )}
   {icon === 'hours' && (

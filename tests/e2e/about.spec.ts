@@ -194,6 +194,20 @@ test('the services close the bio column, level with the portrait’s foot beside
   }
 });
 
+test('About links the CV PDF of the page language under the bio, before the services', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  for (const [lang, label] of [['cs', 'Životopis (PDF)'], ['en', 'CV (PDF)']]) {
+    await page.goto(`/${lang}/e2e/about/`);
+    const link = page.getByRole('link', { name: label, exact: true });
+    await expect(link).toHaveAttribute('href', `/Klara-Svobodova-cv-${lang}.pdf`);
+    const [l, bio, services] = await Promise.all(
+      [link, page.locator('main .prose:visible p').last(), section(page, /^(Services|Služby)$/).getByRole('list')].map(async (element) => (await element.boundingBox())!),
+    );
+    expect(l.y, lang).toBeGreaterThan(bio.y + bio.height);
+    expect(l.y + l.height, lang).toBeLessThan(services.y);
+  }
+});
+
 test('a service wraps to the next line whole, and no separator starts or ends a line', async ({ page }) => {
   await expectServicesWrapWhole(page, 'about-long-services', (page) => section(page, /^(Services|Služby)$/).getByRole('list'));
 });

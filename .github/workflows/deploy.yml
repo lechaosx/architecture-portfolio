@@ -80,11 +80,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       # The site is root-only on a custom domain (public/CNAME); site/SEO is set
-      # in astro.config.mjs. Nothing to configure here.
+      # in astro.config.mjs. The build prints the PDFs with Chromium, installed
+      # after the action's npm install so it matches @playwright/test.
       - name: Build with Astro
         uses: withastro/action@v6
         with:
           node-version: 24
+          build-cmd: npx playwright install --with-deps chromium && npm run build
 
   deploy:
     needs: build

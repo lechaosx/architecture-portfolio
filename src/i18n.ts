@@ -6,6 +6,10 @@ export type Lang = 'cs' | 'en';
 export const ui = {
   cs: {
     about: 'O mně',
+    cv: 'Životopis',
+    cvPdf: 'Životopis (PDF)',
+    aboutMe: 'O mně',
+    links: 'Odkazy',
     languageName: 'Česky (cs)',
     llmsLanguages: 'České stránky jsou na /cs/ a anglické na /en/; odkazy níže označují jazyk.',
     llmsPages: 'Stránky',
@@ -89,6 +93,10 @@ export const ui = {
   },
   en: {
     about: 'About',
+    cv: 'CV',
+    cvPdf: 'CV (PDF)',
+    aboutMe: 'About me',
+    links: 'Links',
     languageName: 'English (en)',
     llmsLanguages: 'Czech pages use /cs/ and English pages use /en/; links below identify the language.',
     llmsPages: 'Pages',
