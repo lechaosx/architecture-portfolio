@@ -311,7 +311,8 @@ attached to an email.
 
 It has a dark sidebar beside a white main column in the site's greys, light
 Roboto text with bold Roboto Condensed titles, and experience and education on
-a timeline whose line runs from the first dot to the last — [Explicit]. Its
+a timeline whose line runs from the first dot to the end of the last row —
+[Explicit]. Its
 type and spacing are as small and dense as the developer's own CV — [Explicit].
 It shows her name, profession and contacts, portrait, links, profile,
 experience with skills, education with degrees and awards, but not Approach or

@@ -47,8 +47,9 @@ const contactText = 'border-b border-neutral-200 py-1.25 pr-10 last:border-b-0';
 const icon = 'size-3.5 shrink-0 text-neutral-400';
 // A timeline row: where and when on the left of the line, what on the right.
 // Each dot draws the line down to the next row's dot, which sits as far below
-// this row's bottom as this dot below its top: rows have no gap.
-const timelineStart = 'relative pr-5 pb-5 text-right before:absolute before:top-2.5 before:-bottom-2.5 before:right-0 before:w-px before:translate-x-1/2 before:bg-black in-[li:last-child]:before:hidden after:absolute after:top-2.5 after:right-0 after:size-3.5 after:translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-black';
+// this row's bottom as this dot below its top: rows have no gap. The last row's
+// line ends where the taller side's content does, above the padding both share.
+const timelineStart = 'relative pr-5 pb-5 text-right before:absolute before:top-2.5 before:-bottom-2.5 before:right-0 before:w-px before:translate-x-1/2 before:bg-black in-[li:last-child]:before:bottom-5 after:absolute after:top-2.5 after:right-0 after:size-3.5 after:translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:bg-black';
 const timelineEnd = 'pb-5 pl-5';
 const secondary = 'text-neutral-600 empty:hidden';
 const description = 'mt-1 space-y-2 text-neutral-700';
