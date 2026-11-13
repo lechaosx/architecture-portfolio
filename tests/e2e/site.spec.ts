@@ -239,7 +239,6 @@ const footerParts = (page: Page) => {
   return {
     footer,
     copyright,
-    copyrightBlock: copyright.locator('..'),
     email: footer.getByRole('link', { name: contact.email }),
     phone: footer.getByRole('link', { name: contact.phone }),
     hours: (lang: 'en' | 'cs') => footer.getByText(contact.hours[lang], { exact: true }),
@@ -255,7 +254,7 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/e2e/work/');
-  const { footer, copyright, copyrightBlock, email, phone, hours, theme, language } = footerParts(page);
+  const { footer, copyright, email, phone, hours, theme, language } = footerParts(page);
 
   await expect(email).toHaveAttribute('href', `mailto:${contact.email}`);
   await expect(phone).toHaveAttribute('href', `tel:${contact.phone.replace(/\s+/g, '')}`);
@@ -266,7 +265,7 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
       const at = `${lang} at ${width}px`;
       await page.setViewportSize({ width, height: 900 });
       const row = [copyright, email, phone, hours(lang), theme, language];
-      const middles = await Promise.all([middle(copyrightBlock), ...row.slice(1).map(middle)]);
+      const middles = await Promise.all(row.map(middle));
       expect(new Set(middles).size, at).toBe(1);
       const lefts = await Promise.all(row.map(async (item) => (await item.boundingBox())!.x));
       expect(lefts, at).toEqual([...lefts].sort((a, b) => a - b));
@@ -320,7 +319,7 @@ test('when the contact line does not fit the footer stacks the contacts in a col
   page,
 }) => {
   await page.goto('/e2e/work/');
-  const { footer, copyright, copyrightBlock, email, phone, hours, theme } = footerParts(page);
+  const { footer, copyright, email, phone, hours, theme } = footerParts(page);
   const icons = footer.getByRole('listitem').locator('svg');
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
@@ -336,8 +335,8 @@ test('when the contact line does not fit the footer stacks the contacts in a col
       for (const item of [email, phone, hours(lang)]) {
         expect(await item.evaluate((element) => element.getClientRects().length), at).toBe(1);
       }
-      const [e, p, h, c] = await Promise.all(
-        [email, phone, hours(lang), copyright].map(async (item) => (await item.boundingBox())!),
+      const [e, p, h, c, t] = await Promise.all(
+        [email, phone, hours(lang), copyright, theme].map(async (item) => (await item.boundingBox())!),
       );
       expect(p.y, `${at}: phone below email`).toBeGreaterThanOrEqual(e.y + e.height);
       expect(h.y, `${at}: hours below phone`).toBeGreaterThanOrEqual(p.y + p.height);
@@ -347,7 +346,8 @@ test('when the contact line does not fit the footer stacks the contacts in a col
       );
       expect(iconLefts, `${at}: icon edge on the ©'s edge`).toEqual(iconLefts.map(() => Math.round(c.x)));
       expect(c.y, at).toBeGreaterThan(h.y + h.height);
-      expect(await middle(theme), at).toBe(await middle(copyrightBlock));
+      expect(t.y, `${at}: switches below the contacts`).toBeGreaterThanOrEqual(h.y + h.height);
+      expect(await middle(theme), `${at}: switches on the ©'s line`).toBe(await middle(copyright));
     }
   }
 });
@@ -651,7 +651,7 @@ for (const path of [
 test('the footer spreads a complete contact line across the width above copyright and switches when the full row does not fit', async ({ page }) => {
   await page.goto('/e2e/work/');
   await page.evaluate(() => document.fonts.ready);
-  const { copyright, copyrightBlock, email, phone, hours, theme, language } = footerParts(page);
+  const { copyright, email, phone, hours, theme, language } = footerParts(page);
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await language.click();
     for (const width of [600, 640, 768]) {
@@ -659,16 +659,18 @@ test('the footer spreads a complete contact line across the width above copyrigh
       const at = `${lang} at ${width}px`;
       await expect(async () => {
         expect(new Set(await Promise.all([email, phone, hours(lang)].map(middle))).size, at).toBe(1);
-        const [contacts, c, firstContact, lastContact] = await Promise.all([
+        const [contacts, c, t, firstContact, lastContact] = await Promise.all([
           page.locator('footer ul').boundingBox(),
           copyright.boundingBox(),
+          theme.boundingBox(),
           page.locator('footer li').first().boundingBox(),
           page.locator('footer li').last().boundingBox(),
         ]);
         expect(firstContact!.x, at).toBeCloseTo(c!.x, 0);
         expect(lastContact!.x + lastContact!.width, at).toBeCloseTo(width - c!.x, 0);
         expect(c!.y, at).toBeGreaterThan(contacts!.y + contacts!.height);
-        expect(await middle(theme), at).toBe(await middle(copyrightBlock));
+        expect(t!.y, `${at}: switches below the contacts`).toBeGreaterThanOrEqual(contacts!.y + contacts!.height);
+        expect(await middle(theme), `${at}: switches on the ©'s line`).toBe(await middle(copyright));
       }).toPass();
     }
   }

@@ -21,7 +21,7 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
 <footer class="border-t border-rule text-sm text-neutral-600">
   <div
     data-footer-layout="stack"
-    class="mx-auto grid max-w-6xl items-center gap-x-12 gap-y-4 px-6 py-6"
+    class="mx-auto grid max-w-6xl items-start gap-x-12 gap-y-6.5 px-6 py-6"
   >
     <ul class="footer-contacts flex w-max flex-col gap-x-6 gap-y-2">
       <li class={item}>
@@ -43,7 +43,7 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
       )}
     </ul>
 
-    <div class="footer-details flex items-center justify-between">
+    <div class="footer-details flex items-start justify-between">
       <div class="footer-copyright w-max">
         <p>© {year} {site.name}</p>
         <p>
@@ -53,8 +53,9 @@ const icon = 'size-3.5 shrink-0 text-neutral-500';
         </p>
       </div>
 
-      {/* Pulled out by the buttons' inner space, so the switches end on the page edge. */}
-      <div class="footer-switches -mr-2 flex items-center gap-3">
+      {/* Pulled out by the buttons' inner space, so the switches end on the page edge and
+          center on the ©'s line; the footer's row gap leaves room for them above it. */}
+      <div class="footer-switches -my-2.5 -mr-2 flex items-center gap-3">
         <button
           type="button"
           data-theme-toggle
