@@ -26,8 +26,8 @@ design_in_progress: false
 project_url: https://www.cka.cz/souteze/databaze/rozsireni-gocarovy-galerie-v-automatickych-mlynech
 studio: Fránek Architects
 role:
-  cs: Architektka
-  en: Architect
+  - cs: Architektka
+    en: Architect
 collaborators:
   - name: Jan Žahour
   - name: Michal Škoda

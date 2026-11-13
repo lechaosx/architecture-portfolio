@@ -271,7 +271,7 @@ first card, and both AI exports list projects in the same order.
 
 ### One project metadata model — [Implicit]
 
-`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms-full.txt`. Optional top-level `role` describes the architect’s responsibilities, while each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets and collaborators in a semantic people list with secondary roles.
+`src/project-facts.ts` supplies filled fact rows and title badge keys to the project page, the work index and `llms-full.txt`. Optional top-level `role` lists the architect’s roles as bilingual items, while each `collaborators` record keeps another contributor’s name and optional bilingual role; an external project link keeps its full destination separately from its displayed hostname. One static Astro badge component renders title and fact-sheet categories without client state; native columns balance intact fact rows, with labels above values in narrow sheets, collaborators in a semantic people list with secondary roles, and her roles in a list of their own.
 
 ### Controlled project classification — [Explicit] (shape [Implicit])
 
@@ -482,7 +482,7 @@ which `Base` inlines as one `@graph` per page. Text follows the page language as
 
 ### Structured data preserves supplied meaning — [Implicit]
 
-Project sites use `contentLocation`; `contributor` links the architect’s Person node and lists collaborators, preserving supplied personal and collaborator roles through schema.org `Role`, while realization supplies `creativeWorkStatus`.
+Project sites use `contentLocation`; `contributor` links the architect’s Person node and lists collaborators, preserving supplied personal and collaborator roles through schema.org `Role`, one per person, her roles together as its several `roleName` values so she appears as one contributor, while realization supplies `creativeWorkStatus`.
 Studies and website languages do not establish awarded credentials or personal language proficiency.
 Personal involvement dates do not establish a project creation date, and free-text roles and studio credits do not establish a creator relationship.
 
@@ -582,6 +582,14 @@ choice) and warn about it and about wrong periods; the image script warns about
 an upload it cannot read. These checks live in the loading modules, not the
 schema, because a schema can only fail an entry, and the content layer skips
 revalidating an entry until its file changes.
+
+One shape is tolerated in the schema: *My role* as a single pair, from before it
+became a list. The CMS server validates every save against its copy of
+`.pages.yml`, which GitHub's push webhook refreshes, so until that arrives a
+form loaded earlier still saves the pair. It reads as one role. The CMS shows
+it as an empty list and would drop it on the next save, so the schema warns,
+naming the text but not the file, which it cannot see, and only on the build
+after the save — [Implicit].
 
 ### Frontmatter text reads as typed — [Implicit]
 

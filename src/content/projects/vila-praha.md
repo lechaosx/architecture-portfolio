@@ -29,8 +29,10 @@ design_in_progress: false
 realization: planned
 studio: Fránek Architects
 role:
-  cs: Architektka, projektantka DPZ
-  en: Architect, Building Permit Documentation Designer
+  - cs: Architektka
+    en: Architect
+  - cs: Projektantka DPZ
+    en: Building Permit Documentation Designer
 collaborators:
   - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. Jiří Železný

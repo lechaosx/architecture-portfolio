@@ -106,7 +106,7 @@ describe('creativeWork', () => {
     from: '2023',
     to: '6/2024',
     location: { cs: 'Brno', en: 'Brno' },
-    collaborators: [],
+    role: [], collaborators: [],
   };
 
   // A drawing 4000px wide, with derivatives up to its own width.
@@ -262,14 +262,14 @@ describe('creativeWork', () => {
     });
   });
 
-  test('attaches a supplied personal role to the implicit architect without inferring authorship', () => {
+  test('attaches supplied personal roles to the implicit architect without inferring authorship', () => {
     const node = creativeWork({
       site, url: 'https://example.cz/project/',
-      project: { ...project, role: { cs: '  Návrh, dokumentace  ', en: 'Design, documentation' } },
+      project: { ...project, role: [{ cs: '  Návrh  ', en: 'Design' }, { cs: 'Dokumentace', en: 'Documentation' }] },
       images: [], responsiveImages: [],
     });
     expect(node.contributor).toEqual([{
-      '@type': 'Role', roleName: 'Návrh, dokumentace',
+      '@type': 'Role', roleName: ['Návrh', 'Dokumentace'],
       contributor: { '@id': 'https://example.cz/#person' },
     }]);
     expect(node).not.toHaveProperty('creator');
@@ -279,7 +279,7 @@ describe('creativeWork', () => {
 test('names the outside page about the project, unless the CMS left it empty', () => {
   const work = (project_url: string) => creativeWork({
     site, url: 'https://example.cz/project/',
-    project: { title: { cs: 'Projekt', en: 'Project' }, collaborators: [], project_url },
+    project: { title: { cs: 'Projekt', en: 'Project' }, role: [], collaborators: [], project_url },
     images: [], responsiveImages: [],
   });
   expect(work('https://example.org/news/library')).toMatchObject({
@@ -291,7 +291,7 @@ test('names the outside page about the project, unless the CMS left it empty', (
 test('the work page lists every project in page order, linking those with a page', () => {
   const project = {
     from: '2024', draft: false, context: [], intervention: [], scope: [],
-    design_in_progress: false, collaborators: [], blocks: [],
+    design_in_progress: false, role: [], collaborators: [], blocks: [],
   };
   const node = collectionPage({
     site, url: 'https://example.cz/en/work/', lang: 'en',
@@ -332,7 +332,7 @@ describe('jsonLd', () => {
 
 
 test('personal involvement does not establish project authorship or creation date', () => {
-  const project = { title: { cs: 'Projekt', en: 'Project' }, from: '2024', to: '2025', brief: { cs: 'Dokumentace pro povolení.', en: 'Permit documentation.' }, studio: 'Ateliér A', collaborators: [{ name: 'Jan Novák', role: { cs: 'Autor návrhu', en: 'Design author' } }] };
+  const project = { title: { cs: 'Projekt', en: 'Project' }, from: '2024', to: '2025', brief: { cs: 'Dokumentace pro povolení.', en: 'Permit documentation.' }, studio: 'Ateliér A', role: [], collaborators: [{ name: 'Jan Novák', role: { cs: 'Autor návrhu', en: 'Design author' } }] };
   const node = creativeWork({ site, url: 'https://example.cz/project/',
     project,
     images: [], responsiveImages: [] });
@@ -345,7 +345,7 @@ test('personal involvement does not establish project authorship or creation dat
 test('credits the architect implicitly and trims supplied collaborator names and roles', () => {
   const node = creativeWork({
     site, url: 'https://example.cz/project/',
-    project: { title: { cs: 'Projekt', en: 'Project' }, collaborators: [
+    project: { title: { cs: 'Projekt', en: 'Project' }, role: [], collaborators: [
       { name: '  Jan Novák  ', role: { cs: '  dokumentace  ', en: 'Documentation' } },
       { name: 'Petr' },
     ] },

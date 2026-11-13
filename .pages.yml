@@ -116,8 +116,9 @@ content:
       - name: role
         label: Moje role
         type: object
+        list: true
         required: false
-        description: 'Stručný přehled mé práce, např. „Návrh interiéru, dokumentace“. Stejný formát jako role ostatních spolupracovníků; souvislosti patří do briefu. Nepovinné: vyplňte oba jazyky, nebo nechte obě pole prázdná.'
+        description: 'Moje práce na projektu, jedna role na položku, např. „Architektka“ a „Spoluautorka“. Stejný tvar jako role spolupracovníků; souvislosti patří do briefu.'
         fields: &string-pair
           - { name: cs, label: Česky, type: string, required: true, pattern: *text }
           - { name: en, label: Anglicky, type: string, required: true, pattern: *text }
@@ -135,8 +136,8 @@ content:
             required: false
             description: *translations
             fields:
-              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Autor návrhu“ nebo „vizualizace“.' }
-              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Design author“ nebo „Visualizations“.' }
+              - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Autor návrhu“ nebo „Vizualizace“.' }
+              - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Design author“ nebo „Visualisations“.' }
       - name: award
         label: Ocenění
         type: object

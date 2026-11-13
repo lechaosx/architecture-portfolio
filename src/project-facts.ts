@@ -58,7 +58,10 @@ export function projectFacts(
       project[label]?.length ? [{ label, lines: [], badges: project[label] }] : [],
     ),
     ...(studio ? [{ label: 'studio' as const, lines: [text(studio)] }] : []),
-    ...pair('myRole', project.role),
+    ...(project.role.length ? [{
+      label: 'myRole' as const,
+      lines: project.role.map(({ cs, en }) => ({ names: [], cs, en })),
+    }] : []),
     ...(collaborators.length ? [{
       label: 'collaborators' as const,
       lines: collaborators.map(({ name, role }) => ({

@@ -74,7 +74,7 @@ test('a project without credits shows only its place and period', async ({ page 
 });
 
 for (const path of ['/e2e/project-role/', '/e2e/work-role-only/']) {
-  test(`my role is bilingual and visible on ${path}`, async ({ page }) => {
+  test(`my roles are a bilingual list, in order, on ${path}`, async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('lang', 'en'));
     await page.goto(path);
     const index = path.includes('work-');
@@ -86,21 +86,22 @@ for (const path of ['/e2e/project-role/', '/e2e/work-role-only/']) {
         JSON.parse(element.textContent!)['@graph'].find((node: Record<string, unknown>) => node['@type'] === 'CreativeWork'),
       );
       expect(work.contributor[0]).toEqual({
-        '@type': 'Role', roleName: 'Interior design, documentation',
+        '@type': 'Role', roleName: ['Interior design', 'Documentation', 'Site supervision'],
         contributor: { '@id': new URL('/#person', work.url).href },
       });
       expect(work).not.toHaveProperty('creator');
     }
-    for (const [language, label, role, collaborator] of [
-      ['en', 'My role', 'Interior design, documentation', 'Jan Novák\nStructural design'],
-      ['cs', 'Moje role', 'Návrh interiéru, dokumentace', 'Jan Novák\nStatika'],
+    for (const [language, label, roles, collaborator] of [
+      ['en', 'My role', ['Interior design', 'Documentation', 'Site supervision'], 'Jan Novák\nStructural design'],
+      ['cs', 'Moje role', ['Návrh interiéru', 'Dokumentace', 'Autorský dozor'], 'Jan Novák\nStatika'],
     ] as const) {
       if (language === 'cs') {
         await page.getByRole('link', { name: 'Switch to Czech' }).click();
         if (index) await expect(page.locator('details')).toHaveAttribute('open', '');
       }
       await expect(sheet(page).getByText(label, { exact: true })).toBeVisible();
-      await expect(sheet(page).getByText(role, { exact: true })).toBeVisible();
+      const row = sheet(page).locator(':scope > div').filter({ has: page.getByText(label, { exact: true }) });
+      await expect(row.getByRole('listitem')).toHaveText(roles);
       if (index) {
         expect(await labels(page)).toEqual([label]);
       } else {

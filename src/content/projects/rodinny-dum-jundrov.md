@@ -21,7 +21,7 @@ scope:
 design_in_progress: false
 realization: planned
 role:
-  cs: Projektantka DPZ
-  en: Building Permit Documentation Designer
+  - cs: Projektantka DPZ
+    en: Building Permit Documentation Designer
 draft: false
 ---

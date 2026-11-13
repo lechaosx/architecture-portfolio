@@ -51,6 +51,19 @@ const projectImage = z.object({
 
 const projectImages = z.array(projectImage).min(1);
 
+/**
+ * My role was a single pair before it became a list, and the CMS can save one
+ * until it picks up the new config from GitHub's push webhook; it reads as one
+ * role. The CMS shows that shape as an empty list and would drop it on the next
+ * save, so the warning asks for the file to be fixed. It names the text, not
+ * the file: the schema cannot see it.
+ */
+const roles = z.preprocess((value) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  console.warn(`role ${JSON.stringify(value)}: a single pair, read as one role; make it a list item, or the CMS drops it on the next save`);
+  return [value];
+}, z.array(bilingual).default([]));
+
 /** A project's id and URL slug; see ARCHITECTURE.md → "A project id never comes out empty". */
 export const projectId = ({ entry }: { entry: string }) =>
   entry
@@ -76,7 +89,7 @@ const projects = defineCollection({
     design_in_progress: z.boolean().default(false),
     realization: z.enum(['planned', 'construction', 'built']).optional(),
     studio: z.string().optional(),
-    role: bilingual.optional(),
+    role: roles,
     collaborators: z
       .array(
         z.object({

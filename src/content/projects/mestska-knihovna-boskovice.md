@@ -22,8 +22,8 @@ scope:
 design_in_progress: false
 studio: Fránek Architects
 role:
-  cs: Architektka
-  en: Architect
+  - cs: Architektka
+    en: Architect
 collaborators:
   - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. arch. Libor Šenekel

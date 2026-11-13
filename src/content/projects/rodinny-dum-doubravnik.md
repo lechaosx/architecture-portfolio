@@ -20,8 +20,10 @@ scope:
 design_in_progress: false
 realization: built
 role:
-  cs: Architektka, spoluautorka
-  en: Architect, co-author
+  - cs: Architektka
+    en: Architect
+  - cs: Spoluautorka
+    en: Co-author
 collaborators:
   - name: Ing. Jiří Železný
     role:

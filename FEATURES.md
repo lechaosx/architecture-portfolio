@@ -115,7 +115,7 @@ name.
 
 ### Project brief and personal role — [Explicit]
 
-The brief introduces the project and her involvement in natural prose; an optional **Moje role / My role** fact summarizes her responsibilities in the same free-text format as collaborators’ roles, with her name implicit. On a project page, the title and badges precede the brief, with full-width facts beneath it; an absent brief leaves the facts directly below the title — [Explicit]. The brief follows the general prose column rule, preserves its line breaks and appears without a preset heading — [Implicit].
+The brief introduces the project and her involvement in natural prose; an optional **Moje role / My role** fact lists her roles, free-text items worded like collaborators’ roles, one per line, with her name implicit. On a project page, the title and badges precede the brief, with full-width facts beneath it; an absent brief leaves the facts directly below the title — [Explicit]. The brief follows the general prose column rule, preserves its line breaks and appears without a preset heading — [Implicit].
 
 ### Project context and progress badges — [Explicit]
 

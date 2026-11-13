@@ -329,7 +329,7 @@ test('English structured data follows the page while the architect identity stay
     name: 'Test project', inLanguage: 'en',
     contentLocation: { name: 'Nowhere' }, url: `${origin}/en/e2e/project-role/`,
     contributor: [
-      { '@type': 'Role', roleName: 'Interior design, documentation', contributor: { '@id': `${origin}/#person` } },
+      { '@type': 'Role', roleName: ['Interior design', 'Documentation', 'Site supervision'], contributor: { '@id': `${origin}/#person` } },
       { '@type': 'Role', roleName: 'Structural design', contributor: { '@type': 'Person', name: 'Jan Novák' } },
     ],
   });

@@ -52,7 +52,7 @@ export function getStaticPaths() {
     to: '6/2026',
     location: { cs: 'Nikde', en: 'Nowhere' },
     draft: false,
-    context: [], intervention: [], scope: [], design_in_progress: false, collaborators: [],
+    context: [], intervention: [], scope: [], design_in_progress: false, role: [], collaborators: [],
     blocks: [
       { type: 'image_set', images: [item('cover.png')] },
       { type: 'text', body: { cs: text(6).cs, en: text(6).en } },
@@ -132,6 +132,11 @@ export function getStaticPaths() {
     alphaProject,
   ];
 
+  const myRoles = [
+    { cs: 'Návrh interiéru', en: 'Interior design' },
+    { cs: 'Dokumentace', en: 'Documentation' },
+    { cs: 'Autorský dozor', en: 'Site supervision' },
+  ];
   // Every credit, one collaborator without a role, and an award.
   const credits: Partial<typeof project> = {
     context: ['academic', 'competition'],
@@ -257,11 +262,11 @@ export function getStaticPaths() {
     { params: { fixture: 'work-project-link' }, props: { projects: [listed('link-only', { title: { cs: 'Externí projekt', en: 'External project' }, blocks: [], project_url: 'https://architecture-and-urban-design.example.org/projects/library?view=plan#drawings' })] } },
     { params: { fixture: 'work-role-only' }, props: { projects: [listed('role-only', {
       title: { cs: 'Pouze moje role', en: 'My role only' }, blocks: [],
-      role: { cs: 'Návrh interiéru, dokumentace', en: 'Interior design, documentation' },
+      role: myRoles,
     })] } },
     projectWith('project-role', project.blocks.slice(0, 1), {
       brief: { cs: 'Knihovna s veřejnou zahradou. Navrhla jsem její interiér.', en: 'A library with a public garden. I designed its interior.' },
-      role: { cs: 'Návrh interiéru, dokumentace', en: 'Interior design, documentation' },
+      role: myRoles,
       studio: 'Studio North',
       collaborators: [{ name: 'Jan Novák', role: { cs: 'Statika', en: 'Structural design' } }],
     }),

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { parse, stringify } from 'yaml';
 import { parseFrontmatter } from 'astro/markdown';
@@ -185,11 +185,22 @@ describe('project content schema', () => {
     ).toMatchObject({ success: true, data: credits });
   });
 
-  test('leaves collaborators empty when omitted', () => {
+  test('leaves my roles and collaborators empty when omitted', () => {
     expect(projectSchema.safeParse(project)).toMatchObject({
       success: true,
-      data: { collaborators: [] },
+      data: { role: [], collaborators: [] },
     });
+  });
+
+  test('reads my role saved as a single pair, before it became a list, as one role and warns', () => {
+    const role = { cs: 'Architektka, spoluautorka', en: 'Architect, co-author' };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      expect(projectSchema.safeParse({ ...project, role })).toMatchObject({ success: true, data: { role: [role] } });
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('Architektka, spoluautorka'));
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   test.each([undefined, '', ...webAddresses])('accepts an optional project website: %s', (project_url) => {
@@ -411,17 +422,23 @@ interface BilingualCase {
   collection: keyof typeof collections;
   content: Record<string, unknown>;
   path: Array<string | number>;
-  pair: string;
+  /** A key in the row, or a position where the pair is a list item. */
+  pair: string | number;
   optional: boolean;
   /** The pair is all its row holds, so leaving it out leaves an empty CMS row. */
   wholeRow?: boolean;
 }
 
 const bilingualCases: BilingualCase[] = [
-  ...['title', 'location', 'brief', 'role', 'award'].map((pair) => ({
+  ...['title', 'location', 'brief', 'award'].map((pair) => ({
     name: `project ${pair}`, collection: 'projects' as const, content: project,
     path: [], pair, optional: pair !== 'title',
   })),
+  {
+    name: 'my role', collection: 'projects',
+    content: { ...project, role: [{ cs: 'Architektka', en: 'Architect' }] },
+    path: ['role'], pair: 0, optional: false, wholeRow: true,
+  },
   {
     name: 'collaborator role', collection: 'projects',
     content: { ...project, collaborators: [{ name: 'Jana' }, { name: 'Petr' }] },

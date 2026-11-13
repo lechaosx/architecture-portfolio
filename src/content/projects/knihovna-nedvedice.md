@@ -28,8 +28,8 @@ realization: built
 project_url: https://duha.mzk.cz/clanky/nedvedicka-knihovna-v-novych-prostorech
 studio: Fránek Architects
 role:
-  cs: Architektka
-  en: Architect
+  - cs: Architektka
+    en: Architect
 collaborators:
   - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. Jiří Železný

@@ -5,6 +5,7 @@ const project = {
   from: '2024',
   to: '2024',
   location: { cs: 'Brno', en: 'Brno' },
+  role: [],
   collaborators: [],
   context: [],
   intervention: [],
@@ -56,15 +57,15 @@ test('has no rows when nothing is filled', () => {
   expect(projectFacts(project)).toEqual([]);
 });
 
-test('keeps my role separate from the studio and other contributors’ roles', () => {
+test('keeps my roles, one line each, separate from the studio and other contributors’ roles', () => {
   expect(projectFacts({
     ...project,
     studio: 'Ateliér A',
-    role: { cs: 'Návrh, dokumentace', en: 'Design, documentation' },
+    role: [{ cs: 'Návrh', en: 'Design' }, { cs: 'Dokumentace', en: 'Documentation' }],
     collaborators: [{ name: 'Jan Novák', role: { cs: 'Statika', en: 'Structural design' } }],
   })).toEqual([
     { label: 'studio', lines: [{ names: [], cs: 'Ateliér A', en: 'Ateliér A' }] },
-    { label: 'myRole', lines: [{ names: [], cs: 'Návrh, dokumentace', en: 'Design, documentation' }] },
+    { label: 'myRole', lines: [{ names: [], cs: 'Návrh', en: 'Design' }, { names: [], cs: 'Dokumentace', en: 'Documentation' }] },
     { label: 'collaborators', lines: [{ names: ['Jan Novák'], cs: 'Statika', en: 'Structural design' }] },
   ]);
 });

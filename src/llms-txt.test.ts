@@ -12,7 +12,7 @@ const contact = { email: 'jana@example.cz' };
 const project = {
   title: { cs: 'Galerie', en: 'Gallery' }, from: '2024', to: '2024',
   draft: false, context: [], intervention: [], scope: [],
-  design_in_progress: false, collaborators: [], blocks: [],
+  design_in_progress: false, role: [], collaborators: [], blocks: [],
 };
 const description = { cs: 'Portfolio architektky.', en: 'An architect’s portfolio.' };
 const input = { site, name, about, contact, description, projects: [] };
@@ -153,12 +153,12 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
     projects: [{ id: 'library', data: {
       ...project, project_url, realization: 'built', studio: 'Ateliér A',
       brief: { cs: 'Knihovna s veřejnou zahradou.', en: 'A library with a public garden.' },
-      role: { cs: 'Návrh interiéru', en: 'Interior design' },
+      role: [{ cs: 'Návrh interiéru', en: 'Interior design' }, { cs: 'Dokumentace', en: 'Documentation' }],
       collaborators: [{ name: 'Jan Novák', role: { cs: 'Statika', en: 'Structural design' } }],
       blocks: [{ type: 'text', body: { cs: 'Text projektu.', en: 'Project text.' } }],
     } }],
   });
-  for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'IČO / Business ID: 12345678', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
+  for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design; Dokumentace / Documentation', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'IČO / Business ID: 12345678', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
   for (const [cs, en] of [[about.bio.cs, about.bio.en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.']]) {
     expect(output).toContain(`**Česky (cs):**\n\n${cs}\n\n**English (en):**\n\n${en}`);
   }

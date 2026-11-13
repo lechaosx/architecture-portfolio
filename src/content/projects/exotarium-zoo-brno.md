@@ -34,8 +34,8 @@ scope:
   - public_space
 design_in_progress: false
 role:
-  cs: Autorka návrhu
-  en: Design author
+  - cs: Autorka návrhu
+    en: Design author
 collaborators:
   - name: Prof. Ing. arch. Jiljí Šindlar, CSc.
     role:

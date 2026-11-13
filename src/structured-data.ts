@@ -122,7 +122,9 @@ function work({
 }) {
   const location = text(project.location?.[lang]);
   const architect = { '@id': personId(site) };
-  const roleName = text(project.role?.[lang]);
+  // One Role with every item as a roleName: schema.org properties take several
+  // values, and a Role per item would list the architect as several contributors.
+  const roleName = texts(project.role.map((role) => role[lang]));
   const contributors = project.collaborators.map(({ name, role }) => {
     const person = { '@type': 'Person', name: name.trim() };
     const roleName = text(role?.[lang]);
@@ -136,7 +138,7 @@ function work({
     description,
     inLanguage: lang,
     url,
-    contributor: [roleName ? { '@type': 'Role', roleName, contributor: architect } : architect, ...contributors],
+    contributor: [roleName.length ? { '@type': 'Role', roleName, contributor: architect } : architect, ...contributors],
     award: text(project.award?.[lang]),
     creativeWorkStatus: project.realization && ui[lang][project.realization],
     subjectOf: outsidePage && { '@type': 'WebPage', url: outsidePage },

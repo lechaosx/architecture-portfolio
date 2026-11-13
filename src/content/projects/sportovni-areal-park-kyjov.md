@@ -58,8 +58,8 @@ scope:
 design_in_progress: false
 project_url: https://www.mestokyjov.cz/novinky-mesto/2104-studenti-predstavili-vize-budoucnosti-kyjova
 role:
-  cs: Autorka návrhu
-  en: Design author
+  - cs: Autorka návrhu
+    en: Design author
 draft: false
 blocks:
   - type: image_set

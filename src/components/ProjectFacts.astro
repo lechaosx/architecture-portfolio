@@ -34,6 +34,10 @@ const { facts } = Astro.props;
                   </li>
                 ))}
               </ul>
+            ) : label === 'myRole' ? (
+              <ul>
+                {lines.map(({ cs, en }) => <T as="li" {cs} {en} />)}
+              </ul>
             ) : lines.map(({ cs, en }) => (
               <p>
                 {(cs || en) && (href

@@ -3,7 +3,7 @@ import { chosenCards, projectCover, publishedProjects, withoutMissingImages, wor
 
 const project = (id: string, year: number): Project => ({
   id,
-  data: { title: { cs: id, en: id }, from: String(year), to: String(year), draft: false, context: [], intervention: [], scope: [], design_in_progress: false, collaborators: [], blocks: [] },
+  data: { title: { cs: id, en: id }, from: String(year), to: String(year), draft: false, context: [], intervention: [], scope: [], design_in_progress: false, role: [], collaborators: [], blocks: [] },
 });
 
 test('projects list ongoing first, then latest first, then by English title', () => {
