@@ -28,7 +28,7 @@ collaborators:
   - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. arch. Libor Šenekel
     role:
-      cs: vizualizace
-      en: Visualizations
+      cs: Vizualizace
+      en: Visualisations
 draft: false
 ---

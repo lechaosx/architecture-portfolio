@@ -15,8 +15,8 @@ brief:
     další dobrodružství této čtveřice.
   en: Development of an architectural study for the renovation of a family home’s
     attic, with the aim of creating four individual bedrooms for four boys and a
-    shared playroom designed for games, gatherings with friends, and new
-    adventures for the four brothers.
+    shared clubroom designed for games, gatherings with friends, and new
+    adventures for the four of them.
 context:
   - commissioned
 intervention:
@@ -65,7 +65,7 @@ blocks:
         comparison_set: řez
         title:
           cs: Řez – architektonický
-          en: Section – architectural
+          en: Architectural section
       - image: /uploads/Pohled V+Z.webp
         title:
           cs: Pohledy V, Z
@@ -76,20 +76,20 @@ blocks:
           en: South and north elevations
       - image: /uploads/INT1.webp
         title:
-          cs: Interiérový řez
-          en: Interior section
+          cs: Interiérový řez 1
+          en: Interior section 1
       - image: /uploads/INT2.webp
         title:
-          cs: Interiérový řez
-          en: Interior section
+          cs: Interiérový řez 2
+          en: Interior section 2
       - image: /uploads/INT3.webp
         title:
-          cs: Interiérový řez
-          en: Interior section
+          cs: Interiérový řez 3
+          en: Interior section 3
       - image: /uploads/INT4.webp
         title:
-          cs: Interiérový řez
-          en: Interior section
+          cs: Interiérový řez 4
+          en: Interior section 4
       - image: /uploads/D.1.1.12 AXO 1-5.webp
         title:
           cs: Axonometrie

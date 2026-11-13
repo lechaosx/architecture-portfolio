@@ -24,18 +24,18 @@ brief:
     objekty, ubytování a úpravy veřejných prostranství. Návrh respektuje
     přírodní charakter území a ochranu kriticky ohroženého sysla obecného.
   en: >-
-    The revitalization of Medlánky Airport in Brno connects sport aviation,
+    The revitalisation of Medlánky Airfield in Brno connects sport aviation,
     architecture, public space, and community life. The aim is to transform the
-    spatially fragmented airport complex into a clearly organized and
+    spatially fragmented airport complex into a clearly organised and
     functionally interconnected environment that preserves active airport
     operations while opening the site to the public.
 
 
-    The centerpiece of the design is the Sport Aviation Gallery–Hangar,
+    The centrepiece of the design is the Sport Aviation Gallery–Hangar,
     combining a glider hangar with exhibition, educational, and community
     spaces. A key architectural feature is the visual connection between
     visitors and airport operations, complemented by a publicly accessible
-    rooftop terrace overlooking the airfield. The revitalization also includes
+    rooftop terrace overlooking the airfield. The revitalisation also includes
     new and renovated operational buildings, accommodation facilities, and
     improvements to public spaces. The design respects the natural character of
     the site and the protection of the critically endangered European ground
@@ -57,7 +57,7 @@ role:
   - cs: Autorka návrhu
     en: Design author
 collaborators:
-  - name: Prof. Ing. arch. Jiljí Šindlar, CSc.
+  - name: prof. Ing. arch. Jiljí Šindlar, CSc.
     role:
       cs: Vedoucí práce
       en: Supervisor
@@ -66,6 +66,9 @@ blocks:
   - type: image_set
     images:
       - image: /uploads/Scene 16_4.webp
+        title:
+          cs: Vizualizace
+          en: Visualisation
   - type: text
     body:
       cs: >-
@@ -96,31 +99,31 @@ blocks:
         biotop sysla obecného, a současně pracuje s principy energeticky
         efektivního a celoročně využitelného areálu.
       en: >-
-        The revitalization of Medlánky Airport in Brno is based on the idea of
-        connecting recreational aviation, architecture, and community life. The
+        The revitalisation of Medlánky Airfield in Brno is based on the idea of
+        connecting sport aviation, architecture, and community life. The
         design responds to the existing spatial and functional fragmentation of
-        the site by creating a new center that opens up the active airport
+        the site by creating a new centre that opens up the active airport
         environment to the wider public.
 
 
-        The centerpiece of the design is the Aviation Gallery–Hangar, combining
-        a glider hangar with a publicly accessible exhibition on the airport’s
-        history, educational workshops, and community spaces. A key feature is
-        the accessible rooftop viewing terrace overlooking the runway, allowing
-        visitors to experience airport operations up close.
+        The centrepiece of the design is the Sport Aviation Gallery–Hangar,
+        combining a glider hangar with a publicly accessible exhibition on the
+        airport’s history, educational workshops, and community spaces. A key
+        feature is the accessible rooftop viewing terrace overlooking the
+        runway, allowing visitors to experience airport operations up close.
 
 
         The architectural concept draws inspiration from the dynamics of
         aerobatic flight and the fluid trajectories of gliders, reflected in
-        both the building forms and the urban layout. The materials and color
+        both the building forms and the urban layout. The materials and colour
         palette reference the technical character of airport architecture,
         incorporating steel, trapezoidal metal cladding, and the traditional
-        red-and-white color scheme.
+        red-and-white colour scheme.
 
 
-        The revitalization also includes new accommodation facilities, an
+        The revitalisation also includes new accommodation facilities, an
         aircraft assembly workshop, the renovation of the existing operations
-        building with a restaurant, and the reorganization of public spaces. The
+        building with a restaurant, and the reorganisation of public spaces. The
         design respects the site’s natural values, particularly the protected
         habitat of the European ground squirrel, while incorporating principles
         of energy efficiency and year-round use.
@@ -142,7 +145,7 @@ blocks:
           en: The architectural form and urban design are based on the dynamics of
             aerobatic glider flight. The main source of inspiration is not the
             shape of the aircraft itself, but its movement, trajectories, and
-            fluid changes of direction in space. Individual aerobatic maneuvers
+            fluid changes of direction in space. Individual aerobatic manoeuvres
             are abstracted into lines and curves, which are reflected in the
             form of the Gallery–Hangar and the urban composition of the site.
             The design thus explores the principles of fluid movement,
@@ -159,7 +162,7 @@ blocks:
       - image: /uploads/01 HISTORIE LETIŠTĚ-2.webp
         title:
           cs: Analýza historie letiště Medlánky
-          en: Analysis of the history of Medlánky Airport
+          en: Analysis of the history of Medlánky Airfield
   - type: gallery
     images:
       - image: /uploads/03 GALERIE - Půdorys 1PP+.webp
@@ -216,49 +219,49 @@ blocks:
       - image: /uploads/Image_2.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 2_2.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 4_3.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 6_2.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 8_1-1.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 13_8.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 16_4.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 19_4.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 25_1.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 27_1.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 29.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
       - image: /uploads/Scene 28.webp
         title:
           cs: Vizualizace
-          en: Visualization
+          en: Visualisation
 ---

@@ -110,8 +110,8 @@ bio:
     Engineering, Brno University of Technology.
 experience:
   - place:
-      cs: Na volné noze
-      en: Freelance
+      cs: na volné noze
+      en: freelance
     department:
       cs: Architektura, projekce
       en: Architecture, Design and Planning

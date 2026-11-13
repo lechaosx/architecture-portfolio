@@ -32,7 +32,7 @@ role:
   - cs: Architektka
     en: Architect
   - cs: Projektantka DPZ
-    en: Building Permit Documentation Designer
+    en: Building permit documentation designer
 collaborators:
   - name: prof. Ing. arch. Zdeněk Fránek
   - name: Ing. Jiří Železný

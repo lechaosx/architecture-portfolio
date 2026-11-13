@@ -22,6 +22,6 @@ design_in_progress: false
 realization: construction
 role:
   - cs: Projektantka DPZ
-    en: Building Permit Documentation Designer
+    en: Building permit documentation designer
 draft: false
 ---

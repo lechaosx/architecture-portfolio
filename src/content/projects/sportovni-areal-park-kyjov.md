@@ -27,22 +27,22 @@ brief:
     zahrnuje také nový amfiteátr, dětské hřiště, komunitní zázemí a pobytové
     plochy, které podporují společenský život a posilují vztah obyvatel k místu.
   en: >-
-    The revitalization of the sports complex in Kyjov is based on the idea of
+    The revitalisation of the sports complex in Kyjov is based on the idea of
     connecting sports, public space, and community life. The aim is to transform
     the existing fragmented and inadequate site into a cohesive, year-round
     complex that naturally integrates with the surrounding urban structure.
 
 
     The design includes a new multifunctional sports hall, outdoor sports
-    facilities, and athletics facilities, complemented by the reorganization of
+    facilities, and athletics facilities, complemented by the reorganisation of
     traffic and parking areas. A key role is played by the urban park, which
     connects the various functions and provides spaces for relaxation, social
     gatherings, and cultural activities.
 
 
-    The urban concept emphasizes site permeability, connections between
+    The urban concept emphasises site permeability, connections between
     pedestrian and cycling routes, and the integration of sports facilities with
-    public green spaces. The proposal also includes a new amphitheater, a
+    public green spaces. The proposal also includes a new amphitheatre, a
     children’s playground, community facilities, and recreational areas that
     encourage social interaction and strengthen residents’ connection to the
     place.
@@ -65,6 +65,9 @@ blocks:
   - type: image_set
     images:
       - image: /uploads/09 AXO 5.webp
+        title:
+          cs: Axonometrie
+          en: Axonometric view
   - type: text
     body:
       cs: >-
@@ -115,7 +118,7 @@ blocks:
         centre**. A new grandstand provides improved facilities for athletes and
         visitors, while its relocation allows for more efficient use of the
         entire site. The naturally rising terrain is incorporated into an
-        **uphill running route**, expanding the range of training opportunities.
+        **uphill running loop**, expanding the range of training opportunities.
 
 
         Equally important is the transformation of the municipal park from a
@@ -338,7 +341,7 @@ blocks:
             improved supporting facilities, relocated to the opposite side of
             the running track from the original, inadequate grandstand. Behind
             it, the naturally rising terrain is used to create a landscaped
-            mound with an uphill running route, expanding training opportunities
+            mound with an uphill running loop, expanding training opportunities
             and attracting new users. The relocation of the grandstand also
             frees up space for the new parkour area. Between the sports complex
             and the park, a children’s playground acts as a spatial filter,

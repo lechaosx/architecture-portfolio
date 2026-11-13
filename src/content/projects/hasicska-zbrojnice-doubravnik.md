@@ -28,8 +28,8 @@ role:
 collaborators:
   - name: Ing. Jiří Železný
     role:
-      cs: hlavní projektant stavby
-      en: Lead Project Designer
+      cs: Hlavní projektant stavby
+      en: Lead project designer
 draft: false
 blocks:
   - type: gallery
@@ -41,15 +41,15 @@ blocks:
       - image: /uploads/04 NOVÝ PŮDORYS 2.NP.webp
         title:
           cs: Půdorys 2. NP
-          en: 2nd Floor
+          en: Upper floor plan
       - image: /uploads/05 POHLED VÝCHODNÍ.webp
         title:
           cs: Pohled východní
-          en: Eastern elevation
+          en: East elevation
       - image: /uploads/06 POHLED ZÁPADNÍ.webp
         title:
           cs: Pohled západní
-          en: Western elevation
+          en: West elevation
       - image: /uploads/07 POHLED SEVERNÍ.webp
         title:
           cs: Pohled severní
@@ -57,7 +57,7 @@ blocks:
       - image: /uploads/08 POHLED JIŽNÍ.webp
         title:
           cs: Pohled jižní
-          en: Southern elevation
+          en: South elevation
       - image: /uploads/09 AXONOMETRIE-4.webp
         title:
           cs: Axonometrie
