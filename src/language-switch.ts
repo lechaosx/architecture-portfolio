@@ -7,7 +7,8 @@ export function initLanguageSwitch() {
   function links(lang: Lang) {
     for (const link of document.querySelectorAll<HTMLAnchorElement>('a[href]')) {
       if (link.closest('astro-island')) continue;
-      const url = new URL(link.href);
+      let url: URL;
+      try { url = new URL(link.href); } catch { continue; }
       if (url.origin !== location.origin) continue;
       if (link.hasAttribute('data-lang-toggle')) {
         const other = lang === 'cs' ? 'en' : 'cs';

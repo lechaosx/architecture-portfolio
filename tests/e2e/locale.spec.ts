@@ -97,6 +97,14 @@ for (const path of ['/e2e/landing/', '/e2e/about/', '/e2e/work/', '/e2e/project/
   expect(comparison.state).toEqual({ applicationValue: 42 });
 });
 
+test('links after an unparseable href still switch language in place', async ({ page }) => {
+  await page.goto('/en/e2e/unparseable-link/');
+  const switcher = page.locator('footer [data-lang-toggle]');
+  await switcher.click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
+  await expect(switcher).toHaveAttribute('href', '/en/e2e/unparseable-link/');
+});
+
 for (const viewer of [false, true]) test(`rapid language clicks use the latest input without document navigation (${viewer ? 'viewer' : 'footer'})`, async ({ page }) => {
   await page.goto(viewer ? '/en/e2e/project/#image-3' : '/en/e2e/about/');
   const selector = `${viewer ? 'dialog' : 'footer'} [data-lang-toggle]`;

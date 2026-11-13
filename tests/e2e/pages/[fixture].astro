@@ -318,6 +318,8 @@ export function getStaticPaths() {
     }),
     projectWith('credits-no-brief', project.blocks.slice(0, 1), credits),
     projectWith('text-only', [{ type: 'text', body: { cs: text(2).cs, en: text(2).en } }]),
+    // A link the CMS saves but no URL parser accepts.
+    projectWith('unparseable-link', [{ type: 'text', body: { cs: '[x](http://)', en: '[x](http://)' } }]),
     projectWith('vector-only', [{ type: 'gallery', images: [item('vector.svg')] }]),
     projectWith('náměstí', [{ type: 'image_set', images: [item('wide.png')] }]),
     // A soft line break, emphasis and an image in the rich text.
