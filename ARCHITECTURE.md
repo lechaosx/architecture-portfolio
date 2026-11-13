@@ -242,6 +242,9 @@ images and the lightbox always receives the original thumbnail. Native gestures
 keep browser momentum and snapping; the strip recenters when it settles.
 Mouse dragging moves the same native scroll surface with pointer capture,
 then hands settling back to the carousel animation — [Implicit].
+Settling switches the neighbours' own lazy images to eager once the current
+image has loaded, so they fetch the srcset candidate the slide will display and
+never compete with the image on screen — [Implicit].
 
 ### Project blocks render in Astro — [Explicit]
 

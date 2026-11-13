@@ -126,6 +126,25 @@ test('the landing carousel auto-advances, pausing while hovered or focused', asy
   await expect.poll(() => currentSlide(page)).toBe(2);
 });
 
+test('a manual change restarts the automatic advance', async ({ browserName, page }) => {
+  test.skip(
+    browserName !== 'chromium',
+    'Playwright Clock does not advance Firefox smooth scrolling',
+  );
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await gotoHeld(page, '/e2e/landing/');
+  await expect.poll(() => currentSlide(page)).toBe(0);
+
+  await page.clock.fastForward(2_000);
+  // Like a touch swipe, the change leaves the carousel neither hovered nor focused.
+  await parts(page).next.evaluate((button: HTMLElement) => button.click());
+  expect(await currentSlide(page)).toBe(1);
+  await page.clock.fastForward(4_500);
+  expect(await currentSlide(page)).toBe(1);
+  await page.clock.fastForward(1_000);
+  await expect.poll(() => currentSlide(page)).toBe(2);
+});
+
 test('the landing carousel does not auto-advance with reduced motion', async ({ page }) => {
   await page.clock.install();
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -568,6 +587,20 @@ for (const navigation of ['arrows', 'dots'] as const) {
     expect(requests.some((url) => new URL(url).searchParams.get('slide') === '12')).toBe(false);
   });
 }
+
+test('the images either side of the current one load before they are shown', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/e2e/carousel-long/');
+  const loaded = (slide: number) =>
+    parts(page).track.evaluate((element, slide) =>
+      [...element.querySelectorAll('img')].find((image) =>
+        new URL(image.src).searchParams.get('slide') === String(slide),
+      )!.complete, slide);
+  await expect.poll(() => loaded(17)).toBe(true);
+  await parts(page).dots.nth(9).click();
+  await expect.poll(() => loaded(8)).toBe(true);
+  await expect.poll(() => loaded(10)).toBe(true);
+});
 
 test('retargeting keeps the visible pair and skips the remaining images', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });

@@ -118,10 +118,20 @@ const slides = await Promise.all(
     let lastFrame = 0;
     let drag: { id: number; x: number; y: number; from: number; index: number } | undefined;
     let dragged = false;
+    const autoAdvance = root.dataset.autoAdvance !== undefined;
+    let timer: number | undefined;
+    // Rearmed on every change, so the next automatic one is a full interval away.
+    const syncTimer = () => {
+      clearTimeout(timer);
+      if (autoAdvance && !reducedMotion.matches && !root.matches(':hover, :focus-within')) {
+        timer = window.setTimeout(() => goTo(current + 1), 5000);
+      }
+    };
     const sync = () => {
       dots.forEach((dot, index) =>
         dot.setAttribute('aria-current', index === current ? 'true' : 'false'),
       );
+      syncTimer();
     };
     const render = (next: Frame[]) => {
       frames = next;
@@ -136,11 +146,27 @@ const slides = await Promise.all(
     const draw = () => {
       track.scrollLeft = position * track.clientWidth;
     };
+    // The neighbours wait for the current image, so they never compete with it,
+    // and for the strip to rest, so images only passed through stay unloaded.
+    const preload = () => {
+      if (animation !== undefined) return;
+      const image = originals[current].querySelector('img');
+      if (image && !image.complete) {
+        image.addEventListener('load', preload, { once: true });
+        return;
+      }
+      for (const index of [current - 1, current + 1]) {
+        for (const neighbour of originals[wrap(index)].querySelectorAll('img')) {
+          neighbour.loading = 'eager';
+        }
+      }
+    };
     const settle = () => {
       position = target = count;
       render([{ at: count, index: current }]);
       draw();
       track.style.scrollSnapType = '';
+      preload();
     };
     const animate = (time: number) => {
       if (pending) {
@@ -318,20 +344,10 @@ const slides = await Promise.all(
       if (reducedMotion.matches) goTo(current);
     });
 
-    if (root.dataset.autoAdvance === undefined) continue;
-    let timer: number | undefined;
-    const syncTimer = () => {
-      if (reducedMotion.matches || root.matches(':hover, :focus-within')) {
-        clearInterval(timer);
-        timer = undefined;
-      } else if (timer === undefined) {
-        timer = window.setInterval(() => goTo(current + 1), 5000);
-      }
-    };
+    if (!autoAdvance) continue;
     for (const event of ['pointerenter', 'pointerleave', 'focusin', 'focusout']) {
       root.addEventListener(event, syncTimer);
     }
     reducedMotion.addEventListener('change', syncTimer);
-    syncTimer();
   }
 </script>

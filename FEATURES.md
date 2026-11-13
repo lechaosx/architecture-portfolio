@@ -248,10 +248,12 @@ the CMS picker lists every project. A repeated one is skipped too — [Implicit]
 The architect picks and orders the landing images; project images are never
 added automatically. One image shows at its natural aspect ratio; two or more
 form a carousel with arrows and dots that auto-advances, pausing on hover or
-focus, and not at all with reduced motion; with none, the page starts with the
-line saying what she is. The carousel is the project image sets' one with
-auto-advance added, its images cropped to fill the frame. The first landing
-image, alone or in the carousel, is fetched with high priority — [Implicit].
+focus, and not at all with reduced motion; a change by hand restarts the
+interval, so the next automatic change comes a full interval later. With none,
+the page starts with the line saying what she is. The carousel is the project
+image sets' one with auto-advance added, its images cropped to fill the frame.
+The first landing image, alone or in the carousel, is fetched with high
+priority — [Implicit].
 
 ### About page — [Explicit]
 
@@ -451,6 +453,12 @@ room — [Implicit]:
 Rapid arrows or dots go to the final image without showing or loading the
 images skipped, in the carousel and the lightbox alike. Images already partly
 visible keep moving continuously towards the new destination.
+
+### Carousels load the images either side — [Explicit]
+
+Once a carousel's current image has loaded, the previous and next ones load
+too, so a change shows an image that is already there; the others load only
+when needed.
 
 ### Carousels wrap through adjacent images — [Explicit]
 
