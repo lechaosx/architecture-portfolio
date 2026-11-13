@@ -72,14 +72,14 @@ test('the portrait matches the bio’s width, beside it on wide screens and abov
   }
 });
 
-test('the services follow the bio and Approach comes before the facts, whose rows keep their order', async ({ page }) => {
+test('the services follow the bio and the facts, whose rows keep their order, come before Approach', async ({ page }) => {
   await page.goto('/e2e/about/');
   await expect(page.locator('main').getByRole('heading', { level: 2 })).toHaveText([
     'Services',
-    'Approach',
     'Experience',
     'Education',
     'Awards',
+    'Approach',
   ]);
   await expect(section(page, 'Experience').locator(':scope > ul > li')).toHaveText(
     [/^2024–present\s*Skills\s*Archicad\s*Visualisation\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],

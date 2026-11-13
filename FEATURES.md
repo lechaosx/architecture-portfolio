@@ -204,9 +204,9 @@ January and ends in December — [Implicit].
 The landing page at `/` gives a visitor her context before the work: chosen
 images, what she is and where, and her chosen projects, even where that repeats Work
 and About. The work page lists every project; the About page holds her bio,
-approach and the facts behind them. The contacts are in the footer of every
-page, so there is no separate Contact page — [Explicit]. The legal information
-page stands outside the menu, linked from the footer — [Explicit].
+the facts of her career and her approach. The contacts are in the footer of
+every page, so there is no separate Contact page — [Explicit]. The legal
+information page stands outside the menu, linked from the footer — [Explicit].
 
 ### Pages open with their content; section headings mark sections — [Explicit]
 
@@ -270,9 +270,10 @@ The intro opens the page, with an accessible About heading; the name already
 appears in the header. The portrait sits in an equal-width column on the
 right when both columns keep a comfortable text measure; otherwise the bio
 and portrait each fill the page width, portrait first. Her services close the
-bio column, then Approach and the facts follow, all edited in the one **O mně**
-entry. The portrait is described by her credentialed name and loads first,
-since it opens the page.
+bio column. The facts follow right after the intro, so studios hiring meet her
+experience and education before Approach, which ends the page — [Explicit].
+All of it is edited in the one **O mně** entry. The portrait is described by
+her credentialed name and loads first, since it opens the page.
 
 The bio follows the general prose rule: longer text can form balanced columns
 where each keeps a comfortable width — [Explicit]. Beside the portrait it is
@@ -316,10 +317,9 @@ to it instead of opening. On phones the period sits above the title and location
 
 ### Approach section — [Explicit]
 
-How the architect works, between About's opening and the facts, as a
-two-by-two grid: each item a small icon beside its small-caps label, with the
-text under it. The items (label, text and which icon) are added, removed and
-reordered in the CMS.
+How the architect works, after About's facts, as a two-by-two grid: each item
+a small icon beside its small-caps label, with the text under it. The items
+(label, text and which icon) are added, removed and reordered in the CMS.
 
 The details — [Implicit]: the heading is a section heading like the facts';
 one column on phones; the four icons are fixed in code. Hover effects mark only
@@ -678,7 +678,8 @@ other title badges — [Implicit]. `/llms-full.txt` gathers her profession, bio,
 approach, experience with its skills, services, education, awards, contact
 details with call hours, IČO and seat, and every published project in the Work
 page's order with its facts, texts and image captions, including projects
-without a separate page. Long passages identify Czech (`cs`) and English (`en`) explicitly.
+without a separate page. Long passages identify Czech (`cs`) and English
+(`en`) explicitly.
 
 ### The landing page's tab title says what she is — [Explicit]
 

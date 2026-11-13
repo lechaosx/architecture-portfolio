@@ -86,25 +86,6 @@ const hasFacts = facts.some(({ rows }) => rows.length > 0);
     </div>
 
     {
-      about.approaches.length > 0 && (
-        <section class="mt-16 sm:mt-24">
-          <SectionHeading k="approach" />
-          <ul class="grid gap-x-12 gap-y-10 sm:grid-cols-2">
-            {about.approaches.map((item) => (
-              <li class="reveal">
-                <div class="flex items-center gap-3">
-                  <ApproachIcon icon={item.icon} class="size-5 shrink-0 text-black" />
-                  <T as="h3" {...item.label} class="text-sm tracking-widest uppercase" />
-                </div>
-                <Paragraphs {...item.text} class="mt-3 space-y-4 text-neutral-700" />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )
-    }
-
-    {
       hasFacts && (
         <div class="mt-16 grid gap-x-12 gap-y-14 sm:mt-24 md:grid-cols-2">
           {facts.map(
@@ -151,6 +132,25 @@ const hasFacts = facts.some(({ rows }) => rows.length > 0);
               ),
           )}
         </div>
+      )
+    }
+
+    {
+      about.approaches.length > 0 && (
+        <section class="mt-16 sm:mt-24">
+          <SectionHeading k="approach" />
+          <ul class="grid gap-x-12 gap-y-10 sm:grid-cols-2">
+            {about.approaches.map((item) => (
+              <li class="reveal">
+                <div class="flex items-center gap-3">
+                  <ApproachIcon icon={item.icon} class="size-5 shrink-0 text-black" />
+                  <T as="h3" {...item.label} class="text-sm tracking-widest uppercase" />
+                </div>
+                <Paragraphs {...item.text} class="mt-3 space-y-4 text-neutral-700" />
+              </li>
+            ))}
+          </ul>
+        </section>
       )
     }
   </PageContent>
