@@ -2,7 +2,7 @@
 title:
   cs: Rodinný dům Doubravník
   en: Family House in Doubravník
-thumbnail: /uploads/11 Axo 1-6.webp
+thumbnail: /uploads/11 Axo 1.webp
 from: "2023"
 to: "2023"
 location:
@@ -55,7 +55,7 @@ blocks:
           en: Section CC'
       - image: /uploads/04 Pohled jižní.webp
         title:
-          cs: "Pohled jižní"
+          cs: Pohled jižní
           en: South elevation
       - image: /uploads/05 Pohled severní.webp
         title:
@@ -69,7 +69,7 @@ blocks:
         title:
           cs: Pohled západní
           en: West elevation
-      - image: /uploads/11 Axo 1-4.webp
+      - image: /uploads/11 Axo 1-7.webp
         title:
           cs: Axonometrie
           en: Axonometry
