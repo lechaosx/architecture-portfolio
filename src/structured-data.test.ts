@@ -15,12 +15,18 @@ const owner = {
   credential: 'Ing. arch.',
   description: { cs: 'Portfolio architektky.', en: 'An architect’s portfolio.' },
 };
-const emptyAbout = { services: [], education: [], awards: [] };
+const emptyAbout = { experience: [], services: [], education: [], awards: [] };
 const contact = { email: 'jana@example.cz' };
+const skill = (cs: string, en: string) => ({ name: { cs, en } });
 
 describe('person', () => {
   test('describes the architect from the content, in Czech', () => {
     const about = {
+      experience: [
+        { place: { cs: 'Ateliér A', en: 'Studio A' }, title: { cs: 'Architektka', en: 'Architect' }, skills: [skill('Archicad', 'Archicad'), skill('Vizualizace', 'Visualisation')] },
+        { place: { cs: 'Ateliér B', en: 'Studio B' }, title: { cs: 'Stážistka', en: 'Intern' }, skills: [skill('Revit', 'Revit'), skill('Archicad', 'Archicad')] },
+        { place: { cs: 'Ateliér C', en: 'Studio C' }, title: { cs: 'Stážistka', en: 'Intern' }, skills: [] },
+      ],
       services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
       education: [
         {
@@ -73,6 +79,7 @@ describe('person', () => {
           recognizedBy: { '@type': 'EducationalOrganization', name: 'Fakulta stavební VUT v Brně' },
         },
       ],
+      knowsAbout: ['Archicad', 'Vizualizace', 'Revit'],
       makesOffer: [
         { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rodinné domy' } },
       ],
@@ -372,6 +379,7 @@ test('English person facts use English service names, award text and ongoing per
   const node = person({
     site, owner, contact, lang: 'en',
     about: {
+      experience: [{ place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Architektka', en: 'Architect' }, skills: [skill('Vizualizace', 'Visualisation')] }],
       services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
       education: [{ place: { cs: 'VUT v Brně', en: 'Brno University of Technology' }, title: { cs: 'Architektura', en: 'Architecture' } }],
       awards: [{ place: { cs: 'Soutěž', en: 'Competition' }, title: { cs: 'Finále', en: 'Final' }, from: '9/2025' }],
@@ -381,6 +389,7 @@ test('English person facts use English service names, award text and ongoing per
     '@id': 'https://example.cz/#person', jobTitle: 'Architect', url: 'https://example.cz/en/',
     description: 'An architect’s portfolio.',
     alumniOf: [{ '@type': 'EducationalOrganization', name: 'Brno University of Technology' }],
+    knowsAbout: ['Visualisation'],
     makesOffer: [{ '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Family houses' } }],
     award: ['Competition, Final (9/2025–present)'],
   });

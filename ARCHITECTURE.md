@@ -489,7 +489,7 @@ Personal involvement dates do not establish a project creation date, and free-te
 ### Workplace, schools and every project in the structured data — [Explicit]
 
 The contact area is the architect's `workLocation`, the places of her finished studies in About her `alumniOf` schools and the site description her `description`.
-A degree filled in on a finished study is a `hasCredential` degree recognised by its school.
+A degree filled in on a finished study is a `hasCredential` degree recognised by its school; the experience rows' skills, each once, are her `knowsAbout`.
 The Work page is a `CollectionPage` listing every published project in page order, with a `url` where it has a page; a project's external link is a `subjectOf` web page, an outside page about the project.
 
 ### AI exports and `robots.txt` as static endpoints — [Implicit]

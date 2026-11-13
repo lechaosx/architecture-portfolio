@@ -168,7 +168,7 @@ const about = defineCollection({
       )
       .default([]),
     bio: bilingual,
-    experience: facts,
+    experience: z.array(factRow.extend({ skills: z.array(z.object({ name: bilingual })).default([]) })).default([]),
     services: z.array(z.object({ name: bilingual })).default([]),
     // A degree such as "Ing. arch." reads the same in both languages.
     education: z.array(factRow.extend({ degree: z.string().optional() })).default([]),

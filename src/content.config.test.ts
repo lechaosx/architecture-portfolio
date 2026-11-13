@@ -334,8 +334,9 @@ describe('about content schema', () => {
   const bare = { place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Stáž', en: 'Internship' } };
 
   test('reads fact rows and services, dropping empty CMS rows', () => {
+    const skill = { name: { cs: 'Vizualizace', en: 'Visualisation' } };
     const facts = {
-      experience: [bare],
+      experience: [{ ...bare, skills: [skill] }],
       services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
       education: [row],
       awards: [{ ...bare, from: '2025', to: '2025' }],
@@ -344,7 +345,7 @@ describe('about content schema', () => {
       aboutSchema.safeParse({
         ...about,
         ...facts,
-        experience: [{}, ...facts.experience],
+        experience: [{}, { ...bare, skills: [{}, skill] }],
         services: [{}, ...facts.services],
         education: [row, {}],
       }),

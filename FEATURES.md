@@ -284,7 +284,10 @@ Work experience, education and awards are each a quiet plain-text list under
 its own section heading. A row reads period, then title and place, with the
 department or category under it in grey and its description, if filled, below.
 An education row can name its degree, shown in grey under the period, so the
-title stays the programme's name alone — [Explicit].
+title stays the programme's name alone — [Explicit]. An experience row can list
+its skills, such as Archicad, BIM or visualisation, as badges under the period
+in the project badge style, so studios hiring see what she worked with and
+where — [Explicit].
 An empty group shows no heading, so with nothing filled About is the bio. Rows
 keep the order they are entered in.
 
@@ -662,7 +665,8 @@ It also says where she works, the schools she studied at and the site
 description; the Work page lists every published project, including those
 without a page, and a project links an outside page about the project —
 [Explicit]. It states the degree a study's row names — [Explicit] — for
-finished studies only — [Implicit].
+finished studies only — [Implicit]. The skills from all experience rows are
+what she knows about — [Explicit].
 
 ### Bilingual index and full export for AI assistants — [Explicit]
 
@@ -671,10 +675,10 @@ index of About, Work and every published project, each linked in both canonical
 languages with the language named (a project without its own page links to
 Work) and noted with its place, period and build status — [Explicit] — and its
 other title badges — [Implicit]. `/llms-full.txt` gathers her profession, bio,
-approach, experience, services, education, awards, contact details with call
-hours, IČO and seat, and every published project in the Work page's order with
-its facts, texts and image captions, including projects without a separate
-page. Long passages identify Czech (`cs`) and English (`en`) explicitly.
+approach, experience with its skills, services, education, awards, contact
+details with call hours, IČO and seat, and every published project in the Work
+page's order with its facts, texts and image captions, including projects
+without a separate page. Long passages identify Czech (`cs`) and English (`en`) explicitly.
 
 ### The landing page's tab title says what she is — [Explicit]
 

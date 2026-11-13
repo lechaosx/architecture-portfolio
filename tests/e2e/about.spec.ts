@@ -81,12 +81,12 @@ test('the services follow the bio and Approach comes before the facts, whose row
     'Education',
     'Awards',
   ]);
-  await expect(section(page, 'Experience').getByRole('listitem')).toHaveText(
-    [/^2024–present\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],
+  await expect(section(page, 'Experience').locator(':scope > ul > li')).toHaveText(
+    [/^2024–present\s*Skills\s*Archicad\s*Visualisation\s*Architect, Studio A, Brno/, /^2022–2024\s*Intern, Studio B, Prague$/],
     visibleText,
   );
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
-  await expect(section(page, 'Praxe').getByRole('listitem').first()).toHaveText(/^2024–dosud\s*Architektka/, visibleText);
+  await expect(section(page, 'Praxe').locator(':scope > ul > li').first()).toHaveText(/^2024–dosud\s*Dovednosti\s*Archicad\s*Vizualizace\s*Architektka/, visibleText);
 });
 
 test('a fact row reads its period, then title and place, with the department under them', async ({
@@ -118,6 +118,22 @@ test('an education row names its degree under the period, beside the title', asy
     expect(degree.x, `${width}px`).toBeCloseTo(period.x, 0);
     expect(degree.y, `${width}px`).toBeGreaterThanOrEqual(period.y + period.height);
     expect(degree.x + degree.width, `${width}px`).toBeLessThan(title.x);
+  }
+});
+
+test('an experience row shows its skills as badges under the period, a row without skills none', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  const rows = section(page, 'Experience').locator(':scope > ul > li');
+  await expect(rows.first().getByRole('list').getByRole('listitem')).toHaveText(['Archicad', 'Visualisation']);
+  await expect(rows.filter({ hasText: 'Intern' }).getByRole('list')).toHaveCount(0);
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [period, skill, title] = await Promise.all(
+      ['2024–present', 'Archicad', 'Architect'].map((text) => box(page, text)),
+    );
+    expect(skill.x, `${width}px`).toBeGreaterThanOrEqual(period.x);
+    expect(skill.y, `${width}px`).toBeGreaterThanOrEqual(period.y + period.height);
+    expect(skill.x + skill.width, `${width}px`).toBeLessThan(title.x);
   }
 });
 

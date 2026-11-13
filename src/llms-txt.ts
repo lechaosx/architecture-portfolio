@@ -32,12 +32,12 @@ const period = (value: Period) => pair(formatPeriod(value));
 
 const line = (text: string) => (text ? [text] : []);
 
-type FactRow = Data<'about'>['education'][number];
+type FactRow = Data<'about'>['education'][number] & Partial<Pick<Data<'about'>['experience'][number], 'skills'>>;
 
 const factHeading = (row: FactRow, lang: Lang) =>
   `${row.title[lang]} – ${[row.place[lang], row.department?.[lang].trim()].filter(Boolean).join(', ')}`;
 
-/** "period · degree · title – place, department", then each line of the description, indented under it. */
+/** "period · degree · title – place, department", then its skills and each line of the description, indented under it. */
 function factRow(row: FactRow) {
   const heading = [
     period(row),
@@ -46,8 +46,11 @@ function factRow(row: FactRow) {
   ]
     .filter(Boolean)
     .join(' · ');
-  const details = passages(row.description)
-    .flatMap((text) => text.split('\n'))
+  const skills = (row.skills ?? []).map((skill) => pair(skill.name)).filter(Boolean);
+  const details = [
+    skills.length ? `${label('skills')}: ${skills.join('; ')}` : '',
+    ...passages(row.description).flatMap((text) => text.split('\n')),
+  ]
     .map((detail) => detail.trim())
     .filter(Boolean);
   return [heading, ...details.map((detail) => `  ${detail}`)].join('\n');

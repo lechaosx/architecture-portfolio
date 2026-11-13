@@ -184,6 +184,7 @@ export function getStaticPaths() {
         department: { cs: 'Tým bydlení', en: 'Housing team' },
         from: '2024',
         title: { cs: 'Architektka', en: 'Architect' },
+        skills: [{ name: { cs: 'Archicad', en: 'Archicad' } }, { name: { cs: 'Vizualizace', en: 'Visualisation' } }],
         description: { cs: `${text(2).cs}\nVýkresy k povolení.`, en: `${text(2).en}\n\nPermit drawings.` },
       },
       {
@@ -191,6 +192,7 @@ export function getStaticPaths() {
         from: '2022',
         to: '2024',
         title: { cs: 'Stážistka', en: 'Intern' },
+        skills: [],
       },
     ],
     services: [service('Family houses', 'Rodinné domy'), service('Renovations', 'Rekonstrukce'), service('Interiors', 'Interiéry')],

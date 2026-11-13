@@ -47,7 +47,7 @@ export function person({
 }: {
   site: URL;
   owner: Pick<Data<'site'>, 'name' | 'credential' | 'description'>;
-  about: Pick<Data<'about'>, 'services' | 'education' | 'awards'>;
+  about: Pick<Data<'about'>, 'experience' | 'services' | 'education' | 'awards'>;
   contact: Pick<Data<'contact'>, 'email' | 'phone' | 'ico' | 'location'>;
   portrait?: string;
   lang?: Lang;
@@ -84,6 +84,7 @@ export function person({
           }]
         : [];
     }),
+    knowsAbout: [...new Set(texts(about.experience.flatMap((row) => row.skills.map((skill) => skill.name[lang]))))],
     makesOffer: texts(about.services.map((service) => service.name[lang])).map(
       (name) => ({
         '@type': 'Offer',

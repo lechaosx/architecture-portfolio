@@ -252,6 +252,13 @@ content:
             fields:
               - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Architektka“.' }
               - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Architect“.' }
+          - name: skills
+            label: Dovednosti
+            type: object
+            list: true
+            description: 'Programy, metody a dovednosti z této praxe, jedna na položku, např. Archicad, BIM, vizualizace. Zobrazují se pod obdobím. Nepovinné.'
+            fields:
+              - { name: name, label: Dovednost, type: object, required: true, fields: *string-pair }
           - { name: description, label: Popis, type: object, required: false, description: *translations, fields: *text-pair }
       - name: services
         label: Služby
