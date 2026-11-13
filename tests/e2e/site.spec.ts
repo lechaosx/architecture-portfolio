@@ -233,6 +233,12 @@ const middle = async (item: Locator) => {
   return Math.round(box.y + box.height / 2);
 };
 
+// The © and the legal link's line under it, as one block.
+const pairMiddle = async (copyright: Locator, legal: Locator) => {
+  const [c, l] = await Promise.all([copyright.boundingBox(), legal.boundingBox()]);
+  return Math.round((c!.y + c!.height / 2 + l!.y + l!.height / 2) / 2);
+};
+
 const footerParts = (page: Page) => {
   const footer = page.locator('footer');
   const copyright = footer.getByText(`© ${new Date().getFullYear()} ${site.name}`);
@@ -254,7 +260,7 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
 }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/e2e/work/');
-  const { footer, copyright, email, phone, hours, theme, language } = footerParts(page);
+  const { footer, copyright, email, phone, hours, legal, theme, language } = footerParts(page);
 
   await expect(email).toHaveAttribute('href', `mailto:${contact.email}`);
   await expect(phone).toHaveAttribute('href', `tel:${contact.phone.replace(/\s+/g, '')}`);
@@ -265,7 +271,10 @@ test('the footer is one row on wide screens: ©, contacts, then the switches', a
       const at = `${lang} at ${width}px`;
       await page.setViewportSize({ width, height: 900 });
       const row = [copyright, email, phone, hours(lang), theme, language];
-      const middles = await Promise.all(row.map(middle));
+      const middles = [
+        await pairMiddle(copyright, legal(lang)),
+        ...(await Promise.all(row.slice(1).map(middle))),
+      ];
       expect(new Set(middles).size, at).toBe(1);
       const lefts = await Promise.all(row.map(async (item) => (await item.boundingBox())!.x));
       expect(lefts, at).toEqual([...lefts].sort((a, b) => a - b));
@@ -319,7 +328,7 @@ test('when the contact line does not fit the footer stacks the contacts in a col
   page,
 }) => {
   await page.goto('/e2e/work/');
-  const { footer, copyright, email, phone, hours, theme } = footerParts(page);
+  const { footer, copyright, email, phone, hours, legal, theme } = footerParts(page);
   const icons = footer.getByRole('listitem').locator('svg');
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await page.getByRole('link', { name: 'Switch to Czech' }).click();
@@ -347,7 +356,7 @@ test('when the contact line does not fit the footer stacks the contacts in a col
       expect(iconLefts, `${at}: icon edge on the ©'s edge`).toEqual(iconLefts.map(() => Math.round(c.x)));
       expect(c.y, at).toBeGreaterThan(h.y + h.height);
       expect(t.y, `${at}: switches below the contacts`).toBeGreaterThanOrEqual(h.y + h.height);
-      expect(await middle(theme), `${at}: switches on the ©'s line`).toBe(await middle(copyright));
+      expect(await middle(theme), `${at}: switches centered on © and legal`).toBe(await pairMiddle(copyright, legal(lang)));
     }
   }
 });
@@ -651,7 +660,7 @@ for (const path of [
 test('the footer spreads a complete contact line across the width above copyright and switches when the full row does not fit', async ({ page }) => {
   await page.goto('/e2e/work/');
   await page.evaluate(() => document.fonts.ready);
-  const { copyright, email, phone, hours, theme, language } = footerParts(page);
+  const { copyright, email, phone, hours, legal, theme, language } = footerParts(page);
   for (const lang of ['en', 'cs'] as const) {
     if (lang === 'cs') await language.click();
     for (const width of [600, 640, 768]) {
@@ -670,7 +679,7 @@ test('the footer spreads a complete contact line across the width above copyrigh
         expect(lastContact!.x + lastContact!.width, at).toBeCloseTo(width - c!.x, 0);
         expect(c!.y, at).toBeGreaterThan(contacts!.y + contacts!.height);
         expect(t!.y, `${at}: switches below the contacts`).toBeGreaterThanOrEqual(contacts!.y + contacts!.height);
-        expect(await middle(theme), `${at}: switches on the ©'s line`).toBe(await middle(copyright));
+        expect(await middle(theme), `${at}: switches centered on © and legal`).toBe(await pairMiddle(copyright, legal(lang)));
       }).toPass();
     }
   }

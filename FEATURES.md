@@ -393,9 +393,10 @@ All of it is in the footer's small grey type — [Explicit]. When the complete
 row no longer fits, the contacts spread across the full first line, with the
 © block and the switches below. Only when that contact line does not fit do the
 contacts stack on the page's left edge, icons and text each in a column,
-followed by © and the switches in one row — [Explicit]. In every layout the
-switches, and on wide screens the contacts, center on the ©'s line; the legal
-link hangs below it — [Implicit].
+followed by © and the switches in one row — [Explicit]. In every layout the ©
+and the legal link under it center, as a pair, on the switches and, on wide
+screens, the contacts, so their line has as much space below as above —
+[Explicit].
 
 ### Custom 404 page — [Explicit]
 
