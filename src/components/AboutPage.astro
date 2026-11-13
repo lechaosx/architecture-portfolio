@@ -3,7 +3,6 @@ import { localizedPath } from '../locale';
 import type { CollectionEntry } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ApproachIcon from './ApproachIcon.astro';
-import FactSection from './FactSection.astro';
 import PageContent from './PageContent.astro';
 import T from './T.astro';
 import Paragraphs from './Paragraphs.astro';
@@ -14,6 +13,7 @@ import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { getResponsiveImage } from '../server-images';
 import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
+import { formatPeriod } from '../period';
 import { profilePage } from '../structured-data';
 import { excerpt } from '../project-description';
 
@@ -88,7 +88,49 @@ const hasFacts = facts.some(({ rows }) => rows.length > 0);
     {
       hasFacts && (
         <div class="mt-16 grid gap-x-12 gap-y-14 sm:mt-24 md:grid-cols-2">
-          {facts.map(({ k, rows }) => <FactSection {k} {rows} class="reveal" />)}
+          {facts.map(
+            ({ k, rows }) =>
+              rows.length > 0 && (
+                <section class="reveal">
+                  <SectionHeading {k} />
+                  <ul class="space-y-5">
+                    {rows.map((row) => (
+                      <li class="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-x-4 sm:grid-cols-[8rem_minmax(0,1fr)]">
+                        <div class="text-sm text-neutral-500">
+                          <T {...formatPeriod(row)} class="tabular-nums" />
+                          {'degree' in row && row.degree && <p>{row.degree}</p>}
+                          {'skills' in row && row.skills.length > 0 && (
+                            <>
+                              <T k="skills" class="sr-only" />
+                              <ul class="mt-2 flex flex-wrap gap-2 text-xs text-neutral-600">
+                                {row.skills.map((skill) => <li class="rounded-sm bg-neutral-100 px-2 py-1"><T {...skill.name} /></li>)}
+                              </ul>
+                            </>
+                          )}
+                        </div>
+                        <div>
+                          <p class="text-balance">
+                            <T {...row.title} class="font-medium" />,{' '}
+                            <T {...row.place} />
+                          </p>
+                          <T
+                            as="p"
+                            {...row.department}
+                            class="text-sm text-balance text-neutral-500 empty:hidden"
+                          />
+                        </div>
+                        {row.description && (
+                          <Paragraphs
+                            {...row.description}
+                            class="col-span-full mt-2 space-y-3 text-sm text-neutral-700 sm:col-start-2"
+                          />
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ),
+          )}
         </div>
       )
     }
