@@ -328,6 +328,7 @@ describe('about content schema', () => {
     from: '9/2024',
     to: '2026',
     title: { cs: 'Architektura a rozvoj sídel', en: 'Architecture and Urban Development' },
+    degree: 'Ing. arch.',
     description: { cs: 'Diplomová práce.', en: 'Diploma thesis.' },
   };
   const bare = { place: { cs: 'Ateliér', en: 'Studio' }, title: { cs: 'Stáž', en: 'Internship' } };

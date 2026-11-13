@@ -290,6 +290,7 @@ content:
             fields:
               - { name: cs, label: Česky, type: string, required: true, pattern: *text, description: 'Např. „Architektura a rozvoj sídel“.' }
               - { name: en, label: Anglicky, type: string, required: true, pattern: *text, description: 'Např. „Architecture and Urban Development“.' }
+          - { name: degree, label: Titul, type: string, required: false, pattern: *text, description: 'Titul získaný studiem, společný pro oba jazyky, např. „Ing. arch.“. Vyplňte až po dokončení studia. Zobrazuje se pod obdobím. Nepovinné.' }
           - { name: description, label: Popis, type: object, required: false, description: *translations, fields: *text-pair }
       - name: awards
         label: Ocenění

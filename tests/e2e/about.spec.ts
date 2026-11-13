@@ -108,6 +108,19 @@ test('a fact row reads its period, then title and place, with the department und
   }
 });
 
+test('an education row names its degree under the period, beside the title', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [period, degree, title] = await Promise.all(
+      ['12/2024–12/2026', 'Ing. arch.', 'Architecture and Urban Development'].map((text) => box(page, text)),
+    );
+    expect(degree.x, `${width}px`).toBeCloseTo(period.x, 0);
+    expect(degree.y, `${width}px`).toBeGreaterThanOrEqual(period.y + period.height);
+    expect(degree.x + degree.width, `${width}px`).toBeLessThan(title.x);
+  }
+});
+
 test('a fact description keeps the author’s paragraphs in both languages', async ({ page }) => {
   await page.goto('/e2e/about/');
   const row = (title: string) =>

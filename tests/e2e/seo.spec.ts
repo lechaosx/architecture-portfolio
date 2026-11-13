@@ -128,7 +128,6 @@ test.describe(() => {
         workLocation: { '@type': 'Place', name: contact.location.cs },
       });
       expect(architect).not.toHaveProperty('knowsLanguage');
-      expect(architect).not.toHaveProperty('hasCredential');
     }
   });
 

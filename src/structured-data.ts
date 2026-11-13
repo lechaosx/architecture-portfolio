@@ -69,10 +69,21 @@ export function person({
     identifier: ico && { '@type': 'PropertyValue', propertyID: 'IČO', value: ico },
     image: portrait && absolute(portrait, site),
     workLocation: workplace && { '@type': 'Place', name: workplace },
-    // The schools only: a study's title does not establish an awarded degree.
     alumniOf: [...new Set(texts(finishedStudies.map((row) => row.place[lang])))].map(
       (name) => ({ '@type': 'EducationalOrganization', name }),
     ),
+    // Only a degree she names: a study's title does not establish one.
+    hasCredential: finishedStudies.flatMap((row) => {
+      const name = text(row.degree);
+      return name
+        ? [{
+            '@type': 'EducationalOccupationalCredential',
+            name,
+            credentialCategory: 'degree',
+            recognizedBy: { '@type': 'EducationalOrganization', name: text(row.place[lang]) },
+          }]
+        : [];
+    }),
     makesOffer: texts(about.services.map((service) => service.name[lang])).map(
       (name) => ({
         '@type': 'Offer',

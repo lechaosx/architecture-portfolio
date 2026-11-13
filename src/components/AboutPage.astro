@@ -115,7 +115,10 @@ const hasFacts = facts.some(({ rows }) => rows.length > 0);
                   <ul class="space-y-5">
                     {rows.map((row) => (
                       <li class="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-x-4 sm:grid-cols-[8rem_minmax(0,1fr)]">
-                        <T {...formatPeriod(row)} class="text-sm text-neutral-500 tabular-nums" />
+                        <div class="text-sm text-neutral-500">
+                          <T {...formatPeriod(row)} class="tabular-nums" />
+                          {'degree' in row && row.degree && <p>{row.degree}</p>}
+                        </div>
                         <div>
                           <p class="text-balance">
                             <T {...row.title} class="font-medium" />,{' '}

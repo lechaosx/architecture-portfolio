@@ -155,8 +155,9 @@ education:
     from: "2024"
     to: "2026"
     title:
-      cs: Architektura a rozvoj sídel (Ing. arch.)
-      en: Architecture and Urban Development (Ing. arch.)
+      cs: Architektura a rozvoj sídel
+      en: Architecture and Urban Development
+    degree: Ing. arch.
   - place:
       cs: VUT v Brně
       en: Brno University of Technology
@@ -166,6 +167,7 @@ education:
     from: "2020"
     to: "2024"
     title:
-      cs: Architektura pozemních staveb (Bc.)
-      en: Building Architecture (Bc.)
+      cs: Architektura pozemních staveb
+      en: Building Architecture
+    degree: Bc.
 ---

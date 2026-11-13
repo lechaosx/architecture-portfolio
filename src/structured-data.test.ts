@@ -29,10 +29,11 @@ describe('person', () => {
           from: '2024',
           to: '2026',
           title: { cs: 'Architektura a rozvoj sídel', en: 'Architecture and Urban Development' },
+          degree: 'Ing. arch.',
         },
-        { place: { cs: 'SPŠ stavební', en: 'Building school' }, title: { cs: 'Maturita', en: 'School-leaving exam' } },
+        { place: { cs: 'SPŠ stavební', en: 'Building school' }, title: { cs: 'Maturita', en: 'School-leaving exam' }, degree: ' ' },
         { place: { cs: 'Fakulta stavební VUT v Brně', en: 'Faculty of Civil Engineering, BUT' }, title: { cs: 'Bc.', en: 'Bc.' } },
-        { place: { cs: 'Probíhající studium', en: 'Ongoing study' }, from: '2025', title: { cs: 'Ph.D.', en: 'Ph.D.' } },
+        { place: { cs: 'Probíhající studium', en: 'Ongoing study' }, from: '2025', title: { cs: 'Ph.D.', en: 'Ph.D.' }, degree: 'Ph.D.' },
       ],
       awards: [
         { place: { cs: 'Cena Bohuslava Fuchse', en: 'Bohuslav Fuchs Award' }, from: '2025', to: '2025', title: { cs: '2. místo', en: '2nd place' } },
@@ -63,6 +64,14 @@ describe('person', () => {
       alumniOf: [
         { '@type': 'EducationalOrganization', name: 'Fakulta stavební VUT v Brně' },
         { '@type': 'EducationalOrganization', name: 'SPŠ stavební' },
+      ],
+      hasCredential: [
+        {
+          '@type': 'EducationalOccupationalCredential',
+          name: 'Ing. arch.',
+          credentialCategory: 'degree',
+          recognizedBy: { '@type': 'EducationalOrganization', name: 'Fakulta stavební VUT v Brně' },
+        },
       ],
       makesOffer: [
         { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rodinné domy' } },

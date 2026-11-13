@@ -162,7 +162,7 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
       approaches: [{ label: { cs: 'Místo', en: 'Place' }, text: { cs: 'Stavím z místa.', en: 'I build from the place.' }, icon: 'place' }],
       experience: [{ place: { cs: 'Ateliér', en: 'Studio' }, from: '3/2024', title: { cs: 'Architektka', en: 'Architect' }, description: { cs: 'Rodinné domy.\nInteriéry.', en: 'Family houses.\nInteriors.' } }],
       services: [{ name: { cs: 'Rodinné domy', en: 'Family houses' } }],
-      education: [{ place: { cs: 'Škola', en: 'School' }, from: '2020', to: '2024', title: { cs: 'Architektura', en: 'Architecture' } }],
+      education: [{ place: { cs: 'Škola', en: 'School' }, from: '2020', to: '2024', title: { cs: 'Architektura', en: 'Architecture' }, degree: 'Bc.' }],
       awards: [{ place: { cs: 'Soutěž', en: 'Competition' }, from: '2025', to: '2025', title: { cs: '1. místo', en: '1st place' } }],
     },
     contact: { ...contact, phone: '+420 777 000 000', location: { cs: 'Brno', en: 'Brno' }, hours: { cs: 'Po–Pá 9–17', en: 'Weekdays 9 am to 5 pm' }, ico: '12345678', seat: 'Na Poříčí 12, Praha' },
@@ -174,7 +174,7 @@ test('the full export retains facts, full URLs, personal roles, credits and lang
       blocks: [{ type: 'text', body: { cs: 'Text projektu.', en: 'Project text.' } }],
     } }],
   });
-  for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design; Dokumentace / Documentation', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'IČO / Business ID: 12345678', 'Fyzická osoba zapsaná v živnostenském rejstříku / Sole trader registered in the Czech Trade Register', 'Sídlo / Registered office: Na Poříčí 12, Praha', 'Čas pro telefonické hovory: Po–Pá 9–17 / Phone call hours: Weekdays 9 am to 5 pm', 'Architektka / Architect', '## Přístup / Approach', '### Místo / Place', 'Rodinné domy.', 'Family houses.', 'Architektura – Škola', '1. místo – Soutěž']) expect(output).toContain(fact);
+  for (const fact of [project_url, 'Moje role / My role: Návrh interiéru / Interior design; Dokumentace / Documentation', 'Spolupráce / Collaborators: Jan Novák – Statika / Structural design', 'Ateliér A', 'Realizováno / Built', '+420 777 000 000', 'IČO / Business ID: 12345678', 'Fyzická osoba zapsaná v živnostenském rejstříku / Sole trader registered in the Czech Trade Register', 'Sídlo / Registered office: Na Poříčí 12, Praha', 'Čas pro telefonické hovory: Po–Pá 9–17 / Phone call hours: Weekdays 9 am to 5 pm', 'Architektka / Architect', '## Přístup / Approach', '### Místo / Place', 'Rodinné domy.', 'Family houses.', '2020–2024 · Bc. · Architektura – Škola / Architecture – School', '1. místo – Soutěž']) expect(output).toContain(fact);
   for (const [cs, en] of [[about.bio.cs, about.bio.en], ['Knihovna s veřejnou zahradou.', 'A library with a public garden.'], ['Text projektu.', 'Project text.'], ['Stavím z místa.', 'I build from the place.']]) {
     expect(output).toContain(`**Česky (cs):**\n\n${cs}\n\n**English (en):**\n\n${en}`);
   }

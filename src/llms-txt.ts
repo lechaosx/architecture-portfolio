@@ -37,10 +37,11 @@ type FactRow = Data<'about'>['education'][number];
 const factHeading = (row: FactRow, lang: Lang) =>
   `${row.title[lang]} – ${[row.place[lang], row.department?.[lang].trim()].filter(Boolean).join(', ')}`;
 
-/** "period · title – place, department", then each line of the description, indented under it. */
+/** "period · degree · title – place, department", then each line of the description, indented under it. */
 function factRow(row: FactRow) {
   const heading = [
     period(row),
+    row.degree?.trim(),
     pair({ cs: factHeading(row, 'cs'), en: factHeading(row, 'en') }),
   ]
     .filter(Boolean)

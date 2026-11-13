@@ -483,12 +483,13 @@ which `Base` inlines as one `@graph` per page. Text follows the page language as
 ### Structured data preserves supplied meaning — [Implicit]
 
 Project sites use `contentLocation`; `contributor` links the architect’s Person node and lists collaborators, preserving supplied personal and collaborator roles through schema.org `Role`, one per person, her roles together as its several `roleName` values so she appears as one contributor, while realization supplies `creativeWorkStatus`.
-Studies and website languages do not establish awarded credentials or personal language proficiency.
+A study's title and the website languages do not establish an awarded degree or personal language proficiency.
 Personal involvement dates do not establish a project creation date, and free-text roles and studio credits do not establish a creator relationship.
 
 ### Workplace, schools and every project in the structured data — [Explicit]
 
 The contact area is the architect's `workLocation`, the places of her finished studies in About her `alumniOf` schools and the site description her `description`.
+A degree filled in on a finished study is a `hasCredential` degree recognised by its school.
 The Work page is a `CollectionPage` listing every published project in page order, with a `url` where it has a page; a project's external link is a `subjectOf` web page, an outside page about the project.
 
 ### AI exports and `robots.txt` as static endpoints — [Implicit]
@@ -555,7 +556,9 @@ refuses whitespace alone, as the schema's `bilingual` does.
 ### One entry holds both languages — [Implicit]
 
 One file and one CMS form per entry; language-neutral fields (images, period
-dates, email, phone, a project's studio and collaborators’ names) stay single.
+dates, email, phone, a project's studio, collaborators’ names, an education
+row's degree) stay single. A degree is an abbreviation such as "Ing. arch.",
+read alike in both languages.
 
 ---
 

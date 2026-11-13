@@ -283,6 +283,8 @@ one column; without one it spans the page — [Implicit].
 Work experience, education and awards are each a quiet plain-text list under
 its own section heading. A row reads period, then title and place, with the
 department or category under it in grey and its description, if filled, below.
+An education row can name its degree, shown in grey under the period, so the
+title stays the programme's name alone — [Explicit].
 An empty group shows no heading, so with nothing filled About is the bio. Rows
 keep the order they are entered in.
 
@@ -654,9 +656,11 @@ contact, services and awards; a project page adds its project location, credits,
 award and status, its cover and its titled or described images, each linked at
 the size the lightbox opens it at.
 The architect's data includes her IČO when filled — [Explicit].
-It also says where she works, the schools she studied at (not a degree) and the
-site description; the Work page lists every published project, including those
-without a page, and a project links an outside page about the project — [Explicit].
+It also says where she works, the schools she studied at and the site
+description; the Work page lists every published project, including those
+without a page, and a project links an outside page about the project —
+[Explicit]. It states the degree a study's row names — [Explicit] — for
+finished studies only — [Implicit].
 
 ### Bilingual index and full export for AI assistants — [Explicit]
 
