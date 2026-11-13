@@ -453,6 +453,12 @@ for a `noindex` page), adds the architect's node and writes the title,
 description, canonical, Open Graph and Twitter tags, falling back to the site
 description, so every page gets the same head.
 
+### One rule decides whether a title names a place — [Implicit]
+
+Project tab titles and image alt text share the rule that decides whether a
+title already names a place, matching word starts so Czech inflections count,
+so the two can't disagree.
+
 ### Share images come from the responsive pipeline — [Implicit]
 
 The image script also writes each raster as a JPEG about 1200px wide, flattened

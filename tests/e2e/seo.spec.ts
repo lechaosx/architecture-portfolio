@@ -53,6 +53,19 @@ test.describe(() => {
     );
   });
 
+  test('About, Work and the legal page describe themselves', async ({ page }) => {
+    for (const [path, description] of [
+      // tests/e2e/pages/[fixture].astro: the bio cut at a word boundary, and
+      // the project titles in page order.
+      ['/cs/e2e/about/', 'Výkres sleduje, jak se náměstí, park a stadion potkávají podél řeky a kudy by je mohla spojit nová cesta. Výkres sleduje, jak se náměstí, park a stadion…'],
+      ['/en/e2e/work/', 'Grid project, Alpha brief, Beta text, Old brief'],
+      ['/cs/e2e/legal/', 'Identifikační údaje, ochrana osobních údajů a spotřebitelské spory.'],
+    ]) {
+      await page.goto(path);
+      await expect(meta(page, 'name="description"'), path).toHaveAttribute('content', description);
+    }
+  });
+
   test('a project page shares its cover as an absolute JPEG', async ({ page }) => {
     await page.goto('/cs/e2e/project/');
     const image = await meta(page, 'property="og:image"').getAttribute('content');

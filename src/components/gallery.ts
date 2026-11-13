@@ -91,6 +91,23 @@ export type ImageContext = Pick<CollectionEntry<'projects'>['data'], 'title' | '
 const words = (text: string) =>
   ` ${text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean).join(' ')} `;
 
+/** The names in order, each left out when the ones kept before it name it. */
+function distinctNames(names: string[]) {
+  const kept: string[] = [];
+  for (const name of names.map((name) => name.trim())) {
+    if (name && !words(kept.join(' ')).includes(words(name).trimEnd())) kept.push(name);
+  }
+  return kept;
+}
+
+const projectNames = (project: ImageContext, lang: Lang) =>
+  [project.title[lang], ...(project.location?.[lang].split(',') ?? [])];
+
+/** A project's title, then its location's parts the text before them doesn't name. */
+export function locatedTitle(project: ImageContext, lang: Lang) {
+  return distinctNames(projectNames(project, lang)).join(', ');
+}
+
 /**
  * A titled image described for machines: its title, then its project's title
  * and location's parts, each left out when the text before it names it.
@@ -102,11 +119,7 @@ export function imageAlt(
 ) {
   const title = imageText(image, 'title', lang);
   if (!title) return undefined;
-  const context: string[] = [];
-  const names = [project.title[lang], ...(project.location?.[lang].split(',') ?? [])];
-  for (const name of names.map((name) => name.trim())) {
-    if (name && !words([title, ...context].join(' ')).includes(words(name).trimEnd())) context.push(name);
-  }
+  const [, ...context] = distinctNames([title, ...projectNames(project, lang)]);
   return context.length ? `${title} – ${context.join(', ')}` : title;
 }
 

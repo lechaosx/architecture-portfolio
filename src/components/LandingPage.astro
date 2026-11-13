@@ -66,6 +66,7 @@ const image =
           height={heroImages[0].responsive?.source.height}
           alt=""
           loading="eager"
+          fetchpriority="high"
           decoding="async"
           class="w-full bg-neutral-100"
         />
@@ -91,6 +92,7 @@ const image =
                 )}
                 alt=""
                 loading={index === 0 ? 'eager' : 'lazy'}
+                fetchpriority={index === 0 ? 'high' : undefined}
                 decoding="async"
                 class="size-full object-cover"
               />
@@ -106,7 +108,7 @@ const image =
         { 'mt-4 sm:mt-6': heroImages.length > 0 },
       ]}
     >
-      <T as="h1" cs={identity('cs')} en={identity('en')} class="shrink-0" />
+      <h1 class="shrink-0"><span class="sr-only">{name} – </span><T cs={identity('cs')} en={identity('en')} /></h1>
       {about.services.length > 0 && (
         <T as="p" cs={services('cs')} en={services('en')} class="min-w-0 text-balance text-neutral-500" />
       )}

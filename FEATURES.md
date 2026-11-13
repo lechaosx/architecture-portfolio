@@ -225,7 +225,9 @@ the header; one quiet line saying what she is and where ("Architektka · Brno",
 the place from the contacts), followed by her services when there are any,
 with **O mně →**; then **Vybrané práce** with **Všechny práce →** over her
 chosen projects as the work page's cards, which end the page.
-No headline or introductory paragraph.
+No headline or introductory paragraph. For machines the line starts with her
+credentialed name, hidden from view, so the page's main heading names her —
+[Explicit].
 
 The layout — [Implicit]: the line sits under the images like a caption, in the
 section headings' small caps, the services in grey; the place appears when
@@ -248,7 +250,8 @@ added automatically. One image shows at its natural aspect ratio; two or more
 form a carousel with arrows and dots that auto-advances, pausing on hover or
 focus, and not at all with reduced motion; with none, the page starts with the
 line saying what she is. The carousel is the project image sets' one with
-auto-advance added, its images cropped to fill the frame — [Implicit].
+auto-advance added, its images cropped to fill the frame. The first landing
+image, alone or in the carousel, is fetched with high priority — [Implicit].
 
 ### About page — [Explicit]
 
@@ -256,7 +259,8 @@ The intro opens the page, with an accessible About heading; the name already
 appears in the header. The portrait sits in an equal-width column on the
 right when both columns keep a comfortable text measure; otherwise the bio
 and portrait each fill the page width, portrait first. Approach and the facts
-follow, all edited in the one **O mně** entry.
+follow, all edited in the one **O mně** entry. The portrait is described by her
+credentialed name and loads first, since it opens the page.
 
 The bio follows the general prose rule: longer text can form balanced columns
 where each keeps a comfortable width — [Explicit]. Beside the portrait it is
@@ -595,13 +599,20 @@ Served at the architect's own domain; the `*.github.io` URL redirects to it.
 Per-page title, description and canonical address, Open Graph and Twitter tags,
 a sitemap, and a `robots.txt` that admits every crawler and names the sitemap.
 Tab titles pair page and credentialed name with `|`, e.g. "About | Ing. arch.
-Tereza Kalábková" — [Explicit].
+Tereza Kalábková" — [Explicit]. A project's adds the place its title doesn't
+already name, e.g. "Hasičská zbrojnice, Doubravník | …" — [Explicit].
 
 ### Project descriptions from the brief — [Implicit]
 
 A project page's description in search results and link previews is its brief,
-else the start of its first text block; other pages use the site's SEO
+else the start of its first text block; the landing page uses the site's SEO
 description.
+
+### About, Work and legal descriptions — [Explicit]
+
+About is described by the start of its bio, Work by its project titles in page
+order, as many whole titles as fit, and the legal page by a fixed line naming
+its sections, so these pages don't repeat the site description.
 
 ### Share image: the project cover — [Implicit]
 

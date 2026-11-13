@@ -14,6 +14,7 @@ import { getResponsiveImage } from '../server-images';
 import { displayImageUrl, responsiveSrcset, THUMBNAIL_WIDTHS } from '../images';
 import { formatPeriod } from '../period';
 import { profilePage } from '../structured-data';
+import { excerpt } from '../project-description';
 
 
 interface Props {
@@ -40,6 +41,7 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
     cs: `${ui.cs.about} | ${credentialedName(site)}`,
     en: `${ui.en.about} | ${credentialedName(site)}`,
   }}
+  description={{ cs: excerpt(about.bio.cs), en: excerpt(about.bio.en) }}
   image={responsivePortrait?.share}
   graph={{
     cs: [profilePage({ site: origin, url: new URL(localizedPath(Astro.url.pathname, 'cs'), origin).href })],
@@ -65,8 +67,9 @@ const hasFacts = about.services.length > 0 || facts.some(({ rows }) => rows.leng
             sizes="(min-width: 1152px) 528px, (min-width: 726px) calc((100vw - 96px) / 2), calc(100vw - 48px)"
             width={responsivePortrait?.source.width}
             height={responsivePortrait?.source.height}
-            alt=""
-            loading="lazy"
+            alt={credentialedName(site)}
+            loading="eager"
+            fetchpriority="high"
             class="reveal min-w-0 flex-[1_1_35ch] bg-neutral-100"
           />
         )

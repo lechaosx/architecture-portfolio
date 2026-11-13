@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { site } from './architect';
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -18,6 +19,11 @@ test('the bio opens About without repeating the wordmark as a visible title', as
   await expect(page.locator('main h1:visible')).toHaveClass(/sr-only/);
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
   await expect(page.locator('main h1:visible')).toHaveText('O mně');
+});
+
+test('the portrait is named after the architect', async ({ page }) => {
+  await page.goto('/e2e/about/');
+  await expect(page.locator('main img')).toHaveAttribute('alt', `${site.credential} ${site.name}`);
 });
 
 test('a portrait opens About as close under the header as the landing hero; without one the bio opens it as the identity line does without images', async ({

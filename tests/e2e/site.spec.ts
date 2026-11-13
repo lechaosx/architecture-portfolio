@@ -71,9 +71,10 @@ test.describe(() => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByRole('heading', { name: 'Approach' })).toBeVisible();
     await expect(page).toHaveTitle(`About | ${owner}`);
+    // tests/e2e/pages/[fixture].astro: the English bio.
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
-      site.description.en,
+      /^The drawing follows/,
     );
 
     await page.goto('/e2e/work/?lang=cs');
@@ -91,9 +92,10 @@ test.describe(() => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.getByRole('heading', { name: 'Work' })).toHaveCount(1);
     await expect(page).toHaveTitle(`Work | ${owner}`);
+    // tests/e2e/pages/[fixture].astro: only the English titles differ.
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
-      site.description.en,
+      /Grid project/,
     );
   });
 
@@ -124,7 +126,7 @@ test('tab titles name the page and the credentialed architect in both languages'
     ['/e2e/landing/', `${owner} | Architect`, `${owner} | Architektka`],
     ['/e2e/work/', `Work | ${owner}`, `Práce | ${owner}`],
     ['/e2e/about/', `About | ${owner}`, `O mně | ${owner}`],
-    ['/e2e/project/', `Test project | ${owner}`, `Testovací projekt | ${owner}`],
+    ['/e2e/project/', `Test project, Nowhere | ${owner}`, `Testovací projekt, Nikde | ${owner}`],
   ];
   await page.goto('/e2e/work/');
   for (const [path, en, cs] of titles) {
@@ -548,7 +550,7 @@ test.describe(() => {
     await page.goto('/cs/e2e/landing/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      `Architektka · ${contact.location.cs}`,
+      `${owner} – Architektka · ${contact.location.cs}`,
     );
     await expect(page).toHaveTitle(`${owner} | Architektka`);
     const meta = (selector: string) => page.locator(`meta[${selector}]`);

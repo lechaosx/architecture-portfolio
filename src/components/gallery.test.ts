@@ -15,6 +15,7 @@ import {
   imageAlt,
   imageText,
   layerPosition,
+  locatedTitle,
   lightboxAreas,
   lightboxImageUrl,
   nativeZoomScale,
@@ -78,6 +79,17 @@ describe('imageAlt', () => {
   test('an untitled image has none', () => {
     expect(imageAlt(image(), project, 'cs')).toBeUndefined();
     expect(imageAlt(titled(' '), project, 'cs')).toBeUndefined();
+  });
+});
+
+describe('locatedTitle', () => {
+  test('adds the parts of the location the title does not name, inflected or not', () => {
+    const located = (title: string, location?: string) =>
+      locatedTitle({ title: { cs: title, en: title }, location: location ? { cs: location, en: location } : undefined }, 'cs');
+    expect(located('Hasičská zbrojnice', 'Doubravník')).toBe('Hasičská zbrojnice, Doubravník');
+    expect(located('Sportovní areál a park v Kyjově', 'Kyjov')).toBe('Sportovní areál a park v Kyjově');
+    expect(located('Exotárium v Zoo Brno', 'Česká republika, Brno')).toBe('Exotárium v Zoo Brno, Česká republika');
+    expect(located('Vila Praha')).toBe('Vila Praha');
   });
 });
 

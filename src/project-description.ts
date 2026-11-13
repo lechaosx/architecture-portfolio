@@ -17,8 +17,30 @@ const entities: Record<string, string> = {
 
 const oneLine = (text: string) => text.replace(/\s+/g, ' ').trim();
 
-function excerpt(markdown: string) {
-  const text = oneLine(
+/** Text on one line, cut at a word boundary to what search engines show. */
+function shorten(text: string) {
+  const line = oneLine(text);
+  if (line.length <= MAX_LENGTH) return line || undefined;
+  const space = line.lastIndexOf(' ', MAX_LENGTH - 1);
+  return `${line.slice(0, space > 0 ? space : MAX_LENGTH - 1)}…`;
+}
+
+/**
+ * Items joined by commas: as many whole ones as fit what search engines show,
+ * then an ellipsis. A first item too long to fit is shortened.
+ */
+export function shortList(items: string[]) {
+  const all = items.map(oneLine).filter(Boolean);
+  for (let count = all.length; count > 0; count -= 1) {
+    const text = all.slice(0, count).join(', ') + (count < all.length ? '…' : '');
+    if (text.length <= MAX_LENGTH) return text;
+  }
+  return all[0] && shorten(all[0]);
+}
+
+/** Markdown as plain text, shortened. */
+export function excerpt(markdown: string) {
+  return shorten(
     marked
       .parse(markdown, { async: false })
       // Line breaks part words; inline tags such as <strong> must not part
@@ -27,9 +49,6 @@ function excerpt(markdown: string) {
       .replace(/<[^>]*>/g, '')
       .replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => entities[entity]),
   );
-  if (text.length <= MAX_LENGTH) return text || undefined;
-  const space = text.lastIndexOf(' ', MAX_LENGTH - 1);
-  return `${text.slice(0, space > 0 ? space : MAX_LENGTH - 1)}…`;
 }
 
 /**

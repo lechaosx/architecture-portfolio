@@ -11,6 +11,8 @@ const bottom = async (locator: Locator) => {
   return y + height;
 };
 
+const name = `${site.credential} ${site.name}`;
+
 const selectedWork = (page: Page) =>
   page.locator('main section', {
     has: page.getByRole('heading', { level: 2, name: 'Selected work' }),
@@ -22,10 +24,10 @@ test('under the images one line says what she is, where and what she offers, and
   // tests/e2e/pages/[fixture].astro: located in Brno, with three services.
   await page.goto('/e2e/landing/');
   const services = page.getByText('Family houses · Renovations · Interiors', { exact: true });
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architect · Brno');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name} – Architect · Brno`);
   await expect(services).toBeVisible();
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architektka · Brno');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name} – Architektka · Brno`);
   await expect(page.getByText('Rodinné domy · Rekonstrukce · Interiéry', { exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'O mně →' }).click();
   await expect(page).toHaveURL(/\/about\/$/);
@@ -33,10 +35,10 @@ test('under the images one line says what she is, where and what she offers, and
 
 test('without services or a place the line is the profession', async ({ page }) => {
   await page.goto('/e2e/landing-bare/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architect');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name} – Architect`);
   await expect(page.getByText(/Family houses/)).toHaveCount(0);
   await page.getByRole('link', { name: 'Switch to Czech' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Architektka');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name} – Architektka`);
 });
 
 test('the site description is not shown, only used as the page description', async ({ page }) => {

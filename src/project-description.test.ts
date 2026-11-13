@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { projectDescription } from './project-description';
+import { projectDescription, shortList } from './project-description';
 
 const text = (cs: string, en = 'English text.') => ({ type: 'text' as const, body: { cs, en } });
 const gallery = { type: 'gallery' as const, images: [{ image: '/uploads/plan.png' }] };
@@ -51,5 +51,18 @@ describe('projectDescription', () => {
       cs: undefined,
       en: undefined,
     });
+  });
+});
+
+describe('shortList', () => {
+  const title = (letter: string) => `${letter} ${'x'.repeat(48)}`;
+
+  test('joins whole items, as many as fit within 160 characters, then an ellipsis', () => {
+    expect(shortList(['A', 'B'])).toBe('A, B');
+    expect(shortList(['A', 'B', 'C', 'D'].map(title))).toBe(`${['A', 'B', 'C'].map(title).join(', ')}…`);
+  });
+
+  test('cuts a first item too long to fit at a word boundary', () => {
+    expect(shortList([`${'slovo '.repeat(40)}`, 'B'])).toBe(`${'slovo '.repeat(26).trimEnd()}…`);
   });
 });

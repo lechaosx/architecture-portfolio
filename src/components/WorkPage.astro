@@ -15,6 +15,7 @@ import { projectBadges, projectFacts } from '../project-facts';
 import { hasPage, workProjects, type Project } from '../projects';
 import { getResponsiveImage } from '../server-images';
 import { collectionPage } from '../structured-data';
+import { shortList } from '../project-description';
 
 const lang = pageLanguage(Astro.url.pathname);
 
@@ -29,12 +30,15 @@ const { site, about, contact } = Astro.props;
 const { grid, listed } = workProjects(Astro.props.projects);
 const image = grid[0] && (await getResponsiveImage(grid[0].cover.image))?.share;
 const origin = new URL('/', Astro.site);
+const projects = [...grid, ...listed];
 const graph = (language: 'cs' | 'en') => [collectionPage({
   site: origin,
   url: new URL(localizedPath(Astro.url.pathname, language), origin).href,
-  projects: [...grid, ...listed],
+  projects,
   lang: language,
 })];
+const description = (language: 'cs' | 'en') =>
+  shortList(projects.map(({ data }) => data.title[language]));
 // One column template for every index row and its brief, so they line up. The
 // period column matches the About facts' so a period reads alike on both; change
 // them together.
@@ -45,6 +49,7 @@ const marker = 'col-start-2 row-start-2 justify-self-end sm:col-start-4 sm:row-s
 
 <Base
   title={{ cs: `${ui.cs.work} | ${credentialedName(site)}`, en: `${ui.en.work} | ${credentialedName(site)}` }}
+  description={{ cs: description('cs'), en: description('en') }}
   {image}
   graph={{ cs: graph('cs'), en: graph('en') }}
   {site}
