@@ -9,37 +9,19 @@ location:
   cs: Brno-Medlánky
   en: Brno-Medlánky
 brief:
-  cs: >-
-    Návrh revitalizace Letiště Medlánky v Brně propojuje sportovní letectví,
-    architekturu, veřejný prostor a komunitní život. Cílem je proměnit
-    prostorově roztříštěný areál v přehledný a funkčně propojený celek, který
-    zachovává aktivní letištní provoz a zároveň jej otevírá veřejnosti.
-
-
-    Ústředním prvkem návrhu je Galerie–Hangár sportovního letectví, kombinující
-    hangár pro větroně s výstavními, vzdělávacími a komunitními prostory.
-    Významným architektonickým motivem je vizuální propojení návštěvníků s
-    leteckým provozem a veřejně přístupná pobytová střecha s výhledem na
-    letiště. Součástí revitalizace jsou také nové a rekonstruované provozní
-    objekty, ubytování a úpravy veřejných prostranství. Návrh respektuje
-    přírodní charakter území a ochranu kriticky ohroženého sysla obecného.
-  en: >-
-    The revitalisation of Medlánky Airfield in Brno connects sport aviation,
-    architecture, public space, and community life. The aim is to transform the
-    spatially fragmented airport complex into a clearly organised and
-    functionally interconnected environment that preserves active airport
-    operations while opening the site to the public.
-
-
-    The centrepiece of the design is the Sport Aviation Gallery–Hangar,
-    combining a glider hangar with exhibition, educational, and community
-    spaces. A key architectural feature is the visual connection between
-    visitors and airport operations, complemented by a publicly accessible
-    rooftop terrace overlooking the airfield. The revitalisation also includes
-    new and renovated operational buildings, accommodation facilities, and
-    improvements to public spaces. The design respects the natural character of
-    the site and the protection of the critically endangered European ground
-    squirrel.
+  cs: Návrh revitalizace Letiště Medlánky v Brně propojuje sportovní letectví,
+    architekturu a veřejný prostor. Ústředním prvkem je Galerie–Hangár,
+    kombinující zázemí pro větroně s výstavními, vzdělávacími a komunitními
+    prostory a veřejně přístupnou pobytovou střechou. Koncepce sjednocuje areál,
+    otevírá jej veřejnosti a zároveň respektuje aktivní letištní provoz i
+    přírodní charakter území s výskytem kriticky ohroženého sysla obecného.
+  en: The revitalization proposal for Medlánky Airfield in Brno connects
+    recreational aviation, architecture, and public space. Its centerpiece is
+    the Gallery–Hangar, combining glider facilities with exhibition,
+    educational, and community spaces, complemented by a publicly accessible
+    rooftop terrace. The concept unifies the site, opens it to the public, and
+    respects both active airfield operations and the natural habitat of the
+    critically endangered European ground squirrel.
 context:
   - academic
 intervention:
@@ -100,9 +82,9 @@ blocks:
         efektivního a celoročně využitelného areálu.
       en: >-
         The revitalisation of Medlánky Airfield in Brno is based on the idea of
-        connecting sport aviation, architecture, and community life. The
-        design responds to the existing spatial and functional fragmentation of
-        the site by creating a new centre that opens up the active airport
+        connecting sport aviation, architecture, and community life. The design
+        responds to the existing spatial and functional fragmentation of the
+        site by creating a new centre that opens up the active airport
         environment to the wider public.
 
 
