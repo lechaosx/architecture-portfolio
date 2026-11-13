@@ -1,10 +1,11 @@
 ---
 import ProjectPage from '../../../src/components/ProjectPage.astro';
+import { hasPage } from '../../../src/projects';
 import { about, contact, site } from '../architect';
 import { thumbnailProjects } from '../thumbnail-projects';
 
 export function getStaticPaths() {
-  return thumbnailProjects.filter(({ data }) => data.blocks.length > 0).map((project) => ({
+  return thumbnailProjects.filter(({ data }) => hasPage(data)).map((project) => ({
     params: { fixture: project.id.replace('e2e-thumbnail-', '') }, props: { project },
   }));
 }

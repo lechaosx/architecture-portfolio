@@ -3,7 +3,7 @@ import { localizedPath } from './locale';
 import { ui, type Lang, type UiKey } from './i18n';
 import { formatPeriod, type Period } from './period';
 import { projectBadges, projectFacts } from './project-facts';
-import { newestFirst, workProjects, type Project } from './projects';
+import { hasPage, newestFirst, workProjects, type Project } from './projects';
 
 type Data<Collection extends 'about' | 'contact' | 'projects'> =
   CollectionEntry<Collection>['data'];
@@ -67,7 +67,7 @@ function project(site: URL, { id, data }: Project) {
     [pair(data.location), `${label('involvement')}: ${period(data)}`]
       .filter(Boolean)
       .join(' · '),
-    ...(data.blocks.length > 0
+    ...(hasPage(data)
       ? ['cs', 'en'].map((lang) => new URL(`/${lang}/projects/${id}/`, site).href)
       : []),
     ...list(projectBadges(data).length ? [`${label('projectInformation')}: ${projectBadges(data).map(label).join(' · ')}`] : []),
@@ -169,7 +169,7 @@ export function llmsTxt({
       ]),
     ])),
     ...section(label('work'), list(
-      [...grid, ...listed].flatMap(({ id, data }) => (['cs', 'en'] as const).map((lang) => `${textLink(`${data.title[lang]} (${lang})`, new URL(localizedPath(data.blocks.length > 0 ? `/projects/${id}/` : '/work/', lang), site))}: ${[
+      [...grid, ...listed].flatMap(({ id, data }) => (['cs', 'en'] as const).map((lang) => `${textLink(`${data.title[lang]} (${lang})`, new URL(localizedPath(hasPage(data) ? `/projects/${id}/` : '/work/', lang), site))}: ${[
         data.location?.[lang].replace(/\s+/g, ' '),
         `${ui[lang].involvement}: ${formatPeriod(data)?.[lang]}`,
       ].filter(Boolean).join(' · ')}`)),

@@ -1,10 +1,11 @@
 ---
 import { projects } from '../../published-projects';
+import { hasPage } from '../../projects';
 import { about, contact, site } from '../../singletons';
 import ProjectPage from '../../components/ProjectPage.astro';
 
 export async function getStaticPaths() {
-  const pages = projects.filter(({ data }) => data.blocks.length > 0);
+  const pages = projects.filter(({ data }) => hasPage(data));
   return pages.map((p) => ({ params: { slug: p.id }, props: { project: p } }));
 }
 

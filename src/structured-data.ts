@@ -5,7 +5,7 @@ import { ui, type Lang } from './i18n';
 import { largeImageUrl, type ResponsiveImage } from './images';
 import { formatPeriod } from './period';
 import { projectDescription } from './project-description';
-import { projectCover, type Project } from './projects';
+import { hasPage, projectCover, type Project } from './projects';
 
 
 type Node = Record<string, unknown>;
@@ -213,7 +213,7 @@ export function collectionPage({
         position: index + 1,
         item: work({
           site,
-          url: data.blocks.length > 0 ? absolute(localizedPath(`/projects/${id}/`, lang), site) : undefined,
+          url: hasPage(data) ? absolute(localizedPath(`/projects/${id}/`, lang), site) : undefined,
           project: data,
           description: projectDescription(data)[lang],
           lang,

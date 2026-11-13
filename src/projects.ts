@@ -58,12 +58,15 @@ export function publishedProjects<T extends Project & { filePath?: string }>(
 export const newestFirst = (a: Project, b: Project) =>
   latestFirst(a.data, b.data) || a.data.title.en.localeCompare(b.data.title.en);
 
-/** A card needs a cover and content blocks, because a project without blocks has no page. */
+/** A project's own page shows its content blocks, so a project without any has no page. */
+export const hasPage = (data: Pick<Project['data'], 'blocks'>) => data.blocks.length > 0;
+
+/** A card needs a cover and a page to link to. */
 export function projectCard(project: Project): CardProject | undefined {
   const images = project.data.blocks.flatMap((block) =>
     block.type === 'text' ? [] : block.images,
   );
-  const cover = project.data.blocks.length > 0
+  const cover = hasPage(project.data)
     ? projectCover(project.data.thumbnail, images)
     : undefined;
   return cover && { ...project, cover };

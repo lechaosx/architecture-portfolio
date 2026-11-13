@@ -12,7 +12,7 @@ import { credentialedName } from '../site-title';
 import { ui } from '../i18n';
 import { formatPeriod } from '../period';
 import { projectBadges, projectFacts } from '../project-facts';
-import { workProjects, type Project } from '../projects';
+import { hasPage, workProjects, type Project } from '../projects';
 import { getResponsiveImage } from '../server-images';
 import { collectionPage } from '../structured-data';
 
@@ -85,7 +85,7 @@ const marker = 'col-start-2 row-start-2 justify-self-end sm:col-start-4 sm:row-s
             );
             return (
               <li>
-                {data.blocks.length > 0 ? (
+                {hasPage(data) ? (
                   <a href={localizedPath(`/projects/${id}/`, lang)} class={`group ${row} py-3`}>
                     {cells}
                     <span aria-hidden="true" class={marker}>→</span>
